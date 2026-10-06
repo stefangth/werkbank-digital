@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import i18n, { resources } from './index';
+import i18n, { resources, composeModuleCatalogs } from './index';
 import { MODULE_I18N } from '@/modules/i18n';
 
 /** Flatten a nested catalog object to a sorted list of dotted key paths. */
@@ -66,5 +66,14 @@ describe('module i18n namespaces', () => {
       expect(Object.keys(resources.de)).toContain(ns);
       expect(i18n.options.ns).toContain(ns);
     }
+  });
+});
+
+describe('composeModuleCatalogs', () => {
+  it('selects the requested language per namespace', () => {
+    const registry = { fixture: { en: { hello: 'Hello' }, de: { hello: 'Hallo' } } };
+    expect(composeModuleCatalogs(registry, 'en')).toEqual({ fixture: { hello: 'Hello' } });
+    expect(composeModuleCatalogs(registry, 'de')).toEqual({ fixture: { hello: 'Hallo' } });
+    expect(composeModuleCatalogs({}, 'en')).toEqual({});
   });
 });

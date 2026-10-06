@@ -64,11 +64,14 @@ import enToday from './locales/en/today.json';
 import deToday from './locales/de/today.json';
 import { MODULE_I18N } from '@/modules/i18n';
 
-/** Each module namespace's catalog for one language. */
-function moduleCatalogs<L extends 'en' | 'de'>(lang: L) {
+/** Each module namespace's catalog for one language. Pure: takes the registry as input. */
+export function composeModuleCatalogs<
+  R extends Record<string, { en: Record<string, unknown>; de: Record<string, unknown> }>,
+  L extends 'en' | 'de',
+>(registry: R, lang: L) {
   return Object.fromEntries(
-    Object.entries(MODULE_I18N).map(([ns, catalogs]) => [ns, catalogs[lang]]),
-  ) as { [N in keyof typeof MODULE_I18N]: (typeof MODULE_I18N)[N][L] };
+    Object.entries(registry).map(([ns, catalogs]) => [ns, catalogs[lang]]),
+  ) as { [N in keyof R]: R[N][L] };
 }
 
 export const resources = {
@@ -83,7 +86,7 @@ export const resources = {
     hireOrdersPages: enHireOrdersPages, showsDetail: enShowsDetail, chats: enChats, profile: enProfile,
     onboarding: enOnboarding, flowCopy: enFlowCopy, bookingCopy: enBookingCopy,
     getRunning: enGetRunning, getRunningV3: enGetRunningV3, today: enToday,
-    ...moduleCatalogs('en'),
+    ...composeModuleCatalogs(MODULE_I18N, 'en'),
   },
   de: {
     common: deCommon, help: deHelp, dashboard: deDashboard, bookings: deBookings, availability: deAvailability,
@@ -96,7 +99,7 @@ export const resources = {
     hireOrdersPages: deHireOrdersPages, showsDetail: deShowsDetail, chats: deChats, profile: deProfile,
     onboarding: deOnboarding, flowCopy: deFlowCopy, bookingCopy: deBookingCopy,
     getRunning: deGetRunning, getRunningV3: deGetRunningV3, today: deToday,
-    ...moduleCatalogs('de'),
+    ...composeModuleCatalogs(MODULE_I18N, 'de'),
   },
 } as const;
 

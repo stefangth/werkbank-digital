@@ -482,3 +482,53 @@ Deno.test("provision-org: without a provisioning entry the booking-flow seed sti
     .flatMap((c) => c.args?.[0] as { key: string }[]);
   assertEquals(rows.some((r) => r.key === "booking_flow"), true);
 });
+
+type FakeTables = NonNullable<NonNullable<Parameters<typeof makeFakeDeps>[0]>["tables"]>;
+const kindFake = (tables: FakeTables = {}) => makeFakeDeps({
+  authUser: { id: "u1" },
+  tables: { platform_admins: { data: { user_id: "u1" }, error: null }, ...tables },
+  rpcs: { provision_org: { data: { org_id: "org-9", token: "tok-9" }, error: null } },
+  usersById: {},
+  generateLinkResult: { data: { properties: { action_link: "https://app.test/reset-password?redirect=x" } }, error: null },
+});
+const kindReq = (extra: Record<string, unknown> = {}) =>
+  makeRequest({ headers: { Authorization: "Bearer x" }, body: { ...body, org_kind: "staffing", ...extra } });
+const upsertCalls = (calls: { table: string; method: string; args: unknown[] }[]) =>
+  calls.filter((c) => c.table === "app_settings" && c.method === "upsert");
+
+Deno.test("provision-org: kind settings are still seeded when the org_entitlements insert errors", async () => {
+  const { deps, calls } = kindFake({ org_entitlements: { data: null, error: { message: "boom" } } });
+  const res = await handle(kindReq(), deps, { staffing: { entitlements: {}, settings: { org_language: "de" }, skipBookingFlowSeed: false } });
+  assertEquals(res.status, 200);
+  const rows = upsertCalls(calls).flatMap((c) => c.args[0] as { key: string }[]);
+  assertEquals(rows.some((r) => r.key === "org_language"), true);
+  // the booking-flow seed still depends on the entitlement insert landing
+  assertEquals(rows.some((r) => r.key === "booking_flow"), false);
+});
+
+Deno.test("provision-org: kind entitlements reach the org_entitlements rows and beat the request body", async () => {
+  const { deps, calls } = kindFake();
+  const res = await handle(
+    kindReq({ entitlements: { booking_flow: true } }),
+    deps,
+    { staffing: { entitlements: { booking_flow: false }, settings: {}, skipBookingFlowSeed: false } },
+  );
+  assertEquals(res.status, 200);
+  const insert = calls.find((c) => c.table === "org_entitlements" && c.method === "insert");
+  const rows = insert!.args[0] as { feature: string; enabled: boolean }[];
+  assertEquals(rows.find((r) => r.feature === "booking_flow")?.enabled, false);
+  assertEquals(rows.length, FEATURE_KEYS.length);
+});
+
+Deno.test("provision-org: kind settings upsert uses onConflict org_id,key and runs after the booking-flow seed", async () => {
+  const { deps, calls } = kindFake();
+  const res = await handle(kindReq(), deps, { staffing: { entitlements: {}, settings: { org_language: "de" }, skipBookingFlowSeed: false } });
+  assertEquals(res.status, 200);
+  const upserts = upsertCalls(calls);
+  assertEquals(upserts.length, 2);
+  const keysOf = (c: { args: unknown[] }) => (c.args[0] as { key: string }[]).map((r) => r.key);
+  assertEquals(keysOf(upserts[0]).includes("booking_flow"), true);
+  assertEquals(keysOf(upserts[1]), ["org_language"]);
+  assertEquals((upserts[1].args[0] as { org_id: string }[])[0].org_id, "org-9");
+  assertEquals(upserts[1].args[1], { onConflict: "org_id,key" });
+});

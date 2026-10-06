@@ -81,6 +81,7 @@ export async function handle(
     // each feature's registry default when that platform setting is unset). Best-effort: a
     // seeding failure must not undo the org that was just created, so log and continue —
     // same resilience posture as the invite delivery below.
+    const kindDefaults = provisioning[orgKind];
     try {
       const fallbackDefaults = Object.fromEntries(
         FEATURE_KEYS.map((key) => [key, FEATURE_REGISTRY[key].defaultEnabled]),
@@ -91,7 +92,6 @@ export async function handle(
       const platformEntitlements = Object.fromEntries(
         FEATURE_KEYS.map((feature) => [feature, defaultEntitlements[feature] ?? FEATURE_REGISTRY[feature].defaultEnabled]),
       ) as Record<FeatureKey, boolean>;
-      const kindDefaults = provisioning[orgKind];
       const entitlements = mergeEntitlements(platformEntitlements, body?.entitlements ?? null, kindDefaults?.entitlements);
       const entitlementRows = FEATURE_KEYS.map((feature) => ({ org_id, feature, enabled: entitlements[feature] }));
       const { error: entitlementsError } = await deps.admin.from("org_entitlements").insert(entitlementRows);
@@ -120,21 +120,22 @@ export async function handle(
           console.error("provision-org: off-flow seed failed", (e as Error).message);
         }
       }
-
-      // The kind's own app_settings defaults (after the booking-flow seed, so a kind can
-      // override it). Best-effort, same posture as above.
-      const kindSettings = Object.entries(kindDefaults?.settings ?? {});
-      if (!entitlementsError && kindSettings.length > 0) {
-        try {
-          const { error: settingsErr } = await deps.admin.from("app_settings")
-            .upsert(kindSettings.map(([key, value]) => ({ org_id, key, value })), { onConflict: "org_id,key" });
-          if (settingsErr) console.error("provision-org: kind settings seed failed", settingsErr.message);
-        } catch (e) {
-          console.error("provision-org: kind settings seed failed", (e as Error).message);
-        }
-      }
     } catch (e) {
       console.error("provision-org: entitlement seeding failed", (e as Error).message);
+    }
+
+    // The kind's own app_settings defaults. Independent of the entitlement seeding above so
+    // a transient failure there cannot leave a kind org without its defaults; runs after
+    // the booking-flow seed so a kind's settings win. Best-effort, same posture as above.
+    const kindSettings = Object.entries(kindDefaults?.settings ?? {});
+    if (kindSettings.length > 0) {
+      try {
+        const { error: settingsErr } = await deps.admin.from("app_settings")
+          .upsert(kindSettings.map(([key, value]) => ({ org_id, key, value })), { onConflict: "org_id,key" });
+        if (settingsErr) console.error("provision-org: kind settings seed failed", settingsErr.message);
+      } catch (e) {
+        console.error("provision-org: kind settings seed failed", (e as Error).message);
+      }
     }
 
     // Resolve the invitation id created inside provision_org (it returns only {org_id, token}),
