@@ -2,13 +2,12 @@ import { preflight, json } from "../_shared/http.ts";
 import { requireSuperAdmin } from "../_shared/auth.ts";
 import { realDeps, type Deps } from "../_shared/deps.ts";
 import { ensureInvitedAccount, formatExpiresOn, resolveArtistOffersExpected, sendOrgInvitationEmail, SYSTEM_INVITER_NAME } from "../_shared/invitations.ts";
-import { inviteRoleLabel } from "../_shared/roles.ts";
-import { resolveOrgLocale } from "../_shared/orgLocale.ts";
+import { resolveInviteRoleLabel } from "../_shared/roles.ts";
 import { resolveOrgSetting } from "../_shared/settings.ts";
 import { FEATURE_KEYS, FEATURE_REGISTRY, type FeatureKey } from "../_shared/entitlements.ts";
 import { BOOKING_FLOW_TEMPLATE_DEFAULTS, normalizeBookingFlowTemplates } from "../_shared/bookingFlow.ts";
 import type { Json } from "../_shared/database.types.ts";
-import { isOrgKind, DEFAULT_ORG_KIND, resolveOrgKind } from "../_shared/orgKind.ts";
+import { isOrgKind, DEFAULT_ORG_KIND } from "../_shared/orgKind.ts";
 
 type Body = {
   name: string;
@@ -138,7 +137,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
         ? await resolveArtistOffersExpected(deps.admin, org_id)
         : undefined;
       await sendOrgInvitationEmail(deps, {
-        email, orgName: name, role: inviteRoleLabel(role, await resolveOrgKind(deps.admin, org_id), await resolveOrgLocale(deps.admin, org_id)), roleKey: role, token,
+        email, orgName: name, role: await resolveInviteRoleLabel(deps.admin, org_id, role), roleKey: role, token,
         inviterName: SYSTEM_INVITER_NAME,
         expiresOn: formatExpiresOn((invRow as { expires_at?: string } | null)?.expires_at),
         offersExpected,

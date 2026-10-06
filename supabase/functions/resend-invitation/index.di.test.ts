@@ -675,3 +675,26 @@ Deno.test("resend-invitation DI: a resend requested well after a previous attemp
   assertExists(keyB);
   assertEquals(keyA === keyB, false, "a resend 30 minutes later must not collide with the earlier one, even at the same stale resent_count");
 });
+
+Deno.test("resend-invitation DI: the invite email still sends when the organizations and app_settings reads error", async () => {
+  const { deps, invokeCalls } = makeFakeDeps({
+    authUser: { id: "u1" },
+    usersById: { u1: { email: "admin@acme.test" } },
+    tables: {
+      org_memberships: { data: { role: "admin" }, error: null },
+      org_invitations: { data: { id: "inv1", org_id: "org-1", email: "invitee@x.com", role: "producer", status: "pending", token: "tok123" }, error: null },
+      organizations: { data: null, error: { message: "boom" } },
+      app_settings: { data: null, error: { message: "boom" } },
+    },
+    authUsersByEmail: { "invitee@x.com": { id: "existing-invitee" } },
+    rpcs: { ensure_invitation_membership: { data: true, error: null }, mark_invitation_resent: { data: null, error: null } },
+  });
+  const res = await handle(
+    makeRequest({ headers: { Authorization: "Bearer jwt" }, body: { invitation_id: "inv1", app_origin: "https://app.test" } }),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  const sent = invokeCalls.filter((c) => c.name === "send-transactional-email");
+  assertEquals(sent.length, 1);
+  assertEquals((sent[0].body as { templateData: Record<string, unknown> }).templateData.role, "Production Team");
+});

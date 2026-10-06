@@ -4,7 +4,9 @@
 // fails CI on drift. Do not hand-edit the block — edit the source and regenerate.
 // `AppRole` mirrors the frontend enum type so the block can stay byte-identical.
 type AppRole = 'admin' | 'producer' | 'artist';
-import { VOCABULARY, ORG_KIND_DEFS, DEFAULT_ORG_KIND, roleLabelsFollowUiLanguage, type OrgKind, type OrgKindLang } from './orgKind.ts';
+import { VOCABULARY, ORG_KIND_DEFS, DEFAULT_ORG_KIND, roleLabelsFollowUiLanguage, resolveOrgKind, type OrgKind, type OrgKindLang } from './orgKind.ts';
+import { resolveOrgLocale, type ServerLocale } from './orgLocale.ts';
+import type { TypedClient } from './deps.ts';
 
 // >>> ROLE LABELS MIRROR (keep byte-identical with the twin file) >>>
 /**
@@ -112,6 +114,27 @@ export function roleDescription(role: string, kind: OrgKind = DEFAULT_ORG_KIND, 
 
 /** Role label for an invitation email. A kind whose role labels follow the UI language
  *  renders in the org's locale; production and staffing keep today's English label. */
-export function inviteRoleLabel(role: string, kind: OrgKind, locale: "en" | "de"): string {
+export function inviteRoleLabel(role: string, kind: OrgKind, locale: ServerLocale): string {
   return roleLabelsFollowUiLanguage(kind) ? roleLabel(role, kind, locale) : roleLabel(role);
+}
+
+/** Role label for an invitation email, resolved from the org. The kind is read first and
+ *  the org language only when that kind follows the UI language, so production and staffing
+ *  invitations never touch app_settings. A failed locale read degrades to English instead
+ *  of aborting the email. */
+export async function resolveInviteRoleLabel(
+  admin: TypedClient,
+  orgId: string | null,
+  role: string,
+): Promise<string> {
+  const kind = await resolveOrgKind(admin, orgId);
+  let locale: ServerLocale = "en";
+  if (roleLabelsFollowUiLanguage(kind)) {
+    try {
+      locale = await resolveOrgLocale(admin, orgId);
+    } catch {
+      locale = "en";
+    }
+  }
+  return inviteRoleLabel(role, kind, locale);
 }

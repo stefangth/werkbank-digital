@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { roleLabel, roleDescription, ROLE_LABELS, ROLE_DESCRIPTIONS, ROLES } from './app.config';
 import type { AppRole } from './app.config';
+import type { OrgKind } from '@/lib/orgKind';
 
 vi.mock('@/lib/orgKind', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/orgKind')>();
@@ -47,8 +48,7 @@ describe('roleLabel', () => {
     expect(roleLabel('admin', 'staffing', 'de')).toBe('Admin');
   });
   it('follows the UI language for a kind that opts in', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- injected fake kind is not in the OrgKind union
-    const kind = 'fakefollow' as any;
+    const kind = 'fakefollow' as unknown as OrgKind;
     expect(roleLabel('producer', kind, 'de')).toBe('Buero');
     expect(roleLabel('artist', kind, 'de')).toBe('Techniker');
     expect(roleLabel('artist', kind, 'en')).toBe('Technician');
@@ -64,8 +64,7 @@ describe('roleDescription per language', () => {
     }
   });
   it('uses the kind descriptions in the UI language when the kind opts in', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- injected fake kind is not in the OrgKind union
-    const kind = 'fakefollow' as any;
+    const kind = 'fakefollow' as unknown as OrgKind;
     expect(roleDescription('producer', kind, 'de')).toBe('Plant alles.');
     expect(roleDescription('artist', kind, 'en')).toBe('Does it.');
     expect(roleDescription('unknown', kind, 'de')).toBe('');

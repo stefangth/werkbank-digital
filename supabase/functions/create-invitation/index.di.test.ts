@@ -573,3 +573,22 @@ Deno.test("create-invitation DI: a non-artist invite never resolves offersExpect
   const msg = emails[0].body as { templateData: { offersExpected?: boolean } };
   assertEquals(msg.templateData.offersExpected, undefined);
 });
+
+Deno.test("create-invitation DI: the invite email still sends when the organizations and app_settings reads error", async () => {
+  const { deps, invokeCalls } = adminDeps({
+    tables: {
+      org_memberships: { data: { role: "admin" }, error: null },
+      org_invitations: {
+        data: { id: "inv1", org_id: "org-1", email: "invitee@x.com", role: "producer", status: "pending", token: "tok123", expires_at: "2099-01-01T00:00:00Z" },
+        error: null,
+      },
+      organizations: { data: null, error: { message: "boom" } },
+      app_settings: { data: null, error: { message: "boom" } },
+    },
+  });
+  const res = await handle(inviteReq({ org_id: "org-1", email: "invitee@x.com", role: "producer" }), deps);
+  assertEquals(res.status, 200);
+  const sent = invokeCalls.filter((c) => c.name === "send-transactional-email");
+  assertEquals(sent.length, 1);
+  assertEquals((sent[0].body as { templateData: Record<string, unknown> }).templateData.role, "Production Team");
+});

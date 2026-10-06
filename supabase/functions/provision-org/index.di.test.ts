@@ -406,3 +406,21 @@ Deno.test("provision-org: 400 on unknown org_kind", async () => {
   assertEquals(res.status, 400);
   assertEquals((await res.json()).error, "Invalid workspace type");
 });
+
+Deno.test("provision-org: the invite email still sends when the organizations and app_settings reads error", async () => {
+  const { deps, invokeCalls } = makeFakeDeps({
+    authUser: { id: "u1" },
+    tables: {
+      platform_admins: { data: { user_id: "u1" }, error: null },
+      organizations: { data: null, error: { message: "boom" } },
+      app_settings: { data: null, error: { message: "boom" } },
+    },
+    rpcs: { provision_org: { data: { org_id: "org-9", token: "tok-9" }, error: null } },
+    usersById: {},
+  });
+  const res = await handle(makeRequest({ headers: { Authorization: "Bearer x" }, body: { ...body, role: "producer" } }), deps);
+  assertEquals(res.status, 200);
+  const sent = invokeCalls.filter((c) => c.name === "send-transactional-email");
+  assertEquals(sent.length, 1);
+  assertEquals((sent[0].body as { templateData: Record<string, unknown> }).templateData.role, "Production Team");
+});
