@@ -260,7 +260,7 @@ export const PRODUCTION_VOCAB: Record<"en" | "de", Record<string, string>> = {
     understudy: "understudy", understudies: "understudies", Understudy: "Understudy", Understudies: "Understudies",
     skill: "skill", skills: "skills", Skill: "Skill", Skills: "Skills",
     hireOrder: "contract", hireOrders: "contracts", HireOrder: "Contract", HireOrders: "Contracts",
-    roleProducer: "Production Team", kind: "production",
+    roleProducer: "Production Team", roleArtist: "Artist", kind: "production",
   },
   de: {
     show: "Show", shows: "Shows", Show: "Show", Shows: "Shows",
@@ -271,7 +271,7 @@ export const PRODUCTION_VOCAB: Record<"en" | "de", Record<string, string>> = {
     understudy: "Zweitbesetzung", understudies: "Zweitbesetzungen", Understudy: "Zweitbesetzung", Understudies: "Zweitbesetzungen",
     skill: "Skill", skills: "Skills", Skill: "Skill", Skills: "Skills",
     hireOrder: "Engagementvertrag", hireOrders: "Engagementverträge", HireOrder: "Engagementvertrag", HireOrders: "Engagementverträge",
-    roleProducer: "Production Team", kind: "production",
+    roleProducer: "Production Team", roleArtist: "Artist", kind: "production",
   },
 };
 

@@ -7,7 +7,13 @@ import {
   ORG_KIND_LABELS,
   VOCABULARY,
   interpolateVocabulary,
+  composeOrgKinds,
+  ORG_KIND_DEFS,
+  isSwitchableByOrgAdmin,
+  roleLabelsFollowUiLanguage,
+  type OrgKindDef,
 } from "./orgKind";
+import { MODULE_ORG_KINDS } from "@/modules/registry";
 
 const DASH = /[–—]/;
 
@@ -15,7 +21,8 @@ describe("orgKind registry", () => {
   it("lists production first and defaults to it", () => {
     expect(ORG_KINDS[0]).toBe("production");
     expect(DEFAULT_ORG_KIND).toBe("production");
-    expect(ORG_KINDS).toEqual(["production", "staffing"]);
+    expect(ORG_KINDS.slice(0, 2)).toEqual(["production", "staffing"]);
+    expect(ORG_KINDS).toHaveLength(2 + MODULE_ORG_KINDS.length);
   });
 
   it("isOrgKind / coerceOrgKind narrow safely", () => {
@@ -81,5 +88,54 @@ describe("interpolateVocabulary", () => {
   });
   it("is the identity on text without variables", () => {
     expect(interpolateVocabulary("plain", vocab)).toBe("plain");
+  });
+});
+
+describe("composeOrgKinds", () => {
+  const fakeModule: OrgKindDef = {
+    ...ORG_KIND_DEFS.staffing,
+    kind: "test_kind",
+    brand: "test_brand",
+    switchableByOrgAdmin: false,
+    seedsStarterCatalog: false,
+    roleLabelsFollowUiLanguage: true,
+  };
+  const core = [ORG_KIND_DEFS.production, ORG_KIND_DEFS.staffing];
+
+  it("appends module kinds after the core kinds, in order", () => {
+    const composed = composeOrgKinds(core, [fakeModule]);
+    expect(Object.keys(composed)).toEqual(["production", "staffing", "test_kind"]);
+    expect(composed.test_kind).toBe(fakeModule);
+  });
+
+  it("rejects a module that redefines a core kind", () => {
+    expect(() => composeOrgKinds(core, [{ ...fakeModule, kind: "production" }])).toThrow(
+      "Duplicate org kind: production",
+    );
+  });
+
+  it("derives the core tables from the composed defs", () => {
+    for (const kind of ["production", "staffing"] as const) {
+      expect(ORG_KIND_DEFS[kind].kind).toBe(kind);
+      expect(ORG_KIND_DEFS[kind].brand).toBe("showflow");
+      expect(ORG_KIND_DEFS[kind].seedsStarterCatalog).toBe(true);
+      expect(VOCABULARY[kind]).toBe(ORG_KIND_DEFS[kind].vocabulary);
+      expect(ORG_KIND_LABELS[kind]).toBe(ORG_KIND_DEFS[kind].labels);
+    }
+  });
+});
+
+describe("core kind flags and roleArtist", () => {
+  it("carries roleArtist = Artist for the core kinds in both languages", () => {
+    for (const kind of ["production", "staffing"] as const) {
+      for (const lang of ["en", "de"] as const) expect(VOCABULARY[kind][lang].roleArtist).toBe("Artist");
+    }
+  });
+
+  it("core kinds are switchable and keep English role labels", () => {
+    expect(isSwitchableByOrgAdmin("staffing")).toBe(true);
+    expect(isSwitchableByOrgAdmin("production")).toBe(true);
+    expect(roleLabelsFollowUiLanguage("production")).toBe(false);
+    expect(roleLabelsFollowUiLanguage("staffing")).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { assertEquals } from "./test-asserts.ts";
 import { makeFakeDeps } from "./testing.ts";
-import { resolveOrgKind, VOCABULARY, ORG_KINDS } from "./orgKind.ts";
+import { resolveOrgKind, VOCABULARY, ORG_KINDS, ORG_KIND_DEFS } from "./orgKind.ts";
+import { MODULE_ORG_KINDS } from "./modules.ts";
 
 function seed(kind: string | null) {
   return makeFakeDeps({
@@ -39,6 +40,7 @@ Deno.test("resolveOrgKind: read error => production", async () => {
 });
 
 Deno.test("mirror block carries the vocabulary tables", () => {
-  assertEquals(ORG_KINDS.length, 2);
+  assertEquals(ORG_KINDS.length, 2 + MODULE_ORG_KINDS.length);
+  assertEquals(ORG_KIND_DEFS.production.brand, "showflow");
   assertEquals(typeof VOCABULARY.staffing.en.Artists, "string");
 });
