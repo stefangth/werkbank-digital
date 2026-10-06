@@ -1,4 +1,7 @@
-# CLAUDE.md — Showflow Pro
+# CLAUDE.md — Werkbank Digital (fork of Showflow Pro)
+
+> This repository is a fork of Showflow Pro (ADR-0014) on its own Supabase project
+> `wmtbjajmnjxefrhkchts`. Most of this file still describes the inherited Showflow codebase.
 
 Guidance for AI coding agents (Claude Code and others) and new developers. Read this before writing any code.
 

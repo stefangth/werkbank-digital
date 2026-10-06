@@ -39,6 +39,7 @@ export const MODULES: readonly ModuleGuard[] = [
       "supabase/functions/_shared/modules.ts",
       "docs/**",
       "CLAUDE.md",
+      "README.md",
       "scripts/mirrors.manifest.json",
       "supabase/config.toml",
       "src/integrations/supabase/types.ts",

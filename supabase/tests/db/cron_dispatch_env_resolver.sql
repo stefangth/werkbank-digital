@@ -12,8 +12,8 @@ CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(4);
 
 SELECT is(
-  (SELECT count(*)::int FROM cron.job WHERE command LIKE '%epweartpzwvcasrzyueh.supabase.co%'),
-  0, 'no cron job command hardcodes the production functions host');
+  (SELECT count(*)::int FROM cron.job WHERE command LIKE '%.supabase.co%'),
+  0, 'no cron job command hardcodes a supabase.co functions host');
 
 SELECT is(
   (SELECT count(*)::int FROM cron.job
@@ -26,11 +26,11 @@ SELECT is(
 SELECT is(
   (SELECT count(*)::int FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname='public' AND p.proname IN ('dispatch_hire_order_drafts')
-     AND pg_get_functiondef(p.oid) LIKE '%epweartpzwvcasrzyueh.supabase.co%'),
-  0, 'trigger dispatchers use the resolver, not a hardcoded prod host');
+     AND pg_get_functiondef(p.oid) LIKE '%.supabase.co%'),
+  0, 'trigger dispatchers use the resolver, not a hardcoded supabase.co host');
 
 DELETE FROM private.runtime_config WHERE key = 'functions_base_url';  -- rolled back with this txn
-SELECT is(private.functions_base_url(), 'https://epweartpzwvcasrzyueh.supabase.co',
+SELECT is(private.functions_base_url(), 'https://wmtbjajmnjxefrhkchts.supabase.co',
           'functions_base_url() defaults to the production host when no override row exists');
 
 SELECT * FROM finish();

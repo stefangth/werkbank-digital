@@ -237,7 +237,7 @@ function reportMissing(missing, { blocking }) {
 async function main() {
   const options = parseCliOptions(process.argv.slice(2));
   const token = process.env.SUPABASE_ACCESS_TOKEN;
-  const ref = process.env.SUPABASE_PROJECT_REF || process.env.PROJECT_REF || "epweartpzwvcasrzyueh";
+  const ref = process.env.SUPABASE_PROJECT_REF || process.env.PROJECT_REF || "wmtbjajmnjxefrhkchts";
   if (!token) {
     console.error("SUPABASE_ACCESS_TOKEN is required");
     process.exit(2);
