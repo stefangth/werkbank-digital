@@ -1,7 +1,7 @@
 -- handwerk org kind: a locked kind (no starter catalog, not switchable by org admins).
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(8);
+SELECT plan(10);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -58,6 +58,19 @@ RESET ROLE;
 SELECT is(
   (SELECT org_kind FROM public.organizations WHERE id = 'bbbbbbbb-0000-4000-b000-0000000000d1'),
   'handwerk', 'the direct update by an org admin leaves the handwerk kind unchanged');
+
+-- A client request without a user (anon, auth.uid() is null) cannot use the trigger's
+-- null-uid pass-through: RLS gives anon no write access to organizations, and
+-- set_org_kind is not executable by anon.
+SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
+SET LOCAL ROLE anon;
+SELECT throws_ok($$SELECT public.set_org_kind('bbbbbbbb-0000-4000-b000-0000000000d1','production')$$,
+  '42501', NULL, 'anon cannot call set_org_kind');
+UPDATE public.organizations SET org_kind = 'production' WHERE id = 'bbbbbbbb-0000-4000-b000-0000000000d1';
+RESET ROLE;
+SELECT is(
+  (SELECT org_kind FROM public.organizations WHERE id = 'bbbbbbbb-0000-4000-b000-0000000000d1'),
+  'handwerk', 'a direct update without a user leaves the handwerk kind unchanged');
 
 SELECT * FROM finish();
 ROLLBACK;
