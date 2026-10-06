@@ -16,6 +16,8 @@ import {
   type EmailThemeOverride,
 } from './_shell/emailTheme.ts'
 import { VOCABULARY, type OrgKind } from '../orgKind.ts'
+import { brandAppUrl, brandForKind, type BrandDef } from '../brand.ts'
+import { APP_URL } from '../app-url.ts'
 
 export type TemplateData = Record<string, unknown>
 
@@ -85,6 +87,10 @@ export interface TemplatePresentationOptions {
    *  an omitted kind (or production) is byte-identical to before. Delivery resolves it
    *  from the org via resolveOrgKind; preview may set it explicitly for admin QA. */
   kind?: OrgKind
+  /** The brand the email renders under: shell mark and name, and the origin every
+   *  template link is built from (props.appBaseUrl). Defaults to the kind's brand, which
+   *  is showflow for production and staffing, so their output is unchanged. */
+  brand?: BrandDef
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -205,6 +211,7 @@ export function resolveTemplatePresentation(
     VOCABULARY[options.kind ?? 'production'][options.locale ?? 'en'],
   )
   const theme = resolveEmailTheme(options.themeOverride)
+  const brand = options.brand ?? brandForKind(options.kind ?? 'production')
   const defaultSubject = typeof template.subject === 'function'
     ? template.subject(data)
     : template.subject
@@ -224,6 +231,9 @@ export function resolveTemplatePresentation(
       _emailTheme: theme,
       _emailFamily: template.family,
       _emailLocale: options.locale ?? 'en',
+      _emailBrand: brand,
+      // After the caller's data so templateData can never redirect the email's links.
+      appBaseUrl: brandAppUrl(brand, APP_URL),
       ...(isEmailRoleKey(options.highlightRole) ? { _highlightRole: options.highlightRole } : {}),
     },
     copy,

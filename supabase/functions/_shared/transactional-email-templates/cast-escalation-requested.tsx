@@ -2,12 +2,10 @@
 import * as React from "npm:react@18.3.1";
 import { Section, Text } from "npm:@react-email/components@0.0.22";
 import type { TemplateData, TemplateEntry } from "./registry.ts";
-import { APP_URL } from "../app-url.ts";
-import { EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
+import type { BrandDef } from "../brand.ts";
+import { DEFAULT_APP_BASE_URL, EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
 import { applyEmailTokens, EMAIL_COPY_DEFAULTS, type EmailCopy, type EmailLocale } from "./_shell/emailCopy.ts";
 import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTheme } from "./_shell/emailTheme.ts";
-
-const BOOKINGS_URL = `${APP_URL}/dates`;
 
 interface Props {
   program?: string;
@@ -20,6 +18,8 @@ interface Props {
   _emailFamily?: EmailFamily;
   _highlightRole?: EmailRoleKey;
   _emailLocale?: EmailLocale;
+  _emailBrand?: BrandDef;
+  appBaseUrl?: string;
 }
 
 const CastEscalationRequested = ({
@@ -33,9 +33,12 @@ const CastEscalationRequested = ({
   _emailFamily = "ember",
   _highlightRole,
   _emailLocale = "en",
+  _emailBrand,
+  appBaseUrl = DEFAULT_APP_BASE_URL,
 }: Props) => {
   const copy = _emailCopy;
   const theme = _emailTheme;
+  const bookingsUrl = `${appBaseUrl}/dates`;
   const values = {
     program: program ?? copy["cast-escalation-requested.showFallback"],
     date: date ?? copy["cast-escalation-requested.dateFallback"],
@@ -51,9 +54,10 @@ const CastEscalationRequested = ({
       previewText={applyEmailTokens(copy["cast-escalation-requested.previewText"], values)}
       heading={copy["cast-escalation-requested.heading"]}
       footer={copy["cast-escalation-requested.footer"]}
-      cta={{ href: BOOKINGS_URL, label: copy["cast-escalation-requested.ctaLabel"] }}
+      cta={{ href: bookingsUrl, label: copy["cast-escalation-requested.ctaLabel"] }}
       highlightRole={_highlightRole}
       lang={_emailLocale}
+      brand={_emailBrand}
     >
       <Text style={{ ...emailRoleStyle(theme, "body", _highlightRole), lineHeight: "1.6", margin: "0 0 16px" }}>
         {applyEmailTokens(copy["cast-escalation-requested.intro"], values)}

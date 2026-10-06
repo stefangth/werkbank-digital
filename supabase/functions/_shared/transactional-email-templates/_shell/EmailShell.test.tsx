@@ -5,6 +5,7 @@ import { assertStringIncludes } from "https://deno.land/std@0.224.0/assert/mod.t
 import { assertEquals } from "../../test-asserts.ts";
 import { EmailShell } from "./EmailShell.tsx";
 import { EMAIL_FAMILY_ACCENTS, EMAIL_THEME_DEFAULTS } from "./emailTheme.ts";
+import type { BrandDef } from "../../brand.ts";
 
 Deno.test("EmailShell renders a resilient violet hero without unsupported layout CSS", async () => {
   const html = await renderAsync(
@@ -110,4 +111,35 @@ Deno.test("EmailShell colors the CTA with the family accent, not the base theme 
   // The CTA takes the family accent (pine), independent of the org-wide base button color.
   assertStringIncludes(html, `background-color:${EMAIL_FAMILY_ACCENTS.pine.buttonBg}`);
   assertEquals(html.includes("#1257A6"), false);
+});
+
+Deno.test("EmailShell renders the mark and wordmark of the brand it is given", async () => {
+  const brand: BrandDef = {
+    key: "test",
+    name: "Test Brand",
+    markSvgPath: null,
+    emailMarkPath: "/t.png",
+    faviconPath: "/t.svg",
+    appUrl: "https://t.example",
+    hosts: [],
+    defaultFrom: null,
+  };
+  const html = await renderAsync(
+    React.createElement(
+      EmailShell,
+      {
+        family: "violet",
+        theme: EMAIL_THEME_DEFAULTS,
+        previewText: "Preview text",
+        heading: "A booking update",
+        brand,
+      },
+      React.createElement("p", null, "Booking details"),
+    ),
+  );
+
+  assertStringIncludes(html, 'src="https://t.example/t.png"');
+  assertStringIncludes(html, "Test Brand");
+  assertEquals(html.includes("showflow-mark.png"), false);
+  assertEquals(html.includes(">ShowFlow<"), false);
 });

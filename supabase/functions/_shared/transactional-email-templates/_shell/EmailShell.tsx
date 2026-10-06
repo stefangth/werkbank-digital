@@ -15,6 +15,15 @@ import type { EmailFamily, EmailRoleKey, EmailTheme } from "./emailTheme.ts";
 import { EMAIL_FAMILY_ACCENTS } from "./emailTheme.ts";
 import type { EmailLocale } from "./emailCopy.ts";
 import { APP_URL } from "../../app-url.ts";
+import { brandAppUrl, brandForKind, type BrandDef } from "../../brand.ts";
+
+/** Brand used when a caller renders without one (direct renders in tests and previews).
+ *  The registry always supplies the org's brand, so delivery never relies on this. */
+export const DEFAULT_EMAIL_BRAND: BrandDef = brandForKind("production");
+
+/** App origin under DEFAULT_EMAIL_BRAND: the link base a template falls back to when
+ *  rendered without the registry's appBaseUrl. Equals APP_URL for the showflow brand. */
+export const DEFAULT_APP_BASE_URL: string = brandAppUrl(DEFAULT_EMAIL_BRAND, APP_URL);
 
 export interface EmailShellCta {
   href: string;
@@ -41,6 +50,9 @@ export interface EmailShellProps {
   /** Document language for the <html lang> attribute. Defaults to English so every
    *  existing caller renders unchanged; German sends pass "de". */
   lang?: EmailLocale;
+  /** Brand whose mark and wordmark head the email. Defaults to DEFAULT_EMAIL_BRAND so a
+   *  caller that predates brands renders exactly as before. */
+  brand?: BrandDef;
 }
 
 function roleStyle(theme: EmailTheme, role: EmailRoleKey, highlightRole?: EmailRoleKey): React.CSSProperties {
@@ -70,6 +82,7 @@ export function EmailShell({
   postCta,
   highlightRole,
   lang = "en",
+  brand = DEFAULT_EMAIL_BRAND,
 }: EmailShellProps) {
   const colors = theme.base.colors;
   const accent = EMAIL_FAMILY_ACCENTS[family];
@@ -112,11 +125,11 @@ export function EmailShell({
                     <tbody>
                       <tr>
                         <td style={{ paddingRight: "9px", verticalAlign: "middle" }}>
-                          {/* Hosted white mark (public/email/showflow-mark.png, served from APP_URL). alt="" keeps
-                              it decorative: the "ShowFlow" wordmark beside it is live text, so the brand name still
-                              reads when images are blocked. */}
+                          {/* The brand's hosted white mark (e.g. public/email/showflow-mark.png, served from the
+                              brand's app origin). alt="" keeps it decorative: the brand-name wordmark beside it is
+                              live text, so the name still reads when images are blocked. */}
                           <img
-                            src={`${APP_URL}/email/showflow-mark.png`}
+                            src={`${brandAppUrl(brand, APP_URL)}${brand.emailMarkPath}`}
                             width="24"
                             height="24"
                             alt=""
@@ -124,7 +137,7 @@ export function EmailShell({
                           />
                         </td>
                         <td style={{ verticalAlign: "middle" }}>
-                          <Text style={{ ...roleStyle(theme, "header", highlightRole), margin: "0" }}>ShowFlow</Text>
+                          <Text style={{ ...roleStyle(theme, "header", highlightRole), margin: "0" }}>{brand.name}</Text>
                         </td>
                       </tr>
                     </tbody>

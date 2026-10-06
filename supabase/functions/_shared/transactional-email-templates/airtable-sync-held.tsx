@@ -2,8 +2,8 @@
 import * as React from "npm:react@18.3.1";
 import { Text } from "npm:@react-email/components@0.0.22";
 import type { TemplateData, TemplateEntry } from "./registry.ts";
-import { APP_URL } from "../app-url.ts";
-import { EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
+import type { BrandDef } from "../brand.ts";
+import { DEFAULT_APP_BASE_URL, EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
 import { applyEmailTokens, EMAIL_COPY_DEFAULTS, type EmailCopy, type EmailLocale } from "./_shell/emailCopy.ts";
 import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTheme } from "./_shell/emailTheme.ts";
 
@@ -29,6 +29,8 @@ interface Props {
   _emailFamily?: EmailFamily;
   _highlightRole?: EmailRoleKey;
   _emailLocale?: EmailLocale;
+  _emailBrand?: BrandDef;
+  appBaseUrl?: string;
 }
 
 const AirtableSyncHeld = ({
@@ -43,6 +45,8 @@ const AirtableSyncHeld = ({
   _emailFamily = "violet",
   _highlightRole,
   _emailLocale = "en",
+  _emailBrand,
+  appBaseUrl = DEFAULT_APP_BASE_URL,
 }: Props) => {
   const copy = _emailCopy;
   const theme = _emailTheme;
@@ -105,7 +109,7 @@ const AirtableSyncHeld = ({
   const previewText = isZeroImport
     ? applyEmailTokens(copy["airtable-sync-held.previewTextZeroImport"], values)
     : applyEmailTokens(copy["airtable-sync-held.previewTextHeld"], values);
-  const ctaHref = settingsUrl || `${APP_URL}/settings?tab=airtable`;
+  const ctaHref = settingsUrl || `${appBaseUrl}/settings?tab=airtable`;
 
   return (
     <EmailShell
@@ -117,6 +121,7 @@ const AirtableSyncHeld = ({
       cta={{ href: ctaHref, label: copy["airtable-sync-held.ctaLabel"] }}
       highlightRole={_highlightRole}
       lang={_emailLocale}
+      brand={_emailBrand}
     >
       <Text style={{ ...emailRoleStyle(theme, "body", _highlightRole), lineHeight: "1.6", margin: "0 0 16px" }}>
         {intro}
@@ -144,6 +149,6 @@ export const template = {
     heldCount: 3,
     topReasonCategory: "unlinked_program",
     topReasonCount: 2,
-    settingsUrl: `${APP_URL}/settings?tab=airtable`,
+    settingsUrl: `${DEFAULT_APP_BASE_URL}/settings?tab=airtable`,
   },
 } satisfies TemplateEntry;

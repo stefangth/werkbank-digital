@@ -3,12 +3,10 @@ import * as React from "npm:react@18.3.1";
 import { Section, Text } from "npm:@react-email/components@0.0.22";
 import type { TemplateEntry, TemplateData } from "./registry.ts";
 import { digestEmailSubject } from "../scheduleChanges.ts";
-import { APP_URL } from "../app-url.ts";
-import { EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
+import type { BrandDef } from "../brand.ts";
+import { DEFAULT_APP_BASE_URL, EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
 import { applyEmailTokens, EMAIL_COPY_DEFAULTS, type EmailCopy, type EmailLocale } from "./_shell/emailCopy.ts";
 import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTheme } from "./_shell/emailTheme.ts";
-
-const BOOKINGS_URL = `${APP_URL}/dates`;
 
 interface BookingRow { show: string; date: string; city: string; label?: string }
 interface ChangeRow { show: string; date: string; city: string; changes: string }
@@ -23,6 +21,8 @@ interface Props {
   _emailFamily?: EmailFamily;
   _highlightRole?: EmailRoleKey;
   _emailLocale?: EmailLocale;
+  _emailBrand?: BrandDef;
+  appBaseUrl?: string;
 }
 
 function BookingTable({
@@ -58,9 +58,12 @@ const ArtistConfirmationDigest = ({
   _emailFamily = "violet",
   _highlightRole,
   _emailLocale = "en",
+  _emailBrand,
+  appBaseUrl = DEFAULT_APP_BASE_URL,
 }: Props) => {
   const copy = _emailCopy;
   const theme = _emailTheme;
+  const bookingsUrl = `${appBaseUrl}/dates`;
   const hasUpdates = scheduleChanges.length > 0 || cancellations.length > 0;
   const heading = hasUpdates ? copy["artist-confirmation-digest.headingUpdates"] : copy["artist-confirmation-digest.headingConfirmed"];
   const intro = hasUpdates ? copy["artist-confirmation-digest.introUpdates"] : copy["artist-confirmation-digest.introConfirmed"];
@@ -69,7 +72,7 @@ const ArtistConfirmationDigest = ({
   const previewText = hasUpdates ? copy["artist-confirmation-digest.subjectUpdates"] : copy["artist-confirmation-digest.subjectConfirmed"];
 
   return (
-    <EmailShell family={_emailFamily} theme={theme} previewText={previewText} heading={heading} footer={copy["artist-confirmation-digest.footer"]} cta={{ href: BOOKINGS_URL, label: copy["artist-confirmation-digest.ctaLabel"] }} highlightRole={_highlightRole} lang={_emailLocale}>
+    <EmailShell family={_emailFamily} theme={theme} previewText={previewText} heading={heading} footer={copy["artist-confirmation-digest.footer"]} cta={{ href: bookingsUrl, label: copy["artist-confirmation-digest.ctaLabel"] }} highlightRole={_highlightRole} lang={_emailLocale} brand={_emailBrand}>
       <Text style={{ ...emailRoleStyle(theme, "body", _highlightRole), lineHeight: "1.6", margin: "0 0 16px" }}>
         {displayName ? applyEmailTokens(copy["artist-confirmation-digest.greeting"], tokens) : copy["artist-confirmation-digest.greetingAnonymous"]}
       </Text>

@@ -4,10 +4,11 @@ import { legacyTemplateSubjectOverride, resolveTemplatePresentation, TEMPLATES, 
 import { legacyEmailOverridesToCopy, type EmailCopyOverride } from '../_shared/transactional-email-templates/_shell/emailCopy.ts'
 import type { EmailThemeOverride } from '../_shared/transactional-email-templates/_shell/emailTheme.ts'
 import { preflight, json } from "../_shared/http.ts";
-import { realDeps, type Deps, type EmailAttachment } from "../_shared/deps.ts";
+import { realDeps, type Deps, type EmailAttachment, type TypedClient } from "../_shared/deps.ts";
 import { resolveOrgSetting, BOOKING_ENGINE_DEFAULTS } from "../_shared/settings.ts";
 import { coerceLocale, resolveOrgLocale, type ServerLocale } from "../_shared/orgLocale.ts";
 import { resolveOrgKind } from "../_shared/orgKind.ts";
+import { brandForKind, type BrandDef } from "../_shared/brand.ts";
 import { categoryForTemplate } from "../_shared/notificationCategories.ts";
 import { isServiceRole } from "../_shared/auth.ts";
 import { redactEmail } from "../_shared/identity.ts";
@@ -32,6 +33,33 @@ function base64ByteSize(b64: string): number {
   if (b64.endsWith('==')) padding = 2
   else if (b64.endsWith('=')) padding = 1
   return Math.floor((len * 3) / 4) - padding
+}
+
+/**
+ * From header for a send. A brand with its own defaultFrom never inherits the platform
+ * (showflow) sender: the org's own resend_from_address row wins, else the brand default.
+ * A brand without one keeps the org override ?? platform default ?? built-in chain.
+ */
+export async function resolveFromAddress(
+  admin: TypedClient,
+  orgId: string | null,
+  brand: BrandDef,
+): Promise<string> {
+  if (brand.defaultFrom === null) {
+    return await resolveOrgSetting<string>(
+      admin, orgId, 'resend_from_address', BOOKING_ENGINE_DEFAULTS.resend_from_address)
+  }
+  if (!orgId) return brand.defaultFrom
+  const { data, error } = await admin
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'resend_from_address')
+    .eq('org_id', orgId)
+    .maybeSingle()
+  if (error) throw error
+  // A JSONB-null value is not a real override, matching resolveOrgSetting.
+  const value = (data as { value: unknown } | null)?.value
+  return typeof value === 'string' ? value : brand.defaultFrom
 }
 
 export async function handle(req: Request, deps: Deps): Promise<Response> {
@@ -254,9 +282,16 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   // outage from monitoring.
   let sendData: { id: string; [key: string]: unknown }
   try {
-    // Read from-address and presentation settings for this org (org override ?? platform default).
-    const fromAddress = await resolveOrgSetting<string>(
-      admin, orgId, 'resend_from_address', BOOKING_ENGINE_DEFAULTS.resend_from_address)
+    // Per-org workspace type: swaps the domain nouns in the resolved copy (staffing
+    // reads "clients"/"people", production is byte-identical) and picks the brand the
+    // email renders and sends under. Not entitlement-gated; an org-less send (null
+    // orgId) resolves to production.
+    const kind = await resolveOrgKind(admin, orgId)
+    const brand = brandForKind(kind)
+
+    // Read from-address and presentation settings for this org (org override ?? platform
+    // default, or the brand's own sender for a brand that defines one).
+    const fromAddress = await resolveFromAddress(admin, orgId, brand)
 
     // `null` distinguishes a missing new copy setting from a deliberately stored
     // empty map, which suppresses the one-release legacy backfill.
@@ -271,10 +306,6 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     // language_packages (resolveOrgLocale double-gates). Org-less sends (null
     // orgId: magic-link, account-email-changed) stay English.
     const locale = await resolveOrgLocale(admin, orgId, localeOverride)
-    // Per-org workspace type: swaps the domain nouns in the resolved copy (staffing
-    // reads "clients"/"people", production is byte-identical). Not entitlement-gated;
-    // an org-less send (null orgId) resolves to production.
-    const kind = await resolveOrgKind(admin, orgId)
     const presentation = resolveTemplatePresentation(templateName, templateData, {
       copyOverride,
       copyIsExplicit: copySetting !== null,
@@ -284,6 +315,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       themeOverride: themeSetting,
       locale,
       kind,
+      brand,
     })
     if (!presentation) throw new Error(`Template '${templateName}' not found during presentation resolution`)
 

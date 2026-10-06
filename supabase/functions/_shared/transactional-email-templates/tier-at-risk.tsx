@@ -2,8 +2,8 @@
 import * as React from "npm:react@18.3.1";
 import { Text } from "npm:@react-email/components@0.0.22";
 import type { TemplateData, TemplateEntry } from "./registry.ts";
-import { APP_URL } from "../app-url.ts";
-import { EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
+import type { BrandDef } from "../brand.ts";
+import { DEFAULT_APP_BASE_URL, EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
 import { applyEmailTokens, EMAIL_COPY_DEFAULTS, type EmailCopy, type EmailLocale } from "./_shell/emailCopy.ts";
 import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTheme } from "./_shell/emailTheme.ts";
 
@@ -13,8 +13,6 @@ import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTh
  *  fires only after the tier has fully expired, the recovery guidance here names
  *  two live remedies (open the next tier, or book directly) — a still-open tier can
  *  still be filled by a direct booking, not only by escalating. */
-const BOOKINGS_URL = `${APP_URL}/dates`;
-
 interface Props {
   program?: string;
   date?: string;
@@ -28,6 +26,8 @@ interface Props {
   _emailFamily?: EmailFamily;
   _highlightRole?: EmailRoleKey;
   _emailLocale?: EmailLocale;
+  _emailBrand?: BrandDef;
+  appBaseUrl?: string;
 }
 
 const TierAtRisk = ({
@@ -43,9 +43,12 @@ const TierAtRisk = ({
   _emailFamily = "ember",
   _highlightRole,
   _emailLocale = "en",
+  _emailBrand,
+  appBaseUrl = DEFAULT_APP_BASE_URL,
 }: Props) => {
   const copy = _emailCopy;
   const theme = _emailTheme;
+  const bookingsUrl = `${appBaseUrl}/dates`;
   const values = {
     program: program ?? copy["tier-at-risk.showFallback"],
     date: date ?? copy["tier-at-risk.dateFallback"],
@@ -54,7 +57,7 @@ const TierAtRisk = ({
     accepted: accepted ?? 0,
     required: required ?? "?",
   };
-  const ctaHref = reviewUrl || BOOKINGS_URL;
+  const ctaHref = reviewUrl || bookingsUrl;
 
   return (
     <EmailShell
@@ -66,6 +69,7 @@ const TierAtRisk = ({
       cta={{ href: ctaHref, label: copy["tier-at-risk.ctaLabel"] }}
       highlightRole={_highlightRole}
       lang={_emailLocale}
+      brand={_emailBrand}
     >
       <Text style={{ ...emailRoleStyle(theme, "body", _highlightRole), lineHeight: "1.6", margin: "0" }}>
         {applyEmailTokens(copy["tier-at-risk.body"], values)}
@@ -81,5 +85,5 @@ export const template = {
     date: String(data.date ?? "?"),
   }),
   displayName: "Tier at risk",
-  previewData: { program: "Phantom", date: "2026-09-10", tier: 2, pending: 1, accepted: 1, required: 4, reviewUrl: BOOKINGS_URL },
+  previewData: { program: "Phantom", date: "2026-09-10", tier: 2, pending: 1, accepted: 1, required: 4, reviewUrl: `${DEFAULT_APP_BASE_URL}/dates` },
 } satisfies TemplateEntry;

@@ -1,0 +1,522 @@
+{
+  "account-email-changed/preview/production/en": {
+    "subject": "Your ShowFlow login email was changed",
+    "html": "998f7e2a3460043716f33b67191c81ceaa02bebc4fdc7752190a72dc2617e79f",
+    "text": "5c1150820041ae24cab3f3e996e21ef8148a8d4dcd19758393dd5787c4dc46be"
+  },
+  "account-email-changed/preview/production/de": {
+    "subject": "Deine ShowFlow-Anmelde-E-Mail wurde geändert",
+    "html": "711f5afebc974cc64fe048a5ab3017a727fbb87911e82e49220460df97c04a0a",
+    "text": "7978f329d1c1cecc054a6d836d6d2fca759e9107eaa317421a439a3b5afa8b6a"
+  },
+  "account-email-changed/preview/staffing/en": {
+    "subject": "Your ShowFlow login email was changed",
+    "html": "998f7e2a3460043716f33b67191c81ceaa02bebc4fdc7752190a72dc2617e79f",
+    "text": "5c1150820041ae24cab3f3e996e21ef8148a8d4dcd19758393dd5787c4dc46be"
+  },
+  "account-email-changed/preview/staffing/de": {
+    "subject": "Deine ShowFlow-Anmelde-E-Mail wurde geändert",
+    "html": "711f5afebc974cc64fe048a5ab3017a727fbb87911e82e49220460df97c04a0a",
+    "text": "7978f329d1c1cecc054a6d836d6d2fca759e9107eaa317421a439a3b5afa8b6a"
+  },
+  "account-email-changed/empty/production/en": {
+    "subject": "Your ShowFlow login email was changed",
+    "html": "d64756a79ee654e23f16eeec368f94041ff7710bc71a3df1708a76430cf7eb54",
+    "text": "dfc466ef7571452ad3bd79880b0fa1125361f7821d2e33244fa7fa87c78f6af2"
+  },
+  "account-email-changed/empty/production/de": {
+    "subject": "Deine ShowFlow-Anmelde-E-Mail wurde geändert",
+    "html": "c0ff5868f62cc3961fdff2e6be9ac7ae44e3c8d34e91ea40d73a3dc148bc8989",
+    "text": "d2c5d212ccbdea71418ee2658caf2724d717412b39d1abcfab9f010b7473f8fc"
+  },
+  "account-email-changed/empty/staffing/en": {
+    "subject": "Your ShowFlow login email was changed",
+    "html": "d64756a79ee654e23f16eeec368f94041ff7710bc71a3df1708a76430cf7eb54",
+    "text": "dfc466ef7571452ad3bd79880b0fa1125361f7821d2e33244fa7fa87c78f6af2"
+  },
+  "account-email-changed/empty/staffing/de": {
+    "subject": "Deine ShowFlow-Anmelde-E-Mail wurde geändert",
+    "html": "c0ff5868f62cc3961fdff2e6be9ac7ae44e3c8d34e91ea40d73a3dc148bc8989",
+    "text": "d2c5d212ccbdea71418ee2658caf2724d717412b39d1abcfab9f010b7473f8fc"
+  },
+  "airtable-sync-held/preview/production/en": {
+    "subject": "Airtable sync needs attention in Riverdance Co",
+    "html": "9c3eb4bb263dd5af4457203ceadc002a063b5fbd4c2868e986674277322f2b56",
+    "text": "f34e5d9fa3d48155b5176ce289c8b457282707e2f0b28489fc9404783582713a"
+  },
+  "airtable-sync-held/preview/production/de": {
+    "subject": "Airtable-Sync braucht Aufmerksamkeit in Riverdance Co",
+    "html": "24c6391e63894953f9a7c3a5aac10bde23fdebfa1eaed8859ecd94623d7baebf",
+    "text": "438e0867194e854e37e0389cc3ad9974c7b80d2eb31f62e3d93920f9ee97ab4f"
+  },
+  "airtable-sync-held/preview/staffing/en": {
+    "subject": "Airtable sync needs attention in Riverdance Co",
+    "html": "f74d393c89446c42dee56411dd138ca708a6c69804715247da92245b97190d5d",
+    "text": "3c36c672d93873401ec7f614a409aa5ce7a36a81ab29361f7027da11acd082a5"
+  },
+  "airtable-sync-held/preview/staffing/de": {
+    "subject": "Airtable-Sync braucht Aufmerksamkeit in Riverdance Co",
+    "html": "ac0ef036368ec9e5ba2719ea55732e619e6083e716a4308bebd681c2d4c76adc",
+    "text": "7c6115468708d1a07a0f2e663441348376d2ca4d3853f42e45f377fb8cd003a1"
+  },
+  "airtable-sync-held/empty/production/en": {
+    "subject": "Airtable sync needs attention in your organization",
+    "html": "e44c91c3430fc8908a71b70c12a29cf72d6f55187544f976f0acb1302074bd0b",
+    "text": "5a7e01e2c2924892c39b42d33bd9e4a8a81ecf5baac883ad134979fbb9c03685"
+  },
+  "airtable-sync-held/empty/production/de": {
+    "subject": "Airtable-Sync braucht Aufmerksamkeit in Deine Organisation",
+    "html": "d20aeabb2109f32e97e4b551eb66510cf73e32020b28f319fcae0861327d793f",
+    "text": "ace76c7f5be76bbb58f6caa8d12938f508b46e32dcf475537e9edfe49f349954"
+  },
+  "airtable-sync-held/empty/staffing/en": {
+    "subject": "Airtable sync needs attention in your organization",
+    "html": "e44c91c3430fc8908a71b70c12a29cf72d6f55187544f976f0acb1302074bd0b",
+    "text": "5a7e01e2c2924892c39b42d33bd9e4a8a81ecf5baac883ad134979fbb9c03685"
+  },
+  "airtable-sync-held/empty/staffing/de": {
+    "subject": "Airtable-Sync braucht Aufmerksamkeit in Deine Organisation",
+    "html": "d20aeabb2109f32e97e4b551eb66510cf73e32020b28f319fcae0861327d793f",
+    "text": "ace76c7f5be76bbb58f6caa8d12938f508b46e32dcf475537e9edfe49f349954"
+  },
+  "artist-confirmation-digest/preview/production/en": {
+    "subject": "Updates to your dates on ShowFlow",
+    "html": "7b9cc098a85c68db22b3f635718e5984a320bc21175e97d94b2789d1d5409e07",
+    "text": "3c67ccff06f4ac57f6a11b9417e9f9847a0d60fa45b62a4885bfd09cf1aaccd2"
+  },
+  "artist-confirmation-digest/preview/production/de": {
+    "subject": "Neuigkeiten zu Deinen Terminen auf ShowFlow",
+    "html": "a47893fbec6725dd18d255bd864e511c288924cb269661a48a49044072a9058c",
+    "text": "de7f171860ea09be807192fdd43b7d482ea9c60c23f2cfb88534d3d452532eb1"
+  },
+  "artist-confirmation-digest/preview/staffing/en": {
+    "subject": "Updates to your dates on ShowFlow",
+    "html": "b0f1489025f072585a68b5f18d87552b507bb9188ba67e230d4fe07d118c4508",
+    "text": "ff6fed62a44ed4650af4d8619fd08e8bfe75d3cdaa6a5fda09907283f4063334"
+  },
+  "artist-confirmation-digest/preview/staffing/de": {
+    "subject": "Neuigkeiten zu Deinen Terminen auf ShowFlow",
+    "html": "49e1a592ec6b4282e67493cc5f5d204186f7a6e03799fe6002cd000c91f884d5",
+    "text": "fd0d4c0e714bd3d734fe1b30526b2303a2f293a964ff91a062cdec5e1b6557e0"
+  },
+  "artist-confirmation-digest/empty/production/en": {
+    "subject": "You are booked on ShowFlow",
+    "html": "57a3420c2e90bbba6c7263187486857a9541ed58d83264b1e58156d2923c9685",
+    "text": "a60faa545a589a239722ec0bba000d8437902c054ddbf6c122b4221a0fbacc49"
+  },
+  "artist-confirmation-digest/empty/production/de": {
+    "subject": "Du bist gebucht auf ShowFlow",
+    "html": "b92dd371cfa01340a40fe691502908b30a61efc713b231524743259460d19359",
+    "text": "98c7861e4faf36bd07c174ffa1f3da88ca3fbf050b60ccc5fef26f3ef71ab5de"
+  },
+  "artist-confirmation-digest/empty/staffing/en": {
+    "subject": "You are booked on ShowFlow",
+    "html": "57a3420c2e90bbba6c7263187486857a9541ed58d83264b1e58156d2923c9685",
+    "text": "a60faa545a589a239722ec0bba000d8437902c054ddbf6c122b4221a0fbacc49"
+  },
+  "artist-confirmation-digest/empty/staffing/de": {
+    "subject": "Du bist gebucht auf ShowFlow",
+    "html": "b92dd371cfa01340a40fe691502908b30a61efc713b231524743259460d19359",
+    "text": "98c7861e4faf36bd07c174ffa1f3da88ca3fbf050b60ccc5fef26f3ef71ab5de"
+  },
+  "artist-offer-digest/preview/production/en": {
+    "subject": "2 dates to answer on ShowFlow",
+    "html": "ad4b8b9cbb5b681419654596474ed22cae82827c9671cd7165bb65b71c62dd3d",
+    "text": "c693e95f404c7fffd9fce667eb9fe06acc5c411f282d53c06c63815cb6c325f7"
+  },
+  "artist-offer-digest/preview/production/de": {
+    "subject": "2 Termine zum Beantworten auf ShowFlow",
+    "html": "3da81f5fe23553b0726aabd1a30d251ab71a3ac4c0d126235c386f29e9d13f64",
+    "text": "b2becdc088985b2e6bdf876b5a270a56f1d90bb2c5e95226ede9f7c92db4972e"
+  },
+  "artist-offer-digest/preview/staffing/en": {
+    "subject": "2 dates to answer on ShowFlow",
+    "html": "03b0d84f9e8031dfa559ffe5861c82992ee40985ab1af66290e94773952324b9",
+    "text": "907fc26343387a09474740dcff361b8c23073c119040b89471c0d98bb66a0b55"
+  },
+  "artist-offer-digest/preview/staffing/de": {
+    "subject": "2 Termine zum Beantworten auf ShowFlow",
+    "html": "288324653e54b2cc07950111ff74859aaf7ea4cd4ca06e6d5275302bfae6058e",
+    "text": "28e060d26624d7ea8f1827308d2d78d585969d7cedfa9ab4e63ed9aac3049f11"
+  },
+  "artist-offer-digest/empty/production/en": {
+    "subject": "0 dates to answer on ShowFlow",
+    "html": "e519c6f84559ef283a7e7363e314be528f52b5cb475f1e390888f0d47cdc7293",
+    "text": "1847200cccaf20c50642bee358f15ab51e282c76f91f10681cee6495f661afad"
+  },
+  "artist-offer-digest/empty/production/de": {
+    "subject": "0 Termine zum Beantworten auf ShowFlow",
+    "html": "ce3489b1aa6e6b031920d0e8947c57629b5cd9cab8fe567b25f8a5e01d2cce80",
+    "text": "edaeb27b0e0513d9aacad90ecb5b1470ce7a5b43a924eca07f63bd7046eda4cf"
+  },
+  "artist-offer-digest/empty/staffing/en": {
+    "subject": "0 dates to answer on ShowFlow",
+    "html": "c49b6486b19d733173399fbc7d0b0157a311771fc85e3ec59e731e221f269199",
+    "text": "ace4a953659d32ee969e66fde3a8a92a2fc193f7e50f4ffc24ab4183ab49cdae"
+  },
+  "artist-offer-digest/empty/staffing/de": {
+    "subject": "0 Termine zum Beantworten auf ShowFlow",
+    "html": "19b07ddb079a8aa6a801f0df6d785fc96d2c7355130a9572ec019d927a89bec9",
+    "text": "4742a15f65513a5827ccbcc9f9eecc544e7077db1d8d93efd1bb790678df8bd1"
+  },
+  "cast-escalation-requested/preview/production/en": {
+    "subject": "Tier 1 for Riverdance on 2026-06-15 ran out of time",
+    "html": "360c2765a116e07d0160b8b857b8c78af83a838b8435c892b1d22088ade13370",
+    "text": "fae3be9b04d66257572d1a99d1e4c08baa5b288c7e3be5e0d608e4fa8d860518"
+  },
+  "cast-escalation-requested/preview/production/de": {
+    "subject": "Stufe 1 für Riverdance am 2026-06-15 ist abgelaufen",
+    "html": "776b0630310521028b0ec1c9eedbd8ed7f98f80620656e1cb8d97f6cd7e6946e",
+    "text": "b960b2ed293944c102912f5ede967cfbeea5376017827a5ed35a7ddf0714db53"
+  },
+  "cast-escalation-requested/preview/staffing/en": {
+    "subject": "Tier 1 for Riverdance on 2026-06-15 ran out of time",
+    "html": "e0e41838d06a951416e03865abef851c364e638dc586265daa5cb05eb2511c77",
+    "text": "e53a3890e5b39afafd1ceb7538341378518a8a91e49367c26b7ee1ddda188044"
+  },
+  "cast-escalation-requested/preview/staffing/de": {
+    "subject": "Stufe 1 für Riverdance am 2026-06-15 ist abgelaufen",
+    "html": "c7b1d577026fbf19921f8be763559a58a0ee45b1a6915b3815d8766ca75d4533",
+    "text": "4262080d315e477213e45d6e50fd97a63ac2d6a78ef1268c0a14c8dbc38947e2"
+  },
+  "cast-escalation-requested/empty/production/en": {
+    "subject": "Tier ? for show on ? ran out of time",
+    "html": "396b2494a30f13f3e898a5999a6c34a0f4cb29c32a321f7f92750d964cd89a01",
+    "text": "68ae302424a0ed49ecdbcf25ddf9d987983706e414be0f3fd17ab056a7d617b6"
+  },
+  "cast-escalation-requested/empty/production/de": {
+    "subject": "Stufe ? für show am ? ist abgelaufen",
+    "html": "91a2486e70582cb75e2ec07df8be69910b030f8ce0133a00a7dfe17dd12813ef",
+    "text": "2397533020e675722ef22add04cc1fcfb1d0104037f9715257db04b97ace1832"
+  },
+  "cast-escalation-requested/empty/staffing/en": {
+    "subject": "Tier ? for show on ? ran out of time",
+    "html": "7b63b9cddcbf437ff6a8f3fea9b5c27fb1c2189a1842b64f30aedba7d377902a",
+    "text": "99f5efe931e2c3bb8e433e7d4979b93d87642296c106231f0eff41d29400ecbd"
+  },
+  "cast-escalation-requested/empty/staffing/de": {
+    "subject": "Stufe ? für show am ? ist abgelaufen",
+    "html": "1504342de41f33d6f2afd4593d651f6792e5a51b41fccf7c7a063aaa76c78ad2",
+    "text": "48a439faee5105c260ec134f8bacf70a3d7f7a7aa0fc4ecfb291ef6fefc82ddb"
+  },
+  "cron-health-alert/preview/production/en": {
+    "subject": "Cron health: send-offer-digest is failing (404)",
+    "html": "ccf4010664d4c8b73ff2590c71ce0afb184f95233df67086e5ae54d5d1c04112",
+    "text": "66346b871f41205536ce8c5f15d3746a724d78ff4ae241b105e9041c72eee666"
+  },
+  "cron-health-alert/preview/production/de": {
+    "subject": "Cron-Status: send-offer-digest schlägt fehl (404)",
+    "html": "aa92f0a997c4c114e9d65d8fcccbb27a48bc0eaeb885b196bec9d22423f56a7b",
+    "text": "f5cf14ea6f30039ff4a603d1bb1ab7b336b91b4fcd09effa95b7a47696e62561"
+  },
+  "cron-health-alert/preview/staffing/en": {
+    "subject": "Cron health: send-offer-digest is failing (404)",
+    "html": "ccf4010664d4c8b73ff2590c71ce0afb184f95233df67086e5ae54d5d1c04112",
+    "text": "66346b871f41205536ce8c5f15d3746a724d78ff4ae241b105e9041c72eee666"
+  },
+  "cron-health-alert/preview/staffing/de": {
+    "subject": "Cron-Status: send-offer-digest schlägt fehl (404)",
+    "html": "aa92f0a997c4c114e9d65d8fcccbb27a48bc0eaeb885b196bec9d22423f56a7b",
+    "text": "f5cf14ea6f30039ff4a603d1bb1ab7b336b91b4fcd09effa95b7a47696e62561"
+  },
+  "cron-health-alert/empty/production/en": {
+    "subject": "Cron health: a job is failing (?)",
+    "html": "611bb72cd7224d624f1b2d7b5d13e84fc8c0b7fbf6073d370eba401ddf6754f0",
+    "text": "e2f6f7c6ee834fb3c0500928c0ad41fac619af2e4bc6da2ff45a5189ee3ca933"
+  },
+  "cron-health-alert/empty/production/de": {
+    "subject": "Cron-Status: a job schlägt fehl (?)",
+    "html": "8bd24d4725a60165c849f7e7c8d33eb818031cc62b4fe4fdf332e64681e25f3f",
+    "text": "d81a7823ccaba071d0cceced0c3122d98940db69d6a521122f4ac2de1dcf7229"
+  },
+  "cron-health-alert/empty/staffing/en": {
+    "subject": "Cron health: a job is failing (?)",
+    "html": "611bb72cd7224d624f1b2d7b5d13e84fc8c0b7fbf6073d370eba401ddf6754f0",
+    "text": "e2f6f7c6ee834fb3c0500928c0ad41fac619af2e4bc6da2ff45a5189ee3ca933"
+  },
+  "cron-health-alert/empty/staffing/de": {
+    "subject": "Cron-Status: a job schlägt fehl (?)",
+    "html": "8bd24d4725a60165c849f7e7c8d33eb818031cc62b4fe4fdf332e64681e25f3f",
+    "text": "d81a7823ccaba071d0cceced0c3122d98940db69d6a521122f4ac2de1dcf7229"
+  },
+  "hire-order-countersigned/preview/production/en": {
+    "subject": "Your contract for Sat, Aug 15 2026 is signed",
+    "html": "583041e2206549f5629eabefbc8370dd7ac1df9926f6346fee7647a1610534f5",
+    "text": "27d7a2a81bf44916cd45022473611b1836c3e3628835729600388a938b527706"
+  },
+  "hire-order-countersigned/preview/production/de": {
+    "subject": "Dein Engagementvertrag für Sat, Aug 15 2026 ist unterschrieben",
+    "html": "bac383ea61626cbbadd2173de16e8891d97a446c31354e2360006cbe7cedeec9",
+    "text": "501370e6505690a5f21697892bc24f8ffac89da38f67ed7002c03c1e70b7a96c"
+  },
+  "hire-order-countersigned/preview/staffing/en": {
+    "subject": "Your work order for Sat, Aug 15 2026 is signed",
+    "html": "7be302b293492cab604d9df5d23351888c82ea95850522cc412ac43bbf7b9dd9",
+    "text": "63d3800b4148fe4a96ad508acae94b861fdf86ddc7d8daf622c0dc4955b4f9a4"
+  },
+  "hire-order-countersigned/preview/staffing/de": {
+    "subject": "Dein Arbeitsauftrag für Sat, Aug 15 2026 ist unterschrieben",
+    "html": "5d3ecdce522f0b68612cb08574771745d20add2333a299e2dfc8ffc1ea3a6d8e",
+    "text": "5539634c7c6a0e8fa1546267d29f3e6bd2763e38b32abba523f75172c7f20d1a"
+  },
+  "hire-order-countersigned/empty/production/en": {
+    "subject": "Your contract for your date is signed",
+    "html": "d91ceb723e1e2d3079de6b946dadb151e22cf38a32db0cfd1284e89649cf6db2",
+    "text": "6c02fc98cb3a453f84940fb0bbafd0d8c406ee2516f8352cd5365f17addd144f"
+  },
+  "hire-order-countersigned/empty/production/de": {
+    "subject": "Dein Engagementvertrag für your date ist unterschrieben",
+    "html": "1406f8fc29bf20dc025fb292118fbb10e19de63e21baa647116639f95351ca5d",
+    "text": "63a5d83de2c51bb7e3e764cacb4ac0316b18f8541037e598636b74ef77209105"
+  },
+  "hire-order-countersigned/empty/staffing/en": {
+    "subject": "Your work order for your date is signed",
+    "html": "fc1f7d74b741d6dfa789e2c1942857b63727daec110589f1cff7ceac5c9ca85d",
+    "text": "477f57f851581aca727daeffd0a919e30aa6c546de723c91c270c194e50e95d0"
+  },
+  "hire-order-countersigned/empty/staffing/de": {
+    "subject": "Dein Arbeitsauftrag für your date ist unterschrieben",
+    "html": "b97690dbb195e56df0888278ece28bd05ea65ad6ce22f1ff36ab735360ac875d",
+    "text": "ea147053c06daec62bffd5e0778293f3838a2c10f0ba5de7a0ec6f1fc6efe52b"
+  },
+  "hire-order-issued/preview/production/en": {
+    "subject": "Your contract for Sat, Aug 15 2026 at Tempodrom",
+    "html": "4f238c2db0f1d08d33bda042d02c7356dcdf6a25e40cf239dc50a24d628f925b",
+    "text": "68c461534621f8b33e55c48ada71009d8128dfc30ba32f1a66d2032726801ae9"
+  },
+  "hire-order-issued/preview/production/de": {
+    "subject": "Dein Engagementvertrag für Sat, Aug 15 2026 im Tempodrom",
+    "html": "972de0f70230dac38b4baeffada93e71fa04c8625b482f328cb8843cf11413c2",
+    "text": "8ed70e54d36dd88fcb7cd6d7b4f61400299e0dede86ae6c4455d7cf73697b9ad"
+  },
+  "hire-order-issued/preview/staffing/en": {
+    "subject": "Your work order for Sat, Aug 15 2026 at Tempodrom",
+    "html": "b7c1c47fbb1c5c15354e3270b641aa3a26fd9ccd9b5f9f0e913e1f115b5fb1bd",
+    "text": "9bdbb3564be713cdf1fe8719638a9e413a5adc0a3b3d0dc807f17320dcd42d64"
+  },
+  "hire-order-issued/preview/staffing/de": {
+    "subject": "Dein Arbeitsauftrag für Sat, Aug 15 2026 im Tempodrom",
+    "html": "60b32c1c0bcd566ceae7d30a9a9deabe9b27d9cf53ae3208d54393db799f0e74",
+    "text": "517ad322dc9c2df39036c2662ec5434f2b94169be96d17a1f7b700b2f126a096"
+  },
+  "hire-order-issued/empty/production/en": {
+    "subject": "Your contract for your date at the venue",
+    "html": "2137d4ba73e5084bc91faa028a686c51f9ed3d96ed3784741812b3481aa922a5",
+    "text": "49f75604c9035098dcf62375f4031df959d5ea171f50b5c6ce787cac6c605675"
+  },
+  "hire-order-issued/empty/production/de": {
+    "subject": "Dein Engagementvertrag für your date im the venue",
+    "html": "aa8a70651e6a6e52ceb7d87c3babc5423047e708fb3c3aa2491b65ce4bcf795a",
+    "text": "2e843efec4786c65e4a5d7306b61b4b68ef68ce390fae6c5347568839f978221"
+  },
+  "hire-order-issued/empty/staffing/en": {
+    "subject": "Your work order for your date at the venue",
+    "html": "36b39ce7cb833f28482c692df1d4d76782281398416cad0b089ac283459beb73",
+    "text": "25303f9faea68e519838d83c289eb2b51fe8468d6c77e62b8b45ce1a742726d1"
+  },
+  "hire-order-issued/empty/staffing/de": {
+    "subject": "Dein Arbeitsauftrag für your date im the venue",
+    "html": "02c97bc9c237c45ae3646e6d4453bf58ab973b8a96f18a2052cbef2695dbdb48",
+    "text": "9a80278b420643314417c599df84845992f85b121ef531e184c2a1d1f10c1b08"
+  },
+  "magic-link/preview/production/en": {
+    "subject": "Your sign-in link for ShowFlow",
+    "html": "090bbcac05c1cf375bbdc35a19d2ecb76e47213cee5c1f57e56c876dd853f795",
+    "text": "1eba95a6d4d9d6c792ae5cb589bbc0c859c7b55bde8214d4c727adec753562ed"
+  },
+  "magic-link/preview/production/de": {
+    "subject": "Dein Anmeldelink für ShowFlow",
+    "html": "e22c3f1f7210a56f6ee2056edf580706a345260d80b1fbb3d5933590113493d5",
+    "text": "35f82b7a4a3833264b9be09772fae4fc623d7d417d1141235a9b471d20cc5f9c"
+  },
+  "magic-link/preview/staffing/en": {
+    "subject": "Your sign-in link for ShowFlow",
+    "html": "090bbcac05c1cf375bbdc35a19d2ecb76e47213cee5c1f57e56c876dd853f795",
+    "text": "1eba95a6d4d9d6c792ae5cb589bbc0c859c7b55bde8214d4c727adec753562ed"
+  },
+  "magic-link/preview/staffing/de": {
+    "subject": "Dein Anmeldelink für ShowFlow",
+    "html": "e22c3f1f7210a56f6ee2056edf580706a345260d80b1fbb3d5933590113493d5",
+    "text": "35f82b7a4a3833264b9be09772fae4fc623d7d417d1141235a9b471d20cc5f9c"
+  },
+  "magic-link/empty/production/en": {
+    "subject": "Your sign-in link for ShowFlow",
+    "html": "35dc886eb34e16f18db32beedc4316e11961d02673a5e44cc6e9dbc200de15de",
+    "text": "0f230e56a33f314ac81a5b66e147c2070c7820b024a53640cc406b2d753059e6"
+  },
+  "magic-link/empty/production/de": {
+    "subject": "Dein Anmeldelink für ShowFlow",
+    "html": "485fcb609c5f40f3ae58019e44ee95083a02b9d734cb0213d96f5f3b88213a3e",
+    "text": "1bfc9ff5190ab9a534a659df7f6d97a1aff5d404a0ae0ef1cde16ceecdaae759"
+  },
+  "magic-link/empty/staffing/en": {
+    "subject": "Your sign-in link for ShowFlow",
+    "html": "35dc886eb34e16f18db32beedc4316e11961d02673a5e44cc6e9dbc200de15de",
+    "text": "0f230e56a33f314ac81a5b66e147c2070c7820b024a53640cc406b2d753059e6"
+  },
+  "magic-link/empty/staffing/de": {
+    "subject": "Dein Anmeldelink für ShowFlow",
+    "html": "485fcb609c5f40f3ae58019e44ee95083a02b9d734cb0213d96f5f3b88213a3e",
+    "text": "1bfc9ff5190ab9a534a659df7f6d97a1aff5d404a0ae0ef1cde16ceecdaae759"
+  },
+  "offer-expiry-reminder/preview/production/en": {
+    "subject": "Reminder: answer by tomorrow",
+    "html": "1bce2c0b5bcaec511bd33206d4f04358ea5914bc716410dc98739a85d26135ce",
+    "text": "e078490ea138f7750ae3916820d9f73916926f00e815a51f92c2e7a2467f945d"
+  },
+  "offer-expiry-reminder/preview/production/de": {
+    "subject": "Erinnerung: Antworte bis morgen",
+    "html": "f6384341d1e31053d3d41f3a4face43a7b12dc574a070cc549692cc7f91043a6",
+    "text": "19f52262da5c53a4c294d1147b52136424a782da63a1d8319036b33776230969"
+  },
+  "offer-expiry-reminder/preview/staffing/en": {
+    "subject": "Reminder: answer by tomorrow",
+    "html": "c7909d7ab6df39a899fe49db0db8071cbb49eb94c142d10b402c7313cacc8999",
+    "text": "8b467b64c8ff067bdfeab64d5ea5db86c93fe37e7a55ce18ecedba35d225bf0e"
+  },
+  "offer-expiry-reminder/preview/staffing/de": {
+    "subject": "Erinnerung: Antworte bis morgen",
+    "html": "ceac2105b01c001c26f425151f86fb6bc3dbdbe19d6cf8d1cb1c439877c96777",
+    "text": "637bbcba8c6b017c8f317d4bb9b69e85b1a56840767959f6668c9dd653622eff"
+  },
+  "offer-expiry-reminder/empty/production/en": {
+    "subject": "Reminder: 0 asks need an answer by tomorrow",
+    "html": "500ecd25addd565d6e4b0cc58745f07b307d41545e51ae3eb330a28264d21f91",
+    "text": "9903dcbfff3d1700488a2c677a019b2cc1520b7ddabfb3a6aa0faafc6489f9a1"
+  },
+  "offer-expiry-reminder/empty/production/de": {
+    "subject": "Erinnerung: 0 Anfragen brauchen bis morgen eine Antwort",
+    "html": "5cd595eb32029670732c38853c416d79550f5ea94aaa3b8e93060625a987308b",
+    "text": "41cf1aba535c1e8938a2d1af1a6df345325e30bf00a69f263a88aeb640958f7a"
+  },
+  "offer-expiry-reminder/empty/staffing/en": {
+    "subject": "Reminder: 0 asks need an answer by tomorrow",
+    "html": "f7b0a383e4757f072c31acc15b7a652110c9b8e9291a56cadac81289d659b4a8",
+    "text": "ee37d866d48b2d71501e315528e33f0c6f30887964820a3753daa198f0bfbef1"
+  },
+  "offer-expiry-reminder/empty/staffing/de": {
+    "subject": "Erinnerung: 0 Anfragen brauchen bis morgen eine Antwort",
+    "html": "3695ddb26cc45b331cd9c1e5849e07d5df4e98e28a99f2c4f8fd2d16f20962d1",
+    "text": "b60ddcbccded1d109fce01cbe3d76cbe0a3c57abb6e52664e2188c2a7e8ef008"
+  },
+  "offer-immediate/preview/production/en": {
+    "subject": "Can you do Candlelight · Strings? · 2026-04-30",
+    "html": "499218dc18542ba074792b600da446f9dfe54a39f87753c4413eb65833bb7068",
+    "text": "c8df9b2b039ac377637426fed47c81ea8b961835725f850627487fda4f3947d3"
+  },
+  "offer-immediate/preview/production/de": {
+    "subject": "Kannst Du Candlelight · Strings übernehmen? · 2026-04-30",
+    "html": "a526c8508aaafb9f0fe6a9e3d3a73e4c44ce0a4e8679260e9e62094606619d70",
+    "text": "431dbaedf9e82dadc18e8c16b773b1b9b35c615484f203c03bb385e489d627b9"
+  },
+  "offer-immediate/preview/staffing/en": {
+    "subject": "Can you do Candlelight · Strings? · 2026-04-30",
+    "html": "b137c2d115cdbc24b40d2ed42727e61e87dbb4c42fc162ff09f52f0205295621",
+    "text": "61b8a66db747aea0f3af924267cae42ac46ff65303912c13fe4fca479253cd10"
+  },
+  "offer-immediate/preview/staffing/de": {
+    "subject": "Kannst Du Candlelight · Strings übernehmen? · 2026-04-30",
+    "html": "89a656b538045041b4af488847ea3886f77dfcd11df29b730196ff28259fee74",
+    "text": "d561d671a0bdc5de106f5249c2fa37e406ecef630378da61c3da2135bf94b751"
+  },
+  "offer-immediate/empty/production/en": {
+    "subject": "Can you do a production? · ?",
+    "html": "2e2e8c1220854b705c7a9d24c6cfb487c20d527cb219f239ba0e46aaebe3f814",
+    "text": "1be9fccb3bc6af0feb7264209afb9b2acdeb7aae148d6a8bb330ab1de5199186"
+  },
+  "offer-immediate/empty/production/de": {
+    "subject": "Kannst Du eine Produktion übernehmen? · ?",
+    "html": "56a29127c553465da1d8f8f1e42971feb998f86c029cd154e744ded4340f4b4b",
+    "text": "4037c502a8ce2fefeae4151dc678d590f4f321595a5379d8105348c506080942"
+  },
+  "offer-immediate/empty/staffing/en": {
+    "subject": "Can you do a client? · ?",
+    "html": "a057d368991515b4625100a710b20c4cab21e8ab97e7772efe38388e4935550a",
+    "text": "035dec32c9cf06b6088324e5bc0dd5ad651936cfe8458dbdcad1de6035277b03"
+  },
+  "offer-immediate/empty/staffing/de": {
+    "subject": "Kannst Du eine Produktion übernehmen? · ?",
+    "html": "07e38c0b5ce488fa28989c4bd9b9d41009356dcbf3f5ee28e8c746f1b00cebf2",
+    "text": "53d89de8c11f455fd660ea2a4d9393ffdf91e3de1c12b64b2f4c38f01adc11d5"
+  },
+  "org-invitation/preview/production/en": {
+    "subject": "You're invited to join Cirque Lumière on ShowFlow",
+    "html": "137c740e47ee66a5d3c7e07650ea2fa5aa326577f08b0202cfb581c6226eeb54",
+    "text": "845370647d416b9c42268276a88d93712d29732d138044c7bf5fa80da055fe25"
+  },
+  "org-invitation/preview/production/de": {
+    "subject": "Du bist eingeladen, Cirque Lumière auf ShowFlow beizutreten",
+    "html": "a9565d909016f2f4ea5b849049ef1201aa2ceb6e9c68e74d790abd430025ec23",
+    "text": "2e71165ca2ea8d2d7fd97af4f767f3a29c893653213895a0da96c2fd19fc985c"
+  },
+  "org-invitation/preview/staffing/en": {
+    "subject": "You're invited to join Cirque Lumière on ShowFlow",
+    "html": "b1649547bf73afb9ebd1b9fdc8af14e62889b5460ac1846c5697ce1216d79789",
+    "text": "f0d101cc29f8afbc43b3abaf116551e70046cbc8cadaba070221cd536450ad4a"
+  },
+  "org-invitation/preview/staffing/de": {
+    "subject": "Du bist eingeladen, Cirque Lumière auf ShowFlow beizutreten",
+    "html": "7e86f1f419bc553df14032e4648c6d19af952f7d4dbecc00d089f317d29f2f16",
+    "text": "6be3d3954bbca22b93fd57f294732839a5adf30be8f9d20cd3872d007ca5d175"
+  },
+  "org-invitation/empty/production/en": {
+    "subject": "You're invited to join an organization on ShowFlow",
+    "html": "7eabe493a885565427dcf1619abcb9d69f5504e1654c55ca8b824e06b3793e03",
+    "text": "fa05da8609889456887275e591afca357188788499d608d1f9670ea7133a270c"
+  },
+  "org-invitation/empty/production/de": {
+    "subject": "Du bist eingeladen, an organization auf ShowFlow beizutreten",
+    "html": "ab3b8f086a190379a7faf0f9777bce621f74a4271269f39e9d5735d593f198b7",
+    "text": "8d25a30966977836981a12be14193ee4c7d3ce8f9021ea785dd5c1b2c8bc88d6"
+  },
+  "org-invitation/empty/staffing/en": {
+    "subject": "You're invited to join an organization on ShowFlow",
+    "html": "318a81b311b37decf523b4e4cba78d5a6f6da5aa4be843e9280318e9d004cc68",
+    "text": "a4596fcda7ea52e45132f9b1011cbe350e40f104a450299d1f5112a058b52114"
+  },
+  "org-invitation/empty/staffing/de": {
+    "subject": "Du bist eingeladen, an organization auf ShowFlow beizutreten",
+    "html": "e582c06564ea2cb99ccbccab349796acd556b8825af3403abb6407a016e958ae",
+    "text": "66669f105d64629898aabb8fb68924913c94507c28ac2bbe80f321fd64b520fa"
+  },
+  "tier-at-risk/preview/production/en": {
+    "subject": "Phantom on 2026-09-10 is at risk",
+    "html": "74ab88391eca97251d6fc787c8cf032cb0f359226352578309ba37f86fd59ec7",
+    "text": "7e1b5c0fafd8ea957859d88f079b5724c02fe8a6616979aee487850eca2f4eef"
+  },
+  "tier-at-risk/preview/production/de": {
+    "subject": "Phantom am 2026-09-10 ist gefährdet",
+    "html": "8035b611ddec141e97613c4a4d75563ae96bc395da39dfd5dbbdce765e5278ec",
+    "text": "8e7e41072931fbaeff3139ecce63ea64a5a1000e5581a8b67c2705ae3e71f9a7"
+  },
+  "tier-at-risk/preview/staffing/en": {
+    "subject": "Phantom on 2026-09-10 is at risk",
+    "html": "74ab88391eca97251d6fc787c8cf032cb0f359226352578309ba37f86fd59ec7",
+    "text": "7e1b5c0fafd8ea957859d88f079b5724c02fe8a6616979aee487850eca2f4eef"
+  },
+  "tier-at-risk/preview/staffing/de": {
+    "subject": "Phantom am 2026-09-10 ist gefährdet",
+    "html": "8035b611ddec141e97613c4a4d75563ae96bc395da39dfd5dbbdce765e5278ec",
+    "text": "8e7e41072931fbaeff3139ecce63ea64a5a1000e5581a8b67c2705ae3e71f9a7"
+  },
+  "tier-at-risk/empty/production/en": {
+    "subject": "show on ? is at risk",
+    "html": "a0cab91d7ecc0d41231ed1215d074a6bee097b32dc2082d745d5cb5e96148733",
+    "text": "c5862019c1999f663ab8dc1f4c3f4a5202301801da7126804b354ab35e575d1b"
+  },
+  "tier-at-risk/empty/production/de": {
+    "subject": "show am ? ist gefährdet",
+    "html": "bbf69a92f873107432d673c78fe3145433c5d498173281f2fb6ce2547fd023cc",
+    "text": "c2a92bef6ebbf14534f2f9baea13e831192995256b7b9667211b62a51b3331b0"
+  },
+  "tier-at-risk/empty/staffing/en": {
+    "subject": "show on ? is at risk",
+    "html": "5d2bfac8fee2324c9102054b1998f7443b97ea574d8b72819592f09e47f5a658",
+    "text": "d2baa884576bbfbc9012920defa7727b5af31a3f285e6f9bf0f4e657df23417b"
+  },
+  "tier-at-risk/empty/staffing/de": {
+    "subject": "show am ? ist gefährdet",
+    "html": "bbf69a92f873107432d673c78fe3145433c5d498173281f2fb6ce2547fd023cc",
+    "text": "c2a92bef6ebbf14534f2f9baea13e831192995256b7b9667211b62a51b3331b0"
+  }
+}

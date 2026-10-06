@@ -2,12 +2,10 @@
 import * as React from "npm:react@18.3.1";
 import { Section, Text } from "npm:@react-email/components@0.0.22";
 import type { TemplateEntry, TemplateData } from "./registry.ts";
-import { APP_URL } from "../app-url.ts";
-import { EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
+import type { BrandDef } from "../brand.ts";
+import { DEFAULT_APP_BASE_URL, EmailShell, emailRoleStyle } from "./_shell/EmailShell.tsx";
 import { applyEmailTokens, EMAIL_COPY_DEFAULTS, type EmailCopy, type EmailLocale } from "./_shell/emailCopy.ts";
 import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTheme } from "./_shell/emailTheme.ts";
-
-const AVAILABILITY_URL = `${APP_URL}/availability`;
 
 interface OfferRow { referenceLabel: string; date: string; expiresAt: string }
 interface Props {
@@ -18,6 +16,8 @@ interface Props {
   _emailFamily?: EmailFamily;
   _highlightRole?: EmailRoleKey;
   _emailLocale?: EmailLocale;
+  _emailBrand?: BrandDef;
+  appBaseUrl?: string;
 }
 
 const OfferExpiryReminder = ({
@@ -28,9 +28,12 @@ const OfferExpiryReminder = ({
   _emailFamily = "violet",
   _highlightRole,
   _emailLocale = "en",
+  _emailBrand,
+  appBaseUrl = DEFAULT_APP_BASE_URL,
 }: Props) => {
   const copy = _emailCopy;
   const theme = _emailTheme;
+  const availabilityUrl = `${appBaseUrl}/availability`;
   const count = offers.length;
   const singular = count === 1;
   const tokens = { count, displayName: displayName ?? "" };
@@ -52,9 +55,10 @@ const OfferExpiryReminder = ({
       previewText={previewText}
       heading={heading}
       footer={copy["offer-expiry-reminder.footer"]}
-      cta={{ href: AVAILABILITY_URL, label: ctaLabel }}
+      cta={{ href: availabilityUrl, label: ctaLabel }}
       highlightRole={_highlightRole}
       lang={_emailLocale}
+      brand={_emailBrand}
     >
       <Text style={{ ...emailRoleStyle(theme, "body", _highlightRole), lineHeight: "1.6", margin: "0 0 16px" }}>
         {displayName ? applyEmailTokens(copy["offer-expiry-reminder.greeting"], tokens) : copy["offer-expiry-reminder.greetingAnonymous"]}
