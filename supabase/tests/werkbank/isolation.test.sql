@@ -10,9 +10,12 @@
 -- object bodies is not done.
 -- A third check guards the data itself: every table in `werkbank` must have RLS enabled,
 -- because the schema is exposed through the API like `public`.
+-- A fourth check guards functions: Postgres grants EXECUTE to PUBLIC on every new
+-- function, so each werkbank function must `revoke all ... from public, anon` (the same
+-- pattern as the public RPCs) and grant execute explicitly.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(10);
+SELECT plan(12);
 
 SELECT has_schema('werkbank', 'werkbank schema exists');
 SELECT ok(
@@ -123,6 +126,26 @@ DROP TABLE werkbank.t;
 SELECT is_empty(
   $$ SELECT * FROM pg_temp.werkbank_tables_without_rls() $$,
   'RLS check: every table in schema werkbank has row level security enabled');
+
+-- Functions: no function in schema werkbank is executable by anon (directly or via PUBLIC).
+CREATE FUNCTION pg_temp.werkbank_functions_callable_by_anon() RETURNS SETOF text
+LANGUAGE sql STABLE AS $$
+  SELECT p.oid::regprocedure::text
+  FROM pg_proc p
+  WHERE p.pronamespace = 'werkbank'::regnamespace
+    AND has_function_privilege('anon', p.oid, 'EXECUTE')
+$$;
+
+-- Prove the function check works: a fresh function is executable by PUBLIC.
+CREATE FUNCTION werkbank.probe() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+SELECT isnt_empty(
+  $$ SELECT * FROM pg_temp.werkbank_functions_callable_by_anon() $$,
+  'function check finds a werkbank function that anon may execute');
+DROP FUNCTION werkbank.probe();
+
+SELECT is_empty(
+  $$ SELECT * FROM pg_temp.werkbank_functions_callable_by_anon() $$,
+  'function check: no function in schema werkbank is executable by anon');
 
 SELECT * FROM finish();
 ROLLBACK;
