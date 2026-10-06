@@ -1,4 +1,4 @@
--- set_org_kind: admin sets; non-admin rejected; unknown kind rejected by CHECK; set_at stamped.
+-- set_org_kind: admin sets; non-admin rejected; unknown kind rejected by FK; set_at stamped.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(7);
@@ -19,10 +19,10 @@ SET session_replication_role = DEFAULT;
 SELECT is((SELECT org_kind FROM public.organizations WHERE id='00000000-0000-0000-0000-0000000006c0'), 'production', 'defaults to production');
 SELECT is((SELECT org_kind_set_at FROM public.organizations WHERE id='00000000-0000-0000-0000-0000000006c0'), NULL, 'set_at is null until chosen');
 
--- CHECK constraint
+-- org_kinds foreign key
 SELECT throws_ok(
   $$ UPDATE public.organizations SET org_kind='circus' WHERE id='00000000-0000-0000-0000-0000000006c0' $$,
-  '23514', NULL, 'unknown kind rejected by CHECK');
+  '23503', NULL, 'unknown kind rejected by foreign key');
 
 -- non-admin (bob) cannot set
 SELECT set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000006b0","role":"authenticated"}', true);

@@ -1703,6 +1703,24 @@ export type Database = {
           },
         ]
       }
+      org_kinds: {
+        Row: {
+          kind: string
+          seeds_starter_catalog: boolean
+          switchable_by_org_admin: boolean
+        }
+        Insert: {
+          kind: string
+          seeds_starter_catalog: boolean
+          switchable_by_org_admin: boolean
+        }
+        Update: {
+          kind?: string
+          seeds_starter_catalog?: boolean
+          switchable_by_org_admin?: boolean
+        }
+        Relationships: []
+      }
       org_member_removals: {
         Row: {
           display_name: string | null
@@ -1810,7 +1828,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_org_kind_fkey"
+            columns: ["org_kind"]
+            isOneToOne: false
+            referencedRelation: "org_kinds"
+            referencedColumns: ["kind"]
+          },
+        ]
       }
       platform_admins: {
         Row: {
