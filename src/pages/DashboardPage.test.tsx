@@ -16,9 +16,28 @@ vi.mock("@/components/today/TodayPage", () => ({
 }));
 
 // MODULE_UIS is empty in core; the module dashboard path is exercised through a mock.
-vi.mock("@/modules/ui", () => ({
-  MODULE_UIS: [{ navItems: [], routes: [], dashboards: { test_kind: () => <div>module dashboard probe</div> } }],
-}));
+// The lazy dashboard resolves only when a test calls lazyDashboard.resolve().
+const lazyDashboard = vi.hoisted(() => {
+  let resolve: () => void = () => {};
+  const loaded = new Promise<void>((r) => { resolve = r; });
+  return { loaded, resolve: () => resolve() };
+});
+vi.mock("@/modules/ui", async () => {
+  const { lazy } = await import("react");
+  return {
+    MODULE_UIS: [{
+      navItems: [],
+      routes: [],
+      dashboards: {
+        test_kind: () => <div>module dashboard probe</div>,
+        lazy_kind: lazy(async () => {
+          await lazyDashboard.loaded;
+          return { default: () => <div>lazy module dashboard probe</div> };
+        }),
+      },
+    }],
+  };
+});
 vi.mock("@/hooks/useOrgKind", () => ({ useOrgKind: vi.fn(() => "production") }));
 
 import { useAuth } from "@/features/auth/AuthContext";
@@ -69,6 +88,17 @@ describe("DashboardPage (always renders, never redirects)", () => {
     vi.mocked(useOrgKind).mockReturnValue("test_kind" as never);
     renderPage();
     expect(screen.getByText("module dashboard probe")).toBeInTheDocument();
+    expect(screen.queryByText("today board probe")).not.toBeInTheDocument();
+  });
+
+  it("renders a lazily loaded module dashboard once it has loaded", async () => {
+    authAs("producer");
+    vi.mocked(useOrgKind).mockReturnValue("lazy_kind" as never);
+    const { container } = renderPage();
+    // The page skeleton holds the place while the module's chunk loads.
+    expect(container.querySelector(".animate-pulse")).not.toBeNull();
+    lazyDashboard.resolve();
+    expect(await screen.findByText("lazy module dashboard probe")).toBeInTheDocument();
     expect(screen.queryByText("today board probe")).not.toBeInTheDocument();
   });
 

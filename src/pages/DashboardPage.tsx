@@ -5,11 +5,13 @@ import { ArtistDashboard } from '@/components/dashboard/ArtistDashboard';
 import TodayContainer from '@/components/today/TodayPage';
 import { useOrgKind } from '@/hooks/useOrgKind';
 import { MODULE_UIS } from '@/modules/ui';
+import { SuspendedPage } from '@/components/layout/SuspendedPage';
 
-/** The dashboard a module contributes for this kind, as an element, or null. */
+/** The dashboard a module contributes for this kind, as an element, or null. Module
+ *  dashboards may be lazily loaded, so they render inside the page skeleton's Suspense. */
 function moduleDashboardFor(kind: OrgKind): ReactElement | null {
   const Dashboard = MODULE_UIS.map((m) => m.dashboards[kind]).find((d) => d !== undefined);
-  return Dashboard ? createElement(Dashboard) : null;
+  return Dashboard ? createElement(SuspendedPage, { Page: Dashboard }) : null;
 }
 
 /**
