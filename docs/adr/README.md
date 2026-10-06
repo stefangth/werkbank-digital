@@ -64,6 +64,7 @@ as reconstructed.
 | [0009](0009-extensible-synced-fields.md) | Extensible synced fields via per-entity JSONB + registry (not dynamic DDL) | 2026-06-16 | Accepted |
 | [0010](0010-catalog-link-keys.md) | Catalog links are per-org opaque-key columns; link grain lives in the mapping layer, not the schema | 2026-06-17 | Accepted |
 | [0011](0011-identity-contact-ownership.md) | Identity vs. booking-contact ownership — `profiles` vs `artists`, login-email-first resolution | 2026-06-17 | Accepted (amended 2026-06-20) |
+| [0013](0013-werkbank-as-removable-module.md) | Werkbank Digital is built as a removable module inside Showflow | 2026-10-06 | Accepted |
 
 ## Key decisions (operational summary)
 
