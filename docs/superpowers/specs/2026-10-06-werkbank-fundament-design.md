@@ -41,7 +41,7 @@ Teil 1 builds that foundation and the isolation that keeps Werkbank removable.
 - A Werkbank domain, mail sender domain or landing page (planned for, configured later; see Go-live checklist).
 - Per-business white-labelling or custom domains.
 - Entitlements or pricing tiers for Werkbank.
-- Changing behaviour of `production` or `staffing` orgs. Every core extension point must leave their output unchanged, except where an open decision below says otherwise.
+- Changing behaviour of `production` or `staffing` orgs. Every core extension point must leave their output unchanged.
 
 ## Isolation model
 
@@ -96,7 +96,8 @@ Core files that must name the module and are therefore allowed explicitly (each 
 | kind | handwerk | handwerk |
 
   Capitalised forms follow the existing four-form rule.
-- New vocabulary key `roleArtist`, used by `roleLabel` and the role-description templates for the `artist` role. Values for `production` and `staffing` are `"Artist"`, so their output stays as today (see open decision D2). `handwerk`: DE "Monteur", EN "Technician".
+- New vocabulary key `roleArtist`, used by `roleLabel` and the role-description templates for the `artist` role. `handwerk`: DE "Monteur", EN "Technician". The key-completeness rule forces a value for the existing kinds too; per the non-goals it is `"Artist"` for `production` and `staffing`, so their output stays exactly as today.
+- Role labels in the UI language. `roleLabel(role, kind, lang)` and `roleDescription(role, kind, lang)` gain a `lang` argument, and the shared surfaces that render roles (People pane, invitations, accept-invite) pass the UI language. A kind definition carries `roleLabelsFollowUiLanguage`: `true` for `handwerk`, so the pilot reads "Büro" and "Monteur" in German; `false` for `production` and `staffing`, which keep today's English-only labels unchanged.
 - `ORG_KIND_LABELS.handwerk`: DE "Handwerksbetrieb", "Kunden, Aufträge, Monteure und Rechnungen."; EN "Trade business", "Customers, jobs, technicians and invoices."
 - The `admin` label stays "Admin" for every kind.
 
@@ -154,9 +155,7 @@ Core files that must name the module and are therefore allowed explicitly (each 
 
 ## Open decisions for spec review
 
-- **D1. Language of role labels.** `roleLabel` is English-only by convention (upstream, 2026-10). A German-speaking pilot would read "Office" and "Technician" in shared surfaces such as the People pane. Proposal: `roleLabel(role, kind, lang = 'en')` resolves from `VOCABULARY[kind][lang]`, and the shared surfaces pass the UI language. Effect: `production` unchanged (identical EN and DE values); `staffing` orgs with German enabled would read "Buchungsteam" instead of "Booking team". Alternative: Werkbank surfaces pass the language, shared surfaces stay English.
-- **D2. `roleArtist` for `staffing`.** Kept at "Artist" to avoid a behaviour change. The staffing vocabulary already says "Staff member" for the noun; aligning the role label is a separate owner decision.
-- **D3. Extraction threshold.** ADR-0013 proposes about 10 paying businesses. Adjust if needed.
+- **D1. Extraction threshold.** ADR-0013 proposes about 10 paying businesses. Adjust if needed.
 
 ## Testing
 
