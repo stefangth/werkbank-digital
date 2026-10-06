@@ -1,7 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { handle } from "./index.ts";
+import { handle, mergeEntitlements } from "./index.ts";
 import { makeFakeDeps, makeRequest } from "../_shared/testing.ts";
-import { FEATURE_KEYS } from "../_shared/entitlements.ts";
+import { FEATURE_KEYS, type FeatureKey } from "../_shared/entitlements.ts";
 
 const body = { name: "Acme", slug: "acme", admin_email: "a@acme.com", role: "admin", app_origin: "https://app.test" };
 
@@ -423,4 +423,62 @@ Deno.test("provision-org: the invite email still sends when the organizations an
   const sent = invokeCalls.filter((c) => c.name === "send-transactional-email");
   assertEquals(sent.length, 1);
   assertEquals((sent[0].body as { templateData: Record<string, unknown> }).templateData.role, "Production Team");
+});
+
+Deno.test("provision-org: mergeEntitlements precedence is kind defaults, then request, then platform", () => {
+  assertEquals(
+    mergeEntitlements(
+      { booking_flow: true, hire_orders: false, language_packages: false } as Record<FeatureKey, boolean>,
+      { booking_flow: true },
+      { booking_flow: false, language_packages: true },
+    ),
+    { booking_flow: false, hire_orders: false, language_packages: true },
+  );
+});
+
+Deno.test("provision-org: mergeEntitlements without request or kind defaults returns the platform values", () => {
+  const platform = { booking_flow: true, hire_orders: false } as Record<FeatureKey, boolean>;
+  assertEquals(mergeEntitlements(platform, null, undefined), platform);
+  assertEquals<unknown>(mergeEntitlements(platform, { hire_orders: true, booking_flow: "x" as unknown as boolean }, undefined), {
+    booking_flow: true, hire_orders: true,
+  });
+});
+
+Deno.test("provision-org: a kind's provisioning defaults seed settings and skip the booking-flow seed", async () => {
+  const { deps, calls } = makeFakeDeps({
+    authUser: { id: "u1" },
+    tables: { platform_admins: { data: { user_id: "u1" }, error: null } },
+    rpcs: { provision_org: { data: { org_id: "org-9", token: "tok-9" }, error: null } },
+    usersById: {},
+    generateLinkResult: { data: { properties: { action_link: "https://app.test/reset-password?redirect=x" } }, error: null },
+  });
+  const res = await handle(
+    makeRequest({ headers: { Authorization: "Bearer x" }, body: { ...body, org_kind: "staffing" } }),
+    deps,
+    { staffing: { entitlements: {}, settings: { org_language: "de" }, skipBookingFlowSeed: true } },
+  );
+  assertEquals(res.status, 200);
+  const upserts = calls.filter((c) => c.table === "app_settings" && c.method === "upsert");
+  const rows = upserts.flatMap((c) => c.args?.[0] as { key: string; value: unknown }[]);
+  assertEquals(rows.some((r) => r.key === "org_language" && r.value === "de"), true);
+  assertEquals(rows.some((r) => r.key === "booking_flow"), false);
+});
+
+Deno.test("provision-org: without a provisioning entry the booking-flow seed still runs", async () => {
+  const { deps, calls } = makeFakeDeps({
+    authUser: { id: "u1" },
+    tables: { platform_admins: { data: { user_id: "u1" }, error: null } },
+    rpcs: { provision_org: { data: { org_id: "org-9", token: "tok-9" }, error: null } },
+    usersById: {},
+    generateLinkResult: { data: { properties: { action_link: "https://app.test/reset-password?redirect=x" } }, error: null },
+  });
+  const res = await handle(
+    makeRequest({ headers: { Authorization: "Bearer x" }, body: { ...body, org_kind: "staffing" } }),
+    deps,
+    {},
+  );
+  assertEquals(res.status, 200);
+  const rows = calls.filter((c) => c.table === "app_settings" && c.method === "upsert")
+    .flatMap((c) => c.args?.[0] as { key: string }[]);
+  assertEquals(rows.some((r) => r.key === "booking_flow"), true);
 });

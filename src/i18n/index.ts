@@ -62,6 +62,14 @@ import enGetRunningV3 from './locales/en/getRunningV3.json';
 import deGetRunningV3 from './locales/de/getRunningV3.json';
 import enToday from './locales/en/today.json';
 import deToday from './locales/de/today.json';
+import { MODULE_I18N } from '@/modules/i18n';
+
+/** Each module namespace's catalog for one language. */
+function moduleCatalogs<L extends 'en' | 'de'>(lang: L) {
+  return Object.fromEntries(
+    Object.entries(MODULE_I18N).map(([ns, catalogs]) => [ns, catalogs[lang]]),
+  ) as { [N in keyof typeof MODULE_I18N]: (typeof MODULE_I18N)[N][L] };
+}
 
 export const resources = {
   en: {
@@ -75,6 +83,7 @@ export const resources = {
     hireOrdersPages: enHireOrdersPages, showsDetail: enShowsDetail, chats: enChats, profile: enProfile,
     onboarding: enOnboarding, flowCopy: enFlowCopy, bookingCopy: enBookingCopy,
     getRunning: enGetRunning, getRunningV3: enGetRunningV3, today: enToday,
+    ...moduleCatalogs('en'),
   },
   de: {
     common: deCommon, help: deHelp, dashboard: deDashboard, bookings: deBookings, availability: deAvailability,
@@ -87,6 +96,7 @@ export const resources = {
     hireOrdersPages: deHireOrdersPages, showsDetail: deShowsDetail, chats: deChats, profile: deProfile,
     onboarding: deOnboarding, flowCopy: deFlowCopy, bookingCopy: deBookingCopy,
     getRunning: deGetRunning, getRunningV3: deGetRunningV3, today: deToday,
+    ...moduleCatalogs('de'),
   },
 } as const;
 
@@ -104,6 +114,7 @@ i18n.use(initReactI18next).init({
     'settingsRolesRights', 'settingsEditor',
     'auth', 'admin', 'artists', 'productions', 'hireOrdersPages', 'showsDetail', 'chats', 'profile',
     'onboarding', 'flowCopy', 'bookingCopy', 'getRunning', 'getRunningV3', 'today',
+    ...Object.keys(MODULE_I18N),
   ],
   defaultNS: 'common',
   returnEmptyString: false,

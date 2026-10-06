@@ -7,7 +7,8 @@ import { resolveOrgSetting } from "../_shared/settings.ts";
 import { FEATURE_KEYS, FEATURE_REGISTRY, type FeatureKey } from "../_shared/entitlements.ts";
 import { BOOKING_FLOW_TEMPLATE_DEFAULTS, normalizeBookingFlowTemplates } from "../_shared/bookingFlow.ts";
 import type { Json } from "../_shared/database.types.ts";
-import { isOrgKind, DEFAULT_ORG_KIND } from "../_shared/orgKind.ts";
+import { isOrgKind, DEFAULT_ORG_KIND, type OrgKind } from "../_shared/orgKind.ts";
+import { MODULE_PROVISIONING, type ProvisioningDefaults } from "../_shared/modules.ts";
 
 type Body = {
   name: string;
@@ -19,7 +20,32 @@ type Body = {
   org_kind?: string;
 };
 
-export async function handle(req: Request, deps: Deps): Promise<Response> {
+/**
+ * Resolve the entitlement to seed per feature. Precedence: the kind's provisioning
+ * defaults, then an explicit request (non-boolean values are ignored), then the platform
+ * value. Features are taken from `platform`, which the caller fills for every feature.
+ */
+export function mergeEntitlements(
+  platform: Record<FeatureKey, boolean>,
+  requested: Record<string, boolean> | null,
+  kindDefaults: Partial<Record<FeatureKey, boolean>> | undefined,
+): Record<FeatureKey, boolean> {
+  const merged = {} as Record<FeatureKey, boolean>;
+  for (const feature of Object.keys(platform) as FeatureKey[]) {
+    const fromKind = kindDefaults?.[feature];
+    const fromRequest = requested?.[feature];
+    merged[feature] = typeof fromKind === "boolean"
+      ? fromKind
+      : typeof fromRequest === "boolean" ? fromRequest : platform[feature];
+  }
+  return merged;
+}
+
+export async function handle(
+  req: Request,
+  deps: Deps,
+  provisioning: Partial<Record<OrgKind, ProvisioningDefaults>> = MODULE_PROVISIONING,
+): Promise<Response> {
   if (req.method === "OPTIONS") return preflight();
 
   try {
@@ -62,14 +88,12 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       const defaultEntitlements = await resolveOrgSetting<Record<FeatureKey, boolean>>(
         deps.admin, null, "default_entitlements", fallbackDefaults,
       );
-      const requested = body?.entitlements ?? null;
-      const entitlementRows = FEATURE_KEYS.map((feature) => ({
-        org_id,
-        feature,
-        enabled: requested && typeof requested[feature] === "boolean"
-          ? requested[feature]
-          : (defaultEntitlements[feature] ?? FEATURE_REGISTRY[feature].defaultEnabled),
-      }));
+      const platformEntitlements = Object.fromEntries(
+        FEATURE_KEYS.map((feature) => [feature, defaultEntitlements[feature] ?? FEATURE_REGISTRY[feature].defaultEnabled]),
+      ) as Record<FeatureKey, boolean>;
+      const kindDefaults = provisioning[orgKind];
+      const entitlements = mergeEntitlements(platformEntitlements, body?.entitlements ?? null, kindDefaults?.entitlements);
+      const entitlementRows = FEATURE_KEYS.map((feature) => ({ org_id, feature, enabled: entitlements[feature] }));
       const { error: entitlementsError } = await deps.admin.from("org_entitlements").insert(entitlementRows);
       if (entitlementsError) console.error("provision-org: entitlement seeding failed", entitlementsError.message);
 
@@ -77,7 +101,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       // dispatching offers before someone configures it. Best-effort, same posture as above.
       // Only seed the off-flow row if the entitlement insert actually landed — otherwise the
       // two writes could disagree (an off flow row for an org whose entitlements never wrote).
-      if (!entitlementsError) {
+      if (!entitlementsError && !kindDefaults?.skipBookingFlowSeed) {
         try {
           const templates = normalizeBookingFlowTemplates(await resolveOrgSetting(
             deps.admin, null, "booking_flow_templates", BOOKING_FLOW_TEMPLATE_DEFAULTS,
@@ -94,6 +118,19 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
           if (flowErr) console.error("provision-org: off-flow seed failed", flowErr.message);
         } catch (e) {
           console.error("provision-org: off-flow seed failed", (e as Error).message);
+        }
+      }
+
+      // The kind's own app_settings defaults (after the booking-flow seed, so a kind can
+      // override it). Best-effort, same posture as above.
+      const kindSettings = Object.entries(kindDefaults?.settings ?? {});
+      if (!entitlementsError && kindSettings.length > 0) {
+        try {
+          const { error: settingsErr } = await deps.admin.from("app_settings")
+            .upsert(kindSettings.map(([key, value]) => ({ org_id, key, value })), { onConflict: "org_id,key" });
+          if (settingsErr) console.error("provision-org: kind settings seed failed", settingsErr.message);
+        } catch (e) {
+          console.error("provision-org: kind settings seed failed", (e as Error).message);
         }
       }
     } catch (e) {

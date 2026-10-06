@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { resources } from './index';
+import i18n, { resources } from './index';
+import { MODULE_I18N } from '@/modules/i18n';
 
 /** Flatten a nested catalog object to a sorted list of dotted key paths. */
 function keyset(obj: unknown, prefix = ''): string[] {
@@ -32,6 +33,7 @@ describe('catalog key parity', () => {
     'settingsRolesRights', 'settingsEditor',
     'auth', 'admin', 'artists', 'productions', 'hireOrdersPages', 'showsDetail', 'chats', 'profile',
     'onboarding', 'flowCopy', 'bookingCopy', 'getRunning', 'getRunningV3', 'today',
+    ...(Object.keys(MODULE_I18N) as (keyof typeof MODULE_I18N)[]),
   ] as const) {
     it(`de matches en for namespace "${ns}"`, () => {
       const enKeys = keyset(resources.en[ns]).sort();
@@ -53,4 +55,16 @@ describe('catalog key parity', () => {
       }
     });
   }
+});
+
+// Plugins ship their own namespaces through the module manifest; each must reach the
+// resource bundle and the i18n namespace list in both languages.
+describe('module i18n namespaces', () => {
+  it('registers every module namespace in resources and ns', () => {
+    for (const ns of Object.keys(MODULE_I18N)) {
+      expect(Object.keys(resources.en)).toContain(ns);
+      expect(Object.keys(resources.de)).toContain(ns);
+      expect(i18n.options.ns).toContain(ns);
+    }
+  });
 });
