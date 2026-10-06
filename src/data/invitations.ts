@@ -37,7 +37,7 @@ export class InvitationExchangeError extends Error {
 export async function exchangeInvitation(
   client: SupabaseClient<Database>,
   args: { token: string; appOrigin: string },
-): Promise<{ actionUrl: string }> {
+): Promise<{ actionUrl: string; brand: string | null }> {
   const { data, error } = await client.functions.invoke("exchange-invitation", {
     body: { token: args.token, app_origin: args.appOrigin },
   });
@@ -56,11 +56,12 @@ export async function exchangeInvitation(
     }
     throw new InvitationExchangeError("unknown");
   }
-  const payload = data as { action_url?: unknown } | null;
+  const payload = data as { action_url?: unknown; brand?: unknown } | null;
   if (typeof payload?.action_url !== "string" || !payload.action_url.trim()) {
     throw new InvitationExchangeError("unknown");
   }
-  return { actionUrl: payload.action_url };
+  const brand = typeof payload.brand === "string" && payload.brand ? payload.brand : null;
+  return { actionUrl: payload.action_url, brand };
 }
 
 /** Absolute accept-invite link for an invitation token (for copy-to-clipboard). */

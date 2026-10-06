@@ -11,12 +11,26 @@ describe("exchangeInvitation", () => {
       token: "stable-token",
       appOrigin: "https://app.showflow.pro",
     });
-    expect(result).toEqual({ actionUrl: "https://auth.example/action" });
+    expect(result).toEqual({ actionUrl: "https://auth.example/action", brand: null });
     expect(fake.calls).toContainEqual({
       table: "fn:exchange-invitation",
       method: "invoke",
       args: [{ token: "stable-token", app_origin: "https://app.showflow.pro" }],
     });
+  });
+
+  it("returns the inviting org's brand key when the function sends one", async () => {
+    const fake = createFakeSupabase({ "fn:exchange-invitation": { data: { action_url: "https://auth.example/action", brand: "showflow" }, error: null } });
+    const result = await exchangeInvitation(fake as never, { token: "stable-token", appOrigin: "https://app.showflow.pro" });
+    expect(result).toEqual({ actionUrl: "https://auth.example/action", brand: "showflow" });
+  });
+
+  it("treats a non-string or empty brand as absent", async () => {
+    for (const brand of [42, "", null]) {
+      const fake = createFakeSupabase({ "fn:exchange-invitation": { data: { action_url: "https://auth.example/action", brand }, error: null } });
+      const result = await exchangeInvitation(fake as never, { token: "stable-token", appOrigin: "https://app.showflow.pro" });
+      expect(result.brand).toBeNull();
+    }
   });
 
   it.each([

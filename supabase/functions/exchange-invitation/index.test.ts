@@ -8,9 +8,11 @@ const APP_ORIGIN = "https://app.showflow.pro";
 function depsFor(
   claim: { data: unknown; error: unknown },
   actionUrl = "https://auth.example/action",
+  tables: Record<string, { data?: unknown; error?: unknown }> = {},
 ) {
   const logs: string[] = [];
   const { deps, calls } = makeFakeDeps({
+    tables,
     rpcs: { claim_invitation_auth_exchange: claim },
     authUsersByEmail: { "invitee@example.com": { id: "u1" }, "claimed@example.com": { id: "u2" } },
     generateLinkResult: {
@@ -124,6 +126,33 @@ Deno.test("exchange-invitation: success mints from the claimed email without exp
   assertEquals(logs.some((line) => line.includes("claimed@example.com")), false);
   assertEquals(logs, []);
   assertEquals(calls.some((call) => call.table === "org_invitations" && call.method === "update"), false);
+});
+
+Deno.test("exchange-invitation: success returns the inviting org's brand key", async () => {
+  const { deps, calls } = depsFor({
+    data: { status: "ok", email: "claimed@example.com", claimed_at: "2026-08-12T09:00:00Z" },
+    error: null,
+  }, "https://auth.example/action", {
+    org_invitations: { data: { org_id: "org-1" }, error: null },
+    organizations: { data: { org_kind: "production" }, error: null },
+  });
+  const response = await handle(request(), deps);
+  assertEquals(response.status, 200);
+  assertEquals(await body(response), { action_url: "https://auth.example/action", brand: "showflow" });
+  assertEquals(calls.some((call) => call.table === "org_invitations" && call.method === "select" && call.args[0] === "org_id"), true);
+});
+
+Deno.test("exchange-invitation: a failed brand lookup still returns 200 with only the action url", async () => {
+  const { deps, logs } = depsFor({
+    data: { status: "ok", email: "claimed@example.com", claimed_at: "2026-08-12T09:00:00Z" },
+    error: null,
+  }, "https://auth.example/action", {
+    org_invitations: { data: null, error: { message: "boom" } },
+  });
+  const response = await captureErrors(logs, () => handle(request(), deps));
+  assertEquals(response.status, 200);
+  assertEquals(await body(response), { action_url: "https://auth.example/action" });
+  assertEquals(logs.some((line) => line.includes("boom")), false);
 });
 
 function request(): Request {

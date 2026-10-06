@@ -266,6 +266,26 @@ describe("AcceptInvitePage error paths (unchanged)", () => {
     await waitFor(() => expect(locationAssignSpy).toHaveBeenCalledWith("https://auth.example/verify"));
   });
 
+  it("stores the returned brand as the pre-auth hint before assigning the Auth URL", async () => {
+    authState.user = null;
+    let hintAtAssign: string | null = null;
+    locationAssignSpy.mockImplementationOnce(() => { hintAtAssign = sessionStorage.getItem("showflow.brandHint.v1"); });
+    exchangeInvitationMock.mockResolvedValueOnce({ actionUrl: "https://auth.example/verify", brand: "showflow" });
+    renderAt(`${ROUTES.ACCEPT_INVITE}?token=abc123`);
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await waitFor(() => expect(locationAssignSpy).toHaveBeenCalledWith("https://auth.example/verify"));
+    expect(hintAtAssign).toBe("showflow");
+  });
+
+  it("leaves the brand hint alone when the exchange returns no brand", async () => {
+    authState.user = null;
+    exchangeInvitationMock.mockResolvedValueOnce({ actionUrl: "https://auth.example/verify", brand: null });
+    renderAt(`${ROUTES.ACCEPT_INVITE}?token=abc123`);
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await waitFor(() => expect(locationAssignSpy).toHaveBeenCalledWith("https://auth.example/verify"));
+    expect(sessionStorage.getItem("showflow.brandHint.v1")).toBeNull();
+  });
+
   it("keeps retry available after throttling", async () => {
     authState.user = null;
     exchangeInvitationMock.mockRejectedValueOnce(new InvitationExchangeError("throttled", 30));

@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BrandMark } from '@/components/brand/BrandMark';
+import { BRAND_HINT_KEY } from '@/hooks/useBrand';
 import { usePasswordStatus } from '@/hooks/usePasswordStatus';
 import { PasswordSetupForm } from '@/components/auth/PasswordSetupForm';
 
@@ -419,7 +420,16 @@ export default function AcceptInvitePage() {
     setExchangePending(true);
     setExchangeError(null);
     try {
-      const { actionUrl } = await exchangeInvitation(supabase, { token, appOrigin: window.location.origin });
+      const { actionUrl, brand } = await exchangeInvitation(supabase, { token, appOrigin: window.location.origin });
+      // Pre-auth brand hint for the post-redirect screens (useBrand reads it). Best effort:
+      // storage can be blocked, and that must never stop the sign-in redirect.
+      if (brand) {
+        try {
+          window.sessionStorage.setItem(BRAND_HINT_KEY, brand);
+        } catch {
+          // Without the hint the next screens fall back to the hostname brand.
+        }
+      }
       window.location.assign(actionUrl);
     } catch (error) {
       const kind = error instanceof InvitationExchangeError ? error.kind : 'unknown';

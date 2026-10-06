@@ -1,6 +1,8 @@
 import { json, preflight } from "../_shared/http.ts";
 import { type Deps, realDeps } from "../_shared/deps.ts";
 import { mintInvitationActionLink } from "../_shared/invitations.ts";
+import { brandForKind } from "../_shared/brand.ts";
+import { resolveOrgKind } from "../_shared/orgKind.ts";
 
 const COOLDOWN_SECONDS = 60;
 
@@ -21,6 +23,26 @@ async function releaseFailedClaim(
     if (error) throw error;
   } catch {
     console.error("exchange-invitation: failed claim could not be released");
+  }
+}
+
+/**
+ * The inviting org's brand key, so the accept-invite page can render under it before
+ * sign-in. Best effort and silent: any failure omits the brand and the exchange still
+ * succeeds, and nothing about the lookup ever reaches an error response.
+ */
+async function brandKeyForInvitation(deps: Deps, token: string): Promise<string | undefined> {
+  try {
+    const { data, error } = await deps.admin
+      .from("org_invitations")
+      .select("org_id")
+      .eq("token", token)
+      .maybeSingle();
+    const orgId = (data as { org_id?: unknown } | null)?.org_id;
+    if (error || typeof orgId !== "string" || !orgId) return undefined;
+    return brandForKind(await resolveOrgKind(deps.admin, orgId)).key;
+  } catch {
+    return undefined;
   }
 }
 
@@ -82,7 +104,8 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       console.error("exchange-invitation: action link mint failed");
       return json({ error: "Internal error" }, 500);
     }
-    return json({ action_url: actionUrl });
+    const brand = await brandKeyForInvitation(deps, token);
+    return json(brand ? { action_url: actionUrl, brand } : { action_url: actionUrl });
   } catch {
     console.error("exchange-invitation: unexpected failure");
     return json({ error: "Internal error" }, 500);
