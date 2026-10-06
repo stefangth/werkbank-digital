@@ -42,11 +42,13 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Werkbank foundation", () => {
   let orgId = "";
+  let adminUserId = "";
 
   test.beforeAll(async () => {
     await ensurePlatformAdmin(SUPER_EMAIL, SUPER_PASSWORD);
     await deleteUserByEmail(ADMIN_EMAIL);
-    await createConfirmedUser(ADMIN_EMAIL, ADMIN_PASSWORD);
+    // Pre-created so provision-org takes the deterministic existing-user path (as in platform-console.spec.ts).
+    adminUserId = (await createConfirmedUser(ADMIN_EMAIL, ADMIN_PASSWORD)).id;
   });
 
   test.afterAll(async () => {
@@ -72,8 +74,7 @@ test.describe("Werkbank foundation", () => {
     await page.getByLabel("Slug").fill(ORG_SLUG);
     await page.getByLabel("Workspace type").click();
     await page.getByRole("option", { name: /Handwerksbetrieb|Trade business/ }).click();
-    // The first admin is attached through the DB below, so any address works for provisioning.
-    await page.getByLabel("First admin email").fill(tagEmail("werkbank-invitee", stamp));
+    await page.getByLabel("First admin email").fill(ADMIN_EMAIL);
     await page.getByRole("button", { name: /^create$/i }).click();
     await expect(page.getByText(ORG_SLUG)).toBeVisible({ timeout: 15_000 });
 
@@ -82,12 +83,10 @@ test.describe("Werkbank foundation", () => {
     expect(org?.org_kind).toBe("handwerk");
     orgId = org!.id;
 
-    const { data: user } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const adminUser = user.users.find((u) => u.email === ADMIN_EMAIL);
-    expect(adminUser?.id).toBeTruthy();
+    // Make the admin membership explicit (idempotent: provision-org may already have created it).
     const { error } = await admin
       .from("org_memberships")
-      .insert({ org_id: orgId, user_id: adminUser!.id, role: "admin" });
+      .upsert({ org_id: orgId, user_id: adminUserId, role: "admin" }, { onConflict: "org_id,user_id,role" });
     expect(error).toBeNull();
   });
 
