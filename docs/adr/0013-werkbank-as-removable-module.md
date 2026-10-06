@@ -87,16 +87,33 @@ the schema carries 242 migrations. The maintainer is a single person.
 
 ### Removal procedure
 
+The order matters; each step names why.
+
 1. Export every Werkbank org's data and hand it to the business (invoices are subject to
    statutory retention; the obligation is the business's, but it needs its data).
-2. Delete the `handwerk` organizations.
-3. One migration: `drop schema werkbank cascade;` and `delete from public.org_kinds where kind = 'handwerk';`.
-4. Delete the plugin paths and the manifest lines, the Werkbank boundary rules in
-   `eslint.config.js` and the Werkbank allow-list in `scripts/moduleIsolation.test.ts`; run
-   `supabase functions delete` for each `werkbank-*` function (the deploy workflow never
-   deletes functions).
-5. Remove `werkbank` from the exposed API schemas (`supabase/config.toml` and the production
-   dashboard) and regenerate the types.
+2. Delete the `handwerk` organizations while the schema still exists. This works because
+   every table in schema `werkbank` that references `public.organizations` declares
+   `on delete cascade` (a rule for Teil 2 and later), so an org's Werkbank rows go with it.
+   The orgs must be gone before step 4, which deletes their kind (`organizations.org_kind`
+   references `public.org_kinds`).
+3. Remove `werkbank` from the exposed API schemas, in the production dashboard (Settings,
+   API, "Exposed schemas") and in `supabase/config.toml`, before the drop migration runs.
+   PostgREST cannot load an exposed schema that no longer exists, so dropping it first
+   breaks the API for every org.
+4. Add one new migration named `*_werkbank_*` (for example
+   `YYYYMMDDHHMMSS_werkbank_removal.sql`) containing
+   `drop schema if exists werkbank cascade;` and
+   `delete from public.org_kinds where kind = 'handwerk';`. Keep the existing
+   `*_werkbank_*` migration files as history: production has their versions recorded, and
+   deleting them breaks `scripts/check-migrations.mjs` and `supabase db push`.
+5. Delete the plugin paths except the migrations, the manifest lines, the Werkbank
+   boundary rules in `eslint.config.js` and the Werkbank allow-list in
+   `scripts/moduleIsolation.test.ts` except its `supabase/migrations/*_werkbank_*.sql`
+   entry; regenerate the types without `werkbank`; run `supabase functions delete` for each
+   `werkbank-*` function (the deploy workflow never deletes functions).
+
+At go-live the mirror image applies: apply the `*_werkbank_schema` migration in
+production first, then add `werkbank` to "Exposed schemas".
 
 What remains are the kind-neutral extension points.
 

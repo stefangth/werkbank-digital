@@ -186,7 +186,9 @@ Changelog: none. Nothing changes for existing customers, and creating `handwerk`
 2. Add the domain to the Vercel project.
 3. Add the domain to the Supabase Auth redirect URLs (`supabase/config.toml` and the production dashboard).
 4. Verify the sender domain at Resend.
-5. Production dashboard: "Exposed schemas" includes `werkbank` (required as soon as R8 ships, not only at go-live).
+5. Production dashboard: "Exposed schemas" includes `werkbank` (required as soon as R8 ships, not only at go-live). Order: apply the `*_werkbank_schema` migration in production first, then add the schema; PostgREST cannot load an exposed schema that does not exist. Removal reverses this (ADR-0013, Removal procedure).
+6. Magic-link emails are sent without an org, so they are always Showflow-branded. They need a host-based brand resolution before Werkbank users sign in by magic link on the Werkbank domain.
+7. Callers still pass `APP_URL`-based links in `templateData`: `generate-hire-orders` (`download_url`), `platform-manage-user` (`appOrigin`), `cron-health-watcher` and `tier-at-risk-watcher`. Each must use the brand's app URL (`brandAppUrl`) before the Werkbank domain goes live.
 
 ## Risks
 
