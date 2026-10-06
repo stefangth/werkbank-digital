@@ -557,3 +557,21 @@ Deno.test("provision-org: without a seeded email copy the first invite keeps the
   assertEquals(res.status, 200);
   assertEquals(sentInviterName(invokeCalls), SYSTEM_INVITER_NAME);
 });
+
+Deno.test("provision-org: reports which defaults could not be seeded", async () => {
+  const { deps } = kindFake({
+    org_entitlements: { data: null, error: { message: "boom" } },
+    app_settings: { data: null, error: { message: "boom" } },
+  });
+  const res = await handle(kindReq(), deps, { staffing: { entitlements: {}, settings: { org_language: "de" }, skipBookingFlowSeed: false } });
+  assertEquals(res.status, 200);
+  const payload = await res.json() as { org_id: string; warnings?: string[] };
+  assertEquals(payload.org_id, "org-9");
+  assertEquals(payload.warnings, ["entitlements", "kind_settings"]);
+});
+
+Deno.test("provision-org: a clean provisioning response carries no warnings", async () => {
+  const { deps } = kindFake();
+  const res = await handle(kindReq(), deps, { staffing: { entitlements: {}, settings: { org_language: "de" }, skipBookingFlowSeed: false } });
+  assertEquals(await res.json(), { org_id: "org-9" });
+});

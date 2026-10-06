@@ -3,10 +3,11 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 
 import { NewOrgDialog } from "./NewOrgDialog";
 import * as platform from "@/data/platform";
+import { toast } from "sonner";
 
 describe("NewOrgDialog modules section", () => {
   beforeEach(() => {
@@ -14,7 +15,7 @@ describe("NewOrgDialog modules section", () => {
   });
 
   it("defaults every module off and submits the chosen features", async () => {
-    const provision = vi.spyOn(platform, "provisionOrg").mockResolvedValue("o1");
+    const provision = vi.spyOn(platform, "provisionOrgWithWarnings").mockResolvedValue({ orgId: "o1", warnings: [] });
     renderWithProviders(<NewOrgDialog />);
     fireEvent.click(screen.getByRole("button", { name: /new organization/i }));
 
@@ -53,7 +54,7 @@ describe("NewOrgDialog workspace type", () => {
   };
 
   it("submits orgKind: production by default", async () => {
-    const provision = vi.spyOn(platform, "provisionOrg").mockResolvedValue("o1");
+    const provision = vi.spyOn(platform, "provisionOrgWithWarnings").mockResolvedValue({ orgId: "o1", warnings: [] });
     renderWithProviders(<NewOrgDialog />);
     fireEvent.click(screen.getByRole("button", { name: /new organization/i }));
     fillRequiredFields();
@@ -69,7 +70,7 @@ describe("NewOrgDialog workspace type", () => {
   });
 
   it("submits the picked workspace type", async () => {
-    const provision = vi.spyOn(platform, "provisionOrg").mockResolvedValue("o1");
+    const provision = vi.spyOn(platform, "provisionOrgWithWarnings").mockResolvedValue({ orgId: "o1", warnings: [] });
     renderWithProviders(<NewOrgDialog />);
     fireEvent.click(screen.getByRole("button", { name: /new organization/i }));
     fillRequiredFields();
@@ -85,5 +86,22 @@ describe("NewOrgDialog workspace type", () => {
         expect.objectContaining({ orgKind: "staffing" }),
       ),
     );
+  });
+});
+
+describe("NewOrgDialog provisioning warnings", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("warns the super-admin when some defaults could not be seeded", async () => {
+    vi.spyOn(platform, "provisionOrgWithWarnings").mockResolvedValue({ orgId: "o1", warnings: ["kind_settings"] });
+    renderWithProviders(<NewOrgDialog />);
+    fireEvent.click(screen.getByRole("button", { name: /new organization/i }));
+    fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: "Acme" } });
+    fireEvent.change(screen.getByLabelText(/first admin email/i), { target: { value: "a@acme.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining("kind_settings")));
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });

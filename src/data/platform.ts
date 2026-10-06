@@ -228,10 +228,17 @@ export async function fetchPlatformOrgStats(client: SupabaseClient<Database>): P
 /** Provision a new org + seed catalog + invite first admin (super-admin only). Returns org_id.
  *  `features`, when passed, selects which module entitlements the new org starts with and is
  *  forwarded as `entitlements` in the request body for the edge function to seed. */
-export async function provisionOrg(
+export interface ProvisionArgs {
+  name: string; slug: string; adminEmail: string; role?: AppRole; appOrigin: string;
+  features?: Partial<Record<FeatureKey, boolean>>; orgKind?: OrgKind;
+}
+
+/** Provision an org and report which best-effort defaults (entitlements, booking flow,
+ *  workspace-type settings) the edge function could not seed. The org exists either way. */
+export async function provisionOrgWithWarnings(
   client: SupabaseClient<Database>,
-  args: { name: string; slug: string; adminEmail: string; role?: AppRole; appOrigin: string; features?: Partial<Record<FeatureKey, boolean>>; orgKind?: OrgKind },
-): Promise<string> {
+  args: ProvisionArgs,
+): Promise<{ orgId: string; warnings: string[] }> {
   const { data, error } = await client.functions.invoke("provision-org", {
     body: {
       name: args.name,
@@ -244,10 +251,17 @@ export async function provisionOrg(
     },
   });
   if (error) throw error;
-  const payload = data as { error?: string; org_id?: string };
+  const payload = data as { error?: string; org_id?: string; warnings?: unknown };
   if (payload?.error) throw new Error(payload.error);
   if (!payload?.org_id) throw new Error("Org was not created");
-  return payload.org_id;
+  const warnings = Array.isArray(payload.warnings)
+    ? payload.warnings.filter((w): w is string => typeof w === "string")
+    : [];
+  return { orgId: payload.org_id, warnings };
+}
+
+export async function provisionOrg(client: SupabaseClient<Database>, args: ProvisionArgs): Promise<string> {
+  return (await provisionOrgWithWarnings(client, args)).orgId;
 }
 
 /** Suspend / reactivate an org (super-admin only via organizations RLS). */

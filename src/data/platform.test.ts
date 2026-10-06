@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import {
-  fetchIsSuperAdmin, fetchAllOrgs, fetchPlatformOrgStats, provisionOrg,
+  fetchIsSuperAdmin, fetchAllOrgs, fetchPlatformOrgStats, provisionOrg, provisionOrgWithWarnings,
   setOrgStatus, updateOrg, fetchPlatformAdmins, addPlatformAdmin,
   removePlatformAdmin, savePlatformSetting,
   fetchPlatformBookingTemplates, savePlatformBookingTemplates,
@@ -34,6 +34,18 @@ describe("data/platform", () => {
     const id = await provisionOrg(fake as never, { name: "Acme", slug: "acme", adminEmail: "a@acme.com", appOrigin: "https://app.test" });
     expect(id).toBe("o9");
     expect(fake.calls).toContainEqual({ table: "fn:provision-org", method: "invoke", args: [{ name: "Acme", slug: "acme", admin_email: "a@acme.com", role: "admin", app_origin: "https://app.test" }] });
+  });
+
+  it("provisionOrgWithWarnings returns the seeding warnings the edge function reports", async () => {
+    const fake = createFakeSupabase({ "fn:provision-org": { data: { org_id: "o9", warnings: ["kind_settings"] }, error: null } });
+    const result = await provisionOrgWithWarnings(fake as never, { name: "Acme", slug: "acme", adminEmail: "a@acme.com", appOrigin: "https://app.test" });
+    expect(result).toEqual({ orgId: "o9", warnings: ["kind_settings"] });
+  });
+
+  it("provisionOrgWithWarnings returns no warnings for a clean response", async () => {
+    const fake = createFakeSupabase({ "fn:provision-org": { data: { org_id: "o9" }, error: null } });
+    const result = await provisionOrgWithWarnings(fake as never, { name: "Acme", slug: "acme", adminEmail: "a@acme.com", appOrigin: "https://app.test" });
+    expect(result).toEqual({ orgId: "o9", warnings: [] });
   });
 
   it("provisionOrg forwards features as the entitlements body", async () => {

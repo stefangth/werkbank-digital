@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { provisionOrg } from "@/data/platform";
+import { provisionOrgWithWarnings } from "@/data/platform";
 import { slugify } from "./platformFormat";
 import { FEATURE_KEYS, FEATURE_REGISTRY, type FeatureKey } from "@/lib/entitlements";
 import { OrgKindSelect } from "@/components/settings/OrgKindSelect";
@@ -42,7 +42,7 @@ export function NewOrgDialog() {
 
   const mutation = useMutation({
     mutationFn: (v: FormValues) =>
-      provisionOrg(supabase, {
+      provisionOrgWithWarnings(supabase, {
         name: v.name,
         slug: v.slug,
         adminEmail: v.adminEmail,
@@ -51,9 +51,13 @@ export function NewOrgDialog() {
         features: v.features as Record<FeatureKey, boolean>,
         orgKind: v.orgKind,
       }),
-    onSuccess: () => {
+    onSuccess: ({ warnings }) => {
       qc.invalidateQueries({ queryKey: ["platform"] });
-      toast.success("Organization created and first admin invited");
+      if (warnings.length > 0) {
+        toast.warning(`Organization created, but some defaults could not be applied (${warnings.join(", ")}). Check the organization's settings.`);
+      } else {
+        toast.success("Organization created and first admin invited");
+      }
       form.reset();
       setOpen(false);
     },

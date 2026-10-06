@@ -26,6 +26,9 @@ type Body = {
  * defaults, then an explicit request (non-boolean values are ignored), then the platform
  * value. Features are taken from `platform`, which the caller fills for every feature.
  */
+/** Best-effort seeding steps that can fail without undoing the org; reported to the caller. */
+export type ProvisioningWarning = "entitlements" | "booking_flow" | "kind_settings";
+
 export function mergeEntitlements(
   platform: Record<FeatureKey, boolean>,
   requested: Record<string, boolean> | null,
@@ -95,6 +98,9 @@ export async function handle(
     // seeding failure must not undo the org that was just created, so log and continue —
     // same resilience posture as the invite delivery below.
     const kindDefaults = provisioning[orgKind];
+    // Seeding stays best effort, but the caller learns which defaults are missing so a
+    // super-admin can fix them instead of an org silently starting with the wrong setup.
+    const warnings: ProvisioningWarning[] = [];
     try {
       const fallbackDefaults = Object.fromEntries(
         FEATURE_KEYS.map((key) => [key, FEATURE_REGISTRY[key].defaultEnabled]),
@@ -108,7 +114,10 @@ export async function handle(
       const entitlements = mergeEntitlements(platformEntitlements, body?.entitlements ?? null, kindDefaults?.entitlements);
       const entitlementRows = FEATURE_KEYS.map((feature) => ({ org_id, feature, enabled: entitlements[feature] }));
       const { error: entitlementsError } = await deps.admin.from("org_entitlements").insert(entitlementRows);
-      if (entitlementsError) console.error("provision-org: entitlement seeding failed", entitlementsError.message);
+      if (entitlementsError) {
+        console.error("provision-org: entitlement seeding failed", entitlementsError.message);
+        warnings.push("entitlements");
+      }
 
       // Land every new organization's booking_flow in the "off" state so it doesn't start
       // dispatching offers before someone configures it. Best-effort, same posture as above.
@@ -128,13 +137,18 @@ export async function handle(
               { org_id, key: "offer_digest_hour_berlin", value: off.times.offerDigestHour as unknown as Json },
               { org_id, key: "confirmation_digest_hour_berlin", value: off.times.confirmationDigestHour as unknown as Json },
             ], { onConflict: "org_id,key" });
-          if (flowErr) console.error("provision-org: off-flow seed failed", flowErr.message);
+          if (flowErr) {
+            console.error("provision-org: off-flow seed failed", flowErr.message);
+            warnings.push("booking_flow");
+          }
         } catch (e) {
           console.error("provision-org: off-flow seed failed", (e as Error).message);
+          warnings.push("booking_flow");
         }
       }
     } catch (e) {
       console.error("provision-org: entitlement seeding failed", (e as Error).message);
+      if (!warnings.includes("entitlements")) warnings.push("entitlements");
     }
 
     // The kind's own app_settings defaults. Independent of the entitlement seeding above so
@@ -145,9 +159,13 @@ export async function handle(
       try {
         const { error: settingsErr } = await deps.admin.from("app_settings")
           .upsert(kindSettings.map(([key, value]) => ({ org_id, key, value })), { onConflict: "org_id,key" });
-        if (settingsErr) console.error("provision-org: kind settings seed failed", settingsErr.message);
+        if (settingsErr) {
+          console.error("provision-org: kind settings seed failed", settingsErr.message);
+          warnings.push("kind_settings");
+        }
       } catch (e) {
         console.error("provision-org: kind settings seed failed", (e as Error).message);
+        warnings.push("kind_settings");
       }
     }
 
@@ -199,7 +217,7 @@ export async function handle(
       console.error("provision-org: invite delivery failed", (e as Error).message);
     }
 
-    return json({ org_id });
+    return json(warnings.length > 0 ? { org_id, warnings } : { org_id });
   } catch (e) {
     console.error("provision-org error", e);
     return json({ error: (e as Error).message }, 500);
