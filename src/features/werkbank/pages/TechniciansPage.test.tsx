@@ -225,6 +225,17 @@ describe("TechniciansPage invite action", () => {
     canAdd.value = true;
   });
 
+  it("shows Invited with resend and revoke for a linked login whose invitation is still pending", async () => {
+    // create-invitation links user_id at invite time, so a fresh technician has both.
+    seed({ artists: [{ id: "a2", name: "Bernd", email: "bernd@x.de", phone: null, user_id: "u2" }] });
+    renderPage();
+    await screen.findByText("Bernd");
+    expect(screen.getByText("Invited")).toBeInTheDocument();
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Resend invitation" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Revoke invitation" })).toBeInTheDocument();
+  });
+
   it("invites a saved technician who has an email but no invitation", async () => {
     const fake = seed({ artists: [{ id: "a9", name: "Emil", email: "emil@x.de", phone: null, user_id: null }] });
     renderPage();

@@ -27,10 +27,19 @@ describe("fetchTechnicians", () => {
     expect(fake.calls).toContainEqual(expect.objectContaining({ table: "artists", method: "order", args: ["name"] }));
   });
 
-  it("treats an artist with a login as active even if an invite is still pending", async () => {
+  it("treats an artist with a login as invited while the invite is still pending", async () => {
     const fake = createFakeSupabase({
       artists: { data: [{ id: "a1", name: "Anna", email: "a@x.de", phone: null, user_id: "u1" }], error: null },
       "rpc:list_pending_invited_artists": { data: ["a1"], error: null },
+    });
+    const result = await fetchTechnicians(asClient(fake), "org-1");
+    expect(result[0].account).toBe("invited");
+  });
+
+  it("treats an accepted technician (login, no pending invite) as active", async () => {
+    const fake = createFakeSupabase({
+      artists: { data: [{ id: "a1", name: "Anna", email: "a@x.de", phone: null, user_id: "u1" }], error: null },
+      "rpc:list_pending_invited_artists": { data: [], error: null },
     });
     const result = await fetchTechnicians(asClient(fake), "org-1");
     expect(result[0].account).toBe("active");

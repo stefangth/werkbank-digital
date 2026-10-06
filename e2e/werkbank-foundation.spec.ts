@@ -133,9 +133,13 @@ test.describe("Werkbank foundation", () => {
     const row = page.getByRole("row", { name: new RegExp(TECHNICIAN_NAME) });
     await expect(row).toBeVisible({ timeout: 15_000 });
 
-    // The invitation is the oracle. The Konto pill is deliberately not asserted: create-invitation
-    // links the artist to the invited login at invite time, so the page shows "Aktiv" (a login
-    // exists) even while the invitation is still pending.
+    // create-invitation links the login at invite time; the pill still reads "Eingeladen"
+    // while the invitation is pending, and the row offers resend and revoke.
+    await expect(row.getByText("Eingeladen")).toBeVisible();
+    await expect(row.getByRole("button", { name: "Einladung erneut senden" })).toBeVisible();
+    await expect(row.getByRole("button", { name: "Einladung widerrufen" })).toBeVisible();
+
+    // The DB agrees: exactly one pending artist invitation stamped with the new artist.
     const admin = adminClient();
     const { data: artist } = await admin
       .from("artists").select("id").eq("org_id", orgId).eq("email", TECHNICIAN_EMAIL).single();

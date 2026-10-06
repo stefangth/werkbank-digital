@@ -13,8 +13,10 @@ export interface Technician {
   account: TechnicianAccount;
 }
 
-/** The org's technicians (artists rows) with their app-login state: a linked login is
- *  `active`, a live pending invite is `invited`, anything else has `none`. */
+/** The org's technicians (artists rows) with their app-login state: a live pending invite is
+ *  `invited` (it wins, because create-invitation links the login at invite time, before the
+ *  technician has accepted), a linked login without a pending invite is `active`, anything
+ *  else has `none`. */
 export async function fetchTechnicians(
   client: SupabaseClient<Database>,
   orgId: string,
@@ -30,7 +32,7 @@ export async function fetchTechnicians(
     name: row.name,
     email: row.email,
     phone: row.phone,
-    account: row.user_id ? "active" : pending.has(row.id) ? "invited" : "none",
+    account: pending.has(row.id) ? "invited" : row.user_id ? "active" : "none",
   }));
 }
 
