@@ -1,13 +1,15 @@
-// Werkbank plugin UI: nav item, routes and the handwerk dashboard, registered in
-// src/modules/ui.ts. Routes are added with the technicians page.
+// Werkbank plugin UI: nav item, the technicians route and the handwerk dashboard,
+// registered in src/modules/ui.ts.
 import { HardHat } from "lucide-react";
 import type { ModuleUi } from "@/modules/ui";
 import { WerkbankDashboard } from "./components/WerkbankDashboard";
+import { TechniciansPage } from "./pages/TechniciansPage";
+import { TECHNICIANS_PATH } from "./paths";
 
 export const werkbankUi: ModuleUi = {
   navItems: [
     {
-      to: "/technicians",
+      to: TECHNICIANS_PATH,
       icon: HardHat,
       label: "Technicians",
       labelKey: "werkbank:nav.technicians",
@@ -16,6 +18,13 @@ export const werkbankUi: ModuleUi = {
       kinds: ["handwerk"],
     },
   ],
-  routes: [],
+  routes: [
+    {
+      path: TECHNICIANS_PATH,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer"],
+      Page: TechniciansPage,
+    },
+  ],
   dashboards: { handwerk: WerkbankDashboard },
 };

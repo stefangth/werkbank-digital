@@ -6,5 +6,54 @@
     "title": "Willkommen bei Werkbank Digital",
     "body": "Hier siehst du bald Kunden, Angebote und Rechnungen. Leg zuerst deine Monteure an.",
     "cta": "Monteure anlegen"
+  },
+  "technicians": {
+    "title": "Monteure",
+    "sub": "Die Leute, die deine Aufträge erledigen. Leg sie hier an und lade sie in die App ein.",
+    "add": "Monteur anlegen",
+    "loadFailed": "Deine Monteure konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "empty": {
+      "title": "Noch keine Monteure",
+      "body": "Leg deinen ersten Monteur an und schick die Einladung zur App in einem Schritt mit.",
+      "action": "Ersten Monteur anlegen"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "account": "Konto",
+      "actions": "Aktionen"
+    },
+    "account": {
+      "active": "Aktiv",
+      "invited": "Eingeladen",
+      "none": "Kein Konto"
+    },
+    "actions": {
+      "resend": "Einladung erneut senden",
+      "revoke": "Einladung widerrufen"
+    },
+    "dialog": {
+      "title": "Monteur anlegen",
+      "description": "Der Monteur bekommt eine Einladung zur App per E-Mail.",
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon (optional)",
+      "cancel": "Abbrechen",
+      "submit": "Anlegen und einladen",
+      "errors": {
+        "name": "Gib einen Namen ein",
+        "emailRequired": "Gib eine E-Mail-Adresse ein",
+        "emailInvalid": "Gib eine gültige E-Mail-Adresse ein"
+      }
+    },
+    "toast": {
+      "added": "Monteur angelegt und Einladung gesendet",
+      "addFailed": "Das hat nicht geklappt. Prüfe in der Liste, ob der Monteur angelegt wurde.",
+      "resent": "Einladung erneut gesendet",
+      "resendFailed": "Die Einladung konnte nicht erneut gesendet werden",
+      "revoked": "Einladung widerrufen",
+      "revokeFailed": "Die Einladung konnte nicht widerrufen werden"
+    }
   }
 }

@@ -32,13 +32,17 @@ import { describe, expect, it } from "vitest";
  *      actually prevents the bug.
  *
  *   2. LOCATION (list reads only): a SELECT whose only scoping is the org filter — i.e.
- *      a list read — must live in `src/data/**`, where it is testable against
+ *      a list read — must live in `src/data/**` (or a plugin's own data layer,
+ *      `src/features/<plugin>/data/**`), where it is testable against
  *      `supabaseFake` and reviewable in one place. UUID-scoped reads and writes may
  *      still sit inline; migrating those too is desirable but is not what stops a leak.
  */
 
 const SRC = "src";
 const DATA_DIR = join("src", "data");
+/** A plugin's own data layer: `src/features/<plugin>/data/**` (fetchX(client, orgId, …), fake-tested). */
+const PLUGIN_DATA_DIR = /^src[\\/]features[\\/][^\\/]+[\\/]data[\\/]/;
+const inDataLayer = (file: string) => file.startsWith(DATA_DIR) || PLUGIN_DATA_DIR.test(file);
 const TYPES_FILE = "src/integrations/supabase/types.ts";
 
 /**
@@ -162,11 +166,11 @@ describe("tenant-table reads are scoped to the active org", () => {
 
   it("keeps org-filtered list reads in src/data/**", () => {
     const offenders = selects()
-      .filter(({ file, stmt }) => !file.startsWith(DATA_DIR) && !UUID_FILTER.test(stmt))
+      .filter(({ file, stmt }) => !inDataLayer(file) && !UUID_FILTER.test(stmt))
       .map(({ file, table, line }) => `${file}:${line} list-reads "${table}" inline`);
     expect(
       offenders,
-      "A list read is scoped only by its org filter, so it must live in src/data/<domain>.ts " +
+      "A list read is scoped only by its org filter, so it must live in src/data/<domain>.ts (or src/features/<plugin>/data/) " +
         "as fetchX(client, orgId, …) where supabaseFake can assert the filter is present.",
     ).toEqual([]);
   });

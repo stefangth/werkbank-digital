@@ -6,5 +6,54 @@
     "title": "Welcome to Werkbank Digital",
     "body": "Customers, quotes and invoices will appear here soon. Start by adding your technicians.",
     "cta": "Add technicians"
+  },
+  "technicians": {
+    "title": "Technicians",
+    "sub": "The people who do the jobs. Add them here and invite them to the app.",
+    "add": "Add technician",
+    "loadFailed": "Could not load your technicians. Please try again.",
+    "empty": {
+      "title": "No technicians yet",
+      "body": "Add your first technician and send the invitation to the app in one step.",
+      "action": "Add your first technician"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "account": "Account",
+      "actions": "Actions"
+    },
+    "account": {
+      "active": "Active",
+      "invited": "Invited",
+      "none": "No account"
+    },
+    "actions": {
+      "resend": "Resend invitation",
+      "revoke": "Revoke invitation"
+    },
+    "dialog": {
+      "title": "Add technician",
+      "description": "The technician gets an email invitation to the app.",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone (optional)",
+      "cancel": "Cancel",
+      "submit": "Add and invite",
+      "errors": {
+        "name": "Enter a name",
+        "emailRequired": "Enter an email address",
+        "emailInvalid": "Enter a valid email address"
+      }
+    },
+    "toast": {
+      "added": "Technician added and invitation sent",
+      "addFailed": "Could not complete this. Check the list to see whether the technician was added.",
+      "resent": "Invitation sent again",
+      "resendFailed": "Could not send the invitation again",
+      "revoked": "Invitation revoked",
+      "revokeFailed": "Could not revoke the invitation"
+    }
   }
 }

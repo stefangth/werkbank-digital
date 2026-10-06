@@ -4,6 +4,8 @@ import type { OrgKind } from "@/lib/orgKind";
 import { MODULE_UIS } from "@/modules/ui";
 import { werkbankUi } from "./ui";
 import { WerkbankDashboard } from "./components/WerkbankDashboard";
+import { TechniciansPage } from "./pages/TechniciansPage";
+import { TECHNICIANS_PATH } from "./paths";
 
 const ctx = (roles: string[], orgKind: OrgKind) => ({
   isEditorMode: false,
@@ -39,8 +41,20 @@ describe("werkbank module UI", () => {
     ]);
   });
 
-  it("contributes the handwerk dashboard and no routes yet", () => {
+  it("contributes the handwerk dashboard", () => {
     expect(werkbankUi.dashboards.handwerk).toBe(WerkbankDashboard);
-    expect(werkbankUi.routes).toEqual([]);
+  });
+
+  it("contributes the technicians route for handwerk office roles", () => {
+    const route = werkbankUi.routes.find((r) => r.path === TECHNICIANS_PATH);
+    expect(route).toBeDefined();
+    expect(route?.path).toBe("/technicians");
+    expect(route?.kinds).toEqual(["handwerk"]);
+    expect(route?.requiredRoles).toEqual(["admin", "producer"]);
+    expect(route?.Page).toBe(TechniciansPage);
+  });
+
+  it("points the nav item at the same path as the route", () => {
+    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([TECHNICIANS_PATH]);
   });
 });
