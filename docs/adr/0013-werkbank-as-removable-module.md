@@ -40,7 +40,7 @@ the schema carries 242 migrations. The maintainer is a single person.
      `src/features/werkbank/`, `supabase/functions/werkbank-*`,
      `supabase/functions/_shared/werkbank/`, migrations named `*_werkbank_*`, tests under
      `supabase/tests/werkbank/`, and a dedicated Postgres schema `werkbank`. It plugs into
-     the core through one line per runtime in a module manifest (`src/modules.ts`,
+     the core through one line per manifest file (`src/modules/*.ts`,
      `supabase/functions/_shared/modules.ts`).
 3. **Isolation is enforced by CI, not by discipline:** ESLint import boundaries in both
    directions, a scan test that fails when `werkbank` or `handwerk` appears outside the

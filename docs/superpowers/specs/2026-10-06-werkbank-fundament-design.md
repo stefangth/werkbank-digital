@@ -1,7 +1,7 @@
 # Werkbank Teil 1: Foundation (org kind `handwerk`, brand, kind-aware surface, isolation). Spec
 
 **Date:** 2026-10-06
-**Status:** Approved in brainstorming (owner, 2026-10-06). Awaiting spec review.
+**Status:** Approved (owner, 2026-10-06).
 **Decision record:** [ADR-0013](../../adr/0013-werkbank-as-removable-module.md) (why a module inside Showflow, the isolation model, removal and extraction).
 **Related:** `2026-09-14-org-kind-workspace-type-design.md` (org kind and vocabulary, which this extends), `2026-08-15-i18n-server-side-per-org.md` (per-org language for emails and PDFs).
 
@@ -56,8 +56,9 @@ Allowed plugin paths:
 - `src/features/werkbank/**`
 - `supabase/functions/werkbank-*/**`, `supabase/functions/_shared/werkbank/**`
 - `supabase/migrations/*_werkbank_*.sql`, `supabase/tests/werkbank/**`
-- the Werkbank lines in `src/modules.ts` and `supabase/functions/_shared/modules.ts`
-- `docs/**`, and entries in `scripts/mirrors.manifest.json` that point at plugin paths
+- the Werkbank lines in the manifests `src/modules/registry.ts`, `src/modules/i18n.ts`, `src/modules/ui.ts` and `supabase/functions/_shared/modules.ts`
+- `public/werkbank/**` (logo, favicon, email mark), `e2e/werkbank-*.spec.ts`
+- `docs/**`, the Werkbank section in `CLAUDE.md`, and entries in `scripts/mirrors.manifest.json` that point at plugin paths
 
 Core files that must name the module and are therefore allowed explicitly (each is edited on removal or extraction): the `werkbank` entry in `supabase/config.toml` `[api] schemas`, the generated types (`src/integrations/supabase/types.ts` and its edge mirror `_shared/database.types.ts`), the Werkbank boundary rules in `eslint.config.js`, and the allow-list in `scripts/moduleIsolation.test.ts` itself.
 
@@ -65,10 +66,13 @@ Core files that must name the module and are therefore allowed explicitly (each 
 
 ### R1. Module manifest
 
-- `src/modules.ts` exports `MODULES: readonly AppModule[]`. Its edge twin `supabase/functions/_shared/modules.ts` exports the server-side subset.
-- An `AppModule` may contribute: org kind definitions (R3), a brand (R4), navigation items and routes (R5), a dashboard component per kind (R5), settings-tab visibility (R5), provisioning defaults (R6), i18n namespaces.
-- The Werkbank plugin exposes one module object from `src/features/werkbank/module.ts` (edge: `_shared/werkbank/module.ts`). Registering it is one import plus one array entry per runtime.
-- The core reads modules only through registries built from `MODULES`; no other core file imports from `src/features/werkbank`.
+- The client manifest is split in three files so that pure data never imports React (a single manifest would create an import cycle through `orgKind.ts` and `app.config.ts`):
+  - `src/modules/registry.ts`: pure data. Org kind definitions (R2, R3), brands (R4).
+  - `src/modules/i18n.ts`: i18n namespaces as JSON.
+  - `src/modules/ui.ts`: React contributions. Navigation items, routes, dashboards per kind (R5).
+- The edge manifest `supabase/functions/_shared/modules.ts` holds org kinds, brands and provisioning defaults (R6).
+- The Werkbank plugin exposes `src/features/werkbank/registry.ts` (pure data with zero imports, file-mode mirrored to `_shared/werkbank/registry.ts`), `src/features/werkbank/i18n/{en,de}.json` and `src/features/werkbank/ui.ts`. Registering it is one import plus one array entry per manifest file.
+- The core reads modules only through registries built from the manifests; no other core file imports from `src/features/werkbank`.
 
 ### R2. Org kinds as data
 
@@ -117,15 +121,15 @@ Core files that must name the module and are therefore allowed explicitly (each 
 ### R5. Kind-aware surface
 
 - `NavItem` gains `kinds?: OrgKind[]`. A kind filter hides an item (entitlements keep greying out). Items without `kinds` show for every kind.
-- Existing items Get running, Dates, Hire orders, Availability, Chats, Productions and Artists get `kinds: ['production', 'staffing']`. Dashboard, Help, Settings and Platform stay unrestricted.
+- Existing items Get running, Dates, Hire orders, Availability, Chats, Productions, Artists and Help get `kinds: ['production', 'staffing']`. Help is Showflow's booking help; it returns for `handwerk` when Werkbank help content exists (Teil 2). Dashboard, Settings and Platform stay unrestricted.
 - Modules contribute nav items and routes. Werkbank contributes "Monteure" (Teil 1) and later its business pages.
 - `ROUTE_KINDS`, analogous to `ROUTE_FEATURES`, maps route patterns to allowed kinds. `ProtectedRoute` redirects to the dashboard when the active org's kind is not allowed. Super-admins are not exempt here (unlike the membership gate), because a mismatching kind means a broken page rather than a missing permission. This gate is UX; data protection stays in RLS.
 - `DashboardPage` picks its body from a per-kind registry. Werkbank contributes a plain placeholder in Teil 1.
-- Settings tabs gain the same `kinds` filter. For `handwerk`, Booking flow, Hire orders, Airtable sync and Casts and cities are hidden; Organization, People, Roles and rights, Email templates and Trust and data stay.
+- Settings tabs gain the same `kinds` filter, including the `?tab=` deep link, which falls back to the default tab when the tab is hidden for the kind. For `handwerk`, How it works, Get running, Booking engine, Hire orders, Sources (Airtable), Casts and coverage, and Skills are hidden; Organization, People, Activity, Roles and rights, Email templates, Notifications, Trust and data, and Docs stay.
 
 ### R6. Provisioning defaults
 
-- A module may contribute `provisioningDefaults[kind] = { entitlements, settings }` through the edge manifest. `provision-org` applies them after the platform defaults and skips the booking-flow "off" seed when the kind's defaults say so.
+- A module may contribute `provisioningDefaults[kind] = { entitlements, settings, skipBookingFlowSeed }` through the edge manifest. Precedence for each entitlement: kind default, then the request body (the New organization dialog sends explicit toggles), then platform defaults. `provision-org` upserts the kind's settings and skips the booking-flow "off" seed when `skipBookingFlowSeed` is true.
 - Werkbank defaults for `handwerk`: entitlements `booking_flow = false`, `hire_orders = false`, `language_packages = true`; settings `org_language = 'de'`.
 - Creating a `handwerk` org works through Platform, Organizations, New, with the kind picker (R2).
 
@@ -149,13 +153,13 @@ Core files that must name the module and are therefore allowed explicitly (each 
 
 - ESLint `no-restricted-imports`:
   - in `src/features/werkbank/**`, `supabase/functions/werkbank-*/**` and `_shared/werkbank/**`: no imports of booking, show, show-date, cast, hire-order or Airtable modules (exact path list in the plan);
-  - everywhere else: no imports of `src/features/werkbank/**` or `_shared/werkbank/**`, except from the two manifest files.
+  - everywhere else: no imports of `src/features/werkbank/**` or `_shared/werkbank/**`, except from the manifest files (`src/modules/*.ts`, `_shared/modules.ts`).
 - `scripts/moduleIsolation.test.ts`: scans git-tracked files and fails on `werkbank` or `handwerk` (case-insensitive) outside the allowed plugin paths. Allowed-path lists live in the test, per module.
 - `supabase/tests/werkbank/isolation.test.sql` (pgTAP): no object in schema `public` depends on an object in schema `werkbank` (via `pg_depend` and `pg_rewrite` for views and functions).
 
-## Open decisions for spec review
+## Decisions resolved in spec review
 
-- **D1. Extraction threshold.** ADR-0013 proposes about 10 paying businesses. Adjust if needed.
+- **D1. Extraction threshold.** About 10 paying businesses, as in ADR-0013 (owner, 2026-10-06).
 
 ## Testing
 
