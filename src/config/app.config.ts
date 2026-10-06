@@ -61,12 +61,13 @@ export const ROUTE_KINDS: Record<string, readonly OrgKind[]> = {
 
 /**
  * Pure lookup: which kinds (if any) a pathname is restricted to. Matches like
- * requiredFeatureForPath. `extra` carries module route kinds, which win over core
- * entries for the same path.
+ * requiredFeatureForPath. `extra` carries the module route kinds (from the module UI
+ * manifest) and is required so a caller cannot forget it and fail open; pass `{}` only
+ * where no module routes exist. Module entries win over core entries for the same path.
  */
 export function requiredKindsForPath(
   pathname: string,
-  extra: Record<string, readonly OrgKind[]> = {},
+  extra: Record<string, readonly OrgKind[]>,
 ): readonly OrgKind[] | undefined {
   const table = { ...ROUTE_KINDS, ...extra };
   const exact = table[pathname];

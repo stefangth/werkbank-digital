@@ -35,6 +35,16 @@ vi.mock("@/components/layout/AppLayout", () => ({
     React.createElement("div", { "data-testid": "app-layout" }, children),
 }));
 
+// MODULE_ROUTE_KINDS is built from MODULE_UIS when ProtectedRoute loads, so the manifest
+// mock is hoisted above that import. Core ships no module routes.
+vi.mock("@/modules/ui", () => ({
+  MODULE_UIS: [{
+    navItems: [],
+    dashboards: {},
+    routes: [{ path: "/module-page", kinds: ["test_kind"], requiredRoles: [], Page: () => null }],
+  }],
+}));
+
 import { useAuth } from "./AuthContext";
 import { useEditorConfig } from "../editor/EditorContext";
 import { useEntitlements } from "@/hooks/useEntitlements";
@@ -373,6 +383,19 @@ describe("ProtectedRoute", () => {
     it("renders children for a staffing org at a production route", () => {
       member({ ...ACTIVE_ORG, org_kind: "staffing" as never });
       renderProtected({ path: "/dates" });
+      expect(screen.getByText("Protected Content")).toBeTruthy();
+    });
+
+    it("redirects a production org away from a module route owned by another kind", () => {
+      member(ACTIVE_ORG);
+      renderProtected({ path: "/module-page" });
+      expect(screen.getByText("Dashboard")).toBeTruthy();
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("renders a module route for the kind that owns it", () => {
+      member(TEST_KIND_ORG);
+      renderProtected({ path: "/module-page" });
       expect(screen.getByText("Protected Content")).toBeTruthy();
     });
 

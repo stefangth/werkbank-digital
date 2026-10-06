@@ -118,27 +118,27 @@ describe("requiredKindsForPath", () => {
   });
 
   it("matches a dynamic route against a concrete pathname", () => {
-    expect(requiredKindsForPath("/contracts/abc")).toEqual(CORE);
-    expect(requiredKindsForPath("/contracts/abc/edit")).toEqual(CORE);
+    expect(requiredKindsForPath("/contracts/abc", {})).toEqual(CORE);
+    expect(requiredKindsForPath("/contracts/abc/edit", {})).toEqual(CORE);
   });
 
   it("matches an exact static route", () => {
-    expect(requiredKindsForPath("/dates")).toEqual(CORE);
+    expect(requiredKindsForPath("/dates", {})).toEqual(CORE);
   });
 
   it("returns undefined for a kind-neutral route", () => {
-    expect(requiredKindsForPath("/today")).toBeUndefined();
-    expect(requiredKindsForPath("/settings")).toBeUndefined();
+    expect(requiredKindsForPath("/today", {})).toBeUndefined();
+    expect(requiredKindsForPath("/settings", {})).toBeUndefined();
   });
 
   it("does not match a dynamic pattern for the wrong segment count", () => {
-    expect(requiredKindsForPath("/contracts/abc/extra")).toBeUndefined();
+    expect(requiredKindsForPath("/contracts/abc/extra", {})).toBeUndefined();
   });
 
   it("resolves routes a module contributes through the extra map", () => {
     const extra = { "/technicians": ["handwerk"], "/technicians/:id": ["handwerk"] } as never;
     expect(requiredKindsForPath("/technicians", extra)).toEqual(["handwerk"]);
     expect(requiredKindsForPath("/technicians/abc", extra)).toEqual(["handwerk"]);
-    expect(requiredKindsForPath("/technicians")).toBeUndefined();
+    expect(requiredKindsForPath("/technicians", {})).toBeUndefined();
   });
 });

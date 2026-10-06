@@ -176,7 +176,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     </span>
                     {!collapsed && (
                       <span className="flex flex-1 items-center gap-2 min-w-0">
-                        <span className="truncate">{item.labelKey ? t(item.labelKey) : item.label}</span>
+                        <span className="truncate">{item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}</span>
                         <Lock className="ml-auto h-3 w-3 shrink-0" />
                       </span>
                     )}
@@ -216,7 +216,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </span>
                   {!collapsed && (
                     <span className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="truncate">{item.labelKey ? t(item.labelKey) : item.label}</span>
+                      <span className="truncate">{item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}</span>
                       {badgeCount > 0 && (
                         <span className="ml-auto shrink-0 rounded-full bg-sidebar-accent px-1.5 py-px text-eyebrow font-semibold tabular-nums text-sidebar-accent-foreground">
                           {badgeCount}
@@ -408,7 +408,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   <>
                     <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />
                     <span aria-current="page" className="truncate font-medium text-foreground">
-                      {ROUTE_TO_LABELKEY[location.pathname] ? t(ROUTE_TO_LABELKEY[location.pathname]!) : ROUTE_TO_LABEL[location.pathname]}
+                      {ROUTE_TO_LABELKEY[location.pathname] ? t(ROUTE_TO_LABELKEY[location.pathname]!, { defaultValue: ROUTE_TO_LABEL[location.pathname] }) : ROUTE_TO_LABEL[location.pathname]}
                     </span>
                   </>
                 )}
