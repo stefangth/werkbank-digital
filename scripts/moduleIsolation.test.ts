@@ -1,0 +1,143 @@
+// Removability guard (ADR 0013): the plugin's name and its kind identifier may
+// appear only in the plugin's own paths, the module manifests, docs and the few
+// generated or config files listed below. Anywhere else the core would know about
+// the plugin, and deleting the plugin would no longer be a clean removal.
+//
+// The import direction (core -> plugin only through manifests, plugin -> booking
+// domain never) is enforced by ESLint no-restricted-imports in eslint.config.js.
+
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { dirname, extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/** Glob-ish patterns: `**` crosses directories, `*` stays within one path segment. */
+export const ALLOWED_PATTERNS = [
+  "src/features/werkbank/**",
+  "supabase/functions/werkbank-*/**",
+  "supabase/functions/_shared/werkbank/**",
+  "supabase/migrations/*_werkbank_*.sql",
+  "supabase/tests/werkbank/**",
+  "public/werkbank/**",
+  "e2e/werkbank-*.spec.ts",
+  "src/modules/*.ts",
+  "supabase/functions/_shared/modules.ts",
+  "docs/**",
+  "CLAUDE.md",
+  "scripts/mirrors.manifest.json",
+  "supabase/config.toml",
+  "src/integrations/supabase/types.ts",
+  "supabase/functions/_shared/database.types.ts",
+  "eslint.config.js",
+  "scripts/moduleIsolation.test.ts",
+] as const;
+
+const FORBIDDEN = /werkbank|handwerk/i;
+
+const BINARY_EXTENSIONS = new Set([
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".pdf", ".woff", ".woff2",
+  ".ttf", ".otf", ".eot", ".zip", ".gz", ".mp3", ".mp4", ".mov", ".webm", ".wasm",
+]);
+
+function globToRegExp(glob: string): RegExp {
+  let out = "";
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i];
+    if (c === "*" && glob[i + 1] === "*") {
+      out += ".*";
+      i++;
+      if (glob[i + 1] === "/") i++;
+    } else if (c === "*") {
+      out += "[^/]*";
+    } else {
+      out += c.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  return new RegExp(`^${out}$`);
+}
+
+const ALLOWED = ALLOWED_PATTERNS.map(globToRegExp);
+
+const isAllowed = (path: string): boolean => ALLOWED.some((re) => re.test(path));
+
+/** Paths of files that mention the plugin or its kind outside the allowed locations. */
+export function findViolations(files: { path: string; text: string }[]): string[] {
+  return files.filter((f) => FORBIDDEN.test(f.text) && !isAllowed(f.path)).map((f) => f.path);
+}
+
+function trackedTextFiles(): { path: string; text: string }[] {
+  const listed = execFileSync("git", ["ls-files", "-z"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    maxBuffer: 256 * 1024 * 1024,
+  });
+  const files: { path: string; text: string }[] = [];
+  for (const path of listed.split("\0").filter(Boolean)) {
+    if (path.startsWith(".superpowers/") || BINARY_EXTENSIONS.has(extname(path).toLowerCase())) continue;
+    let buf: Buffer;
+    try {
+      buf = readFileSync(join(repoRoot, path));
+    } catch {
+      continue; // listed but deleted in the working tree
+    }
+    if (buf.subarray(0, 8192).includes(0)) continue; // NUL byte: binary
+    files.push({ path, text: buf.toString("utf8") });
+  }
+  return files;
+}
+
+describe("module isolation (ADR 0013)", () => {
+  it("flags a mention in a core file", () => {
+    expect(findViolations([{ path: "src/pages/X.tsx", text: "const kind = 'handwerk';" }])).toEqual([
+      "src/pages/X.tsx",
+    ]);
+  });
+
+  it("matches case-insensitively and reports every offending file", () => {
+    const hits = findViolations([
+      { path: "src/a.ts", text: "Werkbank" },
+      { path: "supabase/functions/booking/index.ts", text: "// HANDWERK" },
+      { path: "src/clean.ts", text: "nothing here" },
+    ]);
+    expect(hits).toEqual(["src/a.ts", "supabase/functions/booking/index.ts"]);
+  });
+
+  it("allows mentions inside the plugin and manifest paths", () => {
+    const text = "werkbank handwerk";
+    const paths = [
+      "src/features/werkbank/index.ts",
+      "src/features/werkbank/pages/A.tsx",
+      "supabase/functions/werkbank-invoice/index.ts",
+      "supabase/functions/_shared/werkbank/x.ts",
+      "supabase/migrations/20261101000000_werkbank_schema.sql",
+      "supabase/tests/werkbank/a.sql",
+      "public/werkbank/logo.svg",
+      "e2e/werkbank-smoke.spec.ts",
+      "src/modules/registry.ts",
+      "supabase/functions/_shared/modules.ts",
+      "docs/adr/0013-werkbank-as-removable-module.md",
+      "CLAUDE.md",
+      "eslint.config.js",
+      "scripts/moduleIsolation.test.ts",
+    ];
+    expect(findViolations(paths.map((path) => ({ path, text })))).toEqual([]);
+  });
+
+  it("does not let a single star cross directories", () => {
+    const text = "werkbank";
+    expect(
+      findViolations([
+        { path: "src/modules/nested/x.ts", text },
+        { path: "supabase/migrations/20261101000000_other.sql", text },
+        { path: "supabase/functions/werkbank-x", text }, // no segment after the prefix dir
+      ]),
+    ).toEqual(["src/modules/nested/x.ts", "supabase/migrations/20261101000000_other.sql", "supabase/functions/werkbank-x"]);
+  });
+
+  it("finds no mention of the plugin outside its allowed paths in the tracked tree", () => {
+    expect(findViolations(trackedTextFiles())).toEqual([]);
+  });
+});

@@ -55,6 +55,79 @@ const reactCompilerRulesOff = {
   "react-hooks/error-boundaries": "off",
 };
 
+// Module isolation (ADR 0013). The Werkbank plugin must stay removable: core code
+// reaches it only through the module manifests, and it never reaches into
+// Showflow's booking domain. ESLint keeps only the LAST matching config object's
+// options for `no-restricted-imports` per file, and uiConventions (src/**) is
+// appended last and sets that rule too. So the isolation objects below come after
+// it and repeat its Design System pattern for the src files it covers.
+// Patterns are gitignore-style (node-ignore), which has no brace expansion, hence
+// expand().
+const expand = (prefix, names, suffix = "*") => names.map((name) => `${prefix}${name}${suffix}`);
+
+const sharedBookingModules = ["bookingFlow", "hireOrders", "airtable", "eligibility"];
+
+const bookingDomainPatterns = [
+  {
+    group: [
+      ...expand("**/data/", ["bookings", "shows", "showDates", "showAssignments", "casts", "hireOrders", "airtable"]),
+      ...expand("**/hooks/use", ["Booking", "Shows", "ShowDates", "HireOrders", "Airtable"]),
+      ...expand("**/components/", ["bookings", "shows", "casts", "hireOrders", "availability"], "/**"),
+      "**/lib/hireOrders/**",
+      ...expand("**/_shared/", sharedBookingModules),
+      // Inside _shared/werkbank/ the same modules are reached as siblings of the plugin folder.
+      ...expand("../", sharedBookingModules),
+      ...expand("../../", sharedBookingModules),
+    ],
+    message:
+      "The plugin must not depend on Showflow's booking domain (ADR 0013). Go through a kind-neutral core extension point instead.",
+  },
+];
+
+const pluginImportPatterns = [
+  {
+    group: ["**/features/werkbank/**", "**/_shared/werkbank/**"],
+    message:
+      "Core code must not import the Werkbank plugin (ADR 0013). Register it in a module manifest: src/modules/*.ts or supabase/functions/_shared/modules.ts.",
+  },
+];
+
+const designSystemPatterns = uiConventions.rules["no-restricted-imports"][1].patterns;
+
+const srcPluginPaths = ["src/features/werkbank/**"];
+const edgePluginPaths = ["supabase/functions/werkbank-*/**", "supabase/functions/_shared/werkbank/**"];
+const manifestPaths = ["src/modules/*.ts", "supabase/functions/_shared/modules.ts"];
+
+const restrictImports = (patterns) => ({ "no-restricted-imports": ["error", { patterns }] });
+
+const moduleIsolation = [
+  // The plugin: no booking-domain imports (and uiConventions' Design System ban).
+  {
+    files: [...srcPluginPaths, ...edgePluginPaths].map((glob) => `${glob}/*.{ts,tsx}`),
+    rules: restrictImports([...bookingDomainPatterns, ...designSystemPatterns]),
+  },
+  // Core src: no plugin imports outside the manifests, plus the Design System ban
+  // for the files uiConventions covers.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: [...srcPluginPaths, ...manifestPaths, ...uiConventions.ignores],
+    rules: restrictImports([...pluginImportPatterns, ...designSystemPatterns]),
+  },
+  // Core src that uiConventions exempts (vendored ui, tests, pdf/email themes):
+  // the plugin ban only, so their Design System behaviour is unchanged.
+  {
+    files: uiConventions.ignores,
+    ignores: [...srcPluginPaths, ...manifestPaths],
+    rules: restrictImports(pluginImportPatterns),
+  },
+  // Core edge functions.
+  {
+    files: ["supabase/functions/**/*.{ts,tsx}"],
+    ignores: [...edgePluginPaths, ...manifestPaths],
+    rules: restrictImports(pluginImportPatterns),
+  },
+];
+
 export default tseslint.config(
   // Build output and the v8 coverage HTML report (both gitignored — ESLint does
   // not read .gitignore). `npm run test:coverage` writes coverage/, whose vendored
@@ -128,4 +201,5 @@ export default tseslint.config(
     rules: reactCompilerRulesOff,
   },
   uiConventions,
+  ...moduleIsolation,
 );

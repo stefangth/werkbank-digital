@@ -136,9 +136,9 @@ describe("requiredKindsForPath", () => {
   });
 
   it("resolves routes a module contributes through the extra map", () => {
-    const extra = { "/technicians": ["handwerk"], "/technicians/:id": ["handwerk"] } as never;
-    expect(requiredKindsForPath("/technicians", extra)).toEqual(["handwerk"]);
-    expect(requiredKindsForPath("/technicians/abc", extra)).toEqual(["handwerk"]);
+    const extra = { "/technicians": ["module-kind"], "/technicians/:id": ["module-kind"] } as never;
+    expect(requiredKindsForPath("/technicians", extra)).toEqual(["module-kind"]);
+    expect(requiredKindsForPath("/technicians/abc", extra)).toEqual(["module-kind"]);
     expect(requiredKindsForPath("/technicians", {})).toBeUndefined();
   });
 });
