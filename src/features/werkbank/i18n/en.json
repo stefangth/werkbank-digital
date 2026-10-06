@@ -46,7 +46,8 @@
       "errors": {
         "name": "Enter a name",
         "emailRequired": "Enter an email address",
-        "emailInvalid": "Enter a valid email address"
+        "emailInvalid": "Enter a valid email address",
+        "emailTaken": "A technician with this email address already exists"
       }
     },
     "toast": {

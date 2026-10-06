@@ -46,7 +46,8 @@
       "errors": {
         "name": "Gib einen Namen ein",
         "emailRequired": "Gib eine E-Mail-Adresse ein",
-        "emailInvalid": "Gib eine gültige E-Mail-Adresse ein"
+        "emailInvalid": "Gib eine gültige E-Mail-Adresse ein",
+        "emailTaken": "Es gibt schon einen Monteur mit dieser E-Mail-Adresse"
       }
     },
     "toast": {

@@ -29,17 +29,22 @@ interface FormValues {
 
 const EMPTY: FormValues = { name: "", email: "", phone: "" };
 
-/** Name and email are required (the email is where the app invitation goes), phone is optional. */
+/** Name and email are required (the email is where the app invitation goes), phone is optional.
+ *  An email already used by a technician of this org is rejected, so a second attempt for the
+ *  same person cannot create a duplicate row (`artists` has no unique email constraint). */
 export function AddTechnicianDialog({
   open,
   onOpenChange,
   onSubmit,
   submitting,
+  existingEmails,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: NewTechnician) => void;
   submitting: boolean;
+  /** Lower-cased emails of the org's technicians. */
+  existingEmails: ReadonlySet<string>;
 }) {
   const { t } = useTranslation("werkbank");
   const schema = useMemo(
@@ -50,10 +55,11 @@ export function AddTechnicianDialog({
           .string()
           .trim()
           .min(1, t("technicians.dialog.errors.emailRequired"))
-          .email(t("technicians.dialog.errors.emailInvalid")),
+          .email(t("technicians.dialog.errors.emailInvalid"))
+          .refine((email) => !existingEmails.has(email.toLowerCase()), t("technicians.dialog.errors.emailTaken")),
         phone: z.string().trim(),
       }),
-    [t],
+    [t, existingEmails],
   );
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: EMPTY });
 

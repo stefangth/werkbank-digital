@@ -100,6 +100,20 @@ describe("TechniciansPage", () => {
     expect(fake.calls.some((c) => c.table === "fn:create-invitation")).toBe(false);
   });
 
+  it("rejects an email that an existing technician already uses and makes no call", async () => {
+    const fake = seed();
+    renderPage();
+    await screen.findByText("Anna");
+    fireEvent.click(screen.getByRole("button", { name: "Add technician" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("Name"), { target: { value: "Anna Zwei" } });
+    fireEvent.change(within(dialog).getByLabelText("Email"), { target: { value: " ANNA@x.de " } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add and invite" }));
+    expect(await within(dialog).findByText("A technician with this email address already exists")).toBeInTheDocument();
+    expect(fake.calls.some((c) => c.method === "insert")).toBe(false);
+    expect(fake.calls.some((c) => c.table === "fn:create-invitation")).toBe(false);
+  });
+
   it("requires a name", async () => {
     const fake = seed();
     renderPage();

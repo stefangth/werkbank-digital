@@ -46,6 +46,11 @@ export function TechniciansPage() {
     return map;
   }, [pendingInvitations]);
 
+  const existingEmails = useMemo(
+    () => new Set((technicians ?? []).flatMap((tech) => (tech.email ? [tech.email.trim().toLowerCase()] : []))),
+    [technicians],
+  );
+
   const openDialog = () => setDialogOpen(true);
 
   const submitTechnician = (values: { name: string; email: string; phone: string | null }) => {
@@ -162,6 +167,7 @@ export function TechniciansPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         submitting={create.isPending}
+        existingEmails={existingEmails}
         onSubmit={submitTechnician}
       />
     </div>
