@@ -87,6 +87,9 @@ export async function handle(
     if (error) {
       const code = (error as { code?: string }).code;
       if (code === "23505") return json({ error: "That slug is already taken" }, 409);
+      // 22023: provision_org rejected the input (missing fields, or a kind the edge registry
+      // knows but public.org_kinds does not). A client error, not a server failure.
+      if (code === "22023") return json({ error: (error as Error).message ?? "Invalid input" }, 400);
       return json({ error: (error as Error).message ?? "Could not provision org" }, 500);
     }
     const { org_id, token } = data as { org_id: string; token: string };

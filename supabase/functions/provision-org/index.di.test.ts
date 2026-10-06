@@ -153,6 +153,17 @@ Deno.test("provision-org: 409 on duplicate slug", async () => {
   assertEquals(res.status, 409);
 });
 
+Deno.test("provision-org: 400 with the rpc message when provision_org rejects the input (22023)", async () => {
+  const { deps } = makeFakeDeps({
+    authUser: { id: "u1" },
+    tables: { platform_admins: { data: { user_id: "u1" }, error: null } },
+    rpcs: { provision_org: { data: null, error: { code: "22023", message: "Unknown workspace type" } } },
+  });
+  const res = await handle(makeRequest({ headers: { Authorization: "Bearer x" }, body }), deps);
+  assertEquals(res.status, 400);
+  assertEquals(await res.json(), { error: "Unknown workspace type" });
+});
+
 // ---------------------------------------------------------------------------
 // Task 9: seed org_entitlements from the platform default_entitlements setting
 // at creation time. resolveOrgSetting reads app_settings via a `key`-matched
