@@ -21,14 +21,14 @@ type Body = {
   org_kind?: string;
 };
 
+/** Best-effort seeding steps that can fail without undoing the org; reported to the caller. */
+export type ProvisioningWarning = "entitlements" | "booking_flow" | "kind_settings";
+
 /**
  * Resolve the entitlement to seed per feature. Precedence: the kind's provisioning
  * defaults, then an explicit request (non-boolean values are ignored), then the platform
  * value. Features are taken from `platform`, which the caller fills for every feature.
  */
-/** Best-effort seeding steps that can fail without undoing the org; reported to the caller. */
-export type ProvisioningWarning = "entitlements" | "booking_flow" | "kind_settings";
-
 export function mergeEntitlements(
   platform: Record<FeatureKey, boolean>,
   requested: Record<string, boolean> | null,

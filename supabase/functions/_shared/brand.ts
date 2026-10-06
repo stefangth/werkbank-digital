@@ -17,7 +17,10 @@ export interface BrandDef {
   appUrl: string | null;
   /** Hostnames that identify this brand before sign-in. */
   hosts: readonly string[];
-  /** Default From header for transactional email; null: the platform default. */
+  /** Default From header for transactional email, used when the org has no
+   *  `resend_from_address` row of its own. When set, it
+   *  deliberately replaces the platform-level default sender (a brand never inherits the
+   *  ShowFlow sender); when null, the existing org-then-platform resolution applies. */
   defaultFrom: string | null;
 }
 
