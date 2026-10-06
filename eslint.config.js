@@ -58,21 +58,30 @@ const reactCompilerRulesOff = {
 // Module isolation (ADR 0013). The Werkbank plugin must stay removable: core code
 // reaches it only through the module manifests, and it never reaches into
 // Showflow's booking domain. ESLint keeps only the LAST matching config object's
-// options for `no-restricted-imports` per file, and uiConventions (src/**) is
-// appended last and sets that rule too. So the isolation objects below come after
-// it and repeat its Design System pattern for the src files it covers.
-// Patterns are gitignore-style (node-ignore), which has no brace expansion, hence
-// expand().
+// options for a rule per file, and uiConventions (src/**) is appended last and sets
+// `no-restricted-imports` and `no-restricted-syntax`. So the isolation objects below
+// come after it and repeat its Design System import pattern and its syntax
+// selectors for the src files it covers.
+//
+// Static imports use `no-restricted-imports` (gitignore-style patterns via
+// node-ignore: no brace expansion, hence expand(); `dir/**` does not match the bare
+// `dir`, hence both forms). Dynamic `import()` is invisible to that rule, so the same
+// paths are mirrored as ImportExpression selectors in `no-restricted-syntax`.
 const expand = (prefix, names, suffix = "*") => names.map((name) => `${prefix}${name}${suffix}`);
 
+const bookingData = ["bookings", "shows", "showDates", "showAssignments", "casts", "hireOrders", "airtable"];
+const bookingHooks = ["Booking", "Shows", "ShowDates", "HireOrders", "Airtable"];
+const bookingComponents = ["bookings", "shows", "casts", "hireOrders", "availability"];
 const sharedBookingModules = ["bookingFlow", "hireOrders", "airtable", "eligibility"];
 
 const bookingDomainPatterns = [
   {
     group: [
-      ...expand("**/data/", ["bookings", "shows", "showDates", "showAssignments", "casts", "hireOrders", "airtable"]),
-      ...expand("**/hooks/use", ["Booking", "Shows", "ShowDates", "HireOrders", "Airtable"]),
-      ...expand("**/components/", ["bookings", "shows", "casts", "hireOrders", "availability"], "/**"),
+      ...expand("**/data/", bookingData),
+      ...expand("**/hooks/use", bookingHooks),
+      ...expand("**/components/", bookingComponents, ""),
+      ...expand("**/components/", bookingComponents, "/**"),
+      "**/lib/hireOrders",
       "**/lib/hireOrders/**",
       ...expand("**/_shared/", sharedBookingModules),
       // Inside _shared/werkbank/ the same modules are reached as siblings of the plugin folder.
@@ -86,45 +95,81 @@ const bookingDomainPatterns = [
 
 const pluginImportPatterns = [
   {
-    group: ["**/features/werkbank/**", "**/_shared/werkbank/**"],
+    group: ["**/features/werkbank", "**/features/werkbank/**", "**/_shared/werkbank", "**/_shared/werkbank/**"],
     message:
       "Core code must not import the Werkbank plugin (ADR 0013). Register it in a module manifest: src/modules/*.ts or supabase/functions/_shared/modules.ts.",
   },
 ];
 
 const designSystemPatterns = uiConventions.rules["no-restricted-imports"][1].patterns;
+const uiConventionSelectors = uiConventions.rules["no-restricted-syntax"].slice(1);
+
+// Regex sources mirroring the pattern groups above. esquery ends a regex at the
+// first "/", so every slash is written as \u002F.
+const alt = (names) => `(${names.join("|")})`;
+const toSelector = (source, message) => ({
+  selector: `ImportExpression[source.value=/${source.replaceAll("/", "\\u002F")}/]`,
+  message,
+});
+const bookingDomainSource = [
+  `(^|/)data/${alt(bookingData)}`,
+  `(^|/)hooks/use${alt(bookingHooks)}`,
+  `(^|/)components/${alt(bookingComponents)}(/|$)`,
+  `(^|/)lib/hireOrders(/|$)`,
+  `(^|/)_shared/${alt(sharedBookingModules)}`,
+  `^(\\.\\./){1,2}${alt(sharedBookingModules)}`,
+].join("|");
+const pluginImportSource = "(^|/)(features|_shared)/werkbank(/|$)";
+const bookingDomainDynamic = toSelector(bookingDomainSource, bookingDomainPatterns[0].message);
+const pluginImportDynamic = toSelector(pluginImportSource, pluginImportPatterns[0].message);
 
 const srcPluginPaths = ["src/features/werkbank/**"];
 const edgePluginPaths = ["supabase/functions/werkbank-*/**", "supabase/functions/_shared/werkbank/**"];
 const manifestPaths = ["src/modules/*.ts", "supabase/functions/_shared/modules.ts"];
 
-const restrictImports = (patterns) => ({ "no-restricted-imports": ["error", { patterns }] });
+const isolationRules = (patterns, selectors) => ({
+  "no-restricted-imports": ["error", { patterns }],
+  "no-restricted-syntax": ["error", ...selectors],
+});
 
 const moduleIsolation = [
-  // The plugin: no booking-domain imports (and uiConventions' Design System ban).
+  // The plugin, all files: no booking-domain imports (static or dynamic).
   {
     files: [...srcPluginPaths, ...edgePluginPaths].map((glob) => `${glob}/*.{ts,tsx}`),
-    rules: restrictImports([...bookingDomainPatterns, ...designSystemPatterns]),
+    rules: isolationRules(bookingDomainPatterns, [bookingDomainDynamic]),
   },
-  // Core src: no plugin imports outside the manifests, plus the Design System ban
-  // for the files uiConventions covers.
+  // Plugin src that uiConventions covers: the same, plus its Design System import
+  // ban and syntax selectors (this object wins over the one above for these files).
+  {
+    files: srcPluginPaths.map((glob) => `${glob}/*.{ts,tsx}`),
+    ignores: uiConventions.ignores,
+    rules: isolationRules(
+      [...bookingDomainPatterns, ...designSystemPatterns],
+      [...uiConventionSelectors, bookingDomainDynamic],
+    ),
+  },
+  // Core src: no plugin imports outside the manifests, plus uiConventions' rules
+  // for the files it covers.
   {
     files: ["src/**/*.{ts,tsx}"],
     ignores: [...srcPluginPaths, ...manifestPaths, ...uiConventions.ignores],
-    rules: restrictImports([...pluginImportPatterns, ...designSystemPatterns]),
+    rules: isolationRules(
+      [...pluginImportPatterns, ...designSystemPatterns],
+      [...uiConventionSelectors, pluginImportDynamic],
+    ),
   },
   // Core src that uiConventions exempts (vendored ui, tests, pdf/email themes):
-  // the plugin ban only, so their Design System behaviour is unchanged.
+  // the plugin ban only, so their other behaviour is unchanged.
   {
     files: uiConventions.ignores,
     ignores: [...srcPluginPaths, ...manifestPaths],
-    rules: restrictImports(pluginImportPatterns),
+    rules: isolationRules(pluginImportPatterns, [pluginImportDynamic]),
   },
   // Core edge functions.
   {
     files: ["supabase/functions/**/*.{ts,tsx}"],
     ignores: [...edgePluginPaths, ...manifestPaths],
-    rules: restrictImports(pluginImportPatterns),
+    rules: isolationRules(pluginImportPatterns, [pluginImportDynamic]),
   },
 ];
 
