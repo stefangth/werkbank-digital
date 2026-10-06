@@ -15,6 +15,7 @@ import { PasswordSetupForm } from "@/components/auth/PasswordSetupForm";
 import { useMyArtist } from "@/hooks/useMyArtist";
 import { useMyBlockedDatesCount } from "@/hooks/useMyBlockedDatesCount";
 import { useLanguage } from "@/features/i18n/LanguageContext";
+import { useBrand } from "@/hooks/useBrand";
 import { SUPPORTED_LANGUAGES, LANGUAGE_LABELS, type Lang } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +96,8 @@ export default function ProfilePage() {
     closePasswordForm();
   };
 
-  useEffect(() => { document.title = t("page.documentTitle"); }, [t]);
+  const brandName = useBrand().name;
+  useEffect(() => { document.title = t("page.documentTitle", { appName: brandName }); }, [t, brandName]);
 
   // Notification preferences
   const { data: notifPrefs } = useNotificationPreferences();

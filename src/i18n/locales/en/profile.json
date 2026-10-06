@@ -1,6 +1,6 @@
 {
   "page": {
-    "documentTitle": "Profile · ShowFlow",
+    "documentTitle": "Profile · {{appName}}",
     "title": "Account",
     "subtitle": "Your details, how you sign in, and what reaches you."
   },

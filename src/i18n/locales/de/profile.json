@@ -1,6 +1,6 @@
 {
   "page": {
-    "documentTitle": "Konto · ShowFlow",
+    "documentTitle": "Konto · {{appName}}",
     "title": "Konto",
     "subtitle": "Deine Details, wie du dich anmeldest, und was dich erreicht."
   },
