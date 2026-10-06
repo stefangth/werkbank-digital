@@ -2,6 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handle, mergeEntitlements } from "./index.ts";
 import { makeFakeDeps, makeRequest } from "../_shared/testing.ts";
 import { FEATURE_KEYS, type FeatureKey } from "../_shared/entitlements.ts";
+import { SYSTEM_INVITER_NAME } from "../_shared/invitations.ts";
 
 const body = { name: "Acme", slug: "acme", admin_email: "a@acme.com", role: "admin", app_origin: "https://app.test" };
 
@@ -531,4 +532,28 @@ Deno.test("provision-org: kind settings upsert uses onConflict org_id,key and ru
   assertEquals(keysOf(upserts[1]), ["org_language"]);
   assertEquals((upserts[1].args[0] as { org_id: string }[])[0].org_id, "org-9");
   assertEquals(upserts[1].args[1], { onConflict: "org_id,key" });
+});
+
+const sentInviterName = (invokeCalls: { name: string; body: unknown }[]) =>
+  (invokeCalls.find((c) => c.name === "send-transactional-email")?.body as { templateData: { inviterName: string } })
+    .templateData.inviterName;
+
+Deno.test("provision-org: the first invite names the kind's seeded inviter fallback", async () => {
+  const { deps, invokeCalls } = kindFake();
+  const res = await handle(kindReq(), deps, {
+    staffing: {
+      entitlements: {},
+      settings: { email_copy: { "org-invitation.inviterFallback": "Acme Platform" } },
+      skipBookingFlowSeed: false,
+    },
+  });
+  assertEquals(res.status, 200);
+  assertEquals(sentInviterName(invokeCalls), "Acme Platform");
+});
+
+Deno.test("provision-org: without a seeded email copy the first invite keeps the system inviter", async () => {
+  const { deps, invokeCalls } = kindFake();
+  const res = await handle(kindReq(), deps, {});
+  assertEquals(res.status, 200);
+  assertEquals(sentInviterName(invokeCalls), SYSTEM_INVITER_NAME);
 });

@@ -9,6 +9,7 @@ import { BOOKING_FLOW_TEMPLATE_DEFAULTS, normalizeBookingFlowTemplates } from ".
 import type { Json } from "../_shared/database.types.ts";
 import { isOrgKind, DEFAULT_ORG_KIND, type OrgKind } from "../_shared/orgKind.ts";
 import { MODULE_PROVISIONING, type ProvisioningDefaults } from "../_shared/modules.ts";
+import { resolveEmailCopy, type EmailCopyOverride } from "../_shared/transactional-email-templates/_shell/emailCopy.ts";
 
 type Body = {
   name: string;
@@ -39,6 +40,18 @@ export function mergeEntitlements(
       : typeof fromRequest === "boolean" ? fromRequest : platform[feature];
   }
   return merged;
+}
+
+/**
+ * The "Invited by" name on a new org's first invitation. A kind may seed its own
+ * `email_copy` (provisioning defaults); its `org-invitation.inviterFallback` then names the
+ * sender, so the invite reads under that kind's brand. Without one this is exactly
+ * SYSTEM_INVITER_NAME.
+ */
+export function firstInviterName(kindDefaults: ProvisioningDefaults | undefined): string {
+  const seeded = kindDefaults?.settings.email_copy;
+  if (typeof seeded !== "object" || seeded === null || Array.isArray(seeded)) return SYSTEM_INVITER_NAME;
+  return resolveEmailCopy(seeded as EmailCopyOverride)["org-invitation.inviterFallback"];
 }
 
 export async function handle(
@@ -155,7 +168,8 @@ export async function handle(
       }
       // The durable invitation email contains no short-lived Auth action link. The first
       // admin of a brand-new org is a total stranger to the super-admin
-      // provisioning it, so "Invited by" always reads a generic, org-neutral line here:
+      // provisioning it, so "Invited by" always reads a generic, org-neutral line here
+      // (the platform team, or the kind's brand when its defaults seed one, firstInviterName):
       // never the platform operator's own display name or personal inbox address. A
       // stranger has no more context for "Jordan Owner" than for owner@platform.test,
       // so forwarding either would read as no more trustworthy than a spam sender's,
@@ -176,7 +190,7 @@ export async function handle(
         : undefined;
       await sendOrgInvitationEmail(deps, {
         email, orgName: name, role: await resolveInviteRoleLabel(deps.admin, org_id, role), roleKey: role, token,
-        inviterName: SYSTEM_INVITER_NAME,
+        inviterName: firstInviterName(kindDefaults),
         expiresOn: formatExpiresOn((invRow as { expires_at?: string } | null)?.expires_at),
         offersExpected,
         appOrigin, idempotencyKey: `org-invitation-${org_id}`, orgId: org_id,
