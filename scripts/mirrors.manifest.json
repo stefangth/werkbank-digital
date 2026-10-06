@@ -112,6 +112,12 @@
       "start": "// >>> BRAND REGISTRY MIRROR (keep byte-identical with the twin file) >>>",
       "end": "// <<< BRAND REGISTRY MIRROR <<<",
       "why": "Brand registry + resolver. Emails and the app shell resolve the same brand definitions (name, marks, from address); the surrounding imports differ per runtime."
+    },
+    {
+      "mode": "file",
+      "source": "src/features/werkbank/registry.ts",
+      "target": "supabase/functions/_shared/werkbank/registry.ts",
+      "why": "Werkbank org kind, brand and provisioning defaults as pure data with zero imports. The client manifest and the edge manifest register the same objects, so the two runtimes cannot drift."
     }
   ]
 }

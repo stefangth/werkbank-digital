@@ -1,12 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
+import { ORG_KINDS } from "@/lib/orgKind";
 import { OrgKindSelect } from "./OrgKindSelect";
 
-// ESM exports cannot be spied on, so mock the module: "staffing" reports locked here.
+// ESM exports cannot be spied on, so mock the module: only "production" reports switchable here.
 vi.mock("@/lib/orgKind", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/orgKind")>()),
-  isSwitchableByOrgAdmin: (k: string) => k !== "staffing",
+  isSwitchableByOrgAdmin: (k: string) => k === "production",
 }));
 
 describe("OrgKindSelect", () => {
@@ -43,7 +44,7 @@ describe("OrgKindSelect", () => {
   it("lists locked kinds too when includeLocked is set", async () => {
     renderWithProviders(<OrgKindSelect id="k" value="production" onChange={() => {}} includeLocked />);
     fireEvent.click(screen.getByRole("combobox"));
-    expect(await screen.findAllByRole("option")).toHaveLength(2);
+    expect(await screen.findAllByRole("option")).toHaveLength(ORG_KINDS.length);
   });
 
   it("renders a locked current value disabled without includeLocked", () => {

@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
 
-// ESM exports cannot be spied on, so mock the module: "staffing" reports locked when h.lockStaffing is set.
+// ESM exports cannot be spied on, so mock the module: "staffing" reports locked when h.lockStaffing is set, and every other module kind is locked.
 vi.mock("@/lib/orgKind", async (orig) => ({
   ...(await orig<typeof import("@/lib/orgKind")>()),
-  isSwitchableByOrgAdmin: (k: string) => !(h.lockStaffing && k === "staffing"),
+  isSwitchableByOrgAdmin: (k: string) => k === "production" || (k === "staffing" && !h.lockStaffing),
 }));
 
 const setOrgKind = vi.fn((..._a: unknown[]) => Promise.resolve());

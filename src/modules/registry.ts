@@ -4,10 +4,11 @@
 // Type-only import: orgKind.ts imports this file at runtime, so no runtime cycle.
 import type { BrandDef } from "@/lib/brand";
 import type { OrgKindDef } from "@/lib/orgKind";
+import { WERKBANK_BRAND, WERKBANK_ORG_KIND } from "@/features/werkbank/registry";
 
-export const MODULE_ORG_KINDS = [] as const satisfies readonly OrgKindDef[];
+export const MODULE_ORG_KINDS = [WERKBANK_ORG_KIND] as const satisfies readonly OrgKindDef[];
 
 /** Brands that plugins add on top of the core showflow brand (see src/lib/brand.ts). */
-export const MODULE_BRANDS: readonly BrandDef[] = [];
+export const MODULE_BRANDS: readonly BrandDef[] = [WERKBANK_BRAND];
 
 export type ModuleOrgKind = (typeof MODULE_ORG_KINDS)[number]["kind"];

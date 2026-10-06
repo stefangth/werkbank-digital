@@ -6,11 +6,12 @@ import type { BrandDef } from "./brand.ts";
 import type { OrgKind, OrgKindDef } from "./orgKind.ts";
 import type { FeatureKey } from "./entitlements.ts";
 import type { Json } from "./database.types.ts";
+import { WERKBANK_BRAND, WERKBANK_ORG_KIND, WERKBANK_PROVISIONING } from "./werkbank/registry.ts";
 
-export const MODULE_ORG_KINDS = [] as const satisfies readonly OrgKindDef[];
+export const MODULE_ORG_KINDS = [WERKBANK_ORG_KIND] as const satisfies readonly OrgKindDef[];
 
 /** Brands that plugins add on top of the core showflow brand (see src/lib/brand.ts). */
-export const MODULE_BRANDS: readonly BrandDef[] = [];
+export const MODULE_BRANDS: readonly BrandDef[] = [WERKBANK_BRAND];
 
 export type ModuleOrgKind = (typeof MODULE_ORG_KINDS)[number]["kind"];
 
@@ -27,4 +28,4 @@ export interface ProvisioningDefaults {
 }
 
 /** Per-kind provisioning defaults that plugins add. Core kinds provision unchanged. */
-export const MODULE_PROVISIONING: Partial<Record<OrgKind, ProvisioningDefaults>> = {};
+export const MODULE_PROVISIONING: Partial<Record<OrgKind, ProvisioningDefaults>> = WERKBANK_PROVISIONING;

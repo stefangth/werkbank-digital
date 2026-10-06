@@ -5,6 +5,7 @@ import { previewEmailTemplate } from "@/data/emailTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import type { EmailCopyOverride } from "@/lib/emailTemplates/emailCopy";
 import type { EmailThemeOverride } from "@/lib/emailTemplates/emailTheme";
+import type { OrgKind } from "@/lib/orgKind";
 
 const DEBOUNCE_MS = 250;
 
@@ -18,8 +19,8 @@ export interface EmailPreviewPaneProps {
   dataOverride?: Record<string, unknown>;
   /** Preview language (default English). */
   locale?: "en" | "de";
-  /** Preview workspace type (default production), so an admin can see staffing wording. */
-  kind?: "production" | "staffing";
+  /** Preview workspace type (default production), so an admin can see another type's wording. */
+  kind?: OrgKind;
 }
 
 /** Debounced edge-rendered preview with stale-run and unmount protection. */

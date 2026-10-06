@@ -5,6 +5,7 @@ import {
   type EmailCopyOverride,
 } from "@/lib/emailTemplates/emailCopy";
 import type { EmailThemeOverride } from "@/lib/emailTemplates/emailTheme";
+import type { OrgKind } from "@/lib/orgKind";
 import { resolveOrgSetting } from "./settings";
 
 export interface EmailTemplateSettings {
@@ -24,9 +25,9 @@ export interface EmailTemplatePreviewRequest {
   /** Preview language. The preview endpoint is NOT entitlement-gated (admin QA), so
    *  this lets an admin preview German before enabling it for the org. */
   locale?: "en" | "de";
-  /** Preview workspace type (admin QA). Lets an admin see staffing wording without
+  /** Preview workspace type (admin QA). Lets an admin see another type's wording without
    *  switching the org; the preview endpoint coerces it (defaulting to production). */
-  kind?: "production" | "staffing";
+  kind?: OrgKind;
 }
 
 /**
