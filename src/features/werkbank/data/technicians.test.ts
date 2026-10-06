@@ -18,6 +18,7 @@ describe("fetchTechnicians", () => {
         error: null,
       },
       "rpc:list_pending_invited_artists": { data: ["a2"], error: null },
+      org_invitations: { data: [{ artist_id: "a1", email: "anna@x.de" }], error: null },
     });
     const result = await fetchTechnicians(asClient(fake), "org-1");
     expect(result.map((t) => t.account)).toEqual(["active", "invited", "none"]);
@@ -36,13 +37,40 @@ describe("fetchTechnicians", () => {
     expect(result[0].account).toBe("invited");
   });
 
-  it("treats an accepted technician (login, no pending invite) as active", async () => {
+  it("treats a technician who accepted the invitation as active", async () => {
     const fake = createFakeSupabase({
       artists: { data: [{ id: "a1", name: "Anna", email: "a@x.de", phone: null, user_id: "u1" }], error: null },
       "rpc:list_pending_invited_artists": { data: [], error: null },
+      org_invitations: { data: [{ artist_id: "a1", email: "a@x.de" }], error: null },
     });
     const result = await fetchTechnicians(asClient(fake), "org-1");
     expect(result[0].account).toBe("active");
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: "org_invitations", method: "eq", args: ["org_id", "org-1"] }));
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: "org_invitations", method: "eq", args: ["status", "accepted"] }));
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: "org_invitations", method: "eq", args: ["role", "artist"] }));
+  });
+
+  it("matches an accepted invitation without an artist id by email", async () => {
+    const fake = createFakeSupabase({
+      artists: { data: [{ id: "a1", name: "Anna", email: "Anna@X.de", phone: null, user_id: "u1" }], error: null },
+      "rpc:list_pending_invited_artists": { data: [], error: null },
+      org_invitations: { data: [{ artist_id: null, email: "anna@x.de" }], error: null },
+    });
+    const result = await fetchTechnicians(asClient(fake), "org-1");
+    expect(result[0].account).toBe("active");
+  });
+
+  it("treats a linked technician whose invitation expired unaccepted as none", async () => {
+    // create-invitation links artists.user_id at invite time, so a login alone does not
+    // mean the technician joined; with no pending and no accepted invitation they can be
+    // invited again.
+    const fake = createFakeSupabase({
+      artists: { data: [{ id: "a1", name: "Anna", email: "a@x.de", phone: null, user_id: "u1" }], error: null },
+      "rpc:list_pending_invited_artists": { data: [], error: null },
+      org_invitations: { data: [], error: null },
+    });
+    const result = await fetchTechnicians(asClient(fake), "org-1");
+    expect(result[0].account).toBe("none");
   });
 });
 
@@ -53,6 +81,15 @@ describe("fetchTechnicians failures", () => {
       "rpc:list_pending_invited_artists": { data: [], error: null },
     });
     await expect(fetchTechnicians(asClient(fake), "org-1")).rejects.toThrow("artists failed");
+  });
+
+  it("rejects when the accepted invitations query errors", async () => {
+    const fake = createFakeSupabase({
+      artists: { data: [{ id: "a1", name: "Anna", email: null, phone: null, user_id: "u1" }], error: null },
+      "rpc:list_pending_invited_artists": { data: [], error: null },
+      org_invitations: { data: null, error: new Error("invitations failed") },
+    });
+    await expect(fetchTechnicians(asClient(fake), "org-1")).rejects.toThrow("invitations failed");
   });
 
   it("rejects when the pending invites RPC errors", async () => {

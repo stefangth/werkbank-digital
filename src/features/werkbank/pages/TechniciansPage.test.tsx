@@ -31,9 +31,13 @@ function seed({ artists = rows, artistsError = null, inviteError = null, insertE
   const fake = createFakeSupabase({
     artists: { data: artistsError ? null : artists, error: artistsError },
     "rpc:list_pending_invited_artists": { data: ["a2"], error: null },
-    org_invitations: invitationsError
-      ? { data: null, error: invitationsError }
-      : { data: [{ id: "inv-2", artist_id: "a2", email: "bernd@x.de" }], error: null },
+    // Pending invitations feed resend and revoke; accepted ones tell who actually joined.
+    org_invitations: [
+      invitationsError
+        ? { when: { status: "pending" }, data: null, error: invitationsError }
+        : { when: { status: "pending" }, data: [{ id: "inv-2", artist_id: "a2", email: "bernd@x.de" }], error: null },
+      { when: { status: "accepted" }, data: [{ artist_id: "a1", email: "anna@x.de" }], error: null },
+    ],
     "fn:create-invitation": inviteError ? { data: null, error: inviteError } : { data: { invitation: { id: "inv-9" } }, error: null },
     "fn:resend-invitation": { data: {}, error: null },
     "rpc:revoke_invitation": { data: null, error: null },
@@ -223,6 +227,15 @@ describe("TechniciansPage invite action", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     canAdd.value = true;
+  });
+
+  it("offers the invitation again for a linked login whose invitation expired unaccepted", async () => {
+    seed({ artists: [{ id: "a4", name: "Dirk", email: "dirk@x.de", phone: null, user_id: "u4" }] });
+    renderPage();
+    await screen.findByText("Dirk");
+    expect(screen.getByText("No account")).toBeInTheDocument();
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Send invitation" })).toBeInTheDocument();
   });
 
   it("shows Invited with resend and revoke for a linked login whose invitation is still pending", async () => {
