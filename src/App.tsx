@@ -45,6 +45,7 @@ import HireOrderEditPage from "./pages/HireOrderEditPage";
 import SandboxViewerPage from "./pages/SandboxViewerPage";
 import GetRunningPage from "./pages/GetRunningPage";
 import NotFound from "./pages/NotFound";
+import { MODULE_UIS } from "@/modules/ui";
 
 // DEV-ONLY visual harness for the Show Date Cockpit (see DevCockpitHarness.tsx).
 // `import.meta.env.DEV` is statically false in production builds, so both the
@@ -129,6 +130,9 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {MODULE_UIS.flatMap((m) => m.routes).map((r) => (
+              <Route key={r.path} path={r.path} element={<ProtectedRoute requiredRoles={r.requiredRoles}><AppLayout><r.Page /></AppLayout></ProtectedRoute>} />
+            ))}
             <Route path={ROUTES.CHATS} element={<ProtectedRoute><AppLayout><ChatsListPage /></AppLayout></ProtectedRoute>} />
             <Route path={ROUTES.HELP} element={<ProtectedRoute><AppLayout><HelpPage /></AppLayout></ProtectedRoute>} />
             <Route path={ROUTES.PROFILE} element={<ProtectedRoute><AppLayout><ProfilePage /></AppLayout></ProtectedRoute>} />

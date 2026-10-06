@@ -1,10 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { NAV_ITEMS, visibleNavItems, groupNavBySections, isHiddenForViewAs, type NavItem } from "./navItems";
 import { ROUTES, type AppRole } from "@/config/app.config";
+import type { OrgKind } from "@/lib/orgKind";
 
-const ctx = (over: Partial<{ isEditorMode: boolean; isRealAdmin: boolean; isSuperAdmin: boolean; roles: string[]; enabledFeatures: Set<string>; entitlementsLoading: boolean; impersonating: boolean }> = {}) => {
-  const { isEditorMode = false, isRealAdmin = false, isSuperAdmin = false, roles = [], enabledFeatures = new Set<string>(), entitlementsLoading = false, impersonating = false } = over;
-  return { isEditorMode, isRealAdmin, isSuperAdmin, hasRole: (r: string) => roles.includes(r), enabledFeatures, entitlementsLoading, impersonating };
+// A kind no core nav item lists, standing in for a plugin kind.
+const TEST_KIND = "test_kind" as OrgKind;
+
+const ctx = (over: Partial<{ isEditorMode: boolean; isRealAdmin: boolean; isSuperAdmin: boolean; roles: string[]; enabledFeatures: Set<string>; entitlementsLoading: boolean; impersonating: boolean; orgKind: OrgKind }> = {}) => {
+  const { isEditorMode = false, isRealAdmin = false, isSuperAdmin = false, roles = [], enabledFeatures = new Set<string>(), entitlementsLoading = false, impersonating = false, orgKind = "production" } = over;
+  return { isEditorMode, isRealAdmin, isSuperAdmin, hasRole: (r: string) => roles.includes(r), enabledFeatures, entitlementsLoading, impersonating, orgKind };
 };
 
 describe("nav IA", () => {
@@ -240,5 +244,47 @@ describe("sections", () => {
 
   it("drops empty sections", () => {
     expect(groupNavBySections([])).toEqual([]);
+  });
+});
+
+describe("kind filtering", () => {
+  const PRODUCTION_ADMIN_LABELS = [
+    "Get running", "Dashboard", "Dates", "Hire orders", "Chats", "Productions", "Artists", "Help", "Settings",
+  ];
+
+  it("shows today's items to a production org", () => {
+    const labels = visibleNavItems(NAV_ITEMS, ctx({ roles: ["admin"] })).map((i) => i.label);
+    expect(labels).toEqual(PRODUCTION_ADMIN_LABELS);
+  });
+
+  it("shows the same items to a staffing org", () => {
+    const labels = visibleNavItems(NAV_ITEMS, ctx({ roles: ["admin"], orgKind: "staffing" })).map((i) => i.label);
+    expect(labels).toEqual(PRODUCTION_ADMIN_LABELS);
+  });
+
+  it("leaves only Dashboard and Settings for an unlisted kind", () => {
+    const labels = visibleNavItems(NAV_ITEMS, ctx({ roles: ["admin"], orgKind: TEST_KIND })).map((i) => i.label);
+    expect(labels).toEqual(["Dashboard", "Settings"]);
+  });
+
+  it("keeps Platform for a super-admin in an unlisted kind", () => {
+    const labels = visibleNavItems(NAV_ITEMS, ctx({ isSuperAdmin: true, orgKind: TEST_KIND })).map((i) => i.label);
+    expect(labels).toEqual(["Dashboard", "Platform"]);
+  });
+
+  it("hides kind-excluded items in editor mode too", () => {
+    const labels = visibleNavItems(
+      NAV_ITEMS,
+      ctx({ isEditorMode: true, isRealAdmin: true, isSuperAdmin: true, orgKind: TEST_KIND }),
+    ).map((i) => i.label);
+    expect(labels).toEqual(["Dashboard", "Settings", "Platform"]);
+  });
+
+  it("hides a kind-excluded item instead of locking it", () => {
+    const items = [
+      { to: "/x", icon: NAV_ITEMS[0].icon, label: "X", section: "workspace", feature: "hire_orders", kinds: ["production"] } as NavItem,
+    ];
+    expect(visibleNavItems(items, ctx({ orgKind: TEST_KIND }))).toEqual([]);
+    expect(visibleNavItems(items, ctx({ orgKind: "production" }))[0].locked).toBe(true);
   });
 });

@@ -2,6 +2,8 @@ import { CalendarCheck, BookOpen, Clock, Settings, MessageSquare, Users, Buildin
 import type { LucideIcon } from 'lucide-react';
 import { ROUTES, type AppRole } from '@/config/app.config';
 import type { FeatureKey } from '@/lib/entitlements';
+import type { OrgKind } from '@/lib/orgKind';
+import { MODULE_UIS } from '@/modules/ui';
 
 export type NavSection = 'workspace' | 'catalog' | 'system';
 export type NavBadge = 'needsYou' | 'openOffers' | 'awaitingCountersign';
@@ -18,29 +20,36 @@ export interface NavItem {
   icon: LucideIcon;
   label: string;
   /** i18n key for the label; resolved at render via t(item.labelKey) ?? label. */
-  labelKey?: NavLabelKey;
+  labelKey?: NavLabelKey | `${string}:${string}`;
   section: NavSection;
   badge?: NavBadge;
   roles?: string[];
   superAdmin?: boolean;
   /** Gate this item behind an org entitlement (Task 4's FEATURE_REGISTRY). */
   feature?: FeatureKey;
+  /** Workspace kinds that see this item. Absent: every kind. A kind outside the list
+   *  never sees the item (hidden, never locked), in every visibility branch. */
+  kinds?: OrgKind[];
 }
+
+/** Core kinds that use the production surface (shows, dates, artists, hire orders). */
+const PRODUCTION_KINDS: OrgKind[] = ['production', 'staffing'];
 
 // Section header labels are resolved from the i18n `common.nav.*` catalog in
 // AppLayout (t(SECTION_KEY[section])); there is no separate English map here.
 const SECTION_ORDER: NavSection[] = ['workspace', 'catalog', 'system'];
 
 export const NAV_ITEMS: NavItem[] = [
-  { to: ROUTES.GET_RUNNING, icon: Rocket, label: 'Get running', labelKey: 'nav.getRunning', section: 'workspace', roles: ['admin', 'producer'] },
+  { to: ROUTES.GET_RUNNING, icon: Rocket, label: 'Get running', labelKey: 'nav.getRunning', section: 'workspace', roles: ['admin', 'producer'], kinds: PRODUCTION_KINDS },
   { to: ROUTES.DASHBOARD, icon: CalendarCheck, label: 'Dashboard', labelKey: 'nav.dashboard', section: 'workspace' },
-  { to: ROUTES.BOOKINGS, icon: BookOpen, label: 'Dates', labelKey: 'nav.bookings', section: 'workspace', roles: ['admin', 'producer'], badge: 'needsYou' },
-  { to: ROUTES.HIRE_ORDERS, icon: FileSignature, label: 'Hire orders', labelKey: 'nav.hireOrders', section: 'workspace', roles: ['admin', 'producer'], feature: 'hire_orders', badge: 'awaitingCountersign' },
-  { to: ROUTES.AVAILABILITY, icon: Clock, label: 'Availability', labelKey: 'nav.availability', section: 'workspace', roles: ['artist'], feature: 'booking_flow', badge: 'openOffers' },
-  { to: ROUTES.CHATS, icon: MessageSquare, label: 'Chats', labelKey: 'nav.chats', section: 'workspace' },
-  { to: ROUTES.PRODUCTIONS, icon: Theater, label: 'Productions', labelKey: 'nav.productions', section: 'catalog', roles: ['admin', 'producer'] },
-  { to: ROUTES.ARTISTS, icon: Users, label: 'Artists', labelKey: 'nav.artists', section: 'catalog', roles: ['admin', 'producer'] },
-  { to: ROUTES.HELP, icon: HelpCircle, label: 'Help', labelKey: 'nav.help', section: 'system' },
+  { to: ROUTES.BOOKINGS, icon: BookOpen, label: 'Dates', labelKey: 'nav.bookings', section: 'workspace', roles: ['admin', 'producer'], badge: 'needsYou', kinds: PRODUCTION_KINDS },
+  { to: ROUTES.HIRE_ORDERS, icon: FileSignature, label: 'Hire orders', labelKey: 'nav.hireOrders', section: 'workspace', roles: ['admin', 'producer'], feature: 'hire_orders', badge: 'awaitingCountersign', kinds: PRODUCTION_KINDS },
+  { to: ROUTES.AVAILABILITY, icon: Clock, label: 'Availability', labelKey: 'nav.availability', section: 'workspace', roles: ['artist'], feature: 'booking_flow', badge: 'openOffers', kinds: PRODUCTION_KINDS },
+  { to: ROUTES.CHATS, icon: MessageSquare, label: 'Chats', labelKey: 'nav.chats', section: 'workspace', kinds: PRODUCTION_KINDS },
+  { to: ROUTES.PRODUCTIONS, icon: Theater, label: 'Productions', labelKey: 'nav.productions', section: 'catalog', roles: ['admin', 'producer'], kinds: PRODUCTION_KINDS },
+  { to: ROUTES.ARTISTS, icon: Users, label: 'Artists', labelKey: 'nav.artists', section: 'catalog', roles: ['admin', 'producer'], kinds: PRODUCTION_KINDS },
+  ...MODULE_UIS.flatMap((m) => m.navItems),
+  { to: ROUTES.HELP, icon: HelpCircle, label: 'Help', labelKey: 'nav.help', section: 'system', kinds: PRODUCTION_KINDS },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings', labelKey: 'nav.settings', section: 'system', roles: ['admin', 'producer'] },
   { to: ROUTES.PLATFORM, icon: Building2, label: 'Platform', labelKey: 'nav.platform', section: 'system', superAdmin: true },
 ];
@@ -73,6 +82,7 @@ export function visibleNavItems(
     enabledFeatures: Set<string>;
     entitlementsLoading: boolean;
     impersonating?: boolean;
+    orgKind: OrgKind;
   },
 ): VisibleNavItem[] {
   // Entitlement no longer HIDES an item, it LOCKS it: a member who cannot use a
@@ -93,10 +103,14 @@ export function visibleNavItems(
       && !ctx.enabledFeatures.has(item.feature),
   });
 
+  // Kind filtering runs first, in every branch (editor mode included): a kind that does
+  // not own an item never sees it, and it is never shown locked.
+  const forKind = items.filter((i) => !i.kinds || i.kinds.includes(ctx.orgKind));
+
   if (ctx.isEditorMode && ctx.isRealAdmin) {
-    return items.filter((i) => !i.superAdmin || ctx.isSuperAdmin).map(lock);
+    return forKind.filter((i) => !i.superAdmin || ctx.isSuperAdmin).map(lock);
   }
-  return items
+  return forKind
     .filter((item) => {
       if (item.superAdmin) return ctx.isSuperAdmin;
       if (!item.roles) return true;

@@ -15,7 +15,14 @@ vi.mock("@/components/today/TodayPage", () => ({
   default: () => <div>today board probe</div>,
 }));
 
+// MODULE_UIS is empty in core; the module dashboard path is exercised through a mock.
+vi.mock("@/modules/ui", () => ({
+  MODULE_UIS: [{ navItems: [], routes: [], dashboards: { test_kind: () => <div>module dashboard probe</div> } }],
+}));
+vi.mock("@/hooks/useOrgKind", () => ({ useOrgKind: vi.fn(() => "production") }));
+
 import { useAuth } from "@/features/auth/AuthContext";
+import { useOrgKind } from "@/hooks/useOrgKind";
 import DashboardPage from "./DashboardPage";
 
 function authAs(role: "producer" | "admin" | "artist") {
@@ -35,6 +42,7 @@ function renderPage() {
 describe("DashboardPage (always renders, never redirects)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useOrgKind).mockReturnValue("production");
   });
 
   it("renders the Autopilot Today board for a producer", () => {
@@ -54,5 +62,28 @@ describe("DashboardPage (always renders, never redirects)", () => {
     renderPage();
     expect(screen.getByText("artist dashboard probe")).toBeInTheDocument();
     expect(screen.queryByText("today board probe")).not.toBeInTheDocument();
+  });
+
+  it("renders the module dashboard for a kind that contributes one", () => {
+    authAs("producer");
+    vi.mocked(useOrgKind).mockReturnValue("test_kind" as never);
+    renderPage();
+    expect(screen.getByText("module dashboard probe")).toBeInTheDocument();
+    expect(screen.queryByText("today board probe")).not.toBeInTheDocument();
+  });
+
+  it("renders the module dashboard even for an artist-only viewer of that kind", () => {
+    authAs("artist");
+    vi.mocked(useOrgKind).mockReturnValue("test_kind" as never);
+    renderPage();
+    expect(screen.getByText("module dashboard probe")).toBeInTheDocument();
+    expect(screen.queryByText("artist dashboard probe")).not.toBeInTheDocument();
+  });
+
+  it("falls back to today's logic for a kind without a module dashboard", () => {
+    authAs("producer");
+    vi.mocked(useOrgKind).mockReturnValue("staffing");
+    renderPage();
+    expect(screen.getByText("today board probe")).toBeInTheDocument();
   });
 });

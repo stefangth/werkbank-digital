@@ -332,4 +332,54 @@ describe("ProtectedRoute", () => {
       expect(screen.getByText("Protected Content")).toBeTruthy();
     });
   });
+
+  describe("kind gate", () => {
+    const TEST_KIND_ORG = { ...ACTIVE_ORG, org_kind: "test_kind" as never };
+    const member = (currentOrg: typeof ACTIVE_ORG, over: { roles?: string[]; isSuperAdmin?: boolean } = {}) =>
+      vi.mocked(useAuth).mockReturnValue(partialMock<ReturnType<typeof useAuth>>({
+        user: partialMock<User>({ id: "user-1" }),
+        loading: false,
+        roles: (over.roles ?? ["producer"]) as never,
+        isSuperAdmin: over.isSuperAdmin ?? false,
+        currentOrg,
+      }));
+
+    it("redirects a kind that does not own the route to /today", () => {
+      member(TEST_KIND_ORG);
+      renderProtected({ path: "/dates" });
+      expect(screen.getByText("Dashboard")).toBeTruthy();
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("redirects a super-admin too, who is not exempt", () => {
+      member(TEST_KIND_ORG, { roles: [], isSuperAdmin: true });
+      renderProtected({ path: "/dates" });
+      expect(screen.getByText("Dashboard")).toBeTruthy();
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("redirects a dynamic route of another kind", () => {
+      member(TEST_KIND_ORG);
+      renderProtected({ path: "/contracts/abc" });
+      expect(screen.getByText("Dashboard")).toBeTruthy();
+    });
+
+    it("renders children for a production org at a production route", () => {
+      member(ACTIVE_ORG);
+      renderProtected({ path: "/dates" });
+      expect(screen.getByText("Protected Content")).toBeTruthy();
+    });
+
+    it("renders children for a staffing org at a production route", () => {
+      member({ ...ACTIVE_ORG, org_kind: "staffing" as never });
+      renderProtected({ path: "/dates" });
+      expect(screen.getByText("Protected Content")).toBeTruthy();
+    });
+
+    it("lets any kind through a kind-neutral route", () => {
+      member(TEST_KIND_ORG);
+      renderProtected({ path: "/protected" });
+      expect(screen.getByText("Protected Content")).toBeTruthy();
+    });
+  });
 });

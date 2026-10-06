@@ -38,6 +38,46 @@ function matchesRoutePattern(pattern: string, pathname: string): boolean {
 }
 
 /**
+ * Routes owned by specific workspace kinds. ProtectedRoute redirects an org whose kind
+ * is not listed to the dashboard (super-admins included). Same pattern syntax as
+ * ROUTE_FEATURES. Core production routes only; routes a module adds carry their own
+ * `kinds` in the module UI manifest (src/modules/ui.ts), which ProtectedRoute merges in
+ * (kept out of this file so the config never imports the manifest, which module pages
+ * import back).
+ */
+export const ROUTE_KINDS: Record<string, readonly OrgKind[]> = {
+  '/get-running': ['production', 'staffing'],
+  '/dates': ['production', 'staffing'],
+  '/contracts': ['production', 'staffing'],
+  '/contracts/:id': ['production', 'staffing'],
+  '/contracts/:id/edit': ['production', 'staffing'],
+  '/settings/contracts/template': ['production', 'staffing'],
+  '/availability': ['production', 'staffing'],
+  '/chats': ['production', 'staffing'],
+  '/productions': ['production', 'staffing'],
+  '/artists': ['production', 'staffing'],
+  '/help': ['production', 'staffing'],
+};
+
+/**
+ * Pure lookup: which kinds (if any) a pathname is restricted to. Matches like
+ * requiredFeatureForPath. `extra` carries module route kinds, which win over core
+ * entries for the same path.
+ */
+export function requiredKindsForPath(
+  pathname: string,
+  extra: Record<string, readonly OrgKind[]> = {},
+): readonly OrgKind[] | undefined {
+  const table = { ...ROUTE_KINDS, ...extra };
+  const exact = table[pathname];
+  if (exact) return exact;
+  for (const [pattern, kinds] of Object.entries(table)) {
+    if (pattern.includes(':') && matchesRoutePattern(pattern, pathname)) return kinds;
+  }
+  return undefined;
+}
+
+/**
  * Pure lookup: which FeatureKey (if any) gates a given pathname. Exact static
  * matches win first (fast path); dynamic patterns (keys containing `:`) are
  * then matched segment-by-segment so a real URL like `/contracts/<uuid>`

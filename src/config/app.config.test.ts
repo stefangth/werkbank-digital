@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { BOOKING_ENGINE_DEFAULTS, ROLE_LABELS, ROUTES, ROUTE_FEATURES, requiredFeatureForPath, roleLabel } from "./app.config";
+import { BOOKING_ENGINE_DEFAULTS, ROLE_LABELS, ROUTES, ROUTE_FEATURES, ROUTE_KINDS, requiredFeatureForPath, requiredKindsForPath, roleLabel } from "./app.config";
 
 describe("config/app.config", () => {
   it("exposes the exact dynamic email template editor route", () => {
@@ -102,5 +102,43 @@ describe("requiredFeatureForPath", () => {
   it("gates /availability behind booking_flow", () => {
     expect(ROUTE_FEATURES["/availability"]).toBe("booking_flow");
     expect(requiredFeatureForPath("/availability")).toBe("booking_flow");
+  });
+});
+
+describe("requiredKindsForPath", () => {
+  const CORE = ["production", "staffing"];
+
+  it("restricts every core production route to production and staffing", () => {
+    for (const route of [
+      ROUTES.GET_RUNNING, ROUTES.BOOKINGS, ROUTES.HIRE_ORDERS, ROUTES.HIRE_ORDER_DETAIL, ROUTES.HIRE_ORDER_EDIT,
+      ROUTES.HIRE_ORDER_TEMPLATE, ROUTES.AVAILABILITY, ROUTES.CHATS, ROUTES.PRODUCTIONS, ROUTES.ARTISTS, ROUTES.HELP,
+    ]) {
+      expect(ROUTE_KINDS[route]).toEqual(CORE);
+    }
+  });
+
+  it("matches a dynamic route against a concrete pathname", () => {
+    expect(requiredKindsForPath("/contracts/abc")).toEqual(CORE);
+    expect(requiredKindsForPath("/contracts/abc/edit")).toEqual(CORE);
+  });
+
+  it("matches an exact static route", () => {
+    expect(requiredKindsForPath("/dates")).toEqual(CORE);
+  });
+
+  it("returns undefined for a kind-neutral route", () => {
+    expect(requiredKindsForPath("/today")).toBeUndefined();
+    expect(requiredKindsForPath("/settings")).toBeUndefined();
+  });
+
+  it("does not match a dynamic pattern for the wrong segment count", () => {
+    expect(requiredKindsForPath("/contracts/abc/extra")).toBeUndefined();
+  });
+
+  it("resolves routes a module contributes through the extra map", () => {
+    const extra = { "/technicians": ["handwerk"], "/technicians/:id": ["handwerk"] } as never;
+    expect(requiredKindsForPath("/technicians", extra)).toEqual(["handwerk"]);
+    expect(requiredKindsForPath("/technicians/abc", extra)).toEqual(["handwerk"]);
+    expect(requiredKindsForPath("/technicians")).toBeUndefined();
   });
 });

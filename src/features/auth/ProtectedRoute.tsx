@@ -5,11 +5,20 @@ import SuspendedOrgScreen from '@/pages/SuspendedOrgScreen';
 import FeatureDisabledScreen from '@/pages/FeatureDisabledScreen';
 import AppLayout from '@/components/layout/AppLayout';
 import type { AppRole } from '@/config/app.config';
-import { ROUTES, requiredFeatureForPath } from '@/config/app.config';
+import { ROUTES, requiredFeatureForPath, requiredKindsForPath } from '@/config/app.config';
+import type { OrgKind } from '@/lib/orgKind';
+import { MODULE_UIS } from '@/modules/ui';
 import { DEFAULT_PAGE_ACCESS } from '@/features/editor/types';
 import { isImpersonating } from '@/features/auth/orgRoles';
 import { useEditorConfig } from '@/features/editor/EditorContext';
 import { useEntitlements } from '@/hooks/useEntitlements';
+import { useOrgKind } from '@/hooks/useOrgKind';
+
+/** Kind restrictions of module routes, keyed by path. Merged with the core ROUTE_KINDS
+ *  here (not in app.config) so the config never imports the module UI manifest. */
+const MODULE_ROUTE_KINDS: Record<string, readonly OrgKind[]> = Object.fromEntries(
+  MODULE_UIS.flatMap((m) => m.routes).map((r) => [r.path, r.kinds]),
+);
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,6 +29,7 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
   const { user, loading, roles, currentOrg, isSuperAdmin, viewAsRole, viewAsUser } = useAuth();
   const { pageAccess } = useEditorConfig();
   const { features, isLoading: entitlementsLoading } = useEntitlements();
+  const orgKind = useOrgKind();
   const location = useLocation();
 
   if (loading) {
@@ -42,6 +52,13 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
   // Super-admins may enter a suspended org (god-mode); members cannot.
   if (currentOrg.status === 'suspended' && !isSuperAdmin) {
     return <SuspendedOrgScreen />;
+  }
+
+  // Kind gate: a route owned by other workspace kinds is not reachable from this one.
+  // Super-admins are not exempt; a kind's surface simply does not exist outside it.
+  const requiredKinds = requiredKindsForPath(location.pathname, MODULE_ROUTE_KINDS);
+  if (requiredKinds && !requiredKinds.includes(orgKind)) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
 
   // Route-level entitlement gate. While entitlements are still loading, fall

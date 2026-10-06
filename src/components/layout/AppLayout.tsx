@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { IconTooltip } from '@/components/common/IconTooltip';
 import { Settings, LogOut, Bell, ChevronLeft, ChevronRight, Menu, EyeOff, User, Lock, Check, Languages } from 'lucide-react';
-import { NAV_ITEMS, visibleNavItems, groupNavBySections, isHiddenForViewAs, type NavLabelKey } from '@/components/layout/navItems';
+import { NAV_ITEMS, visibleNavItems, groupNavBySections, isHiddenForViewAs, type NavItem } from '@/components/layout/navItems';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/features/i18n/LanguageContext';
 import { VocabularyBridge } from '@/features/i18n/VocabularyBridge';
@@ -36,6 +36,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useNavCounts } from '@/hooks/useNavCounts';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useEntitlements, useFeature } from '@/hooks/useEntitlements';
+import { useOrgKind } from '@/hooks/useOrgKind';
 import { useGetRunningNavVisible } from '@/hooks/useGetRunningNavVisible';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types';
@@ -45,7 +46,7 @@ interface AppLayoutProps {
 }
 
 const ROUTE_TO_LABEL: Record<string, string> = Object.fromEntries(NAV_ITEMS.map((i) => [i.to, i.label]));
-const ROUTE_TO_LABELKEY: Record<string, NavLabelKey | undefined> = Object.fromEntries(NAV_ITEMS.map((i) => [i.to, i.labelKey]));
+const ROUTE_TO_LABELKEY: Record<string, NavItem['labelKey']> = Object.fromEntries(NAV_ITEMS.map((i) => [i.to, i.labelKey]));
 const SECTION_KEY = { workspace: 'nav.workspace', catalog: 'nav.catalog', system: 'nav.system' } as const;
 
 // Last-known `language_packages` entitlement, cached so the force-English guard below has an
@@ -66,6 +67,7 @@ function writeLangPackCache(enabled: boolean): void {
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut, roles, hasRole, viewAsRole, viewAsUser, isSuperAdmin, currentOrg } = useAuth();
   const { isEditorMode } = useEditorConfig();
+  const orgKind = useOrgKind();
   const { t } = useTranslation('common');
   const { lang, setLang } = useLanguage();
   const navigate = useNavigate();
@@ -132,7 +134,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // per-person localStorage dismissal that every other static nav-visibility rule has
   // no notion of.
   const navItemsForViewer = getRunningNavVisible ? NAV_ITEMS : NAV_ITEMS.filter((i) => i.to !== ROUTES.GET_RUNNING);
-  const filteredNav = visibleNavItems(navItemsForViewer, { isEditorMode, isRealAdmin, isSuperAdmin, hasRole: (r) => hasRole(r as AppRole), enabledFeatures: features, entitlementsLoading, impersonating: isImpersonating({ isSuperAdmin, roles, viewAsRole, viewAsUser }) });
+  const filteredNav = visibleNavItems(navItemsForViewer, { isEditorMode, isRealAdmin, isSuperAdmin, hasRole: (r) => hasRole(r as AppRole), enabledFeatures: features, entitlementsLoading, impersonating: isImpersonating({ isSuperAdmin, roles, viewAsRole, viewAsUser }), orgKind });
   const navGroups = groupNavBySections(filteredNav);
 
   const sidebarContent = (
