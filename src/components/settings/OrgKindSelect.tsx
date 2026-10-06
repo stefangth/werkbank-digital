@@ -19,8 +19,9 @@ interface Props {
  *  on a locked kind sees a disabled select showing only that kind. */
 export function OrgKindSelect({ id, value, onChange, disabled, includeLocked = false }: Props): JSX.Element {
   const { lang } = useLanguage();
-  const currentLocked = !includeLocked && !isSwitchableByOrgAdmin(coerceOrgKind(value));
-  const kinds = currentLocked ? [coerceOrgKind(value)] : includeLocked ? ORG_KINDS : ORG_KINDS.filter(isSwitchableByOrgAdmin);
+  const current = coerceOrgKind(value);
+  const currentLocked = !includeLocked && !isSwitchableByOrgAdmin(current);
+  const kinds = currentLocked ? [current] : includeLocked ? ORG_KINDS : ORG_KINDS.filter(isSwitchableByOrgAdmin);
   return (
     <Select value={value} onValueChange={(v) => onChange(coerceOrgKind(v))} disabled={disabled || currentLocked}>
       <SelectTrigger id={id}>

@@ -26,6 +26,10 @@ export function WorkspaceStep({ orgId, onDone }: { orgId: string | null; onDone:
   const canChoose = hasRole("admin");
   const [selected, setSelected] = useState<OrgKind | null>(null);
   const active: OrgKind = selected ?? currentOrg?.org_kind ?? DEFAULT_ORG_KIND;
+  // An org already on a kind org admins cannot switch to sees that kind read-only and nothing is saved.
+  const lockedCurrent = !isSwitchableByOrgAdmin(active);
+  const cardKinds = lockedCurrent ? [active] : ORG_KINDS.filter(isSwitchableByOrgAdmin);
+  const choosable = canChoose && !lockedCurrent;
 
   const save = useMutation({
     mutationFn: (kind: OrgKind) => setOrgKind(supabase, orgId as string, kind),
@@ -37,7 +41,7 @@ export function WorkspaceStep({ orgId, onDone }: { orgId: string | null; onDone:
   });
 
   const continueButton = (
-    <Button type="button" size="sm" disabled={!orgId || save.isPending} onClick={() => save.mutate(active)}>
+    <Button type="button" size="sm" disabled={!orgId || save.isPending} onClick={() => (lockedCurrent ? onDone() : save.mutate(active))}>
       {t("body.workspace.continue")}
     </Button>
   );
@@ -50,20 +54,20 @@ export function WorkspaceStep({ orgId, onDone }: { orgId: string | null; onDone:
         aria-label={t("body.workspace.heading")}
         className="gap-2"
       >
-        {ORG_KINDS.filter(isSwitchableByOrgAdmin).map((kind) => (
+        {cardKinds.map((kind) => (
           <Card
             key={kind}
             className={cn(
               "px-3 py-2.5",
               active === kind && "border-primary ring-1 ring-primary",
-              !canChoose && "opacity-60",
+              !choosable && "opacity-60",
             )}
           >
             <label
               htmlFor={`workspace-${kind}`}
-              className={cn("flex items-start gap-2.5", canChoose ? "cursor-pointer" : "cursor-not-allowed")}
+              className={cn("flex items-start gap-2.5", choosable ? "cursor-pointer" : "cursor-not-allowed")}
             >
-              <RadioGroupItem id={`workspace-${kind}`} value={kind} disabled={!canChoose} className="mt-0.5" />
+              <RadioGroupItem id={`workspace-${kind}`} value={kind} disabled={!choosable} className="mt-0.5" />
               <span className="flex flex-col gap-0.5">
                 <span className="text-control font-medium text-foreground">{ORG_KIND_LABELS[kind][lang].title}</span>
                 <span className="text-xs text-muted-foreground">{ORG_KIND_LABELS[kind][lang].desc}</span>

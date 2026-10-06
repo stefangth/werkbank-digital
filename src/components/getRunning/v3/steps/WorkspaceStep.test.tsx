@@ -11,11 +11,11 @@ vi.mock("@/lib/orgKind", async (orig) => ({
 const setOrgKind = vi.fn((..._a: unknown[]) => Promise.resolve());
 vi.mock("@/data/orgs", async (orig) => ({ ...(await orig<typeof import("@/data/orgs")>()), setOrgKind: (...a: unknown[]) => setOrgKind(...a) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-const h = vi.hoisted(() => ({ admin: true, lockStaffing: false }));
+const h = vi.hoisted(() => ({ admin: true, lockStaffing: false, kind: "production" }));
 vi.mock("@/features/auth/AuthContext", async (orig) => ({
   ...(await orig<typeof import("@/features/auth/AuthContext")>()),
   useAuth: () => ({
-    currentOrg: { id: "org-1", name: "A", slug: "a", status: "active", is_demo: false, org_kind: "production", org_kind_set_at: null },
+    currentOrg: { id: "org-1", name: "A", slug: "a", status: "active", is_demo: false, org_kind: h.kind, org_kind_set_at: null },
     refreshOrgs: () => Promise.resolve(),
     hasRole: (r: string) => (h.admin ? true : r === "producer"),
   }),
@@ -24,7 +24,7 @@ vi.mock("@/features/auth/AuthContext", async (orig) => ({
 import { WorkspaceStep } from "./WorkspaceStep";
 
 describe("WorkspaceStep", () => {
-  beforeEach(() => { vi.clearAllMocks(); h.admin = true; h.lockStaffing = false; });
+  beforeEach(() => { vi.clearAllMocks(); h.admin = true; h.lockStaffing = false; h.kind = "production"; });
 
   it("preselects the org's kind, saves the pick and calls onDone", async () => {
     const onDone = vi.fn();
@@ -57,5 +57,20 @@ describe("WorkspaceStep", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(1);
     expect(screen.getByRole("radio", { name: /live production/i })).toBeInTheDocument();
     expect(screen.queryByRole("radio", { name: /staffing agency/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a locked current kind as one checked, disabled card and Continue saves nothing", () => {
+    h.lockStaffing = true;
+    h.kind = "staffing";
+    const onDone = vi.fn();
+    renderWithProviders(<WorkspaceStep orgId="org-1" onDone={onDone} />);
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    const card = screen.getByRole("radio", { name: /staffing agency/i });
+    expect(card).toBeChecked();
+    expect(card).toBeDisabled();
+    expect(screen.queryByRole("radio", { name: /live production/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    expect(onDone).toHaveBeenCalled();
+    expect(setOrgKind).not.toHaveBeenCalled();
   });
 });
