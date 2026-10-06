@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { NAV_ITEMS, visibleNavItems } from "@/components/layout/navItems";
 import type { OrgKind } from "@/lib/orgKind";
 import { MODULE_UIS } from "@/modules/ui";
-import { werkbankUi } from "./ui";
+import { loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
 import { WerkbankDashboard } from "./components/WerkbankDashboard";
 import { TechniciansPage } from "./pages/TechniciansPage";
 import { TECHNICIANS_PATH } from "./paths";
@@ -17,6 +17,11 @@ const ctx = (roles: string[], orgKind: OrgKind) => ({
   impersonating: false,
   orgKind,
 });
+
+/** React.lazy components are tagged with this symbol. */
+const isLazy = (component: unknown) =>
+  typeof component === "object" && component !== null
+  && (component as { $$typeof?: symbol }).$$typeof === Symbol.for("react.lazy");
 
 describe("werkbank module UI", () => {
   it("is registered in the module UI manifest", () => {
@@ -41,8 +46,9 @@ describe("werkbank module UI", () => {
     ]);
   });
 
-  it("contributes the handwerk dashboard", () => {
-    expect(werkbankUi.dashboards.handwerk).toBe(WerkbankDashboard);
+  it("contributes the handwerk dashboard, loaded lazily", async () => {
+    expect(isLazy(werkbankUi.dashboards.handwerk)).toBe(true);
+    expect((await loadWerkbankDashboard()).default).toBe(WerkbankDashboard);
   });
 
   it("contributes the technicians route for handwerk office roles", () => {
@@ -51,7 +57,11 @@ describe("werkbank module UI", () => {
     expect(route?.path).toBe("/technicians");
     expect(route?.kinds).toEqual(["handwerk"]);
     expect(route?.requiredRoles).toEqual(["admin", "producer"]);
-    expect(route?.Page).toBe(TechniciansPage);
+    expect(isLazy(route?.Page)).toBe(true);
+  });
+
+  it("loads the technicians page lazily, so it stays out of the main bundle", async () => {
+    expect((await loadTechniciansPage()).default).toBe(TechniciansPage);
   });
 
   it("points the nav item at the same path as the route", () => {
