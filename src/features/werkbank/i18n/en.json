@@ -15,7 +15,8 @@
     "empty": {
       "title": "No technicians yet",
       "body": "Add your first technician and send the invitation to the app in one step.",
-      "action": "Add your first technician"
+      "action": "Add your first technician",
+      "reason": "Ask an admin to add technicians."
     },
     "columns": {
       "name": "Name",
@@ -31,7 +32,8 @@
     },
     "actions": {
       "resend": "Resend invitation",
-      "revoke": "Revoke invitation"
+      "revoke": "Revoke invitation",
+      "invite": "Send invitation"
     },
     "dialog": {
       "title": "Add technician",
@@ -49,11 +51,15 @@
     },
     "toast": {
       "added": "Technician added and invitation sent",
-      "addFailed": "Could not complete this. Check the list to see whether the technician was added.",
       "resent": "Invitation sent again",
       "resendFailed": "Could not send the invitation again",
       "revoked": "Invitation revoked",
-      "revokeFailed": "Could not revoke the invitation"
-    }
+      "revokeFailed": "Could not revoke the invitation",
+      "saveFailed": "The technician could not be saved. Please try again.",
+      "inviteFailed": "The invitation could not be sent. Please try again.",
+      "invited": "Invitation sent",
+      "savedInviteFailed": "Technician saved, but the invitation could not be sent. You can send it again from the list."
+    },
+    "invitationsFailed": "Could not load the pending invitations, so resend and revoke are unavailable. Please reload the page."
   }
 }

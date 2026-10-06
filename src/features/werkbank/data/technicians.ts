@@ -34,8 +34,23 @@ export async function fetchTechnicians(
   }));
 }
 
+/** The technician row was saved but the app invitation could not be sent. Retrying the
+ *  whole create would insert a duplicate row, so callers treat this as "saved" and offer
+ *  the invitation again from the list. */
+export class TechnicianInviteError extends Error {
+  readonly artistId: string;
+  readonly inviteCause: unknown;
+  constructor(artistId: string, cause: unknown) {
+    super(cause instanceof Error ? cause.message : "Invitation could not be sent");
+    this.name = "TechnicianInviteError";
+    this.artistId = artistId;
+    this.inviteCause = cause;
+  }
+}
+
 /** Add a technician and send the app invitation. The invite needs the new row's id, so the
- *  two steps run in order; if the insert fails no invitation is sent. */
+ *  two steps run in order. If the insert fails the raw error is thrown and no invitation is
+ *  sent; if only the invite fails a TechnicianInviteError carries the saved row's id. */
 export async function createTechnician(
   client: SupabaseClient<Database>,
   args: { orgId: string; name: string; email: string; phone: string | null },
@@ -46,6 +61,10 @@ export async function createTechnician(
     .select("id")
     .single();
   if (error) throw error;
-  await inviteArtistToApp(client, { orgId: args.orgId, artistId: data.id, email: args.email });
+  try {
+    await inviteArtistToApp(client, { orgId: args.orgId, artistId: data.id, email: args.email });
+  } catch (e) {
+    throw new TechnicianInviteError(data.id, e);
+  }
   return { id: data.id };
 }

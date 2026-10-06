@@ -7,6 +7,8 @@ import { anOrganization } from "@/test/fixtures";
 const { client } = vi.hoisted(() => ({ client: {} as Record<string, unknown> }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: client }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const { canAdd } = vi.hoisted(() => ({ canAdd: { value: true } }));
+vi.mock("@/hooks/useCapabilities", () => ({ useCan: () => canAdd.value }));
 
 import { toast } from "sonner";
 import { TechniciansPage } from "./TechniciansPage";
@@ -17,11 +19,21 @@ const rows = [
   { id: "a3", name: "Carla", email: null, phone: null, user_id: null },
 ];
 
-function seed(artists: unknown[] = rows, inviteError: unknown = null) {
+interface SeedOptions {
+  artists?: unknown[];
+  artistsError?: unknown;
+  inviteError?: unknown;
+  insertError?: unknown;
+  invitationsError?: unknown;
+}
+
+function seed({ artists = rows, artistsError = null, inviteError = null, insertError = null, invitationsError = null }: SeedOptions = {}) {
   const fake = createFakeSupabase({
-    artists: { data: artists, error: null },
+    artists: { data: artistsError ? null : artists, error: artistsError },
     "rpc:list_pending_invited_artists": { data: ["a2"], error: null },
-    org_invitations: { data: [{ id: "inv-2", artist_id: "a2", email: "bernd@x.de" }], error: null },
+    org_invitations: invitationsError
+      ? { data: null, error: invitationsError }
+      : { data: [{ id: "inv-2", artist_id: "a2", email: "bernd@x.de" }], error: null },
     "fn:create-invitation": inviteError ? { data: null, error: inviteError } : { data: { invitation: { id: "inv-9" } }, error: null },
     "fn:resend-invitation": { data: {}, error: null },
     "rpc:revoke_invitation": { data: null, error: null },
@@ -31,7 +43,7 @@ function seed(artists: unknown[] = rows, inviteError: unknown = null) {
   Object.assign(client, fake, {
     from: (table: string) => {
       const chain = from(table);
-      if (table === "artists") chain.single = () => Promise.resolve({ data: { id: "new-1" }, error: null });
+      if (table === "artists") chain.single = () => Promise.resolve(insertError ? { data: null, error: insertError } : { data: { id: "new-1" }, error: null });
       return chain;
     },
   });
@@ -46,7 +58,10 @@ function renderPage() {
 }
 
 describe("TechniciansPage", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    canAdd.value = true;
+  });
 
   it("renders the three account pills", async () => {
     seed();
@@ -62,7 +77,7 @@ describe("TechniciansPage", () => {
   });
 
   it("shows the empty state with an add action", async () => {
-    seed([]);
+    seed({ artists: [] });
     renderPage();
     expect(await screen.findByText("No technicians yet")).toBeInTheDocument();
   });
@@ -119,18 +134,104 @@ describe("TechniciansPage", () => {
     expect(fake.calls.find((c) => c.table === "rpc:revoke_invitation")?.args[0]).toEqual({ p_id: "inv-2" });
   });
 
-  it("keeps the dialog open and shows a translated error when the invitation fails", async () => {
-    seed(rows, new Error("boom"));
-    renderPage();
+  async function fillAndSubmit() {
     fireEvent.click(await screen.findByRole("button", { name: "Add technician" }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText("Name"), { target: { value: "Dora" } });
     fireEvent.change(within(dialog).getByLabelText("Email"), { target: { value: "dora@x.de" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add and invite" }));
+    return dialog;
+  }
+
+  it("closes the dialog after a failed invite, inserts the row only once and refreshes the list", async () => {
+    const fake = seed({ inviteError: new Error("boom") });
+    const { queryClient } = renderPage();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    await fillAndSubmit();
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Could not complete this. Check the list to see whether the technician was added."),
+      expect(toast.error).toHaveBeenCalledWith(
+        "Technician saved, but the invitation could not be sent. You can send it again from the list.",
+      ),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(fake.calls.filter((c) => c.method === "insert")).toHaveLength(1);
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["artists"] });
+    // A fresh attempt starts from an empty form, so the saved row is never resubmitted.
+    fireEvent.click(screen.getByRole("button", { name: "Add technician" }));
+    const again = await screen.findByRole("dialog");
+    expect(within(again).getByLabelText("Name")).toHaveValue("");
+    expect(within(again).getByLabelText("Email")).toHaveValue("");
+  });
+
+  it("does not insert twice when the submit button is clicked repeatedly", async () => {
+    const fake = seed();
+    renderPage();
+    const dialog = await fillAndSubmit();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add and invite" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add and invite" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(fake.calls.filter((c) => c.method === "insert")).toHaveLength(1);
+    expect(fake.calls.filter((c) => c.table === "fn:create-invitation")).toHaveLength(1);
+  });
+
+  it("keeps the dialog open with a save error when the insert fails, and sends no invitation", async () => {
+    const fake = seed({ insertError: new Error("rls") });
+    renderPage();
+    await fillAndSubmit();
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("The technician could not be saved. Please try again."),
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(toast.success).not.toHaveBeenCalled();
+    expect(fake.calls.some((c) => c.table === "fn:create-invitation")).toBe(false);
+  });
+
+  it("hides the add actions for a user without the add_artists capability", async () => {
+    canAdd.value = false;
+    seed();
+    renderPage();
+    await screen.findByText("Anna");
+    expect(screen.queryByRole("button", { name: "Add technician" })).not.toBeInTheDocument();
+  });
+
+  it("explains the empty state without an add action when the capability is missing", async () => {
+    canAdd.value = false;
+    seed({ artists: [] });
+    renderPage();
+    expect(await screen.findByText("No technicians yet")).toBeInTheDocument();
+    expect(screen.getByText("Ask an admin to add technicians.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add your first technician" })).not.toBeInTheDocument();
+  });
+
+  it("shows the load error when the technicians cannot be loaded", async () => {
+    seed({ artistsError: new Error("down") });
+    renderPage();
+    expect(await screen.findByText("Could not load your technicians. Please try again.")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("tells the user when the pending invitations cannot be loaded and hides resend and revoke", async () => {
+    seed({ invitationsError: new Error("down") });
+    renderPage();
+    expect(await screen.findByText(/Could not load the pending invitations/)).toBeInTheDocument();
+    expect(screen.getByText("Bernd")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Resend invitation" })).not.toBeInTheDocument();
+  });
+});
+
+describe("TechniciansPage invite action", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    canAdd.value = true;
+  });
+
+  it("invites a saved technician who has an email but no invitation", async () => {
+    const fake = seed({ artists: [{ id: "a9", name: "Emil", email: "emil@x.de", phone: null, user_id: null }] });
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Send invitation" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Invitation sent"));
+    expect(fake.calls.find((c) => c.table === "fn:create-invitation")?.args[0]).toMatchObject({
+      role: "artist", artist_id: "a9", email: "emil@x.de",
+    });
   });
 });

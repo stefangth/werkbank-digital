@@ -15,7 +15,8 @@
     "empty": {
       "title": "Noch keine Monteure",
       "body": "Leg deinen ersten Monteur an und schick die Einladung zur App in einem Schritt mit.",
-      "action": "Ersten Monteur anlegen"
+      "action": "Ersten Monteur anlegen",
+      "reason": "Bitte einen Admin, Monteure anzulegen."
     },
     "columns": {
       "name": "Name",
@@ -31,7 +32,8 @@
     },
     "actions": {
       "resend": "Einladung erneut senden",
-      "revoke": "Einladung widerrufen"
+      "revoke": "Einladung widerrufen",
+      "invite": "Einladung senden"
     },
     "dialog": {
       "title": "Monteur anlegen",
@@ -49,11 +51,15 @@
     },
     "toast": {
       "added": "Monteur angelegt und Einladung gesendet",
-      "addFailed": "Das hat nicht geklappt. Prüfe in der Liste, ob der Monteur angelegt wurde.",
       "resent": "Einladung erneut gesendet",
       "resendFailed": "Die Einladung konnte nicht erneut gesendet werden",
       "revoked": "Einladung widerrufen",
-      "revokeFailed": "Die Einladung konnte nicht widerrufen werden"
-    }
+      "revokeFailed": "Die Einladung konnte nicht widerrufen werden",
+      "saveFailed": "Der Monteur konnte nicht gespeichert werden. Versuche es bitte noch einmal.",
+      "inviteFailed": "Die Einladung konnte nicht gesendet werden. Versuche es bitte noch einmal.",
+      "invited": "Einladung gesendet",
+      "savedInviteFailed": "Monteur gespeichert, aber die Einladung konnte nicht gesendet werden. Du kannst sie in der Liste erneut senden."
+    },
+    "invitationsFailed": "Die offenen Einladungen konnten nicht geladen werden, deshalb sind Erneut senden und Widerrufen nicht verfügbar. Lade die Seite bitte neu."
   }
 }

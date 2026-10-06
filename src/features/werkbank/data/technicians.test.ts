@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
-import { createTechnician, fetchTechnicians } from "./technicians";
+import { TechnicianInviteError, createTechnician, fetchTechnicians } from "./technicians";
 
 const asClient = (fake: ReturnType<typeof createFakeSupabase>) => fake as unknown as SupabaseClient<Database>;
 
@@ -37,6 +37,24 @@ describe("fetchTechnicians", () => {
   });
 });
 
+describe("fetchTechnicians failures", () => {
+  it("rejects when the artists query errors", async () => {
+    const fake = createFakeSupabase({
+      artists: { data: null, error: new Error("artists failed") },
+      "rpc:list_pending_invited_artists": { data: [], error: null },
+    });
+    await expect(fetchTechnicians(asClient(fake), "org-1")).rejects.toThrow("artists failed");
+  });
+
+  it("rejects when the pending invites RPC errors", async () => {
+    const fake = createFakeSupabase({
+      artists: { data: [{ id: "a1", name: "Anna", email: null, phone: null, user_id: null }], error: null },
+      "rpc:list_pending_invited_artists": { data: null, error: new Error("rpc failed") },
+    });
+    await expect(fetchTechnicians(asClient(fake), "org-1")).rejects.toThrow("rpc failed");
+  });
+});
+
 describe("createTechnician", () => {
   it("inserts the artists row, then invites it as artist", async () => {
     const fake = createFakeSupabase({
@@ -63,5 +81,26 @@ describe("createTechnician", () => {
       createTechnician(asClient(fake), { orgId: "org-1", name: "Dora", email: "dora@x.de", phone: null }),
     ).rejects.toThrow("insert failed");
     expect(fake.calls.some((c) => c.table === "fn:create-invitation")).toBe(false);
+  });
+
+  it("throws a TechnicianInviteError carrying the saved row id when only the invite fails", async () => {
+    const fake = createFakeSupabase({
+      artists: { data: { id: "new-1" }, error: null },
+      "fn:create-invitation": { data: null, error: new Error("mail down") },
+    });
+    const err = await createTechnician(asClient(fake), {
+      orgId: "org-1", name: "Dora", email: "dora@x.de", phone: null,
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(TechnicianInviteError);
+    expect((err as TechnicianInviteError).artistId).toBe("new-1");
+    expect(fake.calls.filter((c) => c.method === "insert")).toHaveLength(1);
+  });
+
+  it("does not wrap an insert failure as an invite error", async () => {
+    const fake = createFakeSupabase({ artists: { data: null, error: new Error("rls") } });
+    const err = await createTechnician(asClient(fake), {
+      orgId: "org-1", name: "Dora", email: "dora@x.de", phone: null,
+    }).catch((e: unknown) => e);
+    expect(err).not.toBeInstanceOf(TechnicianInviteError);
   });
 });
