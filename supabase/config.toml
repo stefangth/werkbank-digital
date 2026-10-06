@@ -21,7 +21,9 @@ additional_redirect_urls = ["http://localhost:8080", "http://127.0.0.1:8080"]
 # ─────────────────────────────────────────────────────────────────────────────
 # API — schemas exposed through PostgREST on the LOCAL stack. `werkbank` is the
 # Werkbank plugin schema (ADR-0013); production needs the same entry under
-# "Exposed schemas" in the Supabase dashboard.
+# "Exposed schemas" in the Supabase dashboard. An existing local volume needs
+# `supabase migration up --local` (or `npm run local:reset`) after pulling: PostgREST
+# cannot load the werkbank schema before the migration is applied.
 # ─────────────────────────────────────────────────────────────────────────────
 [api]
 schemas = ["public", "graphql_public", "werkbank"]

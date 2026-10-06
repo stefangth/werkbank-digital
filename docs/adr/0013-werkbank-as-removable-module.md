@@ -66,8 +66,8 @@ the schema carries 242 migrations. The maintainer is a single person.
   new kind costs an estimated 10 to 20 percent extra in Teil 1 and little afterwards.
 - **New pattern.** A second exposed Postgres schema is new to this repo. It needs a
   `[api] schemas` entry in `supabase/config.toml`, type generation with
-  `--schema public,werkbank`, client access via `supabase.schema('werkbank')`, and a manual
-  "Exposed schemas" setting in the production dashboard that no migration can apply.
+  `--schema public,graphql_public,werkbank`, client access via
+  `supabase.schema('werkbank')`, and a manual "Exposed schemas" setting in the production dashboard that no migration can apply.
 - **Brand.** Until Werkbank has its own domain, pre-login pages and email links resolve to
   the Showflow host. Inside the app, Werkbank orgs see the Werkbank brand from Teil 1.
 

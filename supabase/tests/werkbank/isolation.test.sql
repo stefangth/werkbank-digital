@@ -1,11 +1,21 @@
 -- Werkbank isolation: the plugin lives in its own schema so that removal is
 -- `drop schema werkbank cascade`. That only stays safe while nothing in `public`
--- depends on an object in `werkbank`.
+-- depends on an object in `werkbank`. Two complementary checks:
+--   1. pg_depend: dependency edges from public relations, SQL-standard-body functions,
+--      view rewrite rules, column defaults, constraints, triggers and policies.
+--   2. prosrc text scan: functions in public whose source mentions `werkbank.`.
+--      pg_depend records nothing for plpgsql or quoted-body SQL functions, so check 1
+--      alone would miss a public function that selects from a werkbank table.
+-- Policy and view definitions are covered by check 1 only; a text scan of other
+-- object bodies is not done.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(4);
+SELECT plan(8);
 
 SELECT has_schema('werkbank', 'werkbank schema exists');
+SELECT ok(
+  NOT has_schema_privilege('anon', 'werkbank', 'USAGE'),
+  'anon has no USAGE on schema werkbank');
 
 -- Every pg_depend edge from an object living in `public` to an object living in `werkbank`.
 -- Dependents are resolved per catalog: relations (tables, views), functions, view
@@ -46,7 +56,7 @@ CREATE TABLE werkbank.t (id int);
 CREATE VIEW public.werkbank_isolation_probe AS SELECT id FROM werkbank.t;
 SELECT isnt_empty(
   $$ SELECT * FROM pg_temp.public_to_werkbank_deps() $$,
-  'detector finds a public view that depends on a werkbank table');
+  'pg_depend check finds a public view that depends on a werkbank table');
 DROP VIEW public.werkbank_isolation_probe;
 DROP TABLE werkbank.t;
 
@@ -57,13 +67,39 @@ CREATE FUNCTION public.werkbank_isolation_probe() RETURNS bigint
 LANGUAGE sql BEGIN ATOMIC SELECT count(*) FROM werkbank.t; END;
 SELECT isnt_empty(
   $$ SELECT * FROM pg_temp.public_to_werkbank_deps() $$,
-  'detector finds a public function that depends on a werkbank table');
+  'pg_depend check finds a public function with a SQL-standard body on a werkbank table');
 DROP FUNCTION public.werkbank_isolation_probe();
 DROP TABLE werkbank.t;
 
 SELECT is_empty(
   $$ SELECT * FROM pg_temp.public_to_werkbank_deps() $$,
-  'no object in public depends on an object in werkbank');
+  'pg_depend check: no relation, function, rule, default, constraint, trigger or policy in public depends on werkbank');
+
+-- Text scan: public functions whose source mentions `werkbank.` (case-insensitive).
+CREATE FUNCTION pg_temp.public_functions_mentioning_werkbank() RETURNS SETOF text
+LANGUAGE sql STABLE AS $$
+  SELECT p.oid::regprocedure::text
+  FROM pg_proc p
+  WHERE p.pronamespace = 'public'::regnamespace
+    AND p.prosrc ~* 'werkbank\.'
+$$;
+
+-- Prove the text scan works: a plpgsql body leaves no pg_depend edge, only source text.
+CREATE TABLE werkbank.t (id int);
+CREATE FUNCTION public.werkbank_isolation_probe() RETURNS bigint
+LANGUAGE plpgsql AS $$ BEGIN RETURN (SELECT count(*) FROM werkbank.t); END $$;
+SELECT is_empty(
+  $$ SELECT * FROM pg_temp.public_to_werkbank_deps() $$,
+  'pg_depend check alone misses a plpgsql function that reads a werkbank table');
+SELECT isnt_empty(
+  $$ SELECT * FROM pg_temp.public_functions_mentioning_werkbank() $$,
+  'prosrc scan finds a public plpgsql function that reads a werkbank table');
+DROP FUNCTION public.werkbank_isolation_probe();
+DROP TABLE werkbank.t;
+
+SELECT is_empty(
+  $$ SELECT * FROM pg_temp.public_functions_mentioning_werkbank() $$,
+  'prosrc scan: no function in public mentions werkbank.');
 
 SELECT * FROM finish();
 ROLLBACK;
