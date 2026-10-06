@@ -121,7 +121,7 @@ export function EditOrgDialog({ org, onClose }: { org: OrgStat | null; onClose: 
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="e-kind">Workspace type</Label>
-            <OrgKindSelect id="e-kind" value={org?.org_kind ?? "production"} onChange={(k) => kindMutation.mutate(k)} disabled={kindMutation.isPending} />
+            <OrgKindSelect id="e-kind" value={org?.org_kind ?? "production"} onChange={(k) => kindMutation.mutate(k)} disabled={kindMutation.isPending} includeLocked />
             <p className="text-xs text-muted-foreground">Saves immediately. Changes the words the org sees, never its data.</p>
           </div>
           <DialogFooter><Button type="submit" disabled={mutation.isPending}>Save</Button></DialogFooter>

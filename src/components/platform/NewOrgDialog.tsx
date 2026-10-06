@@ -100,7 +100,7 @@ export function NewOrgDialog() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="new-org-kind">Workspace type</Label>
-            <OrgKindSelect id="new-org-kind" value={form.watch("orgKind")} onChange={(k) => form.setValue("orgKind", k)} />
+            <OrgKindSelect id="new-org-kind" value={form.watch("orgKind")} onChange={(k) => form.setValue("orgKind", k)} includeLocked />
           </div>
           <div className="space-y-3 border border-border rounded-control p-4">
             <p className="text-sm font-medium">Modules</p>

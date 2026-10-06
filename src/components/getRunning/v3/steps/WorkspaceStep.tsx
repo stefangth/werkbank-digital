@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useLanguage } from "@/features/i18n/LanguageContext";
 import { setOrgKind } from "@/data/orgs";
-import { ORG_KINDS, ORG_KIND_LABELS, DEFAULT_ORG_KIND, type OrgKind } from "@/lib/orgKind";
+import { ORG_KINDS, ORG_KIND_LABELS, DEFAULT_ORG_KIND, isSwitchableByOrgAdmin, type OrgKind } from "@/lib/orgKind";
 import { WizardFooterAction } from "@/components/getRunning/v3/WizardFooterAction";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -50,7 +50,7 @@ export function WorkspaceStep({ orgId, onDone }: { orgId: string | null; onDone:
         aria-label={t("body.workspace.heading")}
         className="gap-2"
       >
-        {ORG_KINDS.map((kind) => (
+        {ORG_KINDS.filter(isSwitchableByOrgAdmin).map((kind) => (
           <Card
             key={kind}
             className={cn(

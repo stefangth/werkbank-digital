@@ -2,10 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
 
+// ESM exports cannot be spied on, so mock the module: "staffing" reports locked when h.lockStaffing is set.
+vi.mock("@/lib/orgKind", async (orig) => ({
+  ...(await orig<typeof import("@/lib/orgKind")>()),
+  isSwitchableByOrgAdmin: (k: string) => !(h.lockStaffing && k === "staffing"),
+}));
+
 const setOrgKind = vi.fn((..._a: unknown[]) => Promise.resolve());
 vi.mock("@/data/orgs", async (orig) => ({ ...(await orig<typeof import("@/data/orgs")>()), setOrgKind: (...a: unknown[]) => setOrgKind(...a) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-const h = vi.hoisted(() => ({ admin: true }));
+const h = vi.hoisted(() => ({ admin: true, lockStaffing: false }));
 vi.mock("@/features/auth/AuthContext", async (orig) => ({
   ...(await orig<typeof import("@/features/auth/AuthContext")>()),
   useAuth: () => ({
@@ -18,7 +24,7 @@ vi.mock("@/features/auth/AuthContext", async (orig) => ({
 import { WorkspaceStep } from "./WorkspaceStep";
 
 describe("WorkspaceStep", () => {
-  beforeEach(() => { vi.clearAllMocks(); h.admin = true; });
+  beforeEach(() => { vi.clearAllMocks(); h.admin = true; h.lockStaffing = false; });
 
   it("preselects the org's kind, saves the pick and calls onDone", async () => {
     const onDone = vi.fn();
@@ -43,5 +49,13 @@ describe("WorkspaceStep", () => {
     expect(screen.getByRole("radio", { name: /live production/i })).toBeDisabled();
     expect(screen.queryByRole("button", { name: /continue/i })).not.toBeInTheDocument();
     expect(screen.getByText(/ask an admin/i)).toBeInTheDocument();
+  });
+
+  it("renders cards only for kinds an org admin may switch to", () => {
+    h.lockStaffing = true;
+    renderWithProviders(<WorkspaceStep orgId="org-1" onDone={() => {}} />);
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    expect(screen.getByRole("radio", { name: /live production/i })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /staffing agency/i })).not.toBeInTheDocument();
   });
 });
