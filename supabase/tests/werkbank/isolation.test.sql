@@ -8,9 +8,11 @@
 --      alone would miss a public function that selects from a werkbank table.
 -- Policy and view definitions are covered by check 1 only; a text scan of other
 -- object bodies is not done.
+-- A third check guards the data itself: every table in `werkbank` must have RLS enabled,
+-- because the schema is exposed through the API like `public`.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(8);
+SELECT plan(10);
 
 SELECT has_schema('werkbank', 'werkbank schema exists');
 SELECT ok(
@@ -100,6 +102,27 @@ DROP TABLE werkbank.t;
 SELECT is_empty(
   $$ SELECT * FROM pg_temp.public_functions_mentioning_werkbank() $$,
   'prosrc scan: no function in public mentions werkbank.');
+
+-- RLS: every table in schema werkbank has row level security enabled.
+CREATE FUNCTION pg_temp.werkbank_tables_without_rls() RETURNS SETOF text
+LANGUAGE sql STABLE AS $$
+  SELECT c.oid::regclass::text
+  FROM pg_class c
+  WHERE c.relnamespace = 'werkbank'::regnamespace
+    AND c.relkind IN ('r', 'p')
+    AND NOT c.relrowsecurity
+$$;
+
+-- Prove the RLS check works: a fresh table starts without RLS.
+CREATE TABLE werkbank.t (id int);
+SELECT isnt_empty(
+  $$ SELECT * FROM pg_temp.werkbank_tables_without_rls() $$,
+  'RLS check finds a werkbank table without row level security');
+DROP TABLE werkbank.t;
+
+SELECT is_empty(
+  $$ SELECT * FROM pg_temp.werkbank_tables_without_rls() $$,
+  'RLS check: every table in schema werkbank has row level security enabled');
 
 SELECT * FROM finish();
 ROLLBACK;
