@@ -533,6 +533,18 @@ A booking moves through: `suggested → soft_booked → confirmed` (or `cancelle
 
 ---
 
+## Werkbank module
+
+Werkbank Digital (org kind `handwerk`, a back office for trade businesses) is a removable plugin inside this codebase, not a fork: [ADR-0013](docs/adr/0013-werkbank-as-removable-module.md). Design: `docs/superpowers/specs/2026-10-06-werkbank-fundament-design.md`.
+
+- **Plugin paths:** `src/features/werkbank/`, `supabase/functions/werkbank-*` and `_shared/werkbank/`, migrations `*_werkbank_*`, `supabase/tests/werkbank/`, `public/werkbank/`, `e2e/werkbank-*.spec.ts`.
+- **Core never names the module** (`werkbank`, `handwerk`) outside the manifests: `src/modules/{registry,i18n,ui}.ts` and `supabase/functions/_shared/modules.ts`. One import and one array entry per manifest. Core code stays kind-neutral (org kinds are rows in `public.org_kinds`, brand, nav and provisioning defaults come from registries); behaviour for `production` and `staffing` must not change.
+- **Guards, all in CI:** ESLint import boundaries in both directions (`eslint.config.js`), `scripts/moduleIsolation.test.ts` (scan for the names outside the allow-list), and `supabase/tests/werkbank/isolation.test.sql` (nothing in `public` may depend on schema `werkbank`). Extend the allow-lists there instead of working around them.
+- **Data:** Werkbank tables live in the Postgres schema `werkbank` and are read with `supabase.schema('werkbank')`. Generate types with `--schema public,graphql_public,werkbank`. The schema is listed in `supabase/config.toml` `[api] schemas`; production needs the same in the dashboard (Settings, API, "Exposed schemas"), which no migration can apply.
+- **Create a handwerk org** as a super-admin in Platform, Organizations, New organization, workspace type "Handwerksbetrieb". Only super-admins can switch an org into or out of this kind.
+
+---
+
 ## Test accounts (development only)
 
 Onboarding is invite-only, so there is no public signup. **Bootstrap the first super-admin** once per environment — the only setup step that needs SQL — per the runbook at `docs/runbooks/first-super-admin-bootstrap.md`: create the auth user (Supabase dashboard), then `insert into public.platform_admins (user_id) select id from auth.users where lower(email) = lower('owner@example.com')`. Sign in and you land in the **Platform console**, where **Organizations → New organization** provisions an org (seeds its starter catalog + emails the first admin an `/accept-invite?token=` link) with no SQL. That admin then invites producers/artists from **Admin → Invites**; each invitee accepts via the emailed link. There is no automated seeding function.
