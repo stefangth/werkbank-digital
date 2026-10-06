@@ -19,6 +19,8 @@
 // from Settings itself. The page does not rewrite the URL when the user then switches tabs
 // by hand, so the param is a starting point, not a lock.
 
+import { DEFAULT_ORG_KIND, type OrgKind } from "@/lib/orgKind";
+
 /** Every `?tab=` value the page is willing to open. */
 export const SETTINGS_TAB_PARAMS = [
   "organization",
@@ -38,6 +40,28 @@ export const SETTINGS_TAB_PARAMS = [
 ] as const;
 
 export type SettingsTabParam = typeof SETTINGS_TAB_PARAMS[number];
+
+/**
+ * Org kinds a tab is offered to. A tab absent from this map is kind-neutral: every kind
+ * sees it. The booking-specific tabs belong to the core kinds only, so a plugin org kind
+ * does not see Showflow's booking, sourcing or casting settings.
+ */
+export const SETTINGS_TAB_KINDS: Partial<Record<SettingsTabParam, readonly OrgKind[]>> = {
+  "how-it-works": ["production", "staffing"],
+  "get-running": ["production", "staffing"],
+  "casts-coverage": ["production", "staffing"],
+  skills: ["production", "staffing"],
+  airtable: ["production", "staffing"],
+  booking: ["production", "staffing"],
+  "hire-orders": ["production", "staffing"],
+};
+
+/** Whether `kind` is offered this tab. Takes a plain string because SettingsPage also
+ *  renders tabs that are not deep-link targets ("trust"); those are kind-neutral. */
+export function isSettingsTabAllowedForKind(tab: string, kind: OrgKind): boolean {
+  const kinds = (SETTINGS_TAB_KINDS as Partial<Record<string, readonly OrgKind[]>>)[tab];
+  return kinds === undefined || kinds.includes(kind);
+}
 
 /** Tabs whose trigger and content only render for an admin. */
 const ADMIN_ONLY: readonly SettingsTabParam[] = ["permissions", "people", "activity"];
@@ -64,15 +88,21 @@ const LEGACY_TAB_REDIRECTS: Readonly<Record<string, SettingsTabParam>> = {
  *  ever loosened). Note it is NOT a safe universal fallback: "organization" is itself gated
  *  `show: isAdmin || isProducer` in SettingsPage `navGroups`, so such a caller would have no
  *  visible Settings tab at all — this fallback (and the guard) would need revisiting together. */
-export function defaultSettingsTab(isAdmin: boolean, isProducer: boolean = false): SettingsTabParam {
-  return isAdmin || isProducer ? "how-it-works" : "organization";
+export function defaultSettingsTab(
+  isAdmin: boolean,
+  isProducer: boolean = false,
+  kind: OrgKind = DEFAULT_ORG_KIND,
+): SettingsTabParam {
+  // "organization" is allowed for every kind, so it is the fallback when the role default is not.
+  return (isAdmin || isProducer) && isSettingsTabAllowedForKind("how-it-works", kind) ? "how-it-works" : "organization";
 }
 
 /**
  * The tab SettingsPage should open on, from the raw `?tab=` search param.
  *
  * Anything unrecognised, any admin-only tab asked for by a non-admin, and any
- * super-admin-only tab asked for by a non-super-admin, falls back to the role default
+ * super-admin-only tab asked for by a non-super-admin, and any tab the org kind is not
+ * offered, falls back to the role default
  * rather than selecting a tab with no trigger and no content.
  */
 export function resolveInitialTab(
@@ -80,13 +110,15 @@ export function resolveInitialTab(
   isAdmin: boolean,
   isSuperAdmin: boolean = false,
   isProducer: boolean = false,
+  kind: OrgKind = DEFAULT_ORG_KIND,
 ): SettingsTabParam {
-  const fallback = defaultSettingsTab(isAdmin, isProducer);
+  const fallback = defaultSettingsTab(isAdmin, isProducer, kind);
   if (!param) return fallback;
   const redirected = LEGACY_TAB_REDIRECTS[param];
   const match = redirected ?? SETTINGS_TAB_PARAMS.find((t) => t === param);
   if (!match) return fallback;
   if (!isAdmin && ADMIN_ONLY.includes(match)) return fallback;
   if (!isSuperAdmin && SUPER_ADMIN_ONLY.includes(match)) return fallback;
+  if (!isSettingsTabAllowedForKind(match, kind)) return fallback;
   return match;
 }

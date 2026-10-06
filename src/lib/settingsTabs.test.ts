@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolveInitialTab, SETTINGS_TAB_PARAMS } from "./settingsTabs";
+import type { OrgKind } from "./orgKind";
+import { isSettingsTabAllowedForKind, resolveInitialTab, SETTINGS_TAB_KINDS, SETTINGS_TAB_PARAMS } from "./settingsTabs";
+
+// A kind no core settings tab lists, standing in for a plugin kind.
+const TEST_KIND = "test_kind" as OrgKind;
 
 describe("resolveInitialTab", () => {
   it("honours a whitelisted tab param", () => {
@@ -79,6 +83,49 @@ describe("resolveInitialTab", () => {
 
   it("honours the get-running deep link for a super-admin too", () => {
     expect(resolveInitialTab("get-running", false, true, false)).toBe("get-running");
+  });
+});
+
+describe("kind-aware settings tabs", () => {
+  it("restricts the booking-specific tabs to production and staffing", () => {
+    for (const tab of ["how-it-works", "get-running", "casts-coverage", "skills", "airtable", "booking", "hire-orders"] as const) {
+      expect(SETTINGS_TAB_KINDS[tab]).toEqual(["production", "staffing"]);
+    }
+  });
+
+  it("allows every tab for production and staffing, and the neutral tabs for any kind", () => {
+    for (const tab of [...SETTINGS_TAB_PARAMS, "trust"]) {
+      expect(isSettingsTabAllowedForKind(tab, "production")).toBe(true);
+      expect(isSettingsTabAllowedForKind(tab, "staffing")).toBe(true);
+    }
+    for (const tab of ["organization", "permissions", "people", "activity", "email-templates", "notifications", "trust", "docs"]) {
+      expect(isSettingsTabAllowedForKind(tab, TEST_KIND)).toBe(true);
+    }
+  });
+
+  it("refuses the booking-specific tabs for another kind", () => {
+    for (const tab of ["how-it-works", "get-running", "casts-coverage", "skills", "airtable", "booking", "hire-orders"]) {
+      expect(isSettingsTabAllowedForKind(tab, TEST_KIND)).toBe(false);
+    }
+  });
+
+  it("opens a tab the kind allows exactly as before", () => {
+    expect(resolveInitialTab("booking", true, false, false, "production")).toBe("booking");
+    expect(resolveInitialTab("booking", true, false, false, "staffing")).toBe("booking");
+    expect(resolveInitialTab("notifications", true, false, false, TEST_KIND)).toBe("notifications");
+  });
+
+  it("falls back to 'organization' when the asked-for tab is not allowed for the kind", () => {
+    expect(resolveInitialTab("booking", true, false, false, TEST_KIND)).toBe("organization");
+    expect(resolveInitialTab("casts-cities", true, false, false, TEST_KIND)).toBe("organization");
+    expect(resolveInitialTab("booking", false, false, true, TEST_KIND)).toBe("organization");
+  });
+
+  it("picks the default among allowed tabs: 'organization' when how-it-works is not allowed", () => {
+    expect(resolveInitialTab(null, true, false, false, TEST_KIND)).toBe("organization");
+    expect(resolveInitialTab(null, false, false, true, TEST_KIND)).toBe("organization");
+    expect(resolveInitialTab("nope", true, false, false, TEST_KIND)).toBe("organization");
+    expect(resolveInitialTab(null, true, false, false, "production")).toBe("how-it-works");
   });
 });
 

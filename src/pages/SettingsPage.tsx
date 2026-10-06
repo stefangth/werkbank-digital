@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BOOKING_ENGINE_DEFAULTS } from '@/config/app.config';
-import { resolveInitialTab } from '@/lib/settingsTabs';
+import { defaultSettingsTab, isSettingsTabAllowedForKind, resolveInitialTab } from '@/lib/settingsTabs';
+import { useOrgKind } from '@/hooks/useOrgKind';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -193,17 +194,27 @@ export default function SettingsPage() {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const navKey = useLocation().key;
-  const [activeTab, setActiveTab] = useState<string>(() => resolveInitialTab(tabParam, isAdmin, isSuperAdmin, isProducer));
+  //
+  // Kind-aware: tabs the org's kind is not offered (SETTINGS_TAB_KINDS) get no trigger, and
+  // `activeTab` below is never one of them, so their <TabsContent> can never mount for that
+  // kind (Radix renders only the active content) and needs no gate of its own.
+  const orgKind = useOrgKind();
+  const [selectedTab, setActiveTab] = useState<string>(() => resolveInitialTab(tabParam, isAdmin, isSuperAdmin, isProducer, orgKind));
   // No param means "wherever you were": a link into plain /settings must not drag someone
   // off the tab they are working on back to the role default. Adjust-during-render tracking
   // the same inputs the effect depended on (navKey is the repeat-navigation trigger)
   // instead of a setState-in-effect.
-  const [tabSync, setTabSync] = useState({ tabParam, isAdmin, isSuperAdmin, isProducer, navKey });
+  const [tabSync, setTabSync] = useState({ tabParam, isAdmin, isSuperAdmin, isProducer, navKey, orgKind });
   if (tabSync.tabParam !== tabParam || tabSync.isAdmin !== isAdmin || tabSync.isSuperAdmin !== isSuperAdmin
-    || tabSync.isProducer !== isProducer || tabSync.navKey !== navKey) {
-    setTabSync({ tabParam, isAdmin, isSuperAdmin, isProducer, navKey });
-    if (tabParam) setActiveTab(resolveInitialTab(tabParam, isAdmin, isSuperAdmin, isProducer));
+    || tabSync.isProducer !== isProducer || tabSync.navKey !== navKey || tabSync.orgKind !== orgKind) {
+    setTabSync({ tabParam, isAdmin, isSuperAdmin, isProducer, navKey, orgKind });
+    if (tabParam) setActiveTab(resolveInitialTab(tabParam, isAdmin, isSuperAdmin, isProducer, orgKind));
   }
+  // An org switch to another kind can leave the selected tab hidden for the new kind (and
+  // with no `?tab=` there is nothing to re-resolve from): land on the kind's default instead.
+  const activeTab = isSettingsTabAllowedForKind(selectedTab, orgKind)
+    ? selectedTab
+    : defaultSettingsTab(isAdmin, isProducer, orgKind);
   // Keep the Tabs ARIA orientation matched to the actual layout axis: the nav rail is
   // vertical on md+ but a horizontal scroll row below md, so arrow-key roving (Up/Down
   // vs Left/Right) follows the visual direction at each breakpoint. Breakpoint (768px)
@@ -367,7 +378,7 @@ export default function SettingsPage() {
       >
         <TabsList className="mb-4 flex h-auto w-full items-stretch gap-1 overflow-x-auto bg-transparent p-0 md:sticky md:top-4 md:mb-0 md:flex-col md:gap-0 md:overflow-visible">
           {navGroups.map((group) => {
-            const items = group.items.filter((i) => i.show);
+            const items = group.items.filter((i) => i.show && isSettingsTabAllowedForKind(i.value, orgKind));
             if (items.length === 0) return null;
             return (
               <div key={group.heading} className="contents md:mt-4 md:block md:first:mt-0">

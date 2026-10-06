@@ -51,6 +51,17 @@ vi.mock("@/hooks/useCapabilities", async (orig) => ({
 // to seed every table that live-data wiring touches just to prove the tab mounts.
 vi.mock("@/hooks/useGetRunningV3", () => ({ useGetRunningV3: vi.fn() }));
 
+// A plugin kind for the kind-aware nav tests: the vocabulary table (derived once at module
+// load) gains a "test_kind" entry cloned from production so vocabulary-reading children
+// (PageMini) render; everything else stays real.
+vi.mock("@/lib/orgKind", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/orgKind")>();
+  return {
+    ...actual,
+    VOCABULARY: { ...actual.VOCABULARY, test_kind: actual.VOCABULARY.production },
+  };
+});
+
 import { useAuth } from "@/features/auth/AuthContext";
 import { useCan } from "@/hooks/useCapabilities";
 import { useGetRunningV3 } from "@/hooks/useGetRunningV3";
@@ -221,6 +232,45 @@ describe("SettingsPage grouped vertical nav", () => {
     fireEvent.mouseDown(await screen.findByRole("tab", { name: /email templates/i }));
     expect((await screen.findAllByText("Booking engine")).length).toBeGreaterThan(0);
     expect(screen.getByText("Password reset")).toBeInTheDocument();
+  });
+});
+
+describe("SettingsPage kind-aware nav", () => {
+  const TAB_LABELS = [/how this org works/i, /get running/i, /casts & coverage/i, /^skills$/i, /sources/i, /booking engine/i, /contracts/i];
+
+  it("keeps the full tab list for production", async () => {
+    vi.mocked(useAuth).mockReturnValue(DEFAULT_AUTH as never);
+    renderWithProviders(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    await screen.findByText("Modules", { selector: "p" });
+    for (const name of TAB_LABELS) expect(screen.getByRole("tab", { name })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^organization$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^notifications$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /email templates/i })).toBeInTheDocument();
+  });
+
+  it("hides Booking engine, Sources, Skills and the other showflow tabs for another kind", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      ...DEFAULT_AUTH,
+      currentOrg: { ...DEFAULT_AUTH.currentOrg, org_kind: "test_kind" },
+    } as never);
+    renderWithProviders(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    await screen.findByRole("tab", { name: /^organization$/i });
+    for (const name of TAB_LABELS) expect(screen.queryByRole("tab", { name })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^notifications$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /email templates/i })).toBeInTheDocument();
+    // The default tab is one the kind allows: Organization is selected.
+    expect(screen.getByRole("tab", { name: /^organization$/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("does not open a hidden tab from a ?tab= deep link for another kind", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      ...DEFAULT_AUTH,
+      currentOrg: { ...DEFAULT_AUTH.currentOrg, org_kind: "test_kind" },
+    } as never);
+    renderWithProviders(<MemoryRouter initialEntries={["/settings?tab=booking"]}><SettingsPage /></MemoryRouter>);
+    const organization = await screen.findByRole("tab", { name: /^organization$/i });
+    expect(organization).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByText("Booking engine is not enabled")).not.toBeInTheDocument();
   });
 });
 
