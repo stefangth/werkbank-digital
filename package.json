@@ -70,7 +70,7 @@
     "framer-motion": "^13.2.0",
     "i18next": "^23.16.8",
     "input-otp": "^1.4.2",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.51.0",
     "next-themes": "^0.3.0",
     "papaparse": "^5.5.4",
     "posthog-js": "^1.415.5",
