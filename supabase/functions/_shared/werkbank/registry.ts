@@ -71,11 +71,31 @@ export const WERKBANK_BRAND = {
   defaultFrom: null,
 } as const;
 
+/**
+ * The org-invitation copy a new handwerk org starts with, stored as its `email_copy`
+ * setting (the same flat override map the Email templates editor writes, see
+ * src/lib/emailTemplates/emailCopy.ts). Without it the invitation would describe
+ * Showflow's booking product. `email_copy` has no language dimension, so the values are
+ * German to match the seeded `org_language`. The inviter fallback is the brand name,
+ * which reads in both languages ("Invited by" / "Eingeladen von" Werkbank Digital) and is
+ * also what provision-org names as the first admin's inviter.
+ */
+export const WERKBANK_INVITATION_COPY = {
+  "org-invitation.subject": "Einladung zu {{orgName}} bei Werkbank Digital",
+  "org-invitation.previewText": "Nimm die Einladung an und leg los.",
+  "org-invitation.productIntro": "Werkbank Digital ist die Software, mit der {{orgName}} Kunden, Aufträge und Rechnungen verwaltet.",
+  "org-invitation.roleIntroAdmin": "Du bekommst volle Kontrolle über den Betrieb, inklusive Personen und Einstellungen.",
+  "org-invitation.roleIntroProducer": "Du erstellst Angebote, Aufträge und Rechnungen und planst die Monteure ein.",
+  "org-invitation.roleIntroArtist": "Du siehst deine Aufträge und meldest sie als erledigt.",
+  "org-invitation.roleIntroArtistOffers": "Du siehst deine Aufträge und meldest sie als erledigt.",
+  "org-invitation.inviterFallback": "Werkbank Digital",
+} as const;
+
 /** Edge provisioning defaults per kind (read by supabase/functions/provision-org). */
 export const WERKBANK_PROVISIONING = {
   handwerk: {
     entitlements: { booking_flow: false, hire_orders: false, language_packages: true },
-    settings: { org_language: "de" },
+    settings: { org_language: "de", email_copy: WERKBANK_INVITATION_COPY },
     skipBookingFlowSeed: true,
   },
 } as const;

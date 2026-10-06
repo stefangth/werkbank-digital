@@ -4,7 +4,7 @@ import { BRANDS, brandForKind, resolveBrand } from "@/lib/brand";
 import { roleLabel, roleDescription } from "@/config/app.config";
 import { MODULE_ORG_KINDS, MODULE_BRANDS } from "@/modules/registry";
 import { readFileSync } from "node:fs";
-import { WERKBANK_ORG_KIND, WERKBANK_BRAND, WERKBANK_PROVISIONING } from "./registry";
+import { WERKBANK_ORG_KIND, WERKBANK_BRAND, WERKBANK_INVITATION_COPY, WERKBANK_PROVISIONING } from "./registry";
 
 describe("werkbank org kind", () => {
   it("is registered after the core kinds", () => {
@@ -97,11 +97,11 @@ describe("werkbank brand", () => {
 });
 
 describe("werkbank provisioning defaults", () => {
-  it("turns off booking and hire orders and defaults the org language to German", () => {
+  it("turns off booking and hire orders, defaults the org language to German and seeds the invitation copy", () => {
     expect(WERKBANK_PROVISIONING).toEqual({
       handwerk: {
         entitlements: { booking_flow: false, hire_orders: false, language_packages: true },
-        settings: { org_language: "de" },
+        settings: { org_language: "de", email_copy: WERKBANK_INVITATION_COPY },
         skipBookingFlowSeed: true,
       },
     });
