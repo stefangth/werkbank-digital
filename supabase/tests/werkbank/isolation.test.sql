@@ -15,7 +15,7 @@
 -- pattern as the public RPCs) and grant execute explicitly.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(12);
+SELECT plan(14);
 
 SELECT has_schema('werkbank', 'werkbank schema exists');
 SELECT ok(
@@ -126,6 +126,15 @@ DROP TABLE werkbank.t;
 SELECT is_empty(
   $$ SELECT * FROM pg_temp.werkbank_tables_without_rls() $$,
   'RLS check: every table in schema werkbank has row level security enabled');
+
+-- Default privileges: a new werkbank table is readable but not writable by authenticated
+-- until the table grants DML explicitly next to its RLS policies.
+CREATE TABLE werkbank.grants_probe (id int);
+SELECT ok(has_table_privilege('authenticated', 'werkbank.grants_probe', 'SELECT'),
+  'default privileges: authenticated may select from a new werkbank table');
+SELECT ok(NOT has_table_privilege('authenticated', 'werkbank.grants_probe', 'INSERT, UPDATE, DELETE'),
+  'default privileges: authenticated gets no insert, update or delete on a new werkbank table');
+DROP TABLE werkbank.grants_probe;
 
 -- Functions: no function in schema werkbank is executable by anon (directly or via PUBLIC).
 CREATE FUNCTION pg_temp.werkbank_functions_callable_by_anon() RETURNS SETOF text
