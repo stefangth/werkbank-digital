@@ -27,6 +27,12 @@ describe("roleDescription workspace-type awareness", () => {
     }
   });
 
+  it("stays English and identical in German for production, which does not follow the UI language", () => {
+    for (const role of ALL_ROLES) {
+      expect(roleDescription(role, "production", "de")).toBe(ROLE_DESCRIPTIONS[role]);
+    }
+  });
+
   it("swaps domain nouns for a staffing workspace", () => {
     const producer = roleDescription("producer", "staffing");
     expect(producer).toContain("clients");

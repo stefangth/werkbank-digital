@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { isLang, DEFAULT_LANGUAGE } from '@/i18n/config';
 import { AlertTriangle, CheckCircle2, KeyRound, Mail } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -332,7 +333,10 @@ export default function AcceptInvitePage() {
     window.sessionStorage,
   ));
   const { user, loading, orgs, memberships, switchOrg, refreshOrgs, signOut } = useAuth();
-  const { t } = useTranslation('auth');
+  const { t, i18n } = useTranslation('auth');
+  // The invite page also renders outside LanguageProvider in tests and during auth hand-offs,
+  // so read the live i18next language (the provider keeps it in sync) instead of the context.
+  const lang = isLang(i18n.language) ? i18n.language : DEFAULT_LANGUAGE;
   const navigate = useNavigate();
   const [error, setError] = useState<AcceptInviteError | null>(null);
   const [joined, setJoined] = useState<JoinedState | null>(null);
@@ -541,8 +545,8 @@ export default function AcceptInvitePage() {
               // a fragment missing its subject. A label-plus-caption pairing (the same
               // shape PersonRow uses for the same registry) needs no shared subject.
               <div className="rounded-control border border-border bg-well-tint p-3 text-left space-y-1">
-                <p className="text-sm font-medium text-foreground">{t('acceptInvite.success.yourRole', { role: roleLabel(role, joinedKind) })}</p>
-                <p className="text-sm text-muted-foreground">{roleDescription(role, joinedKind)}</p>
+                <p className="text-sm font-medium text-foreground">{t('acceptInvite.success.yourRole', { role: roleLabel(role, joinedKind, lang) })}</p>
+                <p className="text-sm text-muted-foreground">{roleDescription(role, joinedKind, lang)}</p>
               </div>
             )}
             {!joined.artistLinked && (

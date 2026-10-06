@@ -7,6 +7,7 @@ import { type Invitation } from "@/data/invitations";
 import type { OrgMember } from "@/data/members";
 import { type AppRole, roleLabel } from "@/config/app.config";
 import { useOrgKind } from "@/hooks/useOrgKind";
+import { useLanguage } from "@/features/i18n/LanguageContext";
 import { useInvitationMutations } from "@/hooks/useInvitationMutations";
 import { parseEmails, isValidEmail, matchContact } from "./peopleMatch";
 import { ROLE_OPTIONS } from "./roleOptions";
@@ -40,6 +41,7 @@ const SEND_CONCURRENCY = 5;
 export function BulkInviteDialog({ open, onOpenChange, members, invites, dedupeHint = null }: BulkInviteDialogProps) {
   const { t } = useTranslation("admin");
   const kind = useOrgKind();
+  const { lang } = useLanguage();
   const dedupeUnready = !!dedupeHint;
   const { currentOrg } = useAuth();
   const { createOne, invalidateInvitations } = useInvitationMutations(currentOrg?.id);
@@ -132,7 +134,7 @@ export function BulkInviteDialog({ open, onOpenChange, members, invites, dedupeH
             <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               {ROLE_OPTIONS.map((r) => (
-                <SelectItem key={r} value={r}>{roleLabel(r, kind)}</SelectItem>
+                <SelectItem key={r} value={r}>{roleLabel(r, kind, lang)}</SelectItem>
               ))}
             </SelectContent>
           </Select>

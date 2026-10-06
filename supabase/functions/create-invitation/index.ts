@@ -4,7 +4,9 @@ import { requireCapability } from "../_shared/capabilities.ts";
 import type { TablesInsert } from "../_shared/database.types.ts";
 import { realDeps, type Deps } from "../_shared/deps.ts";
 import { ensureInvitedAccount, formatExpiresOn, resolveArtistOffersExpected, resolveInviterName, sendOrgInvitationEmail } from "../_shared/invitations.ts";
-import { roleLabel } from "../_shared/roles.ts";
+import { inviteRoleLabel } from "../_shared/roles.ts";
+import { resolveOrgKind } from "../_shared/orgKind.ts";
+import { resolveOrgLocale } from "../_shared/orgLocale.ts";
 
 type Body = {
   org_id: string;
@@ -175,7 +177,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
         await sendOrgInvitationEmail(deps, {
           email: invite.email,
           orgName: (org as { name?: string } | null)?.name ?? undefined,
-          role: roleLabel(invite.role),
+          role: inviteRoleLabel(invite.role, await resolveOrgKind(admin, body.org_id), await resolveOrgLocale(admin, body.org_id)),
           roleKey: invite.role,
           token: invite.token,
           inviterEmail: inviter.email,

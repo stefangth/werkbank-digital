@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Copy, X, RefreshCw, Mail, Settings as SettingsIcon } from "lucide-react";
 import { type AppRole, roleLabel, roleDescription } from "@/config/app.config";
 import { useOrgKind } from "@/hooks/useOrgKind";
+import { useLanguage } from "@/features/i18n/LanguageContext";
 import type { OrgKind } from "@/lib/orgKind";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,11 +42,12 @@ function initials(name: string): string {
  * vertical band down the whole directory, across both subgroups.
  */
 function RoleBadges({ roles, kind }: { roles: AppRole[]; kind: OrgKind }) {
+  const { lang } = useLanguage();
   if (roles.length === 0) return <div className="hidden sm:block sm:w-44" aria-hidden />;
   return (
     <div className="flex flex-wrap items-center gap-1 sm:w-44 sm:justify-end">
       {roles.map((r) => (
-        <Badge key={r} variant="secondary" className="border-border/60 font-normal">{roleLabel(r, kind)}</Badge>
+        <Badge key={r} variant="secondary" className="border-border/60 font-normal">{roleLabel(r, kind, lang)}</Badge>
       ))}
     </div>
   );
@@ -68,6 +70,7 @@ export function PersonRow({
 }: PersonRowProps) {
   const { t } = useTranslation("admin");
   const kind = useOrgKind();
+  const { lang } = useLanguage();
   const invited = person.status === "invited";
   const inv = person.invitation;
   const hasName = Boolean(person.displayName);
@@ -166,8 +169,8 @@ export function PersonRow({
                         className="items-start"
                       >
                         <div className="flex flex-col gap-0.5">
-                          <span>{roleLabel(r, kind)}</span>
-                          <span className="text-xs text-muted-foreground">{roleDescription(r, kind)}</span>
+                          <span>{roleLabel(r, kind, lang)}</span>
+                          <span className="text-xs text-muted-foreground">{roleDescription(r, kind, lang)}</span>
                         </div>
                       </DropdownMenuCheckboxItem>
                     );

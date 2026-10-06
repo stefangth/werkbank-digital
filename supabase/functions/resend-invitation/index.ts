@@ -3,7 +3,9 @@ import { requireOrgRole } from "../_shared/auth.ts";
 import { requireCapability } from "../_shared/capabilities.ts";
 import { emailWasSent, realDeps, type Deps } from "../_shared/deps.ts";
 import { ensureInvitedAccount, formatExpiresOn, resendIdempotencyKey, resolveArtistOffersExpected, resolveInviterName, sendOrgInvitationEmail } from "../_shared/invitations.ts";
-import { roleLabel } from "../_shared/roles.ts";
+import { inviteRoleLabel } from "../_shared/roles.ts";
+import { resolveOrgKind } from "../_shared/orgKind.ts";
+import { resolveOrgLocale } from "../_shared/orgLocale.ts";
 
 type Body = { invitation_id: string; app_origin: string };
 
@@ -100,7 +102,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       const result = await sendOrgInvitationEmail(deps, {
         email: invite.email,
         orgName: (org as { name?: string } | null)?.name ?? undefined,
-        role: roleLabel(invite.role),
+        role: inviteRoleLabel(invite.role, await resolveOrgKind(deps.admin, invite.org_id), await resolveOrgLocale(deps.admin, invite.org_id)),
         roleKey: invite.role,
         token: invite.token,
         inviterEmail: inviter.email,

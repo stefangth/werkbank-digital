@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { roleLabel } from "@/config/app.config";
 import { useOrgKind } from "@/hooks/useOrgKind";
+import { useLanguage } from "@/features/i18n/LanguageContext";
 import type { Invitation } from "@/data/invitations";
 
 export interface InviteRowProps {
@@ -26,6 +27,7 @@ const STATUS_VARIANT: Record<string, "confirmed" | "neutral"> = {
 export function InviteRow({ invite }: InviteRowProps) {
   const { t } = useTranslation("admin");
   const kind = useOrgKind();
+  const { lang } = useLanguage();
   const statusLabels: Record<string, string> = {
     accepted: t("inviteRow.statusAccepted"),
     revoked: t("inviteRow.statusRevoked"),
@@ -48,7 +50,7 @@ export function InviteRow({ invite }: InviteRowProps) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 pl-12 sm:flex-nowrap sm:justify-end sm:pl-0">
-        <Badge variant="secondary" className="border-border/60 font-normal">{roleLabel(invite.role, kind)}</Badge>
+        <Badge variant="secondary" className="border-border/60 font-normal">{roleLabel(invite.role, kind, lang)}</Badge>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
     </div>

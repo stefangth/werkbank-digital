@@ -5,7 +5,7 @@
 
 import type { FeatureKey } from '@/lib/entitlements';
 import type { HireOrderTermsSetting } from '@/lib/hireOrders/terms';
-import { VOCABULARY, DEFAULT_ORG_KIND, type OrgKind } from '@/lib/orgKind';
+import { VOCABULARY, ORG_KIND_DEFS, DEFAULT_ORG_KIND, roleLabelsFollowUiLanguage, type OrgKind, type OrgKindLang } from '@/lib/orgKind';
 
 /**
  * Routes owned by a gated (entitlement-controlled) module. Checked by
@@ -176,11 +176,20 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   artist: 'Artist',
 };
 
+/** Language a kind renders its role copy in: the UI language when the kind opts in,
+ *  English otherwise (today's behaviour for production and staffing). */
+const roleCopyLang = (kind: OrgKind, lang: OrgKindLang): OrgKindLang =>
+  roleLabelsFollowUiLanguage(kind) ? lang : 'en';
+
 /** Display label for a role. Tolerant of unknown strings (falls back to the raw value).
- *  The producer label follows the workspace type (VOCABULARY[kind].en.roleProducer);
- *  labels are English-only by convention. */
-export const roleLabel = (role: string, kind: OrgKind = DEFAULT_ORG_KIND): string =>
-  role === 'producer' ? VOCABULARY[kind].en.roleProducer : (ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role);
+ *  The producer and artist labels follow the workspace type (VOCABULARY[kind][lang]);
+ *  the table language is the UI language only for kinds that opt in, English otherwise. */
+export const roleLabel = (role: string, kind: OrgKind = DEFAULT_ORG_KIND, lang: OrgKindLang = 'en'): string => {
+  const vocab = VOCABULARY[kind][roleCopyLang(kind, lang)];
+  if (role === 'producer') return vocab.roleProducer;
+  if (role === 'artist') return vocab.roleArtist;
+  return ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role;
+};
 
 /**
  * One-sentence explanation of what each role can do, shown wherever someone needs to
@@ -224,10 +233,13 @@ const ROLE_DESCRIPTION_TEMPLATES: Record<AppRole, string> = {
   artist: 'Gets booked for {{productions}} and sees every confirmed engagement.',
 };
 
-/** Resolve a role description in the org's workspace vocabulary. English-only by
- *  convention (like roleLabel). A bare `{{name}}` substitution keeps this file importing
- *  nothing beyond VOCABULARY, so it stays a clean block mirror. */
-function resolveRoleDescription(role: string, kind: OrgKind): string {
+/** Resolve a role description in the org's workspace vocabulary. A kind that sets
+ *  `roleDescriptions` supplies full sentences per language; core kinds do not, so they
+ *  resolve the English templates below. A bare `{{name}}` substitution keeps this file
+ *  importing nothing beyond the org kind registry, so it stays a clean block mirror. */
+function resolveRoleDescription(role: string, kind: OrgKind, lang: OrgKindLang = 'en'): string {
+  const own = ORG_KIND_DEFS[kind].roleDescriptions;
+  if (own) return (own[roleCopyLang(kind, lang)] as Record<string, string>)[role] ?? '';
   const template = ROLE_DESCRIPTION_TEMPLATES[role as keyof typeof ROLE_DESCRIPTION_TEMPLATES];
   if (!template) return '';
   const vocab = VOCABULARY[kind].en as Record<string, string>;
@@ -247,8 +259,8 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
  *  Tolerant of unknown strings (falls back to an empty string), mirroring roleLabel's
  *  fallback semantics so a future enum value that hasn't been added to the registry yet
  *  degrades to "no second sentence" rather than an undefined-riddled render. */
-export function roleDescription(role: string, kind: OrgKind = DEFAULT_ORG_KIND): string {
-  return resolveRoleDescription(role, kind);
+export function roleDescription(role: string, kind: OrgKind = DEFAULT_ORG_KIND, lang: OrgKindLang = 'en'): string {
+  return resolveRoleDescription(role, kind, lang);
 }
 // <<< ROLE LABELS MIRROR <<<
 

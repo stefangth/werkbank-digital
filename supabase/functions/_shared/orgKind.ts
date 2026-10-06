@@ -44,6 +44,9 @@ export interface OrgKindDef<K extends string = string> {
   seedsStarterCatalog: boolean;
   /** False: role labels stay English in every UI language (today's core behaviour). */
   roleLabelsFollowUiLanguage: boolean;
+  /** Role descriptions in full sentences, per language. Absent: the English templates in
+   *  app.config.ts are resolved against the vocabulary (today's core behaviour). */
+  roleDescriptions?: Record<OrgKindLang, Record<"admin" | "producer" | "artist", string>>;
 }
 
 const CORE_ORG_KIND_DEFS: readonly OrgKindDef<CoreOrgKind>[] = [
