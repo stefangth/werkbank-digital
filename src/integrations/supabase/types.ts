@@ -2983,6 +2983,23 @@ export type Database = {
       [_ in never]: never
     }
   }
+  werkbank: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
@@ -3121,6 +3138,9 @@ export const Constants = {
       ],
       show_status: ["active", "archived", "draft"],
     },
+  },
+  werkbank: {
+    Enums: {},
   },
 } as const
 

@@ -19,6 +19,14 @@ site_url = "http://127.0.0.1:8080"
 additional_redirect_urls = ["http://localhost:8080", "http://127.0.0.1:8080"]
 
 # ─────────────────────────────────────────────────────────────────────────────
+# API — schemas exposed through PostgREST on the LOCAL stack. `werkbank` is the
+# Werkbank plugin schema (ADR-0013); production needs the same entry under
+# "Exposed schemas" in the Supabase dashboard.
+# ─────────────────────────────────────────────────────────────────────────────
+[api]
+schemas = ["public", "graphql_public", "werkbank"]
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Edge function JWT verification — pinned per function.
 #
 # `supabase functions deploy` (.github/workflows/deploy-functions.yml) applies
