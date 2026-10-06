@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "technicians": "Monteure"
+  },
+  "dashboard": {
+    "title": "Willkommen bei Werkbank Digital",
+    "body": "Hier siehst du bald Kunden, Angebote und Rechnungen. Leg zuerst deine Monteure an.",
+    "cta": "Monteure anlegen"
+  }
+}

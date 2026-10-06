@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "technicians": "Technicians"
+  },
+  "dashboard": {
+    "title": "Welcome to Werkbank Digital",
+    "body": "Customers, quotes and invoices will appear here soon. Start by adding your technicians.",
+    "cta": "Add technicians"
+  }
+}
