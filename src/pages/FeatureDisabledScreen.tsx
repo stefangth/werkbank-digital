@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { StageMark } from '@/components/brand/StageMark';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/app.config';
 import { FEATURE_REGISTRY, type FeatureKey } from '@/lib/entitlements';
@@ -25,7 +25,7 @@ export default function FeatureDisabledScreen({ feature, embedded = false }: { f
       'flex flex-col items-center justify-center bg-background px-4 text-center',
       embedded ? 'min-h-full' : 'min-h-screen',
     )}>
-      <StageMark variant="tile" size={56} className="mb-6" />
+      <BrandMark variant="tile" size={56} className="mb-6" />
       <h1 className="font-display text-2xl font-semibold tracking-tight">{t('featureDisabled.notEnabled', { label: def.label })}</h1>
       <p className="mt-2 max-w-md text-muted-foreground">
         {t('featureDisabled.body')}

@@ -10,7 +10,8 @@ import { Link } from 'react-router-dom';
 import { ROUTES, APP_META } from '@/config/app.config';
 import { useConsent } from '@/features/consent/ConsentContext';
 import { motion, useReducedMotion } from 'framer-motion';
-import { StageMark } from '@/components/brand/StageMark';
+import { BrandMark } from '@/components/brand/BrandMark';
+import { useBrand } from '@/hooks/useBrand';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { requestLoginLink } from '@/data/authLinks';
@@ -39,6 +40,7 @@ function friendlyAuthErrorKey(message: string): string {
 }
 
 export default function LoginPage() {
+  const brand = useBrand();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -143,9 +145,9 @@ export default function LoginPage() {
           >
             {/* Wordmark */}
             <div className="mb-7 flex items-center gap-3">
-              <StageMark variant="tile" size={36} />
+              <BrandMark variant="tile" size={36} />
               <span className="font-display text-lg font-semibold tracking-tight text-[var(--auth-fg)]">
-                {APP_META.NAME}
+                {brand.name}
               </span>
             </div>
 

@@ -22,8 +22,7 @@ import { cn } from '@/lib/utils';
 import { useSettingsWarnings } from '@/hooks/useSettingsWarnings';
 import { useEditorConfig } from '@/features/editor/EditorContext';
 import { EditorToolbar, EditorModeToggle, EditorPageBadge } from '@/features/editor/EditorToolbar';
-import { StageMark } from '@/components/brand/StageMark';
-import { BrandWordmark } from '@/components/brand/BrandWordmark';
+import { BrandMark, BrandName } from '@/components/brand/BrandMark';
 import { OrgSwitcher } from '@/components/layout/OrgSwitcher';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { NotificationsList } from '@/components/layout/NotificationsList';
@@ -140,8 +139,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-3.5 py-4 border-b-[0.5px] border-sidebar-border">
-        <StageMark variant="mark" size={32} className="shrink-0" />
-        {!collapsed && <BrandWordmark className="flex-1" />}
+        <BrandMark variant="mark" size={32} className="shrink-0" />
+        {!collapsed && <BrandName className="flex-1" />}
       </div>
 
       {/* Org switcher */}
@@ -387,8 +386,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="lg:hidden flex items-center gap-2">
-            <StageMark variant="mark" size={24} />
-            <BrandWordmark />
+            <BrandMark variant="mark" size={24} />
+            <BrandName />
           </div>
 
           {/* Breadcrumb — current page path (desktop) */}

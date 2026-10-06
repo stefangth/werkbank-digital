@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StageMark } from '@/components/brand/StageMark';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { usePasswordStatus } from '@/hooks/usePasswordStatus';
 import { PasswordSetupForm } from '@/components/auth/PasswordSetupForm';
 
@@ -436,7 +436,7 @@ export default function AcceptInvitePage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center space-y-3">
-            <div className="mx-auto"><StageMark variant="tile" size={52} /></div>
+            <div className="mx-auto"><BrandMark variant="tile" size={52} /></div>
             <CardTitle className="font-display text-2xl font-semibold tracking-tight">{t('acceptInvite.unauth.title')}</CardTitle>
             <CardDescription>{t('acceptInvite.unauth.description')}</CardDescription>
           </CardHeader>
@@ -472,7 +472,7 @@ export default function AcceptInvitePage() {
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
           <Card className="w-full max-w-md">
             <CardHeader className="text-center space-y-3">
-              <div className="mx-auto"><StageMark variant="tile" size={52} /></div>
+              <div className="mx-auto"><BrandMark variant="tile" size={52} /></div>
               <CardTitle className="font-display text-2xl font-semibold tracking-tight">
                 {t('acceptInvite.differentAccount.title')}
               </CardTitle>
@@ -522,7 +522,7 @@ export default function AcceptInvitePage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center space-y-3">
-            <div className="mx-auto"><StageMark variant="tile" size={52} /></div>
+            <div className="mx-auto"><BrandMark variant="tile" size={52} /></div>
             <div aria-label={t('acceptInvite.success.invitationAccepted')} className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-success/10 text-success">
               <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
             </div>
@@ -604,7 +604,7 @@ export default function AcceptInvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto"><StageMark variant="tile" size={52} /></div>
+          <div className="mx-auto"><BrandMark variant="tile" size={52} /></div>
           <CardTitle className="font-display text-2xl font-semibold tracking-tight">{t('acceptInvite.pending.title')}</CardTitle>
           <CardDescription>
             {error ? t('acceptInvite.pending.errorDescription') : t('acceptInvite.pending.joiningDescription')}

@@ -1,7 +1,7 @@
 import { useAuth } from '@/features/auth/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { StageMark } from '@/components/brand/StageMark';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { APP_META } from '@/config/app.config';
 
 /**
@@ -42,7 +42,7 @@ export default function SuspendedOrgScreen() {
   const others = orgs.filter((o) => o.id !== currentOrg?.id && o.status !== 'suspended');
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
-      <StageMark variant="tile" size={56} className="mb-6" />
+      <BrandMark variant="tile" size={56} className="mb-6" />
       <h1 className="font-display text-2xl font-semibold tracking-tight">{t('suspended.title')}</h1>
       <p className="mt-2 max-w-md text-muted-foreground">
         <span className="text-foreground">{currentOrg?.name ?? t('suspended.orgFallback')}</span>{t('suspended.body')}

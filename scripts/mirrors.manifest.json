@@ -104,6 +104,14 @@
       "start": "// >>> ORG KIND REGISTRY MIRROR (keep byte-identical with the twin file) >>>",
       "end": "// <<< ORG KIND REGISTRY MIRROR <<<",
       "why": "Workspace-type registry + vocabulary tables. Emails and PDFs substitute {{noun}} variables from the same tables the app UI uses; the edge file adds the DB-backed resolveOrgKind below the block."
+    },
+    {
+      "mode": "block",
+      "source": "src/lib/brand.ts",
+      "target": "supabase/functions/_shared/brand.ts",
+      "start": "// >>> BRAND REGISTRY MIRROR (keep byte-identical with the twin file) >>>",
+      "end": "// <<< BRAND REGISTRY MIRROR <<<",
+      "why": "Brand registry + resolver. Emails and the app shell resolve the same brand definitions (name, marks, from address); the surrounding imports differ per runtime."
     }
   ]
 }

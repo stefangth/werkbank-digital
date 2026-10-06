@@ -7,17 +7,19 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { requestPasswordReset, setNewPassword } from "@/data/profiles";
 import { parseRecoveryHash, safeRelativeRedirect, newPasswordSchema } from "@/features/auth/resetPassword";
-import { ROUTES, APP_META } from "@/config/app.config";
+import { ROUTES } from "@/config/app.config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StageMark } from "@/components/brand/StageMark";
+import { BrandMark } from "@/components/brand/BrandMark";
+import { useBrand } from "@/hooks/useBrand";
 import { z } from "zod";
 
 type SetValues = z.infer<typeof newPasswordSchema>;
 
 export default function ResetPasswordPage() {
+  const brand = useBrand();
   const navigate = useNavigate();
   const { t } = useTranslation("auth");
   const [searchParams] = useSearchParams();
@@ -78,12 +80,12 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto"><StageMark variant="tile" size={52} /></div>
+          <div className="mx-auto"><BrandMark variant="tile" size={52} /></div>
           <CardTitle className="font-display text-2xl font-semibold tracking-tight">
             {mode === "set" ? t("resetPassword.setTitle") : t("resetPassword.requestTitle")}
           </CardTitle>
           <CardDescription>
-            {mode === "set" ? t("resetPassword.setDescription") : t("resetPassword.requestDescription", { appName: APP_META.NAME })}
+            {mode === "set" ? t("resetPassword.setDescription") : t("resetPassword.requestDescription", { appName: brand.name })}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

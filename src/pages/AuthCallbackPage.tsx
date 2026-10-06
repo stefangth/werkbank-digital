@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { safeRelativeRedirect } from "@/features/auth/resetPassword";
 import { ROUTES } from "@/config/app.config";
-import { StageMark } from "@/components/brand/StageMark";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { readInvitationToken } from "@/features/auth/invitationToken";
@@ -53,7 +53,7 @@ export default function AuthCallbackPage() {
       {/* role="status" + aria-live so the loading -> recovery transition is announced. */}
       <Card className="w-full max-w-md" role="status" aria-live="polite">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto"><StageMark variant="tile" size={52} /></div>
+          <div className="mx-auto"><BrandMark variant="tile" size={52} /></div>
           <CardTitle className="font-display text-2xl font-semibold tracking-tight">
             {failed ? t("authCallback.failedTitle") : t("authCallback.signingInTitle")}
           </CardTitle>

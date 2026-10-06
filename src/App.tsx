@@ -15,6 +15,7 @@ import "@/i18n";
 import { CookieConsentBanner } from "@/components/consent/CookieConsentBanner";
 import { AnalyticsBridge } from "@/features/analytics/AnalyticsBridge";
 import { AnalyticsIdentityBridge } from "@/features/analytics/AnalyticsIdentityBridge";
+import BrandDocument from "@/features/brand/BrandDocument";
 import { AppErrorBoundary } from "@/features/analytics/AppErrorBoundary";
 import { ProtectedRoute, PlatformRoute } from "@/features/auth/ProtectedRoute";
 import HomeLanding from "@/features/auth/HomeLanding";
@@ -71,6 +72,7 @@ const App = () => (
         <AppErrorBoundary>
           <AuthProvider>
             <AnalyticsIdentityBridge />
+            <BrandDocument />
             <EditorProvider>
             <DemoProvider>
           <Routes>
