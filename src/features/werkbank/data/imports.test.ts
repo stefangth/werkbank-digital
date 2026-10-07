@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import type { ImportClient, ImportResult } from "../import/types";
 import { CATALOG_IMPORT_SPEC, CUSTOMER_IMPORT_SPEC, PROPERTY_IMPORT_SPEC, importCatalogItems, importCustomers, importProperties } from "./imports";
@@ -23,6 +23,51 @@ describe.each([
     const error = { message: "boom", code: "XX000" };
     const fake = createFakeSupabase({ [`rpc:werkbank.${fn}`]: { data: null, error } });
     await expect(run(asClient(fake), "org-1", rows)).rejects.toBe(error);
+  });
+});
+
+/** A client whose import RPC answers every chunk with one "created" result per row sent. */
+function chunkClient() {
+  const rpc = vi.fn(async (_fn: string, params: { p_rows: Record<string, unknown>[] }) => ({
+    data: params.p_rows.map((_, row) => ({ row, status: "created", reason: null, detail: null })),
+    error: null,
+  }));
+  return { client: { schema: () => ({ rpc }) } as unknown as ImportClient, rpc };
+}
+
+describe("chunked import", () => {
+  it("sends 1200 rows in three calls of 500, 500 and 200 and maps each result back to its row", async () => {
+    const { client, rpc } = chunkClient();
+    const many = Array.from({ length: 1200 }, (_, i) => ({ name: `Item ${i}` }));
+    const out = await importCatalogItems(client, "org-1", many);
+    expect(rpc.mock.calls.map(([, params]) => params.p_rows.length)).toEqual([500, 500, 200]);
+    expect(rpc.mock.calls[1][1].p_rows[0]).toEqual({ name: "Item 500" });
+    expect(out).toHaveLength(1200);
+    expect(out.map((r) => r.row)).toEqual(many.map((_, i) => i));
+  });
+
+  it("keeps the offset of a later chunk in skipped and error results", async () => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: Array.from({ length: 500 }, (_, row) => ({ row, status: "created", reason: null, detail: null })), error: null })
+      .mockResolvedValueOnce({ data: [{ row: 3, status: "skipped", reason: "item_no_taken", detail: null }], error: null });
+    const client = { schema: () => ({ rpc }) } as unknown as ImportClient;
+    const out = await importCatalogItems(client, "org-1", Array.from({ length: 510 }, (_, i) => ({ name: `Item ${i}` })));
+    expect(out.find((r) => r.status === "skipped")?.row).toBe(503);
+  });
+
+  it("sends customers with a number before numberless ones and reports results in file order", async () => {
+    const { client, rpc } = chunkClient();
+    const many: Record<string, unknown>[] = Array.from({ length: 600 }, (_, i) => ({ company_name: `Firma ${i}` }));
+    many[550] = { company_name: "Alt", customer_no: "K-20000" };
+    const out = await importCustomers(client, "org-1", many);
+    expect(rpc.mock.calls[0][1].p_rows[0]).toEqual({ company_name: "Alt", customer_no: "K-20000" });
+    expect(rpc.mock.calls[0][1].p_rows[1]).toEqual({ company_name: "Firma 0" });
+    expect(out.map((r) => r.row)).toEqual(many.map((_, i) => i));
+  });
+
+  it("throws when the RPC result is not a list", async () => {
+    const fake = createFakeSupabase({ "rpc:werkbank.import_customers": { data: { oops: true }, error: null } });
+    await expect(importCustomers(asClient(fake), "org-1", rows)).rejects.toThrow("did not return a result list");
   });
 });
 
