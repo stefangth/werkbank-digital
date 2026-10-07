@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { adminClient, tagEmail } from "./helpers/supabase";
 import { ensureUserWithRole, deleteUserByEmail } from "./helpers/users";
-import { loginAs } from "./helpers/auth";
+import { blockDevAutoLogin, loginAs } from "./helpers/auth";
 import { seedConsent } from "./helpers/consent";
 
 const EMAIL = tagEmail("phase5-reset", "fixed");
@@ -11,7 +11,13 @@ const NEW_PASSWORD = "E2eReset!2new";
 test.describe.configure({ mode: "serial" });
 
 test.describe("Password reset", () => {
-  test.beforeEach(async ({ page }) => { await seedConsent(page); });
+  test.beforeEach(async ({ page }) => {
+    await seedConsent(page);
+    // Both tests need a signed-out page. Locally the dev server's auto-login would
+    // sign in as the seeded admin, and ResetPasswordPage reads that SIGNED_IN as an
+    // arriving recovery session and jumps straight to "Set a new password".
+    await blockDevAutoLogin(page);
+  });
   test.beforeAll(async () => { await ensureUserWithRole(EMAIL, OLD_PASSWORD, "producer"); });
   test.afterAll(async () => { await deleteUserByEmail(EMAIL); });
 

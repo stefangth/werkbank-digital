@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { adminClient, tagEmail } from "./helpers/supabase";
 import { ensureUserWithRole, deleteUserByEmail, findUserByEmail, BOOTSTRAP_ORG_ID } from "./helpers/users";
 import { seedConsent } from "./helpers/consent";
+import { blockDevAutoLogin } from "./helpers/auth";
 
 const ADMIN_EMAIL = tagEmail("stable-invite-admin", "fixed");
 const ADMIN_PASSWORD = "E2eStableInviteAdmin!1";
@@ -59,17 +60,6 @@ async function inviteSessionHash(email: string) {
   }).toString();
 }
 
-async function blockLocalAutoLogin(page: Page) {
-  await page.route("**/auth/v1/token?grant_type=password", async (route) => {
-    const body = route.request().postDataJSON() as { email?: string };
-    if (body.email === "admin@example.com") {
-      await route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ error: "disabled in signed-out invitation test" }) });
-    } else {
-      await route.continue();
-    }
-  });
-}
-
 function publicClient() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -80,7 +70,7 @@ function publicClient() {
 async function openThroughExchange(page: Page, baseURL: string, token: string, email: string) {
   const hash = await inviteSessionHash(email);
   let exchangeCount = 0;
-  await blockLocalAutoLogin(page);
+  await blockDevAutoLogin(page);
   await page.route("**/functions/v1/exchange-invitation", async (route) => {
     exchangeCount += 1;
     expect(route.request().postDataJSON()).toEqual({ token, app_origin: baseURL });
@@ -153,7 +143,7 @@ test.describe("Stable invitation onboarding", () => {
     const admin = adminClient();
     const invite = await seedInvite(emails.expired, new Date(Date.now() - 60_000).toISOString());
     let requestBody: unknown;
-    await blockLocalAutoLogin(page);
+    await blockDevAutoLogin(page);
     await page.route("**/functions/v1/exchange-invitation", async (route) => {
       requestBody = route.request().postDataJSON();
       await route.fulfill({ status: 410, contentType: "application/json", body: JSON.stringify({ error: "Invitation unavailable" }) });
@@ -208,7 +198,7 @@ test.describe("Stable invitation onboarding", () => {
   test("a second immediate exchange shows the exact 429 retry contract", async ({ page }) => {
     const token = crypto.randomUUID();
     let calls = 0;
-    await blockLocalAutoLogin(page);
+    await blockDevAutoLogin(page);
     await page.route("**/functions/v1/exchange-invitation", async (route) => {
       calls += 1;
       await route.fulfill({
