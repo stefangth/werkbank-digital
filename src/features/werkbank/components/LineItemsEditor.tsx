@@ -55,12 +55,19 @@ const snapshotDraft = (c: CatalogItem): ItemDraft => ({
 });
 
 /** Debounced writes per field: the last edit of a field wins, and leaving the field saves at
- *  once. Pending writes of an unmounted row are dropped. */
+ *  once. Pending writes are also run when the row unmounts (navigation, closing, read only), since
+ *  removing an input fires no blur. */
 function useFieldSaver(save: (patch: Patch) => void) {
   const pending = useRef(new Map<string, { timer: ReturnType<typeof setTimeout>; run: () => void }>());
   useEffect(() => {
     const map = pending.current;
-    return () => map.forEach((p) => clearTimeout(p.timer));
+    return () => {
+      map.forEach((p) => {
+        clearTimeout(p.timer);
+        p.run();
+      });
+      map.clear();
+    };
   }, []);
   const flush = (field: string) => {
     const p = pending.current.get(field);
@@ -92,7 +99,7 @@ function useFieldSaver(save: (patch: Patch) => void) {
 /** A text input with local state that saves `toPatch(value)` after the debounce; a value that
  *  `toPatch` rejects (null) is marked invalid and not saved. */
 function SavedInput({
-  field, label, initial, toPatch, saver, className, multiline,
+  field, label, initial, toPatch, saver, className, multiline, numeric,
 }: {
   field: string;
   label: string;
@@ -101,6 +108,7 @@ function SavedInput({
   saver: ReturnType<typeof useFieldSaver>;
   className?: string;
   multiline?: boolean;
+  numeric?: boolean;
 }) {
   const [value, setValue] = useState(initial);
   const [invalid, setInvalid] = useState(false);
@@ -122,7 +130,7 @@ function SavedInput({
   return multiline ? (
     <Textarea {...common} onChange={(e) => onChange(e.target.value)} />
   ) : (
-    <Input {...common} inputMode="text" onChange={(e) => onChange(e.target.value)} />
+    <Input {...common} inputMode={numeric ? "decimal" : "text"} onChange={(e) => onChange(e.target.value)} />
   );
 }
 
@@ -191,6 +199,7 @@ function RowFields({
       toPatch={amount(PRICE, field)}
       saver={saver}
       className="w-24 text-right tabular-nums"
+      numeric
     />
   );
   return (
@@ -204,6 +213,7 @@ function RowFields({
         toPatch={amount(QUANTITY, "quantity")}
         saver={saver}
         className="w-20 text-right tabular-nums"
+        numeric
       />
       <Select value={unit} onValueChange={(v) => update({ unit_code: v })}>
         <SelectTrigger aria-label={t("lineItems.unit")} className="w-24"><SelectValue /></SelectTrigger>

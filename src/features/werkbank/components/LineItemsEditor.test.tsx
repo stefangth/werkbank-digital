@@ -98,6 +98,26 @@ describe("LineItemsEditor", () => {
     expect(mut.update.mutate).toHaveBeenCalledWith({ id: "i1", patch: { quantity: 3.5 } });
   });
 
+  it("flushes a pending edit when the editor unmounts before the debounce", () => {
+    vi.useFakeTimers();
+    const { unmount } = renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    fireEvent.change(screen.getAllByLabelText("Menge")[0], { target: { value: "4" } });
+    act(() => { vi.advanceTimersByTime(100); });
+    expect(mut.update.mutate).not.toHaveBeenCalled();
+    unmount();
+    expect(mut.update.mutate).toHaveBeenCalledTimes(1);
+    expect(mut.update.mutate).toHaveBeenCalledWith({ id: "i1", patch: { quantity: 4 } });
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(mut.update.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses decimal keyboards for quantity and prices", () => {
+    renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    for (const label of ["Menge", "Lohn", "Material"]) {
+      expect(screen.getAllByLabelText(label)[0]).toHaveAttribute("inputmode", "decimal");
+    }
+  });
+
   it("saves a price and does not save an invalid one", () => {
     vi.useFakeTimers();
     renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
