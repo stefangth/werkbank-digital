@@ -536,6 +536,20 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
   });
 }
 
+/** Best-effort network evidence for a decision. Any client can set x-forwarded-for, so no single
+ *  entry is trusted: the whole chain is kept next to x-real-ip and cf-connecting-ip as the proxies
+ *  reported them, e.g. "real=203.0.113.5; xff=1.2.3.4, 203.0.113.5". Capped at 512 characters. */
+export function clientIpEvidence(headers: Headers): string | null {
+  const clean = (v: string | null) => (v ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  const xff = clean(headers.get("x-forwarded-for")).split(",").map((p) => p.trim()).filter(Boolean).join(", ");
+  const parts = [
+    ["real", clean(headers.get("x-real-ip"))],
+    ["cf", clean(headers.get("cf-connecting-ip"))],
+    ["xff", xff],
+  ].filter(([, v]) => v).map(([k, v]) => `${k}=${v}`);
+  return parts.length ? parts.join("; ").slice(0, 512) : null;
+}
+
 /** Generated args of werkbank.record_quote_decision (migration 20261007210000). Type-gen marks
  *  every RPC argument non-null (see scripts/generatedTypes.test.ts); the SQL function takes NULL
  *  for everything a rejection or a typed signature leaves out. */
@@ -652,7 +666,7 @@ async function decideQuote(
     p_method: signature?.method ?? null,
     p_typed_name: signature?.method === "typed" ? signature.typedName : null,
     p_signature_image_path: signaturePath,
-    p_ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+    p_ip: clientIpEvidence(req.headers),
     p_user_agent: req.headers.get("user-agent") || null,
     p_consent_text: decision === "accepted" ? quoteConsentText(displayNo(quote)) : null,
     p_comment: comment,

@@ -11,6 +11,17 @@ export type DbErrorKey =
   | "errors.notAllowedHere"
   | "errors.generic";
 
+/** A client-side failure that stands in for a database error: an Error (stack, instanceof) that
+ *  carries a Postgres-style `code`, so mapDbError treats it like the real one. */
+export class WerkbankDataError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "WerkbankDataError";
+    this.code = code;
+  }
+}
+
 /** Maps a PostgREST/Postgres error to an i18n key in the `werkbank` namespace. */
 export function mapDbError(error: unknown): DbErrorKey {
   if (typeof error !== "object" || error === null) return "errors.generic";

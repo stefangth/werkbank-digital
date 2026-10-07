@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
+import { WerkbankDataError } from "../lib/dbErrors";
 import {
   createOrder, createOrderFromQuote, deleteOrder, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
 } from "./orders";
@@ -131,7 +132,9 @@ describe("deleteOrder", () => {
   });
   it("rejects when RLS filtered the row (the order is no longer open)", async () => {
     const fake = createFakeSupabase({ [O]: { data: [], error: null } });
-    await expect(deleteOrder(asClient(fake), "o1")).rejects.toEqual({ code: "P0001", message: "invalid_transition" });
+    const err = await deleteOrder(asClient(fake), "o1").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(WerkbankDataError);
+    expect(err).toMatchObject({ code: "P0001", message: "invalid_transition" });
   });
   it("rejects on a database error", async () => {
     const fake = createFakeSupabase({ [O]: { data: null, error: new Error("boom") } });

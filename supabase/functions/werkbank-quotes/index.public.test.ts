@@ -6,7 +6,7 @@ import type { EmailMessage } from "../_shared/deps.ts";
 import type { QuotePdfData } from "../_shared/werkbank/pdf/quoteData.ts";
 import { quoteConsentText } from "../_shared/werkbank/acceptance.ts";
 import { sha256Hex } from "../_shared/werkbank/quoteToken.ts";
-import { handle } from "./index.ts";
+import { clientIpEvidence, handle } from "./index.ts";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const QUOTE = "33333333-3333-4333-8333-333333333333";
@@ -323,7 +323,7 @@ Deno.test("a valid accept stores the files, records the decision in one call, no
     p_method: "drawn",
     p_typed_name: null,
     p_signature_image_path: await sigPath(),
-    p_ip: "203.0.113.7",
+    p_ip: "xff=203.0.113.7, 10.0.0.1",
     p_user_agent: "TestBrowser/1.0",
     p_consent_text: quoteConsentText("A-0042"),
     p_comment: null,
@@ -591,3 +591,23 @@ for (const data of [null, "weird", 42] as const) {
     assertEquals(notificationInserts(t.calls).length, 0);
   });
 }
+
+Deno.test("clientIpEvidence keeps the whole forwarded chain as best-effort evidence", () => {
+  const h = (init: Record<string, string>) => new Headers(init);
+  assertEquals(clientIpEvidence(h({})), null);
+  assertEquals(clientIpEvidence(h({ "x-forwarded-for": " , " })), null);
+  assertEquals(clientIpEvidence(h({ "x-forwarded-for": " 1.2.3.4 ,203.0.113.5 " })), "xff=1.2.3.4, 203.0.113.5");
+  assertEquals(
+    clientIpEvidence(h({
+      "x-forwarded-for": "1.2.3.4, 203.0.113.5",
+      "x-real-ip": " 203.0.113.5 ",
+      "cf-connecting-ip": "203.0.113.6",
+    })),
+    "real=203.0.113.5; cf=203.0.113.6; xff=1.2.3.4, 203.0.113.5",
+  );
+  assertEquals(clientIpEvidence(h({ "cf-connecting-ip": "203.0.113.6" })), "cf=203.0.113.6");
+  const long = clientIpEvidence(h({ "x-forwarded-for": Array.from({ length: 100 }, (_, i) => `10.0.0.${i}`).join(", ") }));
+  assertExists(long);
+  assertEquals(long.length, 512);
+  assert(long.startsWith("xff=10.0.0.0, 10.0.0.1"));
+});
