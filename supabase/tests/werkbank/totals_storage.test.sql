@@ -1,7 +1,7 @@
 -- Werkbank Teil 3 (R3, R4): document totals and list views, storage buckets and policies.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(49);
+SELECT plan(53);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -132,6 +132,22 @@ SELECT is((SELECT technician_ids FROM werkbank.order_list WHERE id = '33333333-0
 SELECT is((SELECT technician_ids FROM werkbank.order_list WHERE id = '33333333-0000-4000-a000-0000000000f2'), '{}'::uuid[], 'no technicians: empty array');
 SELECT is((SELECT gross_total FROM werkbank.order_list WHERE id = '33333333-0000-4000-a000-0000000000f1'), 119.00::numeric, 'order_list carries the totals');
 SELECT is((SELECT customer_name FROM werkbank.order_list WHERE id = '33333333-0000-4000-a000-0000000000f2'), 'Hausverwaltung Zwei', 'order_list customer_name');
+
+-- Customer rows the caller cannot see never hide the document (left join) --------------
+RESET ROLE;
+CREATE POLICY ts_hide_customer ON werkbank.customers AS RESTRICTIVE FOR SELECT TO authenticated USING (false);
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f2');
+SET LOCAL ROLE authenticated;
+SELECT is((SELECT count(*)::int FROM werkbank.quote_list), (SELECT count(*)::int FROM werkbank.quotes), 'quote_list has one row per visible quote');
+SELECT is((SELECT count(*)::int FROM werkbank.order_list), (SELECT count(*)::int FROM werkbank.orders), 'order_list has one row per visible order');
+SELECT ok(EXISTS (SELECT 1 FROM werkbank.quote_list WHERE id = '11111111-0000-4000-a000-0000000000f1' AND customer_name IS NULL),
+  'a quote whose customer is not visible stays listed without a customer_name');
+SELECT ok(EXISTS (SELECT 1 FROM werkbank.order_list WHERE id = '33333333-0000-4000-a000-0000000000f1' AND customer_name IS NULL),
+  'an order whose customer is not visible stays listed without a customer_name');
+RESET ROLE;
+DROP POLICY ts_hide_customer ON werkbank.customers;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f2');
+SET LOCAL ROLE authenticated;
 
 -- RLS applies through the views (security_invoker) ------------------------------------
 RESET ROLE;

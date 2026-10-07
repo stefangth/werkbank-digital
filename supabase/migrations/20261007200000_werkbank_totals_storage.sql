@@ -66,7 +66,7 @@ select
   (q.status = 'sent' and q.valid_until < (now() at time zone 'Europe/Berlin')::date) as is_expired,
   exists (select 1 from werkbank.orders o where o.quote_id = q.id) as has_order
 from werkbank.quotes q
-join werkbank.customers c on c.org_id = q.org_id and c.id = q.customer_id
+left join werkbank.customers c on c.org_id = q.org_id and c.id = q.customer_id
 left join werkbank.properties p on p.org_id = q.org_id and p.id = q.property_id
 left join werkbank.document_totals t on t.quote_id = q.id;
 
@@ -81,7 +81,7 @@ select
   coalesce(tech.ids, '{}'::uuid[]) as technician_ids,
   coalesce(tech.names, '{}'::text[]) as technician_names
 from werkbank.orders o
-join werkbank.customers c on c.org_id = o.org_id and c.id = o.customer_id
+left join werkbank.customers c on c.org_id = o.org_id and c.id = o.customer_id
 left join werkbank.properties p on p.org_id = o.org_id and p.id = o.property_id
 left join werkbank.document_totals t on t.order_id = o.id
 left join lateral (
