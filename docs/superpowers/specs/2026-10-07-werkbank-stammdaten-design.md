@@ -183,9 +183,9 @@ New nav items in `src/features/werkbank/ui.ts`, section `workspace`, `kinds: ["h
 ### R7. CSV and Excel import
 
 - One import dialog per entity: customers, properties, catalog items. Steps: upload (CSV or XLSX, reusing `parseSheet` and `MAX_IMPORT_ROWS` = 5000 from `src/lib/artistImport/`), map columns (suggested via `guessMapping` with German and English header aliases), review (per-row validation with the zod schemas of R5, invalid rows listed with the reason and excluded), import, summary.
-- Server: `werkbank.import_customers(p_org uuid, p_rows jsonb)`, `werkbank.import_properties(...)` and `werkbank.import_catalog_items(...)`, `security definer`, `set search_path = ''`. Each checks that the caller is admin or producer of `p_org`, processes every row in its own savepoint, and returns `jsonb` with one `{ row, status: 'created' | 'skipped' | 'error', reason }` per input row, like `bulk_import_artists`. Execute is granted to `authenticated` only.
-- Customers: an existing `customer_no` skips the row ("Kundennummer schon vergeben"); rows without a number get one from the range; afterwards the range is raised (R2).
-- Properties reference their customer by `customer_no`; an unknown number is an error row. The dialog says to import customers first.
+- Server: `werkbank.import_customers(p_org uuid, p_rows jsonb)`, `werkbank.import_properties(...)` and `werkbank.import_catalog_items(...)`, `security definer`, `set search_path = ''`. Each checks that the caller is admin or producer of `p_org`, processes every row in its own savepoint, and returns `jsonb` with one `{ row, status: 'created' | 'skipped' | 'error', reason }` per input row, like `bulk_import_artists`. Execute is granted to `authenticated` only. The client sends the rows in chunks of 500, one call after another, so each call stays well inside the statement timeout.
+- Customers: an existing `customer_no` skips the row ("Kundennummer schon vergeben"); rows without a number get one from the range; afterwards the range is raised (R2). The kind column is optional: unmapped or blank, a row with a company name becomes a property manager, otherwise private (Ruling R16).
+- Properties reference their customer by `customer_no`; an unknown number is an error row. The dialog says to import customers first. A billing address without a billing name is an invalid row (Ruling R16).
 - Catalog items: an existing `item_no` skips the row.
 - Nothing is updated or overwritten by an import.
 
@@ -243,6 +243,7 @@ Five PRs, each green on its own:
 
 1. Apply the Teil 2 migrations to the production project `wmtbjajmnjxefrhkchts` before deploying the frontend.
 2. Confirm `werkbank` is listed under "Exposed schemas" in that project (ADR-0014); without it every page of Teil 2 fails with 404.
+3. Confirm the PostgREST `max_rows` setting is at least 1000; lists and the org export read in 1000-row pages and stop at the first short page.
 
 ## Risks
 

@@ -794,8 +794,8 @@ export const HELP_ITEMS: readonly HelpItem[] = [
     id: 'W4.4', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Einstellungen · Nummernkreise', updated: '2026-10-07',
     q: { en: 'How do I change the format of customer numbers?', de: 'Wie ändere ich das Format der Kundennummern?' },
     a: {
-      en: 'Open Settings, then the Numbering tab. Set the prefix (up to 10 characters, K- by default) and the next number, and the preview shows what the next customer will get. Only admins can change it. Numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import.',
-      de: 'Öffne Einstellungen und dort den Tab Nummernkreise. Lege das Präfix fest (bis zu 10 Zeichen, standardmäßig K-) und die nächste Nummer, die Vorschau zeigt, was der nächste Kunde bekommt. Ändern dürfen das nur Admins. Nummern, die du von Hand eingibst oder in einem anderen Format importierst, bleiben erhalten, verschieben den Zähler aber nicht. Prüf die nächste Nummer deshalb nach einem großen Import.',
+      en: 'Open Settings, then the Numbering tab. Set the prefix (up to 10 characters, K- by default) and the next number, and the preview shows what the next customer will get. Only admins can change it. Numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import. A number that is already taken is skipped, and the next customer gets the next free one.',
+      de: 'Öffne Einstellungen und dort den Tab Nummernkreise. Lege das Präfix fest (bis zu 10 Zeichen, standardmäßig K-) und die nächste Nummer, die Vorschau zeigt, was der nächste Kunde bekommt. Ändern dürfen das nur Admins. Nummern, die du von Hand eingibst oder in einem anderen Format importierst, bleiben erhalten, verschieben den Zähler aber nicht. Prüf die nächste Nummer deshalb nach einem großen Import. Ist eine Nummer schon vergeben, wird sie übersprungen und der nächste Kunde bekommt die nächste freie.',
     },
   },
 ] as const;
