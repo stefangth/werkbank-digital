@@ -33,6 +33,7 @@ export const WERKBANK_ORDER = {
   company_profiles: "org_id",
   quotes: "id",
   orders: "id",
+  invoices: "id",
   order_technicians: "order_id",
   document_items: "id",
   quote_acceptances: "id",
