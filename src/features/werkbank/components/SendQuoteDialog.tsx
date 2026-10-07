@@ -15,6 +15,7 @@ import { useContacts } from "../hooks/useContacts";
 import { useCustomer } from "../hooks/useCustomers";
 import { useDocumentItems } from "../hooks/useDocumentItems";
 import { useQuoteActions } from "../hooks/useQuoteActions";
+import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { quotePreflight, type QuoteBlocker } from "../lib/quotePreflight";
 
 type SendableQuote = Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until">;
@@ -39,7 +40,7 @@ export function SendQuoteDialog({
   const { t } = useTranslation("werkbank");
   const resendMode = quote.status === "sent";
   const actions = useQuoteActions();
-  const { data: profile, isLoading: profileLoading } = useCompanyProfile();
+  const { data: profile, isLoading: profileLoading, isError: profileError } = useCompanyProfile();
   const { data: items, isLoading: itemsLoading } = useDocumentItems({ quoteId: quote.id });
   const { data: customer } = useCustomer(quote.customer_id);
   const { data: customerContacts } = useContacts(quote.customer_id ? { customerId: quote.customer_id } : undefined);
@@ -66,7 +67,7 @@ export function SendQuoteDialog({
     validUntil: quote.valid_until,
     today: berlinDateKey(new Date()),
   });
-  const shownBlockers: QuoteBlocker[] = error?.blockers.length ? error.blockers : loading ? [] : blockers;
+  const shownBlockers: QuoteBlocker[] = error?.blockers.length ? error.blockers : loading ? [] : blockers.filter((b) => !profileError || b !== "profile_incomplete");
   const pending = actions.send.isPending || actions.resend.isPending;
 
   const submit = async () => {
@@ -87,8 +88,15 @@ export function SendQuoteDialog({
     }
   };
 
-  const preview = () => actions.preview.mutateAsync(quote.id).catch((e) =>
-    setError(e instanceof QuoteActionError ? e : new QuoteActionError("unknown")));
+  const preview = () => {
+    const tab = openPendingTab();
+    return actions.preview.mutateAsync(quote.id)
+      .then((url) => showInTab(tab, url, (u) => toast.error(t("quotes.page.pdfBlocked"), { action: { label: t("quotes.page.pdfOpen"), onClick: () => window.open(u, "_blank") } })))
+      .catch((e) => {
+        tab?.close();
+        setError(e instanceof QuoteActionError ? e : new QuoteActionError("unknown"));
+      });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,6 +127,7 @@ export function SendQuoteDialog({
               </ul>
             </Alert>
           )}
+          {profileError && <Alert variant="destructive">{t("quotes.send.errors.profileLoad")}</Alert>}
           {error && error.blockers.length === 0 && <Alert variant="destructive">{t(quoteActionErrorKey(error.code))}</Alert>}
         </div>
 
@@ -129,7 +138,7 @@ export function SendQuoteDialog({
             </Button>
           )}
           <Button variant="secondary" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
-          <Button disabled={loading || pending || blockers.length > 0} onClick={() => void submit()}>
+          <Button disabled={loading || pending || profileError || blockers.length > 0} onClick={() => void submit()}>
             {resendMode ? t("quotes.send.resend") : t("quotes.send.submit")}
           </Button>
         </DialogFooter>

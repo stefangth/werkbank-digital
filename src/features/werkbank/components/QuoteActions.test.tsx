@@ -20,6 +20,7 @@ vi.mock("./SendQuoteDialog", () => ({
   SendQuoteDialog: ({ quote }: { quote: { status: string } }) => <div>dialog:{quote.status}</div>,
 }));
 
+let tab: { closed: boolean; close: ReturnType<typeof vi.fn>; location: { href: string } };
 import { QuoteActions } from "./QuoteActions";
 
 const quote = (status: string) => ({ id: "q1", status }) as never;
@@ -31,7 +32,8 @@ describe("QuoteActions", () => {
     vi.clearAllMocks();
     actions.download.mutateAsync.mockResolvedValue("https://signed");
     actions.preview.mutateAsync.mockResolvedValue(undefined);
-    vi.stubGlobal("open", vi.fn());
+    tab = { closed: false, close: vi.fn(), location: { href: "" } };
+    vi.stubGlobal("open", vi.fn(() => tab));
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
   });
@@ -55,7 +57,7 @@ describe("QuoteActions", () => {
     expect(screen.getByText("dialog:sent")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "PDF" }));
     await waitFor(() => expect(actions.download.mutateAsync).toHaveBeenCalledWith({ quoteId: "q1", kind: "sent" }));
-    expect(window.open).toHaveBeenCalledWith("https://signed", "_blank");
+    expect(tab.location.href).toBe("https://signed");
   });
 
   it("an accepted quote downloads the accepted PDF and cannot be resent", async () => {
@@ -65,11 +67,41 @@ describe("QuoteActions", () => {
     await waitFor(() => expect(actions.download.mutateAsync).toHaveBeenCalledWith({ quoteId: "q1", kind: "accepted" }));
   });
 
-  it("toasts when the PDF cannot be opened", async () => {
+  it("toasts and closes the pre-opened tab when the PDF cannot be opened", async () => {
     actions.download.mutateAsync.mockRejectedValue(new Error("x"));
     renderActions("sent");
     fireEvent.click(screen.getByRole("button", { name: "PDF" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Das PDF konnte nicht geöffnet werden."));
+    expect(tab.close).toHaveBeenCalled();
+  });
+
+  it("opens the tab before the PDF url resolves", async () => {
+    let resolve!: (u: string) => void;
+    actions.download.mutateAsync.mockReturnValue(new Promise((r) => { resolve = r; }));
+    renderActions("sent");
+    fireEvent.click(screen.getByRole("button", { name: "PDF" }));
+    expect(window.open).toHaveBeenCalledWith("", "_blank");
+    expect(tab.location.href).toBe("");
+    resolve("https://late");
+    await waitFor(() => expect(tab.location.href).toBe("https://late"));
+  });
+
+  it("opens the tab before the preview resolves and closes it on error", async () => {
+    let reject!: (e: Error) => void;
+    actions.preview.mutateAsync.mockReturnValue(new Promise((_, r) => { reject = r; }));
+    renderActions("draft");
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    expect(window.open).toHaveBeenCalledWith("", "_blank");
+    expect(tab.close).not.toHaveBeenCalled();
+    reject(new Error("x"));
+    await waitFor(() => expect(tab.close).toHaveBeenCalled());
+  });
+
+  it("offers a link when the browser blocked the tab", async () => {
+    vi.stubGlobal("open", vi.fn(() => null));
+    renderActions("sent");
+    fireEvent.click(screen.getByRole("button", { name: "PDF" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Dein Browser hat den neuen Tab blockiert.", expect.anything()));
   });
 
   it("shows nothing for a rejected quote", () => {

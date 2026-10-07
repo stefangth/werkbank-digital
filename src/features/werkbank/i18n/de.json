@@ -620,7 +620,9 @@
       "resend": "Erneut senden",
       "send": "Senden",
       "preview": "Vorschau",
-      "pdfFailed": "Das PDF konnte nicht geöffnet werden."
+      "pdfFailed": "Das PDF konnte nicht geöffnet werden.",
+      "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
+      "pdfOpen": "PDF öffnen"
     },
     "header": {
       "customer": "Kunde",
@@ -674,7 +676,8 @@
         "tooManyRecipients": "Es sind zu viele Empfänger.",
         "pdfMissing": "Das gespeicherte PDF fehlt. Überarbeite das Angebot und sende es neu.",
         "preflight": "Das Angebot kann noch nicht gesendet werden.",
-        "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+        "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+        "profileLoad": "Die Firmendaten konnten nicht geladen werden. Lade die Seite neu."
       }
     }
   }

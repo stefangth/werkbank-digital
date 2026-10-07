@@ -6,7 +6,7 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { profile, items, contacts, customer, actions, toast } = vi.hoisted(() => ({
-  profile: { data: null as unknown },
+  profile: { data: null as unknown, isError: false },
   items: { data: [] as unknown[] },
   contacts: { data: [] as unknown[] },
   customer: { data: null as unknown },
@@ -45,6 +45,7 @@ describe("SendQuoteDialog", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     profile.data = COMPLETE;
+    profile.isError = false;
     items.data = [{ id: "i1", kind: "item" }];
     contacts.data = [{ id: "k1", email: "kontakt@example.de" }];
     customer.data = { id: "c1", email: "kunde@example.de" };
@@ -126,10 +127,25 @@ describe("SendQuoteDialog", () => {
     expect(await screen.findByText(/Bitte versuche es noch einmal/)).toBeInTheDocument();
   });
 
-  it("Vorschau calls the preview action", async () => {
+  it("shows the load error instead of a profile blocker when the profile fails to load", () => {
+    profile.data = undefined;
+    profile.isError = true;
+    renderDialog();
+    expect(screen.getByText(/Firmendaten konnten nicht geladen/)).toBeInTheDocument();
+    expect(screen.queryByText(/Firmendaten sind unvollständig/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Senden" })).toBeDisabled();
+  });
+
+  it("Vorschau opens the tab first, then calls the preview action", async () => {
+    const tab = { closed: false, close: vi.fn(), location: { href: "" } };
+    vi.stubGlobal("open", vi.fn(() => tab));
+    actions.preview.mutateAsync.mockResolvedValue("blob:pdf");
     renderDialog();
     fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    expect(window.open).toHaveBeenCalledWith("", "_blank");
     await waitFor(() => expect(actions.preview.mutateAsync).toHaveBeenCalledWith("q1"));
+    await waitFor(() => expect(tab.location.href).toBe("blob:pdf"));
+    vi.unstubAllGlobals();
   });
 
   it("opens in resend mode for a sent quote and warns that old links stop working", async () => {

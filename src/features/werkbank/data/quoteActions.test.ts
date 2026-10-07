@@ -42,17 +42,14 @@ describe("resendQuote", () => {
 });
 
 describe("previewQuote", () => {
-  it("opens the decoded PDF from a blob url in a new tab", async () => {
-    const open = vi.fn();
+  it("returns a blob url for the decoded PDF", async () => {
     const createObjectURL = vi.fn((_blob: Blob) => "blob:pdf");
-    vi.stubGlobal("open", open);
     vi.stubGlobal("URL", { createObjectURL, revokeObjectURL: vi.fn() });
     const fake = createFakeSupabase({ [FN]: { data: { pdf_base64: btoa("%PDF-1.4") }, error: null } });
-    await previewQuote(asClient(fake), "org-1", "q1");
+    expect(await previewQuote(asClient(fake), "org-1", "q1")).toBe("blob:pdf");
     const blob = createObjectURL.mock.calls[0][0];
     expect(blob.type).toBe("application/pdf");
     expect(blob.size).toBe(8);
-    expect(open).toHaveBeenCalledWith("blob:pdf", "_blank");
     expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ action: "preview", org_id: "org-1", quote_id: "q1" }] });
   });
 });

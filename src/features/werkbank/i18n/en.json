@@ -620,7 +620,9 @@
       "resend": "Resend",
       "send": "Send",
       "preview": "Preview",
-      "pdfFailed": "The PDF could not be opened."
+      "pdfFailed": "The PDF could not be opened.",
+      "pdfBlocked": "Your browser blocked the new tab.",
+      "pdfOpen": "Open PDF"
     },
     "header": {
       "customer": "Customer",
@@ -674,7 +676,8 @@
         "tooManyRecipients": "There are too many recipients.",
         "pdfMissing": "The stored PDF is missing. Revise the quote and send it again.",
         "preflight": "The quote cannot be sent yet.",
-        "generic": "That did not work. Please try again."
+        "generic": "That did not work. Please try again.",
+        "profileLoad": "Your company details could not be loaded. Reload the page."
       }
     }
   }

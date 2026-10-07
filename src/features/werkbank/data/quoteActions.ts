@@ -62,14 +62,14 @@ async function invoke<T>(orgId: string, quoteId: string, client: Client, action:
   return data as T;
 }
 
-/** Renders the watermarked draft PDF and opens it in a new tab. */
-export async function previewQuote(client: Client, orgId: string, quoteId: string): Promise<void> {
+/** Renders the watermarked draft PDF and returns a blob URL for it. The caller shows it in a
+ *  tab it opened before the call (see lib/pdfTab.ts). The URL is freed when the page unloads. */
+export async function previewQuote(client: Client, orgId: string, quoteId: string): Promise<string> {
   const { pdf_base64 } = await invoke<{ pdf_base64: string }>(orgId, quoteId, client, "preview");
   const bytes = Uint8Array.from(atob(pdf_base64), (c) => c.charCodeAt(0));
   const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-  window.open(url, "_blank");
-  // The new tab has loaded it long before this; free the blob afterwards.
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  window.addEventListener("pagehide", () => URL.revokeObjectURL(url), { once: true });
+  return url;
 }
 
 export async function sendQuote(client: Client, orgId: string, quoteId: string, body: SendBody): Promise<{ emailSent: boolean }> {
