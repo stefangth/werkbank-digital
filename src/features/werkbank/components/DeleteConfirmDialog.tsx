@@ -20,6 +20,7 @@ export function DeleteConfirmDialog({
   body,
   onConfirm,
   pending,
+  confirmLabel,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,6 +28,8 @@ export function DeleteConfirmDialog({
   body: string;
   onConfirm: () => void;
   pending: boolean;
+  /** The confirm button text; "Delete" by default. */
+  confirmLabel?: string;
 }) {
   const { t } = useTranslation("werkbank");
   return (
@@ -39,7 +42,7 @@ export function DeleteConfirmDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <Button variant="destructive" disabled={pending} onClick={onConfirm}>
-            {t("common.delete")}
+            {confirmLabel ?? t("common.delete")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

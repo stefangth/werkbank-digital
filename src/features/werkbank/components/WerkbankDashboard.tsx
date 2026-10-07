@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Alert } from "@/components/ui/alert";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useOrderList } from "../hooks/useOrders";
 import { useQuoteList } from "../hooks/useQuotes";
@@ -10,29 +12,47 @@ import { isAcceptedWithoutOrder } from "../lib/quoteStatus";
 import { ORDERS_PATH, QUOTES_PATH } from "../paths";
 import { StartList } from "./StartList";
 
+/** One count tile: a skeleton while loading, a short error text on failure, else a link to the
+ *  list with its filter applied. */
+function Tile<Row>({
+  to, label, query, count,
+}: {
+  to: string;
+  label: string;
+  query: { data: Row[] | undefined; isLoading: boolean; isError: boolean };
+  count: (rows: Row[]) => number;
+}) {
+  const { t } = useTranslation("werkbank");
+  if (query.isError) return <Alert variant="destructive">{t("dashboard.tiles.loadFailed")}</Alert>;
+  // Loading, or not fetched yet (a disabled query): never an error.
+  if (query.isLoading || !query.data) return <Skeleton role="status" aria-busy="true" aria-label={label} className="h-20 w-full" />;
+  return (
+    <Link to={to} className="block rounded-card hover:bg-hover-tint">
+      <KpiTile tone="waiting" label={label} value={String(count(query.data))} />
+    </Link>
+  );
+}
+
 /** Two counts the office acts on, each linking to the list with its filter applied. */
 function DashboardTiles() {
   const { t } = useTranslation("werkbank");
   const quotes = useQuoteList();
   const orders = useOrderList();
-  const count = (n: number | undefined) => (n === undefined ? "–" : String(n));
 
   return (
     <section aria-label={t("dashboard.tiles.label")} className="grid gap-3 sm:grid-cols-2">
-      <Link to={`${QUOTES_PATH}?status=accepted&noOrder=1`} className="block rounded-card hover:bg-hover-tint">
-        <KpiTile
-          tone="waiting"
-          label={t("dashboard.tiles.acceptedNoOrder")}
-          value={count(quotes.data?.filter(isAcceptedWithoutOrder).length)}
-        />
-      </Link>
-      <Link to={`${ORDERS_PATH}?unscheduled=1`} className="block rounded-card hover:bg-hover-tint">
-        <KpiTile
-          tone="waiting"
-          label={t("dashboard.tiles.unscheduled")}
-          value={count(orders.data?.filter(needsSchedule).length)}
-        />
-      </Link>
+      <Tile
+        to={`${QUOTES_PATH}?status=accepted&noOrder=1`}
+        label={t("dashboard.tiles.acceptedNoOrder")}
+        query={quotes}
+        count={(rows) => rows.filter(isAcceptedWithoutOrder).length}
+      />
+      <Tile
+        to={`${ORDERS_PATH}?unscheduled=1`}
+        label={t("dashboard.tiles.unscheduled")}
+        query={orders}
+        count={(rows) => rows.filter(needsSchedule).length}
+      />
     </section>
   );
 }

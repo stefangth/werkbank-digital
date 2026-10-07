@@ -21,9 +21,11 @@ export const ContactSelect = forwardRef<
   const { data: propertyContacts } = useContacts(propertyId ? { propertyId } : undefined);
   const { data: customerContacts } = useContacts(customerId ? { customerId } : undefined);
 
+  // A contact linked to both the property and the customer is listed once, under the property.
+  const propertyIds = new Set((propertyContacts ?? []).map((c) => c.id));
   const groups = [
     { key: "property", heading: t("pickers.contact.property"), rows: propertyContacts ?? [] },
-    { key: "customer", heading: t("pickers.contact.customer"), rows: customerContacts ?? [] },
+    { key: "customer", heading: t("pickers.contact.customer"), rows: (customerContacts ?? []).filter((c) => !propertyIds.has(c.id)) },
   ].filter((g) => g.rows.length > 0);
   const selected = groups.flatMap((g) => g.rows).find((c) => c.id === value);
 

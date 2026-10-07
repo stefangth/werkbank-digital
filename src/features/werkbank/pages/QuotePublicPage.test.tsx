@@ -119,7 +119,7 @@ describe("QuotePublicPage", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
     expect(await screen.findByText("Dieses Angebot wurde überarbeitet")).toBeInTheDocument();
-    expect(screen.getByText("Es wurde nichts unterschrieben. Ihre Eingaben wurden nicht gespeichert.")).toBeInTheDocument();
+    expect(screen.getByText("Es wurde nichts unterschrieben. Ihre Eingaben wurden nicht gespeichert.").closest("[role='alert']")).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Angebot verbindlich annehmen" })).not.toBeInTheDocument();
     expect(screen.queryByText("Vielen Dank, das Angebot ist angenommen")).not.toBeInTheDocument();
   });
@@ -130,7 +130,38 @@ describe("QuotePublicPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "signieren" }));
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
-    expect(await screen.findByText("Bitte geben Sie Ihren vollständigen Namen an.")).toBeInTheDocument();
+    const message = await screen.findByText("Bitte geben Sie Ihren vollständigen Namen an.");
+    expect(screen.getByRole("button", { name: "Angebot verbindlich annehmen" })).toBeEnabled();
+    // The error is announced and tied to the name field.
+    expect(message.closest("[role='alert']")).not.toBeNull();
+    const name = screen.getByLabelText("Ihr vollständiger Name");
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(name).toHaveAccessibleDescription("Bitte geben Sie Ihren vollständigen Namen an.");
+  });
+
+  it("clears the name error once the name is edited", async () => {
+    mount([{ data: view, error: null }, fail(422, { error: "invalid_signer_name" })]);
+    fireEvent.change(await screen.findByLabelText("Ihr vollständiger Name"), { target: { value: "A" } });
+    fireEvent.click(screen.getByRole("button", { name: "signieren" }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
+    await screen.findByText("Bitte geben Sie Ihren vollständigen Namen an.");
+    fireEvent.change(screen.getByLabelText("Ihr vollständiger Name"), { target: { value: "Anna Muster" } });
+    expect(screen.queryByText("Bitte geben Sie Ihren vollständigen Namen an.")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Ihr vollständiger Name")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("keeps the entered name, signature and consent after a transient 500", async () => {
+    mount([{ data: view, error: null }, fail(500, { error: "boom" })]);
+    fireEvent.change(await screen.findByLabelText("Ihr vollständiger Name"), { target: { value: "Anna Muster" } });
+    fireEvent.click(screen.getByRole("button", { name: "signieren" }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Ihre Antwort konnte nicht gespeichert werden");
+    expect(screen.getByLabelText("Ihr vollständiger Name")).toHaveValue("Anna Muster");
+    expect(screen.getByLabelText("Ihr vollständiger Name")).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByRole("checkbox")).toBeChecked();
     expect(screen.getByRole("button", { name: "Angebot verbindlich annehmen" })).toBeEnabled();
   });
 
@@ -172,6 +203,13 @@ describe("QuotePublicPage", () => {
 
   it("shows the display number of a revised quote in the heading and the title", async () => {
     mount([{ data: { ...view, quote: { ...view.quote, version: 2, number: "A-0042-2" } }, error: null }]);
+    expect(await screen.findByText("A-0042-2")).toBeInTheDocument();
+    expect(document.title).toBe("Angebot A-0042-2");
+  });
+
+  it("falls back to quote_no and version when an older function sends no display number", async () => {
+    const { number: _number, ...older } = { ...view.quote, version: 2 };
+    mount([{ data: { ...view, quote: older }, error: null }]);
     expect(await screen.findByText("A-0042-2")).toBeInTheDocument();
     expect(document.title).toBe("Angebot A-0042-2");
   });

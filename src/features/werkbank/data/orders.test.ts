@@ -26,17 +26,29 @@ describe("fetchOrder", () => {
       [O]: { data: { id: "o1", order_no: "AU-0001" }, error: null },
       "werkbank.document_totals": { data: { order_id: "o1", gross_total: 119 }, error: null },
       [T]: { data: [{ artist_id: "a1" }, { artist_id: "a2" }], error: null },
+      "werkbank.order_list": { data: { technician_names: ["Anna Berg", "Ben Roth"] }, error: null },
     });
     expect(await fetchOrder(asClient(fake), "o1")).toEqual({
-      id: "o1", order_no: "AU-0001", totals: { order_id: "o1", gross_total: 119 }, technician_ids: ["a1", "a2"],
+      id: "o1", order_no: "AU-0001", totals: { order_id: "o1", gross_total: 119 },
+      technician_ids: ["a1", "a2"], technician_names: ["Anna Berg", "Ben Roth"],
     });
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: "werkbank.order_list", method: "eq", args: ["id", "o1"] }));
     expect(fake.calls).toContainEqual(expect.objectContaining({ table: "werkbank.document_totals", method: "eq", args: ["order_id", "o1"] }));
   });
   it("returns null for a missing order", async () => {
     const fake = createFakeSupabase({
       [O]: { data: null, error: null }, "werkbank.document_totals": { data: null, error: null }, [T]: { data: [], error: null },
+      "werkbank.order_list": { data: null, error: null },
     });
     expect(await fetchOrder(asClient(fake), "nope")).toBeNull();
+  });
+  it("throws when the names cannot be read", async () => {
+    const error = { code: "42501" };
+    const fake = createFakeSupabase({
+      [O]: { data: { id: "o1" }, error: null }, "werkbank.document_totals": { data: null, error: null }, [T]: { data: [], error: null },
+      "werkbank.order_list": { data: null, error },
+    });
+    await expect(fetchOrder(asClient(fake), "o1")).rejects.toBe(error);
   });
 });
 

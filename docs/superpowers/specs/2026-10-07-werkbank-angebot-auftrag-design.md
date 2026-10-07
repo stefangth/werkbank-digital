@@ -137,7 +137,7 @@ Read by admin and producer, written by admin only.
 | `kind` | `text not null check (in ('title','item','text'))` |
 | `name` | `text`, required for `title` and `item` |
 | `description` | `text`, required for `text` |
-| `catalog_item_id` | `uuid`, FK to catalog items, `on delete set null` (reference only) |
+| `catalog_item_id` | `uuid`, composite FK `(org_id, catalog_item_id)` to catalog items, `on delete set null (catalog_item_id)` (reference only) |
 | `item_no` | `text`, snapshot |
 | `quantity` | `numeric(12,3)` |
 | `unit_code` | `text`, same check as catalog items |
@@ -150,15 +150,16 @@ A check per kind: `item` requires name, quantity > 0, unit, both prices and VAT;
 
 **`werkbank.quote_acceptances`**: `org_id`, `quote_id` (`unique`, composite FK, `on delete cascade`), `decision` (`accepted` or `rejected`), `comment`, `signer_name` (`not null`), `method` (`typed` or `drawn`, required when accepted), `typed_name`, `signature_image_path`, `decided_at`, `ip`, `user_agent`, `consent_text`, `document_sha256` (`not null`). Written only by the service role. Read by admin and producer.
 
-Indexes: `(org_id)` on every table, `(org_id, customer_id)` on quotes and orders, `(quote_id)` and `(order_id)` on items, `(org_id, status)` on quotes and orders, `(org_id, scheduled_date)` on orders.
+Indexes: `(org_id)` on every table, `(org_id, customer_id)` on quotes and orders, `(quote_id)` and `(order_id)` on items, `(org_id, status)` on quotes and orders, `(org_id, scheduled_date)` on orders, and one per remaining FK column: `(source_item_id)` and `(catalog_item_id)` on items, `(superseded_by)`, `(property_id)` and `(contact_id)` on quotes, `(property_id)` and `(contact_id)` on orders.
 
 ### R2. Locks, numbers and functions
 
 - **Quote lock (trigger):** once `status <> 'draft'`, header content and its items cannot change. Allowed afterwards: status transitions, `valid_until` (extend), `link_revoked_at`, `superseded_by`, and the send/accept columns, all only by the service role, except `valid_until` and `link_revoked_at`, which admin and producer may set.
+- **Draft touch (trigger):** inserting, updating or deleting an item of a draft quote sets the quote's `updated_at`, so the `send` guard (`updated_at` unchanged since the read) also catches item-only edits made while a send is running. Items of non-draft quotes are locked and never touch their quote.
 - **Order lock (trigger):** items and header content are editable in `open` and `in_progress`, locked in `done` and `cancelled`. Transitions: `open → in_progress → done`, `done → in_progress` (reopen), `open | in_progress → cancelled`. The trigger stamps `completed_at` and `cancelled_at`.
 - **Numbers:** ranges `quote` (prefix `A-`) and `order` (prefix `AU-`) are seeded like `customer`, padding 4. Triggers call `werkbank.next_number` the way `assign_customer_no` does. Gaps from deleted drafts are acceptable for quotes and orders.
 - **RPCs** (`security definer`, `set search_path = ''`, role check admin or producer of the row's org, `revoke all ... from public, anon`, `grant execute ... to authenticated`):
-  - `werkbank.revise_quote(p_quote uuid) returns uuid`: from `sent` or `rejected` (or expired); inserts version n+1 as `draft` with copied header and items, sets the old row `superseded` with `superseded_by` and `link_revoked_at`.
+  - `werkbank.revise_quote(p_quote uuid) returns uuid`: from `sent` or `rejected` (or expired); inserts version n+1 as `draft` with copied header and items, sets the old row `superseded` with `superseded_by` and `link_revoked_at`. The revision keeps `valid_until`, unless it lies before Berlin today: then today plus the profile's `quote_validity_days` (30 without a profile).
   - `werkbank.copy_quote(p_quote uuid, p_customer uuid default null, p_property uuid default null) returns uuid`: a new draft with a new number, version 1.
   - `werkbank.create_order_from_quote(p_quote uuid) returns uuid`: only from `accepted`; copies header and items with `source_item_id`; a second call fails on the unique `quote_id`.
 
@@ -176,7 +177,7 @@ This is the only implementation of the VAT and discount rules; it matches the EN
 
 Two private buckets created in a `*_werkbank_*` migration, with the `hire-orders` policy model (first path segment is the org id; read for org admin and producer):
 
-- `werkbank-assets`: logos; insert, update and delete for org admins (client upload with `supabase.storage`).
+- `werkbank-assets`: logos (PNG or JPEG, at most 1 MB, set on the bucket); insert, update and delete for org admins (client upload with `supabase.storage`).
 - `werkbank-documents`: quote PDFs, accepted PDFs, signature images; written by the service role only.
 
 ### R5. Pages and navigation

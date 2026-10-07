@@ -23,11 +23,10 @@ import type { OrderListRow } from "../data/orders";
 import { useOrderList, useOrderMutations } from "../hooks/useOrders";
 import { useTechnicians } from "../hooks/useTechnicians";
 import { formatEuro } from "../lib/money";
-import { ORDER_STATUS_TONES, needsSchedule, type OrderStatus } from "../lib/orderStatus";
+import { ORDER_STATUSES, ORDER_STATUS_TONES, needsSchedule, type OrderStatus } from "../lib/orderStatus";
 import { orderPath } from "../paths";
 
 const ALL = "__all__";
-const STATUSES: OrderStatus[] = ["open", "in_progress", "done", "cancelled"];
 
 function NewOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation("werkbank");
@@ -100,7 +99,20 @@ export function OrdersPage() {
   const [to, setTo] = useState<string | null>(null);
   // The dashboard links here with ?unscheduled=1.
   const [params] = useSearchParams();
-  const [unscheduled, setUnscheduled] = useState(params.get("unscheduled") === "1");
+  const urlUnscheduled = params.get("unscheduled") === "1";
+  const [unscheduled, setUnscheduled] = useState(urlUnscheduled);
+  // The page stays mounted when another dashboard link changes the params: apply them again
+  // (adjusting state while rendering).
+  const [appliedUnscheduled, setAppliedUnscheduled] = useState(urlUnscheduled);
+  if (urlUnscheduled !== appliedUnscheduled) {
+    setAppliedUnscheduled(urlUnscheduled);
+    setUnscheduled(urlUnscheduled);
+    if (urlUnscheduled) {
+      setFrom(null);
+      setTo(null);
+    }
+  }
+  const emptyRange = !!from && !!to && from > to;
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(
@@ -158,7 +170,7 @@ export function OrdersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>{t("orders.allStatuses")}</SelectItem>
-                {STATUSES.map((s) => (
+                {ORDER_STATUSES.map((s) => (
                   <SelectItem key={s} value={s}>{t(`orders.status.${s}`)}</SelectItem>
                 ))}
               </SelectContent>
@@ -185,7 +197,11 @@ export function OrdersPage() {
           </div>
 
           {visible.length === 0 ? (
-            <EmptyState size="inline" title={t("orders.noMatches")} reason={t("orders.noMatchesReason")} />
+            <EmptyState
+              size="inline"
+              title={emptyRange && !unscheduled ? t("orders.range.invalid") : t("orders.noMatches")}
+              reason={t("orders.noMatchesReason")}
+            />
           ) : (
             <Table>
               <TableHeader>

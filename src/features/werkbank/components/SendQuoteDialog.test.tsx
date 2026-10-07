@@ -148,6 +148,39 @@ describe("SendQuoteDialog", () => {
     vi.unstubAllGlobals();
   });
 
+  it("clears an earlier error when a later preview succeeds", async () => {
+    vi.stubGlobal("open", vi.fn(() => ({ closed: false, close: vi.fn(), location: { href: "" } })));
+    actions.preview.mutateAsync.mockRejectedValueOnce(new QuoteActionError("render_failed")).mockResolvedValue("blob:pdf");
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    expect(await screen.findByText(/Bitte versuche es noch einmal/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    await waitFor(() => expect(screen.queryByText(/Bitte versuche es noch einmal/)).not.toBeInTheDocument());
+    vi.unstubAllGlobals();
+  });
+
+  it("does not report a blocked tab when the user closed it before the PDF arrived", async () => {
+    vi.stubGlobal("open", vi.fn(() => ({ closed: true, close: vi.fn(), location: { href: "" } })));
+    actions.preview.mutateAsync.mockResolvedValue("blob:pdf");
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    await waitFor(() => expect(actions.preview.mutateAsync).toHaveBeenCalled());
+    await act(async () => {});
+    expect(toast.error).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("splits recipients at commas, semicolons and whitespace and sends each address once", async () => {
+    renderDialog();
+    fireEvent.change(screen.getByLabelText("An"), { target: { value: "a@x.de, b@x.de;c@x.de  A@x.de\tb@x.de" } });
+    fireEvent.change(screen.getByLabelText("Kopie (CC)"), { target: { value: "d@x.de;; e@x.de" } });
+    fireEvent.click(screen.getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(actions.send.mutateAsync).toHaveBeenCalled());
+    const { body } = actions.send.mutateAsync.mock.calls[0][0];
+    expect(body.to).toEqual(["a@x.de", "b@x.de", "c@x.de"]);
+    expect(body.cc).toEqual(["d@x.de", "e@x.de"]);
+  });
+
   it("opens in resend mode for a sent quote and warns that old links stop working", async () => {
     renderDialog(quote({ status: "sent" }));
     expect(screen.getByText(/Alte Links funktionieren danach nicht mehr/)).toBeInTheDocument();

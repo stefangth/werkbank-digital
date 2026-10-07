@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { edgeResponseContext } from "@/lib/edgeErrors";
 import type { SignatureValue } from "@/components/common/SignaturePad";
+import { formatQuoteNumber } from "../lib/quoteDisplayNumber";
 
 type Client = SupabaseClient<Database>;
 
@@ -71,7 +72,16 @@ async function toClosedOrThrow(error: unknown): Promise<ClosedState> {
 export async function fetchPublicQuote(client: Client, token: string): Promise<PublicQuoteState> {
   const { data, error } = await client.functions.invoke("werkbank-quotes", { body: { action: "view", token } });
   if (error) return toClosedOrThrow(error);
-  return { kind: "open", view: data as PublicQuoteView };
+  const raw = data as PublicQuoteView | null;
+  if (!raw || typeof raw !== "object" || !raw.quote || typeof raw.quote !== "object") {
+    throw new PublicQuoteError("unknown");
+  }
+  // An edge function deployed before `number` existed sends only quote_no and version; derive it
+  // with the shared display rule so the page and the function can deploy independently.
+  const number = typeof raw.quote.number === "string" && raw.quote.number !== ""
+    ? raw.quote.number
+    : formatQuoteNumber(raw.quote.quote_no, raw.quote.version);
+  return { kind: "open", view: { ...raw, quote: { ...raw.quote, number } } };
 }
 
 export type DecideBody =

@@ -1,5 +1,16 @@
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { ORDER_STATUS_TONES, needsSchedule, nextOrderActions } from "./orderStatus";
+import { ORDER_STATUSES, ORDER_STATUS_TONES, needsSchedule, nextOrderActions } from "./orderStatus";
+
+describe("ORDER_STATUSES", () => {
+  it("matches the check constraint on werkbank.orders.status", () => {
+    const sql = readFileSync("supabase/migrations/20261007180000_werkbank_quotes_orders.sql", "utf8");
+    const check = /status text not null default 'open' check \(status in \(([^)]*)\)\)/.exec(sql);
+    expect(check).not.toBeNull();
+    const dbValues = check![1].split(",").map((v) => v.trim().replace(/'/g, ""));
+    expect([...ORDER_STATUSES]).toEqual(dbValues);
+  });
+});
 
 describe("orderStatus", () => {
   it("maps each status to its tone", () => {

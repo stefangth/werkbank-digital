@@ -21,7 +21,8 @@
     "tiles": {
       "acceptedNoOrder": "Angenommen, ohne Auftrag",
       "unscheduled": "Aufträge ohne Termin",
-      "label": "Offene Punkte"
+      "label": "Offene Punkte",
+      "loadFailed": "Die Anzahl konnte nicht geladen werden."
     }
   },
   "technicians": {
@@ -81,6 +82,7 @@
     "invitationsFailed": "Die offenen Einladungen konnten nicht geladen werden, deshalb sind Erneut senden und Widerrufen nicht verfügbar. Lade die Seite bitte neu."
   },
   "common": {
+    "retry": "Erneut versuchen",
     "archive": "Archivieren",
     "restore": "Wiederherstellen",
     "delete": "Löschen",
@@ -556,6 +558,7 @@
     "vat": "MwSt.",
     "lineNet": "Netto",
     "deleteTitle": "Titel löschen",
+    "invalidNumber": "Bitte gib eine Zahl ein, zum Beispiel 12,50.",
     "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten."
   },
   "totals": {
@@ -625,6 +628,8 @@
       "copy": "Kopieren",
       "extend": "Verlängern",
       "revokeLink": "Link sperren",
+      "revokeTitle": "Link sperren?",
+      "revokeBody": "Der Kunde kann das Angebot dann nicht mehr über den Link öffnen.",
       "delete": "Entwurf löschen",
       "extendLabel": "Neues Gültigkeitsdatum",
       "extendConfirm": "Verlängern",
@@ -639,7 +644,8 @@
       "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
       "pdfOpen": "PDF öffnen",
       "createOrder": "Auftrag anlegen",
-      "toOrder": "Zum Auftrag"
+      "toOrder": "Zum Auftrag",
+      "orderLookupFailed": "Der Auftrag konnte nicht geprüft werden."
     },
     "header": {
       "customer": "Kunde",
@@ -710,7 +716,8 @@
     "range": {
       "from": "Von",
       "to": "Bis",
-      "reset": "Zeitraum zurücksetzen"
+      "reset": "Zeitraum zurücksetzen",
+      "invalid": "Das Startdatum liegt nach dem Enddatum."
     },
     "unscheduled": "Nicht eingeplant",
     "status": {

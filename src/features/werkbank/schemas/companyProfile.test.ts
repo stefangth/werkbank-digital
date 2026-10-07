@@ -52,6 +52,11 @@ describe("companyProfileSchema", () => {
     expect(!r.success && r.error.issues[0].message).toBe("company.errors.vatId");
   });
 
+  it("uppercases a VAT id and strips whitespace before the check", () => {
+    const r = parse({ vat_id: " de 123 456 789 " });
+    expect(r.success && r.data.vat_id).toBe("DE123456789");
+  });
+
   it("rejects a validity of 0 and 366, accepts 1 and 365", () => {
     expect(parse({ quote_validity_days: "0" }).success).toBe(false);
     expect(parse({ quote_validity_days: "366" }).success).toBe(false);

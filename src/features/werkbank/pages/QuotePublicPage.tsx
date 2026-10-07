@@ -182,6 +182,7 @@ function DecideForm({ view, token, t, onOutcome }: { view: PublicQuoteView; toke
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const nameInvalid = error === "invalid_signer_name";
   const ready = name.trim().length > 0 && (rejecting || (signature !== null && consent));
 
   async function submit() {
@@ -209,7 +210,16 @@ function DecideForm({ view, token, t, onOutcome }: { view: PublicQuoteView; toke
       <h2 className="font-display text-title-sm font-semibold">{t("publicQuote.decide.title")}</h2>
       <div className="space-y-1.5">
         <Label htmlFor="pq-name">{t("publicQuote.decide.name")}</Label>
-        <Input id="pq-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" disabled={busy} />
+        <Input
+          id="pq-name"
+          value={name}
+          onChange={(e) => { setName(e.target.value); if (error === "invalid_signer_name") setError(null); }}
+          autoComplete="name"
+          disabled={busy}
+          aria-invalid={nameInvalid || undefined}
+          // pq-error is the name field's message only for this error code.
+          aria-describedby={nameInvalid ? "pq-error" : undefined}
+        />
       </div>
       {rejecting ? (
         <div className="space-y-1.5">
@@ -231,7 +241,7 @@ function DecideForm({ view, token, t, onOutcome }: { view: PublicQuoteView; toke
           </div>
         </>
       )}
-      {error && <Alert variant="destructive"><p className="text-control">{t(`publicQuote.errors.${error}` as never)}</p></Alert>}
+      {error && <Alert variant="destructive"><p id="pq-error" className="text-control">{t(`publicQuote.errors.${error}` as never)}</p></Alert>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           type="button"

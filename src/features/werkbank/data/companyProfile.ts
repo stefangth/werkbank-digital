@@ -16,10 +16,26 @@ export async function fetchCompanyProfile(client: Client, orgId: string): Promis
   return data;
 }
 
-export async function saveCompanyProfile(client: Client, orgId: string, row: CompanyProfileRow): Promise<void> {
+/** Saves the profile. When `previousLogoPath` (the stored one) is no longer the profile's logo,
+ *  its storage object is deleted afterwards, best effort: only once the save succeeded, never the
+ *  current logo, and a failing delete is only logged (the save already went through). */
+export async function saveCompanyProfile(
+  client: Client,
+  orgId: string,
+  row: CompanyProfileRow,
+  previousLogoPath?: string | null,
+): Promise<void> {
   const { error } = await client.schema("werkbank").from("company_profiles")
     .upsert({ ...row, org_id: orgId }, { onConflict: "org_id" });
   if (error) throw error;
+  if (previousLogoPath && previousLogoPath !== row.logo_path && previousLogoPath.startsWith(`${orgId}/`)) {
+    try {
+      const { error: removeError } = await client.storage.from(BUCKET).remove([previousLogoPath]);
+      if (removeError) console.warn("Old logo could not be deleted", removeError);
+    } catch (e) {
+      console.warn("Old logo could not be deleted", e);
+    }
+  }
 }
 
 /** Stores the logo as `<orgId>/logo-<timestamp>.<ext>` (the storage policy needs the org id as

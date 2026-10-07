@@ -139,6 +139,34 @@ describe("OrdersPage", () => {
     expect(screen.getByRole("button", { name: "Nicht eingeplant" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("applies the unscheduled link again when the search params change while mounted", async () => {
+    const { rerender } = render();
+    await screen.findByText("AU-0001");
+    expect(numbersShown()).toHaveLength(5);
+    state.search = "?unscheduled=1";
+    rerender(<OrdersPage />);
+    await waitFor(() => expect(numbersShown()).toEqual(["AU-0001"]));
+    state.search = "";
+    rerender(<OrdersPage />);
+    await waitFor(() => expect(numbersShown()).toHaveLength(5));
+  });
+
+  it("flags a start date after the end date and lists nothing for it", async () => {
+    pick.from = "2026-11-10";
+    pick.to = "2026-11-02";
+    try {
+      render();
+      await screen.findByText("AU-0001");
+      fireEvent.click(within(screen.getByRole("group", { name: "Von" })).getByText("test-pick"));
+      fireEvent.click(within(screen.getByRole("group", { name: "Bis" })).getByText("test-pick"));
+      expect(await screen.findByText("Das Startdatum liegt nach dem Enddatum.")).toBeInTheDocument();
+      expect(screen.queryByText("AU-0003")).not.toBeInTheDocument();
+    } finally {
+      pick.from = "2026-11-02";
+      pick.to = "2026-11-05";
+    }
+  });
+
   it("leaves finished and cancelled orders out of Nicht eingeplant", async () => {
     render();
     fireEvent.click(await screen.findByRole("button", { name: "Nicht eingeplant" }));

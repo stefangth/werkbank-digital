@@ -33,9 +33,9 @@ export function useItemMutations(ref: DocumentRef, onLocked?: () => void) {
     return useMutation({
       mutationFn,
       onError: (e) => {
-        const key = mapDbError(e);
-        toast.error(t(key));
-        if (key === "errors.quoteLocked" || key === "errors.orderLocked") onLocked?.();
+        const errorKey = mapDbError(e);
+        toast.error(t(errorKey));
+        if (errorKey === "errors.quoteLocked" || errorKey === "errors.orderLocked") onLocked?.();
       },
       onSettled: () => Promise.all([key, "orderId" in ref ? ORDERS_KEY : QUOTES_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     });

@@ -37,6 +37,18 @@ describe("ContactSelect", () => {
     ]);
   });
 
+  it("lists a contact that is in both lists once, under the property", async () => {
+    contacts.customer = [c("c1", "Kunde"), c("c2", "Objekt")];
+    renderWithProviders(<ContactSelect customerId="k1" propertyId="p1" value="" onChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole("combobox"));
+    const options = await screen.findAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual([
+      expect.stringContaining("Keine Auswahl"),
+      expect.stringContaining("Max Objekt"),
+      expect.stringContaining("Max Kunde"),
+    ]);
+  });
+
   it("reports the picked contact", async () => {
     const onChange = vi.fn();
     renderWithProviders(<ContactSelect customerId="k1" propertyId={null} value="" onChange={onChange} />);

@@ -59,6 +59,9 @@ export function OrderPage() {
 
   if (isLoading) return <Skeleton className="h-48 w-full" />;
   if (isError) return <Alert variant="destructive">{t("orders.page.loadFailed")}</Alert>;
+  // After a delete the refetch finds no order before the navigation runs: keep the skeleton instead
+  // of flashing "not found".
+  if (!order && (remove.isPending || remove.isSuccess)) return <Skeleton className="h-48 w-full" />;
   if (!order) {
     return (
       <div className="space-y-4">
@@ -137,7 +140,7 @@ export function OrderPage() {
         date={order.scheduled_date}
         time={order.scheduled_time}
         technicianIds={order.technician_ids}
-        technicianNames={listRow?.technician_names ?? []}
+        technicianNames={order.technician_names}
         readOnly={readOnly}
         onSchedule={save}
         techniciansPending={setTechnicians.isPending}

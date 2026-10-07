@@ -150,9 +150,10 @@ SELECT throws_ok($$INSERT INTO werkbank.orders (org_id, customer_id, property_id
 SELECT throws_ok($$INSERT INTO werkbank.order_technicians (org_id, order_id, artist_id)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','33333333-0000-4000-a000-0000000000f1','99999999-0000-4000-9000-0000000000b1')$$,
   '23514', 'artist_org_mismatch', 'a technician of another org fails');
-SELECT throws_ok($$INSERT INTO werkbank.orders (org_id, customer_id, scheduled_time)
-  VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','cccccccc-0000-4000-c000-0000000000f1','08:00')$$,
-  '23514', NULL, 'scheduled_time without a date fails');
+-- The polish trigger clears a time without a date before the check runs (tested in
+-- teil3_polish); the constraint stays as the backstop.
+SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_time_needs_date'
+  AND conrelid = 'werkbank.orders'::regclass), 'the scheduled_time-needs-a-date check constraint exists');
 SELECT throws_ok($$INSERT INTO werkbank.quotes (org_id, customer_id, valid_until, status)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','cccccccc-0000-4000-c000-0000000000f1', current_date, 'expired')$$,
   '23514', NULL, 'an unknown quote status fails');

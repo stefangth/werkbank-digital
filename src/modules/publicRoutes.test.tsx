@@ -12,6 +12,10 @@ vi.mock("@/modules/ui", () => ({
   ],
 }));
 
+vi.mock("@/components/layout/AppLayout", () => ({
+  default: ({ children }: { children: React.ReactNode }) => <div data-testid="app-layout">{children}</div>,
+}));
+
 import App from "@/App";
 
 describe("module public routes", () => {
@@ -20,5 +24,9 @@ describe("module public routes", () => {
     render(<App />);
     expect(await screen.findByText("public ok")).toBeInTheDocument();
     expect(window.location.pathname).toBe("/x/abc");
+    // A customer without a login must not see the app shell: no layout, sidebar or navigation.
+    expect(screen.queryByTestId("app-layout")).not.toBeInTheDocument();
+    expect(document.querySelector("aside")).toBeNull();
+    expect(document.querySelector("nav")).toBeNull();
   });
 });

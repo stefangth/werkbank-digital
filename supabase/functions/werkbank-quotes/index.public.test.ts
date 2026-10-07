@@ -580,6 +580,18 @@ Deno.test("the function reports revoked: 410, uploads kept (a decided quote can 
   assertEquals(t.emails, []);
 });
 
+for (const data of [null, "weird", 42] as const) {
+  Deno.test(`an unknown answer from the decision call (${JSON.stringify(data)}) is 500 and keeps the files`, async () => {
+    const t = setup({ rpc: { data, error: null } });
+    const res = await handle(request(acceptBody()), t.deps, t.render);
+    assertEquals(res.status, 500);
+    assertEquals(await res.json(), { error: "update_failed" });
+    assertEquals(removedPaths(t.calls), []);
+    assertEquals(t.emails, []);
+    assertEquals(notificationInserts(t.calls).length, 0);
+  });
+}
+
 Deno.test("clientIpEvidence keeps the whole forwarded chain as best-effort evidence", () => {
   const h = (init: Record<string, string>) => new Headers(init);
   assertEquals(clientIpEvidence(h({})), null);

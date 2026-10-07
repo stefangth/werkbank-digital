@@ -39,8 +39,9 @@ export function QuotePage() {
   const { update, remove, extend, revokeLink, revise, copy } = useQuoteMutations();
   const { createFromQuote } = useOrderMutations();
   // The order lookup is the source of truth: undefined while it loads, null when there is none.
-  const { data: orderId } = useOrderIdForQuote(quote?.id, quote?.status === "accepted");
+  const { data: orderId, isError: orderLookupFailed, refetch: refetchOrder } = useOrderIdForQuote(quote?.id, quote?.status === "accepted");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingRevoke, setConfirmingRevoke] = useState(false);
   // Keyed by the quote id: the route reuses this component, so a lock must not carry over to
   // the next quote the user navigates to.
   const [lockedId, setLockedId] = useState<string | null>(null);
@@ -112,7 +113,7 @@ export function QuotePage() {
                   <Button variant="secondary">{t("quotes.page.extend")}</Button>
                 </DatePopover>
                 {!quote.link_revoked_at && (
-                  <Button variant="secondary" disabled={revokeLink.isPending} onClick={() => revokeLink.mutate(quote.id)}>
+                  <Button variant="secondary" disabled={revokeLink.isPending} onClick={() => setConfirmingRevoke(true)}>
                     {t("quotes.page.revokeLink")}
                   </Button>
                 )}
@@ -162,6 +163,12 @@ export function QuotePage() {
       )}
 
       {locked && <Alert variant="destructive">{t("errors.quoteLocked")}</Alert>}
+      {quote.status === "accepted" && orderLookupFailed && (
+        <Alert variant="destructive" className="flex items-center justify-between gap-3">
+          <span>{t("quotes.page.orderLookupFailed")}</span>
+          <Button type="button" variant="secondary" size="sm" onClick={() => void refetchOrder()}>{t("common.retry")}</Button>
+        </Alert>
+      )}
 
       <QuoteHeaderForm
         key={`${quote.id}-${isDraft}`}
@@ -183,6 +190,15 @@ export function QuotePage() {
         body={t("quotes.page.deleteBody", { number })}
         onConfirm={() => remove.mutate(quote.id, { onSuccess: () => { setConfirmingDelete(false); navigate(QUOTES_PATH); } })}
         pending={remove.isPending}
+      />
+      <DeleteConfirmDialog
+        open={confirmingRevoke}
+        onOpenChange={setConfirmingRevoke}
+        title={t("quotes.page.revokeTitle")}
+        body={t("quotes.page.revokeBody")}
+        confirmLabel={t("quotes.page.revokeLink")}
+        onConfirm={() => revokeLink.mutate(quote.id, { onSettled: () => setConfirmingRevoke(false) })}
+        pending={revokeLink.isPending}
       />
     </div>
   );
