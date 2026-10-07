@@ -9,7 +9,7 @@
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
-    "body": "Angebote und Rechnungen folgen bald.",
+    "body": "Angebote und Aufträge sind da. Rechnungen folgen bald.",
     "startList": {
       "title": "So startest du",
       "company": "Firmendaten ausfüllen",
@@ -101,7 +101,7 @@
     "propertyMismatch": "Das Objekt gehört nicht zu diesem Kunden.",
     "invalidTransition": "Das ist im aktuellen Status nicht möglich.",
     "orderExists": "Zu diesem Angebot gibt es schon einen Auftrag.",
-    "notAllowedHere": "Das kannst Du hier nicht ändern."
+    "notAllowedHere": "Das kannst du hier nicht ändern."
   },
   "units": {
     "HUR": "Std",

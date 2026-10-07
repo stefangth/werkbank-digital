@@ -116,8 +116,12 @@ The order matters; each step names why.
    `supabase/functions/_shared/transactional-email-templates/registry.ts`; the `quote-*`
    keys in `src/lib/emailTemplates/emailCopy.ts` (then `npm run sync:mirrors` for its edge
    mirror); the `werkbank_quote` case in `src/lib/notifications/entityRoutes.ts`; the
-   `publicQuote` Du-form exemption in `src/i18n/copyLint.test.ts`. The `labels` prop of
-   `SignaturePad` is generic and stays.
+   `publicQuote` Du-form exemption in `src/i18n/copyLint.test.ts`; in `src/data/systemMap.ts`
+   the `f_wbquotes` node and its four edges (`u_prod`, `u_public`, `f_send`, `d_notif`); and
+   the `werkbank-quotes` rows in `docs/system-map.md` (the trigger row for the public quote
+   link, the function inventory row, the three quote email and notification rows, and the
+   `werkbank-quotes` function section). The `labels` prop of `SignaturePad` is generic and
+   stays.
 
 Storage is not covered by any of these steps: neither the org delete nor
 `drop schema werkbank` touches the buckets `werkbank-assets` and `werkbank-documents`, and
