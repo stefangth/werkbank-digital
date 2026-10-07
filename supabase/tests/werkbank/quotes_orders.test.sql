@@ -88,9 +88,15 @@ SELECT lives_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, sort_or
 SELECT lives_ok($$INSERT INTO werkbank.orders (id, org_id, order_no, customer_id)
   VALUES ('33333333-0000-4000-a000-0000000000f1','bbbbbbbb-0000-4000-b000-0000000000f1','AU-0001','cccccccc-0000-4000-c000-0000000000f1')$$,
   'producer A inserts an order');
-SELECT lives_ok($$INSERT INTO werkbank.document_items (org_id, order_id, sort_order, kind, name, quantity, unit_code, labour_price, material_price, vat_rate, source_item_id)
-  VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','33333333-0000-4000-a000-0000000000f1',1,'item','Rohr',1,'H87',0,5,7,'22222222-0000-4000-a000-0000000000f1')$$,
-  'producer A inserts an order item pointing at a quote item');
+SELECT lives_ok($$INSERT INTO werkbank.document_items (id, org_id, order_id, sort_order, kind, name, quantity, unit_code, labour_price, material_price, vat_rate)
+  VALUES ('22222222-0000-4000-a000-0000000000f9','bbbbbbbb-0000-4000-b000-0000000000f1','33333333-0000-4000-a000-0000000000f1',1,'item','Rohr',1,'H87',0,5,7)$$,
+  'producer A inserts an order item');
+-- source_item_id is provenance set by create_order_from_quote (owner context), not by users.
+RESET ROLE;
+UPDATE werkbank.document_items SET source_item_id = '22222222-0000-4000-a000-0000000000f1'
+  WHERE id = '22222222-0000-4000-a000-0000000000f9';
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f2');
+SET LOCAL ROLE authenticated;
 SELECT lives_ok($$INSERT INTO werkbank.order_technicians (org_id, order_id, artist_id)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','33333333-0000-4000-a000-0000000000f1','99999999-0000-4000-9000-0000000000a1')$$,
   'producer A assigns a technician of the same org');

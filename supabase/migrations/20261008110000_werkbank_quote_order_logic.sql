@@ -8,6 +8,15 @@
 -- definer RPC the JWT claims still say `authenticated`, so the triggers use current_user instead.
 -- Every definer function checks the caller's org role before it writes, so trusting current_user
 -- here only trusts code that already did that check.
+-- Three contexts are told apart: the user (`authenticated`, `anon`), the service role, and the
+-- owner context (definer RPCs and FK actions). Only the owner context may delete children of a
+-- locked document (FK cascades) or clear a reference through an FK set-null action.
+
+-- Where a superseded quote came from, so deleting its draft revision can restore it.
+alter table werkbank.quotes
+  add column superseded_from_status text check (superseded_from_status in ('sent', 'rejected')),
+  add constraint quotes_superseded_from_status_only_superseded
+    check (superseded_from_status is null or status = 'superseded');
 
 -- Number ranges: quote and order are seeded on first use, like customer. ------------------
 create or replace function werkbank.next_number(p_org uuid, p_key text)
@@ -126,8 +135,9 @@ set search_path = ''
 as $$
 declare
   v_user boolean := current_user in ('authenticated', 'anon');
+  v_owner boolean := current_user not in ('authenticated', 'anon', 'service_role');
   v_service_cols constant text[] := array['status', 'sent_at', 'sent_to', 'pdf_path', 'pdf_sha256',
-    'accepted_pdf_path', 'access_token_hash', 'superseded_by', 'quote_no', 'version'];
+    'accepted_pdf_path', 'access_token_hash', 'superseded_by', 'superseded_from_status', 'quote_no', 'version'];
   v_changed text[];
   v_quote uuid;
   v_status text;
@@ -141,10 +151,10 @@ begin
     else
       v_quote := new.quote_id;
     end if;
-    if v_quote is null or (tg_op = 'DELETE' and not v_user) then
+    if v_quote is null or (tg_op = 'DELETE' and v_owner) then
       return case when tg_op = 'DELETE' then old else new end;
     end if;
-    if tg_op = 'UPDATE' and not v_user then
+    if tg_op = 'UPDATE' and v_owner then
       v_changed := array(
         select n.key from jsonb_each(to_jsonb(new)) n
         where n.value is distinct from to_jsonb(old) -> n.key and n.key <> 'updated_at'
@@ -165,7 +175,8 @@ begin
     -- An unknown status is left to the check constraint (23514).
     if v_user and (new.status in ('sent', 'accepted', 'rejected', 'superseded') or new.version <> 1 or new.sent_at is not null or new.sent_to is not null
         or new.pdf_path is not null or new.pdf_sha256 is not null or new.accepted_pdf_path is not null
-        or new.access_token_hash is not null or new.superseded_by is not null) then
+        or new.access_token_hash is not null or new.superseded_by is not null
+        or new.superseded_from_status is not null) then
       raise exception 'quote_service_only' using errcode = '42501';
     end if;
     return new;
@@ -183,6 +194,8 @@ begin
     (old.status = 'draft' and new.status = 'sent')
     or (old.status = 'sent' and new.status in ('accepted', 'rejected', 'superseded'))
     or (old.status = 'rejected' and new.status = 'superseded')
+    -- restore after the draft revision was deleted (restore_superseded_quote)
+    or (old.status = 'superseded' and new.status = old.superseded_from_status and new.superseded_by is null)
   ) then
     raise exception 'invalid_transition' using errcode = '22023';
   end if;
@@ -192,7 +205,7 @@ begin
       select c from unnest(v_changed) c
       where c not in ('valid_until', 'link_revoked_at')
         and not (not v_user and c = any (v_service_cols))
-        and not (not v_user and c = 'contact_id' and new.contact_id is null));
+        and not (v_owner and c = 'contact_id' and new.contact_id is null));
     if cardinality(v_changed) > 0 then
       raise exception 'quote_locked' using errcode = '55000';
     end if;
@@ -222,15 +235,24 @@ set search_path = ''
 as $$
 declare
   v_user boolean := current_user in ('authenticated', 'anon');
+  v_owner boolean := current_user not in ('authenticated', 'anon', 'service_role');
   v_changed text[];
   v_status text;
 begin
   if tg_table_name in ('document_items', 'order_technicians') then
-    if (tg_op = 'DELETE' and not v_user)
+    -- Provenance: only create_order_from_quote (owner context) links an item to its source line.
+    -- Nested ifs: order_technicians has no source_item_id, so the field is read only for items.
+    if tg_table_name = 'document_items' and v_user and tg_op <> 'DELETE' then
+      if (tg_op = 'INSERT' and new.source_item_id is not null)
+         or (tg_op = 'UPDATE' and new.source_item_id is distinct from old.source_item_id) then
+        raise exception 'provenance_service_only' using errcode = '42501';
+      end if;
+    end if;
+    if (tg_op = 'DELETE' and v_owner)
        or (case when tg_op = 'DELETE' then old.order_id else new.order_id end) is null then
       return case when tg_op = 'DELETE' then old else new end;
     end if;
-    if tg_op = 'UPDATE' and not v_user then
+    if tg_op = 'UPDATE' and v_owner then
       v_changed := array(
         select n.key from jsonb_each(to_jsonb(new)) n
         where n.value is distinct from to_jsonb(old) -> n.key and n.key <> 'updated_at'
@@ -251,6 +273,14 @@ begin
   end if;
 
   -- werkbank.orders
+  -- Provenance: only create_order_from_quote (owner context) links an order to its quote, so a user
+  -- can neither bypass "only from accepted" nor squat the unique quote_id.
+  if v_user and (
+    (tg_op = 'INSERT' and new.quote_id is not null)
+    or (tg_op = 'UPDATE' and new.quote_id is distinct from old.quote_id)
+  ) then
+    raise exception 'provenance_service_only' using errcode = '42501';
+  end if;
   if tg_op = 'INSERT' then
     if new.status <> 'open' then
       raise exception 'invalid_transition' using errcode = '22023';
@@ -273,7 +303,7 @@ begin
       select n.key from jsonb_each(to_jsonb(new)) n
       where n.value is distinct from to_jsonb(old) -> n.key
         and n.key not in ('updated_at', 'status', 'completed_at', 'cancelled_at')
-        and not (not v_user and n.key = 'contact_id' and n.value = 'null'::jsonb));
+        and not (v_owner and n.key = 'contact_id' and n.value = 'null'::jsonb));
     if cardinality(v_changed) > 0 then
       raise exception 'order_locked' using errcode = '55000';
     end if;
@@ -292,6 +322,36 @@ create trigger document_items_order_lock before insert or update or delete on we
   for each row execute function werkbank.order_transition();
 create trigger order_technicians_order_lock before insert or update or delete on werkbank.order_technicians
   for each row execute function werkbank.order_transition();
+
+-- Restore on revision delete ----------------------------------------------------------
+-- Deleting a draft revision (a producer may, RLS allows draft deletes) gives the quote it
+-- superseded its previous status back; the link stays revoked. BEFORE DELETE, because the FK
+-- action (on delete set null) would clear superseded_by right after the row is gone. SECURITY
+-- DEFINER so the restore runs in the owner context the lock trigger trusts with status changes;
+-- it only touches the quote the deleted row superseded, and the delete itself is gated by RLS.
+-- During an org delete the org row is already gone and the restore is skipped, since the whole
+-- org's quotes are being removed.
+create function werkbank.restore_superseded_quote()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if old.status = 'draft'
+     and exists (select 1 from public.organizations o where o.id = old.org_id) then
+    update werkbank.quotes q
+    set status = q.superseded_from_status, superseded_by = null, superseded_from_status = null
+    where q.org_id = old.org_id and q.superseded_by = old.id and q.status = 'superseded'
+      and q.superseded_from_status is not null;
+  end if;
+  return old;
+end;
+$$;
+revoke all on function werkbank.restore_superseded_quote() from public, anon;
+
+create trigger quotes_restore_superseded before delete on werkbank.quotes
+  for each row execute function werkbank.restore_superseded_quote();
 
 -- RPCs --------------------------------------------------------------------------------
 -- New version of a sent, rejected or expired (= sent) quote: version n + 1 as a draft with the
@@ -331,7 +391,8 @@ begin
   order by i.sort_order;
 
   update werkbank.quotes
-  set status = 'superseded', superseded_by = v_id, link_revoked_at = coalesce(link_revoked_at, now())
+  set status = 'superseded', superseded_by = v_id, superseded_from_status = v_q.status,
+    link_revoked_at = coalesce(link_revoked_at, now())
   where id = p_quote;
 
   return v_id;

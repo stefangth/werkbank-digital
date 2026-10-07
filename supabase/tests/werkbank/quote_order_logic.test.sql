@@ -1,7 +1,7 @@
 -- Werkbank Teil 3 (R2): quote and order locks, transitions, numbering and the three RPCs.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(82);
+SELECT plan(93);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -125,6 +125,8 @@ SELECT throws_ok($$UPDATE werkbank.quotes SET subject = 'x' WHERE id = '11111111
   '55000', 'quote_locked', 'service role cannot edit the content of a sent quote either');
 SELECT throws_ok($$UPDATE werkbank.quotes SET status = 'draft' WHERE id = '11111111-0000-4000-a000-0000000000e1'$$,
   '22023', 'invalid_transition', 'sent to draft is not a transition, even for the service role');
+SELECT throws_ok($$DELETE FROM werkbank.document_items WHERE id = '22222222-0000-4000-a000-0000000000e1'$$,
+  '55000', 'quote_locked', 'service role cannot delete an item of a sent quote');
 RESET ROLE;
 
 -- Producer on the sent quote.
@@ -205,6 +207,37 @@ SELECT throws_ok($$SELECT werkbank.copy_quote('11111111-0000-4000-a000-000000000
   '23514', 'property_customer_mismatch', 'copy_quote rejects a property of another customer');
 RESET ROLE;
 
+-- Deleting a draft revision restores the quote it superseded ---------------------------
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e2');
+SET LOCAL ROLE authenticated;
+INSERT INTO werkbank.quotes (id, org_id, customer_id, valid_until) VALUES
+  ('11111111-0000-4000-a000-0000000000e5','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1', current_date + 30),
+  ('11111111-0000-4000-a000-0000000000e6','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1', current_date + 30);
+INSERT INTO werkbank.document_items (org_id, quote_id, sort_order, kind, name)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','11111111-0000-4000-a000-0000000000e5',0,'title','Dach');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+UPDATE werkbank.quotes SET status = 'sent' WHERE id IN ('11111111-0000-4000-a000-0000000000e5','11111111-0000-4000-a000-0000000000e6');
+UPDATE werkbank.quotes SET status = 'rejected' WHERE id = '11111111-0000-4000-a000-0000000000e6';
+RESET ROLE;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e2');
+SET LOCAL ROLE authenticated;
+SELECT set_config('ql.rev5', werkbank.revise_quote('11111111-0000-4000-a000-0000000000e5')::text, true);
+SELECT set_config('ql.rev6', werkbank.revise_quote('11111111-0000-4000-a000-0000000000e6')::text, true);
+SELECT is(pg_temp.row_count($q$DELETE FROM werkbank.quotes WHERE id = pg_temp.id('rev5')$q$), 1,
+  'producer deletes the draft revision of a sent quote');
+SELECT results_eq(
+  $$SELECT status, superseded_by, superseded_from_status, link_revoked_at IS NOT NULL FROM werkbank.quotes WHERE id = '11111111-0000-4000-a000-0000000000e5'$$,
+  $$VALUES ('sent'::text, NULL::uuid, NULL::text, true)$$,
+  'the superseded quote is sent again and its link stays revoked');
+SELECT lives_ok($$SELECT werkbank.revise_quote('11111111-0000-4000-a000-0000000000e5')$$,
+  'the restored quote can be revised again');
+SELECT is(pg_temp.row_count($q$DELETE FROM werkbank.quotes WHERE id = pg_temp.id('rev6')$q$), 1,
+  'producer deletes the draft revision of a rejected quote');
+SELECT is((SELECT status FROM werkbank.quotes WHERE id = '11111111-0000-4000-a000-0000000000e6'), 'rejected',
+  'the superseded quote is rejected again');
+RESET ROLE;
+
 -- create_order_from_quote -------------------------------------------------------------
 -- The service role sends and accepts the revision; a copy is only sent; a quote without
 -- property is accepted.
@@ -239,6 +272,18 @@ SELECT set_config('ql.order2', werkbank.create_order_from_quote('11111111-0000-4
 SELECT is((SELECT property_id FROM werkbank.orders WHERE id = pg_temp.id('order2')), NULL::uuid,
   'a quote without property yields an order without property');
 
+-- Provenance (quote_id, source_item_id) is set only by create_order_from_quote.
+SELECT throws_ok($$INSERT INTO werkbank.orders (org_id, customer_id, quote_id)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1', pg_temp.id('copy1'))$$,
+  '42501', 'provenance_service_only', 'a user cannot insert an order linked to a quote');
+SELECT throws_ok($$UPDATE werkbank.orders SET quote_id = NULL WHERE id = pg_temp.id('order2')$$,
+  '42501', 'provenance_service_only', 'a user cannot change the quote of an order');
+SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, order_id, sort_order, kind, name, source_item_id)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1', pg_temp.id('order2'), 1, 'title', 'X', '22222222-0000-4000-a000-0000000000e1')$$,
+  '42501', 'provenance_service_only', 'a user cannot insert an item with a source line');
+SELECT throws_ok($$UPDATE werkbank.document_items SET source_item_id = NULL WHERE order_id = pg_temp.id('order') AND kind = 'item'$$,
+  '42501', 'provenance_service_only', 'a user cannot change the source line of an item');
+
 -- Order transitions and lock ----------------------------------------------------------
 SELECT throws_ok($$UPDATE werkbank.orders SET status = 'done' WHERE id = pg_temp.id('order2')$$,
   '22023', 'invalid_transition', 'open to done is not a transition');
@@ -260,6 +305,13 @@ SELECT throws_ok($$UPDATE werkbank.orders SET notes = 'x' WHERE id = pg_temp.id(
   '55000', 'order_locked', 'the header of a done order cannot be edited');
 SELECT throws_ok($$DELETE FROM werkbank.order_technicians WHERE order_id = pg_temp.id('order')$$,
   '55000', 'order_locked', 'technicians of a done order cannot be removed');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+SELECT throws_ok($$DELETE FROM werkbank.document_items WHERE order_id = pg_temp.id('order') AND kind = 'item'$$,
+  '55000', 'order_locked', 'service role cannot delete an item of a done order');
+RESET ROLE;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e2');
+SET LOCAL ROLE authenticated;
 SELECT throws_ok($$UPDATE werkbank.orders SET status = 'cancelled' WHERE id = pg_temp.id('order')$$,
   '22023', 'invalid_transition', 'done to cancelled is not a transition');
 SELECT lives_ok($$UPDATE werkbank.orders SET status = 'in_progress' WHERE id = pg_temp.id('order')$$, 'done to in_progress reopens');
