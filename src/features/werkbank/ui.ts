@@ -18,6 +18,9 @@ export const loadCatalogPage = () =>
 export const loadCustomersPage = () =>
   import("./pages/CustomersPage").then((m) => ({ default: m.CustomersPage }));
 
+export const loadCustomerDetailPage = () =>
+  import("./pages/CustomerDetailPage").then((m) => ({ default: m.CustomerDetailPage }));
+
 export const loadPropertiesPage = () =>
   import("./pages/PropertiesPage").then((m) => ({ default: m.PropertiesPage }));
 
@@ -27,6 +30,7 @@ export const loadPropertyDetailPage = () =>
 const PropertiesPage = lazy(loadPropertiesPage);
 const PropertyDetailPage = lazy(loadPropertyDetailPage);
 const CustomersPage = lazy(loadCustomersPage);
+const CustomerDetailPage = lazy(loadCustomerDetailPage);
 const CatalogPage = lazy(loadCatalogPage);
 const TechniciansPage = lazy(loadTechniciansPage);
 const WerkbankDashboard = lazy(loadWerkbankDashboard);
@@ -76,6 +80,12 @@ export const werkbankUi: ModuleUi = {
       kinds: ["handwerk"],
       requiredRoles: ["admin", "producer"],
       Page: CustomersPage,
+    },
+    {
+      path: `${CUSTOMERS_PATH}/:id`,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer"],
+      Page: CustomerDetailPage,
     },
     {
       path: PROPERTIES_PATH,

@@ -3,9 +3,10 @@ import { NAV_ITEMS, visibleNavItems } from "@/components/layout/navItems";
 import type { OrgKind } from "@/lib/orgKind";
 import { MODULE_UIS } from "@/modules/ui";
 import {
-  loadCatalogPage, loadCustomersPage, loadPropertiesPage, loadPropertyDetailPage, loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
+  loadCatalogPage, loadCustomerDetailPage, loadCustomersPage, loadPropertiesPage, loadPropertyDetailPage, loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
 import { WerkbankDashboard } from "./components/WerkbankDashboard";
 import { CatalogPage } from "./pages/CatalogPage";
+import { CustomerDetailPage } from "./pages/CustomerDetailPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { TechniciansPage } from "./pages/TechniciansPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
@@ -74,11 +75,13 @@ describe("werkbank module UI", () => {
   });
 
   it("contributes the customers route for handwerk office roles", () => {
-    const route = werkbankUi.routes.find((r) => r.path === CUSTOMERS_PATH);
-    expect(route?.path).toBe("/customers");
-    expect(route?.kinds).toEqual(["handwerk"]);
-    expect(route?.requiredRoles).toEqual(["admin", "producer"]);
-    expect(isLazy(route?.Page)).toBe(true);
+    for (const path of [CUSTOMERS_PATH, "/customers/:id"]) {
+      const route = werkbankUi.routes.find((r) => r.path === path);
+      expect(route?.path).toBe(path);
+      expect(route?.kinds).toEqual(["handwerk"]);
+      expect(route?.requiredRoles).toEqual(["admin", "producer"]);
+      expect(isLazy(route?.Page)).toBe(true);
+    }
   });
 
   it("lists Customers first in the Werkbank group and hides it from artists and other kinds", () => {
@@ -111,6 +114,7 @@ describe("werkbank module UI", () => {
 
   it("loads the customers page lazily", async () => {
     expect((await loadCustomersPage()).default).toBe(CustomersPage);
+    expect((await loadCustomerDetailPage()).default).toBe(CustomerDetailPage);
   });
 
   it("shows Services to a producer of a handwerk org and hides it from artists and other kinds", () => {

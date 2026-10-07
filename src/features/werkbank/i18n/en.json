@@ -239,6 +239,31 @@
       "CH": "Switzerland",
       "other": "Other country",
       "otherCode": "Country code (two letters)"
+    },
+    "detail": {
+      "loadFailed": "The customer could not be loaded. Please try again.",
+      "notFound": {
+        "title": "Customer not found",
+        "reason": "It was deleted or the link is wrong.",
+        "back": "Back to customers"
+      },
+      "masterData": "Master data",
+      "address": "Address",
+      "email": "Email",
+      "invoiceEmail": "Invoice email",
+      "phone": "Phone",
+      "vatId": "VAT ID",
+      "paymentTerms": "Payment terms",
+      "paymentTermsValue": "{{count}} days",
+      "paymentTermsValue_one": "{{count}} day",
+      "notes": "Notes",
+      "none": "No details",
+      "properties": {
+        "title": "Properties",
+        "add": "Add property",
+        "empty": "This customer has no properties yet.",
+        "loadFailed": "The properties could not be loaded."
+      }
     }
   },
   "properties": {

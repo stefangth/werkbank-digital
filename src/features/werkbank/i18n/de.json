@@ -239,6 +239,31 @@
       "CH": "Schweiz",
       "other": "Anderes Land",
       "otherCode": "Ländercode (zwei Buchstaben)"
+    },
+    "detail": {
+      "loadFailed": "Der Kunde konnte nicht geladen werden. Versuche es bitte noch einmal.",
+      "notFound": {
+        "title": "Kunde nicht gefunden",
+        "reason": "Er wurde gelöscht oder der Link stimmt nicht.",
+        "back": "Zu den Kunden"
+      },
+      "masterData": "Stammdaten",
+      "address": "Adresse",
+      "email": "E-Mail",
+      "invoiceEmail": "Rechnungs-E-Mail",
+      "phone": "Telefon",
+      "vatId": "USt-IdNr.",
+      "paymentTerms": "Zahlungsziel",
+      "paymentTermsValue": "{{count}} Tage",
+      "paymentTermsValue_one": "{{count}} Tag",
+      "notes": "Notizen",
+      "none": "Keine Angaben",
+      "properties": {
+        "title": "Liegenschaften",
+        "add": "Liegenschaft anlegen",
+        "empty": "Dieser Kunde hat noch keine Liegenschaften.",
+        "loadFailed": "Die Liegenschaften konnten nicht geladen werden."
+      }
     }
   },
   "properties": {
