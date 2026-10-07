@@ -53,6 +53,39 @@ describe("order hooks", () => {
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "number-ranges"] });
   });
 
+  it("create draws a number, so it refreshes orders and the numbering", async () => {
+    Object.assign(client, createFakeSupabase({ "werkbank.orders": { data: { id: "o9" }, error: null } }));
+    const { result, queryClient } = renderHookWithProviders(() => useOrderMutations(), { authOverrides });
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    await act(async () => { await result.current.create.mutateAsync({ customer_id: "k1" }); });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "orders"] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "number-ranges"] });
+  });
+
+  it("setStatus writes only the status and refreshes orders", async () => {
+    const fake = createFakeSupabase({ "werkbank.orders": { data: null, error: null } });
+    Object.assign(client, fake);
+    const { result, queryClient } = renderHookWithProviders(() => useOrderMutations(), { authOverrides });
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    await act(async () => { await result.current.setStatus.mutateAsync({ id: "o1", status: "in_progress" }); });
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: "werkbank.orders", method: "update", args: [{ status: "in_progress" }] }));
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "orders"] });
+  });
+
+  it("setTechnicians writes the technician set of the order and refreshes orders", async () => {
+    const fake = createFakeSupabase({ "werkbank.order_technicians": { data: [{ artist_id: "a1" }], error: null } });
+    Object.assign(client, fake);
+    const { result, queryClient } = renderHookWithProviders(() => useOrderMutations(), { authOverrides });
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    await act(async () => { await result.current.setTechnicians.mutateAsync({ orderId: "o1", artistIds: ["a1", "a2"] }); });
+    expect(fake.calls).toContainEqual(expect.objectContaining({
+      table: "werkbank.order_technicians",
+      method: "upsert",
+      args: [[{ org_id: "org-1", order_id: "o1", artist_id: "a2" }], { onConflict: "order_id,artist_id", ignoreDuplicates: true }],
+    }));
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "orders"] });
+  });
+
   it("remove deletes the order and refreshes orders and quotes (has_order changes)", async () => {
     Object.assign(client, createFakeSupabase({ "werkbank.orders": { data: [{ id: "o1" }], error: null } }));
     const { result, queryClient } = renderHookWithProviders(() => useOrderMutations(), { authOverrides });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import { renderHookWithProviders } from "@/test/renderWithProviders";
 import type { AuthContextType } from "@/features/auth/AuthContext";
@@ -41,6 +42,10 @@ describe("quote hooks", () => {
     const { result } = renderHookWithProviders(() => useQuoteMutations(), { authOverrides });
     await act(async () => { await result.current.update.mutateAsync({ id: "q1", patch: { subject: "x" } }).catch(() => undefined); });
     expect(toast.error).toHaveBeenCalledTimes(1);
+    // The message of "quote_locked", not the generic fallback.
+    const locked = i18n.t("errors.quoteLocked", { ns: "werkbank" });
+    expect(locked).not.toBe(i18n.t("errors.generic", { ns: "werkbank" }));
+    expect(toast.error).toHaveBeenCalledWith(locked);
   });
 });
 
@@ -59,6 +64,20 @@ describe("item hooks", () => {
     await act(async () => { await result.current.remove.mutateAsync("i1"); });
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "quotes"] });
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "items", "quote_id:q1"] });
+  });
+
+  it.each([
+    ["quote_locked", { quoteId: "q1" }],
+    ["order_locked", { orderId: "o1" }],
+  ])("calls onLocked when the database rejects a write as %s, and not for another error", async (message, ref) => {
+    const onLocked = vi.fn();
+    Object.assign(client, createFakeSupabase({ "werkbank.document_items": { data: null, error: { code: "55000", message } } }));
+    const { result } = renderHookWithProviders(() => useItemMutations(ref, onLocked), { authOverrides });
+    await act(async () => { await result.current.update.mutateAsync({ id: "i1", patch: { name: "x" } }).catch(() => undefined); });
+    expect(onLocked).toHaveBeenCalledTimes(1);
+    Object.assign(client, createFakeSupabase({ "werkbank.document_items": { data: null, error: { code: "42501", message: "denied" } } }));
+    await act(async () => { await result.current.update.mutateAsync({ id: "i1", patch: { name: "x" } }).catch(() => undefined); });
+    expect(onLocked).toHaveBeenCalledTimes(1);
   });
 
   it("also invalidates the orders domain for an order item mutation", async () => {

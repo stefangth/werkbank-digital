@@ -37,6 +37,13 @@ describe("fetchQuote", () => {
     const fake = createFakeSupabase({ [Q]: { data: null, error: null }, "werkbank.document_totals": { data: null, error: null } });
     expect(await fetchQuote(asClient(fake), "nope")).toBeNull();
   });
+  it("throws the database error of the quote or of its totals", async () => {
+    const error = { code: "42501" };
+    const quoteFails = createFakeSupabase({ [Q]: { data: null, error }, "werkbank.document_totals": { data: null, error: null } });
+    await expect(fetchQuote(asClient(quoteFails), "q1")).rejects.toBe(error);
+    const totalsFail = createFakeSupabase({ [Q]: { data: { id: "q1" }, error: null }, "werkbank.document_totals": { data: null, error } });
+    await expect(fetchQuote(asClient(totalsFail), "q1")).rejects.toBe(error);
+  });
 });
 
 describe("defaultValidUntil", () => {

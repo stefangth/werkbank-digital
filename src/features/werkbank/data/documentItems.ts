@@ -36,9 +36,14 @@ export async function fetchItems(client: Client, ref: DocumentRef): Promise<Docu
 }
 
 export async function addItem(client: Client, orgId: string, ref: DocumentRef, draft: ItemDraft, sortOrder: number): Promise<DocumentItem> {
-  const { column, id } = refColumn(ref);
+  const row: ItemInsert = {
+    ...draft,
+    org_id: orgId,
+    sort_order: sortOrder,
+    ...("quoteId" in ref ? { quote_id: ref.quoteId } : { order_id: ref.orderId }),
+  };
   const { data, error } = await client.schema("werkbank").from("document_items")
-    .insert({ ...draft, org_id: orgId, [column]: id, sort_order: sortOrder } as ItemInsert)
+    .insert(row)
     .select()
     .single();
   if (error) throw error;

@@ -23,11 +23,10 @@ import type { OrderListRow } from "../data/orders";
 import { useOrderList, useOrderMutations } from "../hooks/useOrders";
 import { useTechnicians } from "../hooks/useTechnicians";
 import { formatEuro } from "../lib/money";
-import { ORDER_STATUS_TONES, needsSchedule, type OrderStatus } from "../lib/orderStatus";
+import { ORDER_STATUSES, ORDER_STATUS_TONES, needsSchedule, type OrderStatus } from "../lib/orderStatus";
 import { orderPath } from "../paths";
 
 const ALL = "__all__";
-const STATUSES: OrderStatus[] = ["open", "in_progress", "done", "cancelled"];
 
 function NewOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation("werkbank");
@@ -168,7 +167,7 @@ export function OrdersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>{t("orders.allStatuses")}</SelectItem>
-                {STATUSES.map((s) => (
+                {ORDER_STATUSES.map((s) => (
                   <SelectItem key={s} value={s}>{t(`orders.status.${s}`)}</SelectItem>
                 ))}
               </SelectContent>

@@ -20,6 +20,8 @@ export type OrderDraft = {
   scheduled_time?: string | null;
 };
 export type OrderPatch = Partial<OrderDraft>;
+/** What `updateOrder` writes: a draft patch, or the status (by itself, via `setOrderStatus`). */
+type OrderUpdate = OrderPatch & { status?: Order["status"] };
 
 type Client = SupabaseClient<Database>;
 type OrderInsert = Database["werkbank"]["Tables"]["orders"]["Insert"];
@@ -65,14 +67,14 @@ export async function createOrder(client: Client, orgId: string, draft: OrderDra
   return data.id;
 }
 
-export async function updateOrder(client: Client, id: string, patch: OrderPatch): Promise<void> {
+export async function updateOrder(client: Client, id: string, patch: OrderUpdate): Promise<void> {
   const { error } = await client.schema("werkbank").from("orders").update(patch).eq("id", id);
   if (error) throw error;
 }
 
 /** Only the status is written; `completed_at` and `cancelled_at` are stamped by the trigger. */
 export async function setOrderStatus(client: Client, id: string, status: Order["status"]): Promise<void> {
-  await updateOrder(client, id, { status } as OrderPatch);
+  await updateOrder(client, id, { status });
 }
 
 /** Makes the technician set equal `artistIds`: inserts the new, then deletes the missing.

@@ -7,7 +7,7 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { state, navigate, createQuote, createOrder } = vi.hoisted(() => ({
-  state: { quotes: [] as unknown[], orders: [] as unknown[] },
+  state: { quotes: [] as unknown[], orders: [] as unknown[], profileLoading: false },
   navigate: vi.fn(),
   createQuote: vi.fn(),
   createOrder: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock("../hooks/useOrders", () => ({
   useOrderMutations: () => ({ create: { mutate: createOrder, isPending: false } }),
 }));
 vi.mock("../hooks/useCompanyProfile", () => ({
-  useCompanyProfile: () => ({ data: { quote_validity_days: 14 }, isLoading: false }),
+  useCompanyProfile: () => ({ data: state.profileLoading ? undefined : { quote_validity_days: 14 }, isLoading: state.profileLoading }),
 }));
 
 import { DocumentsSection } from "./DocumentsSection";
@@ -57,6 +57,17 @@ describe("DocumentsSection", () => {
     await act(async () => { await i18n.changeLanguage("de"); });
   });
   afterAll(async () => { await act(async () => { await i18n.changeLanguage("en"); }); });
+
+  it("keeps the create quote button disabled while the company profile loads", async () => {
+    state.profileLoading = true;
+    try {
+      render({ customerId: "k1" });
+      expect(await screen.findByRole("button", { name: "Angebot anlegen" })).toBeDisabled();
+      expect(createQuote).not.toHaveBeenCalled();
+    } finally {
+      state.profileLoading = false;
+    }
+  });
 
   it("lists only the customer's quotes and orders, with the version in the number", () => {
     render({ customerId: "k1" });
