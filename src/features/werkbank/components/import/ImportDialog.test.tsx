@@ -118,6 +118,18 @@ describe("ImportDialog", () => {
     expect(await screen.findByText("Zeile 2: Kunde K-99 nicht gefunden")).toBeInTheDocument();
   });
 
+  it("explains a property_exists row as an existing property", async () => {
+    const spec = fakeSpec([
+      { row: 0, status: "created", reason: null, detail: null },
+      { row: 1, status: "skipped", reason: "property_exists", detail: "11111111-1111-4111-8111-111111111111" },
+    ]);
+    renderDialog(spec);
+    upload(CSV);
+    fireEvent.click(await screen.findByRole("button", { name: "Weiter" }));
+    fireEvent.click(await screen.findByRole("button", { name: "2 Zeilen importieren" }));
+    expect(await screen.findByText("Zeile 4: Objekt existiert schon")).toBeInTheDocument();
+  });
+
   it("keeps the review step and shows an error when the import fails", async () => {
     const spec = fakeSpec(new Error("boom"));
     const { onDone } = renderDialog(spec);

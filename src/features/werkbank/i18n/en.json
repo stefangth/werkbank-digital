@@ -413,6 +413,7 @@
     "reasons": {
       "customer_no_taken": "Customer number already taken",
       "item_no_taken": "Item number already taken",
+      "property_exists": "Property already exists",
       "unknown_customer": "Customer {{detail}} not found",
       "invalid": "Invalid data",
       "other": "Not imported",
