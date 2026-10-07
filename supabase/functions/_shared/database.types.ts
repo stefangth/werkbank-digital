@@ -2988,7 +2988,266 @@ export type Database = {
   }
   werkbank: {
     Tables: {
-      [_ in never]: never
+      catalog_items: {
+        Row: {
+          archived_at: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          item_no: string | null
+          labour_price: number
+          material_price: number
+          name: string
+          net_price: number | null
+          org_id: string
+          unit_code: string
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          archived_at?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_no?: string | null
+          labour_price?: number
+          material_price?: number
+          name: string
+          net_price?: number | null
+          org_id: string
+          unit_code: string
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_no?: string | null
+          labour_price?: number
+          material_price?: number
+          name?: string
+          net_price?: number | null
+          org_id?: string
+          unit_code?: string
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          is_primary: boolean
+          last_name: string
+          mobile: string | null
+          notes: string | null
+          org_id: string
+          phone: string | null
+          property_id: string | null
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_primary?: boolean
+          last_name: string
+          mobile?: string | null
+          notes?: string | null
+          org_id: string
+          phone?: string | null
+          property_id?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_primary?: boolean
+          last_name?: string
+          mobile?: string | null
+          notes?: string | null
+          org_id?: string
+          phone?: string | null
+          property_id?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "contacts_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          archived_at: string | null
+          city: string
+          company_name: string | null
+          country_code: string
+          created_at: string
+          customer_no: string
+          email: string | null
+          first_name: string | null
+          id: string
+          invoice_email: string | null
+          kind: string
+          last_name: string | null
+          notes: string | null
+          org_id: string
+          payment_terms_days: number
+          phone: string | null
+          postal_code: string
+          street: string
+          updated_at: string
+          vat_id: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          city: string
+          company_name?: string | null
+          country_code?: string
+          created_at?: string
+          customer_no: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          invoice_email?: string | null
+          kind: string
+          last_name?: string | null
+          notes?: string | null
+          org_id: string
+          payment_terms_days?: number
+          phone?: string | null
+          postal_code: string
+          street: string
+          updated_at?: string
+          vat_id?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          city?: string
+          company_name?: string | null
+          country_code?: string
+          created_at?: string
+          customer_no?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          invoice_email?: string | null
+          kind?: string
+          last_name?: string | null
+          notes?: string | null
+          org_id?: string
+          payment_terms_days?: number
+          phone?: string | null
+          postal_code?: string
+          street?: string
+          updated_at?: string
+          vat_id?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          access_notes: string | null
+          archived_at: string | null
+          billing_city: string | null
+          billing_country_code: string | null
+          billing_name: string | null
+          billing_postal_code: string | null
+          billing_street: string | null
+          city: string
+          country_code: string
+          created_at: string
+          customer_id: string
+          id: string
+          name: string
+          notes: string | null
+          object_no: string | null
+          org_id: string
+          postal_code: string
+          street: string
+          updated_at: string
+        }
+        Insert: {
+          access_notes?: string | null
+          archived_at?: string | null
+          billing_city?: string | null
+          billing_country_code?: string | null
+          billing_name?: string | null
+          billing_postal_code?: string | null
+          billing_street?: string | null
+          city: string
+          country_code?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          name: string
+          notes?: string | null
+          object_no?: string | null
+          org_id: string
+          postal_code: string
+          street: string
+          updated_at?: string
+        }
+        Update: {
+          access_notes?: string | null
+          archived_at?: string | null
+          billing_city?: string | null
+          billing_country_code?: string | null
+          billing_name?: string | null
+          billing_postal_code?: string | null
+          billing_street?: string | null
+          city?: string
+          country_code?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          object_no?: string | null
+          org_id?: string
+          postal_code?: string
+          street?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
