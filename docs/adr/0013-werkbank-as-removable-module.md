@@ -111,6 +111,13 @@ The order matters; each step names why.
    `scripts/moduleIsolation.test.ts` except its `supabase/migrations/*_werkbank_*.sql`
    entry; regenerate the types without `werkbank`; run `supabase functions delete` for each
    `werkbank-*` function (the deploy workflow never deletes functions).
+6. Remove the core touch points the quote flow (Teil 3) added outside the manifests: the
+   three `../werkbank/emails/quote-*` imports and their entries in
+   `supabase/functions/_shared/transactional-email-templates/registry.ts`; the `quote-*`
+   keys in `src/lib/emailTemplates/emailCopy.ts` (then `npm run sync:mirrors` for its edge
+   mirror); the `werkbank_quote` case in `src/lib/notifications/entityRoutes.ts`; the
+   `publicQuote` Du-form exemption in `src/i18n/copyLint.test.ts`. The `labels` prop of
+   `SignaturePad` is generic and stays.
 
 Storage is not covered by any of these steps: neither the org delete nor
 `drop schema werkbank` touches the buckets `werkbank-assets` and `werkbank-documents`, and
