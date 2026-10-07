@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Settings as SettingsIcon, Database, Bell, Wand2, Save, MapPin, BookOpen, Building2, FileSignature, ShieldCheck, Lock, Sparkles, Users, Activity, Rocket, Compass } from 'lucide-react';
+import { Settings as SettingsIcon, Database, Bell, Wand2, Save, MapPin, BookOpen, Building2, FileSignature, ShieldCheck, Lock, Sparkles, Users, Activity, Rocket, Compass, Hash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { upsertOrgSetting, mergeOrgRows } from '@/data/settings';
 import { computeSettingsDirtyKeys } from '@/lib/settings';
@@ -38,6 +38,7 @@ import { EmailTemplatesTab } from '@/components/settings/emailTemplates/EmailTem
 import { PeopleTab } from '@/components/admin/people/PeopleTab';
 import { HowThisOrgWorks } from '@/components/getRunning/HowThisOrgWorks';
 import { GetRunningSettingsMirror } from '@/components/getRunning/v3/GetRunningSettingsMirror';
+import { NumberingTab } from '@/features/werkbank/components/NumberingTab';
 import { Badge } from '@/components/ui/badge';
 import { PageMini } from '@/components/minis/PageMini';
 
@@ -299,6 +300,7 @@ export default function SettingsPage() {
       { value: "how-it-works", label: t('nav.items.howItWorks'), icon: Compass, show: isAdmin || isProducer },
       { value: "get-running", label: t('nav.items.getRunning'), icon: Rocket, show: showGetRunning },
       { value: "permissions", label: t('nav.items.permissions'), icon: ShieldCheck, show: isAdmin },
+      { value: "numbering", label: t('nav.items.numbering'), icon: Hash, show: isAdmin },
       { value: "casts-coverage", label: t('nav.items.castsCoverage'), icon: MapPin, show: isAdmin || isProducer },
       { value: "skills", label: t('nav.items.skills'), icon: Sparkles, show: isAdmin || isProducer },
     ] },
@@ -447,6 +449,12 @@ export default function SettingsPage() {
         {isAdmin && currentOrg && (
           <TabsContent value="permissions" className="mt-4">
             <RolesRightsTab orgId={currentOrg.id} />
+          </TabsContent>
+        )}
+
+        {isAdmin && currentOrg && (
+          <TabsContent value="numbering" className="mt-4">
+            <NumberingTab />
           </TabsContent>
         )}
 

@@ -145,5 +145,21 @@
       "price": "Gib einen Betrag ab 0 mit höchstens zwei Nachkommastellen ein",
       "vat": "Wähle einen Steuersatz"
     }
+  },
+  "numbering": {
+    "title": "Nummernkreise",
+    "description": "So werden Nummern vergeben, wenn du etwas Neues anlegst.",
+    "customerHeading": "Kundennummern",
+    "prefix": "Präfix",
+    "prefixHint": "Höchstens 10 Zeichen, zum Beispiel K-.",
+    "nextValue": "Nächste Nummer",
+    "preview": "Nächste Kundennummer: {{number}}",
+    "save": "Speichern",
+    "saved": "Nummernkreis gespeichert",
+    "loadFailed": "Die Nummernkreise konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "errors": {
+      "prefixTooLong": "Das Präfix darf höchstens 10 Zeichen lang sein",
+      "nextValue": "Gib eine ganze Zahl ab 1 ein"
+    }
   }
 }

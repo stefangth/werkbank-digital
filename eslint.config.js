@@ -158,6 +158,35 @@ const moduleIsolation = [
       [...uiConventionSelectors, pluginImportDynamic],
     ),
   },
+  // The one core file that may mount a plugin component: the Settings page renders the
+  // Werkbank numbering tab. Same rules as core src, but the plugin ban names every plugin
+  // path except that one component. Later in the list, so it wins for this file.
+  {
+    files: ["src/pages/SettingsPage.tsx"],
+    rules: isolationRules(
+      [
+        {
+          // gitignore semantics: a file cannot be re-included once its directory is excluded, so
+          // the components folder is banned file by file (the plugin root is listed by its top-level files) and the one allowed file is negated.
+          group: [
+            "**/features/werkbank/ui*",
+            "**/features/werkbank/paths*",
+            "**/features/werkbank/registry*",
+            "**/features/werkbank/index*",
+            ...["data", "hooks", "lib", "pages", "schemas", "i18n"].map((dir) => `**/features/werkbank/${dir}`),
+            ...["data", "hooks", "lib", "pages", "schemas", "i18n"].map((dir) => `**/features/werkbank/${dir}/**`),
+            "**/features/werkbank/components/*",
+            "!**/features/werkbank/components/NumberingTab",
+            "**/_shared/werkbank",
+            "**/_shared/werkbank/**",
+          ],
+          message: pluginImportPatterns[0].message,
+        },
+        ...designSystemPatterns,
+      ],
+      [...uiConventionSelectors, pluginImportDynamic],
+    ),
+  },
   // Core src that uiConventions exempts (vendored ui, tests, pdf/email themes):
   // the plugin ban only, so their other behaviour is unchanged.
   {

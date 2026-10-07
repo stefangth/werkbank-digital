@@ -27,6 +27,7 @@ export const SETTINGS_TAB_PARAMS = [
   "how-it-works",
   "get-running",
   "permissions",
+  "numbering",
   "people",
   "activity",
   "casts-coverage",
@@ -54,6 +55,7 @@ export const SETTINGS_TAB_KINDS: Partial<Record<SettingsTabParam, readonly OrgKi
   airtable: ["production", "staffing"],
   booking: ["production", "staffing"],
   "hire-orders": ["production", "staffing"],
+  numbering: ["handwerk"],
 };
 
 /** Whether `kind` is offered this tab. Takes a plain string because SettingsPage also
@@ -64,7 +66,7 @@ export function isSettingsTabAllowedForKind(tab: string, kind: OrgKind): boolean
 }
 
 /** Tabs whose trigger and content only render for an admin. */
-const ADMIN_ONLY: readonly SettingsTabParam[] = ["permissions", "people", "activity"];
+const ADMIN_ONLY: readonly SettingsTabParam[] = ["permissions", "numbering", "people", "activity"];
 
 /** Tabs whose trigger and content only render for a super-admin. */
 const SUPER_ADMIN_ONLY: readonly SettingsTabParam[] = ["docs"];

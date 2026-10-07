@@ -94,7 +94,8 @@ describe("kind-aware settings tabs", () => {
   });
 
   it("allows every tab for production and staffing, and the neutral tabs for any kind", () => {
-    for (const tab of [...SETTINGS_TAB_PARAMS, "trust"]) {
+    // "numbering" belongs to the handwerk plugin kind only (see its own test below).
+    for (const tab of [...SETTINGS_TAB_PARAMS.filter((t) => t !== "numbering"), "trust"]) {
       expect(isSettingsTabAllowedForKind(tab, "production")).toBe(true);
       expect(isSettingsTabAllowedForKind(tab, "staffing")).toBe(true);
     }
@@ -133,3 +134,24 @@ describe("kind-aware settings tabs", () => {
 // not something this pure module can know, and asserting the list against a copy of itself
 // would only restate it. That guard lives in SettingsPage.test.tsx, which renders the page
 // once per value and checks a tab really gets selected.
+
+describe("numbering tab", () => {
+  it("is offered to handwerk only", () => {
+    expect(SETTINGS_TAB_KINDS.numbering).toEqual(["handwerk"]);
+    expect(isSettingsTabAllowedForKind("numbering", "handwerk")).toBe(true);
+    expect(isSettingsTabAllowedForKind("numbering", "production")).toBe(false);
+    expect(isSettingsTabAllowedForKind("numbering", "staffing")).toBe(false);
+  });
+
+  it("opens for a handwerk admin", () => {
+    expect(resolveInitialTab("numbering", true, false, false, "handwerk")).toBe("numbering");
+  });
+
+  it("falls back to the default tab for a producer deep link", () => {
+    expect(resolveInitialTab("numbering", false, false, true, "handwerk")).toBe("organization");
+  });
+
+  it("falls back for an admin of a production org", () => {
+    expect(resolveInitialTab("numbering", true, false, false, "production")).toBe("how-it-works");
+  });
+});

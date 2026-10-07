@@ -145,5 +145,21 @@
       "price": "Enter an amount of 0 or more with at most two decimals",
       "vat": "Choose a VAT rate"
     }
+  },
+  "numbering": {
+    "title": "Numbering",
+    "description": "How numbers are assigned when you create something new.",
+    "customerHeading": "Customer numbers",
+    "prefix": "Prefix",
+    "prefixHint": "At most 10 characters, for example K-.",
+    "nextValue": "Next number",
+    "preview": "Next customer number: {{number}}",
+    "save": "Save",
+    "saved": "Number range saved",
+    "loadFailed": "The number ranges could not be loaded. Please try again.",
+    "errors": {
+      "prefixTooLong": "The prefix can be at most 10 characters long",
+      "nextValue": "Enter a whole number of 1 or more"
+    }
   }
 }

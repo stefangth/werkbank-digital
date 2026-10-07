@@ -52,6 +52,10 @@ export const MODULES: readonly ModuleGuard[] = [
       "src/integrations/supabase/types.ts",
       "supabase/functions/_shared/database.types.ts",
       "eslint.config.js",
+      // Settings tab "numbering": the page mounts the plugin tab, the helper lists its deep link.
+      "src/lib/settingsTabs.ts",
+      "src/lib/settingsTabs.test.ts",
+      "src/pages/SettingsPage.tsx",
       "scripts/moduleIsolation.test.ts",
     ],
   },
