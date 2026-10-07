@@ -10,13 +10,14 @@ import {
 
 let registration: Promise<void> | null = null;
 
-/** Registers Geist once per isolate. Async because the fonts are stored gzipped. */
-export function registerQuoteFonts(): Promise<void> {
+/** Registers Geist once per isolate. Async because the fonts are stored gzipped. A failed
+ *  attempt is not cached, so the next render retries. `inflate` is injectable for tests. */
+export function registerQuoteFonts(inflate: (gzB64: string) => Promise<string> = inflateFontGzB64): Promise<void> {
   registration ??= (async () => {
     const [regular, medium, semibold] = await Promise.all([
-      inflateFontGzB64(GEIST_REGULAR_GZ_B64),
-      inflateFontGzB64(GEIST_MEDIUM_GZ_B64),
-      inflateFontGzB64(GEIST_SEMIBOLD_GZ_B64),
+      inflate(GEIST_REGULAR_GZ_B64),
+      inflate(GEIST_MEDIUM_GZ_B64),
+      inflate(GEIST_SEMIBOLD_GZ_B64),
     ]);
     Font.register({
       family: "Geist",
@@ -28,6 +29,9 @@ export function registerQuoteFonts(): Promise<void> {
     });
     // Names and street lines are not dictionary words: break on whole words only.
     Font.registerHyphenationCallback((word) => [word]);
-  })();
+  })().catch((e) => {
+    registration = null;
+    throw e;
+  });
   return registration;
 }
