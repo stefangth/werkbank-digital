@@ -119,6 +119,7 @@ function SavedInput({
   const [invalid, setInvalid] = useState(false);
   const [syncedInitial, setSyncedInitial] = useState(initial);
   const [focused, setFocused] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const errorId = `${useId()}-error`;
   // A value that changed from outside (another tab, realtime) replaces the shown one, unless the
   // user is editing this field right now (adjusting state while rendering).
@@ -130,6 +131,7 @@ function SavedInput({
     }
   }
   const onChange = (next: string) => {
+    setDirty(true);
     setValue(next);
     const patch = toPatch(next);
     setInvalid(patch === null);
@@ -146,8 +148,10 @@ function SavedInput({
     onBlur: () => {
       setFocused(false);
       saver.flush(field);
-      // An invalid entry was never saved: show the saved value again.
-      if (invalid) {
+      // An invalid entry was never saved, and an untouched field may have missed an outside
+      // change while focused: show the current saved value again.
+      setDirty(false);
+      if (invalid || !dirty) {
         setValue(initial);
         setInvalid(false);
       }

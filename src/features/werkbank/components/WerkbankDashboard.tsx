@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Alert } from "@/components/ui/alert";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,10 +23,9 @@ function Tile<Row>({
   count: (rows: Row[]) => number;
 }) {
   const { t } = useTranslation("werkbank");
-  if (query.isLoading) return <Skeleton className="h-20 w-full" />;
-  if (query.isError || !query.data) {
-    return <p role="alert" className="m-0 rounded-card bg-card p-[14px] text-sm text-destructive">{t("dashboard.tiles.loadFailed")}</p>;
-  }
+  if (query.isError) return <Alert variant="destructive">{t("dashboard.tiles.loadFailed")}</Alert>;
+  // Loading, or not fetched yet (a disabled query): never an error.
+  if (query.isLoading || !query.data) return <Skeleton role="status" aria-busy="true" aria-label={label} className="h-20 w-full" />;
   return (
     <Link to={to} className="block rounded-card hover:bg-hover-tint">
       <KpiTile tone="waiting" label={label} value={String(count(query.data))} />

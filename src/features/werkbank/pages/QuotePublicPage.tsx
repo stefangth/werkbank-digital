@@ -213,10 +213,11 @@ function DecideForm({ view, token, t, onOutcome }: { view: PublicQuoteView; toke
         <Input
           id="pq-name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => { setName(e.target.value); if (error === "invalid_signer_name") setError(null); }}
           autoComplete="name"
           disabled={busy}
           aria-invalid={nameInvalid || undefined}
+          // pq-error is the name field's message only for this error code.
           aria-describedby={nameInvalid ? "pq-error" : undefined}
         />
       </div>

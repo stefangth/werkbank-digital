@@ -139,6 +139,18 @@ describe("QuotePublicPage", () => {
     expect(name).toHaveAccessibleDescription("Bitte geben Sie Ihren vollständigen Namen an.");
   });
 
+  it("clears the name error once the name is edited", async () => {
+    mount([{ data: view, error: null }, fail(422, { error: "invalid_signer_name" })]);
+    fireEvent.change(await screen.findByLabelText("Ihr vollständiger Name"), { target: { value: "A" } });
+    fireEvent.click(screen.getByRole("button", { name: "signieren" }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
+    await screen.findByText("Bitte geben Sie Ihren vollständigen Namen an.");
+    fireEvent.change(screen.getByLabelText("Ihr vollständiger Name"), { target: { value: "Anna Muster" } });
+    expect(screen.queryByText("Bitte geben Sie Ihren vollständigen Namen an.")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Ihr vollständiger Name")).not.toHaveAttribute("aria-invalid");
+  });
+
   it("keeps the entered name, signature and consent after a transient 500", async () => {
     mount([{ data: view, error: null }, fail(500, { error: "boom" })]);
     fireEvent.change(await screen.findByLabelText("Ihr vollständiger Name"), { target: { value: "Anna Muster" } });

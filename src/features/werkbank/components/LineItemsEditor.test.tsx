@@ -170,6 +170,17 @@ describe("LineItemsEditor", () => {
     expect(name()).toHaveValue("Tippe");
   });
 
+  it("adopts an outside change on blur when the focused field was not edited", () => {
+    const { rerender } = renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    const name = () => screen.getAllByLabelText("Bezeichnung")[0];
+    fireEvent.focus(name());
+    state.items = (state.items as DocumentItem[]).map((i) => (i.id === "i1" ? { ...i, name: "Fremd" } : i));
+    rerender(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    expect(name()).toHaveValue("Fliesen");
+    fireEvent.blur(name());
+    expect(name()).toHaveValue("Fremd");
+  });
+
   it("formats the read only quantity with the UI language, up to three decimals", async () => {
     state.items = [row({ id: "i1", quantity: 1234.5 }), row({ id: "i2", quantity: 0.125 })];
     const { unmount } = renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly />);

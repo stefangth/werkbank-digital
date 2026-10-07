@@ -82,7 +82,7 @@ describe("WerkbankDashboard", () => {
     authAs("admin");
     renderDashboard();
     expect(screen.queryByText("–")).not.toBeInTheDocument();
-    expect(document.querySelectorAll("section[aria-label='Open items'] [class*='animate-pulse']").length).toBe(2);
+    expect(screen.getAllByRole("status")).toHaveLength(2);
   });
 
   it("says so when a count cannot be loaded, and still shows the other tile", async () => {
