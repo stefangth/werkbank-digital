@@ -87,7 +87,13 @@
     "itemNoTaken": "This item number is already taken.",
     "inUse": "This is still in use. Archive it instead.",
     "forbidden": "You do not have the rights for that.",
-    "generic": "That did not work. Please try again."
+    "generic": "That did not work. Please try again.",
+    "quoteLocked": "This quote is no longer a draft and cannot be changed.",
+    "orderLocked": "This order is closed and cannot be changed.",
+    "propertyMismatch": "The property does not belong to this customer.",
+    "invalidTransition": "That is not possible in the current status.",
+    "orderExists": "An order already exists for this quote.",
+    "notAllowedHere": "You cannot change that here."
   },
   "units": {
     "HUR": "h",

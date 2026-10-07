@@ -40,3 +40,29 @@ describe("mapDbError", () => {
     expect(mapDbError("text")).toBe("errors.generic");
   });
 });
+
+describe("mapDbError quote and order errors", () => {
+  it.each([
+    ["quote_locked", "errors.quoteLocked"],
+    ["order_locked", "errors.orderLocked"],
+    ["property_customer_mismatch", "errors.propertyMismatch"],
+    ["invalid_transition", "errors.invalidTransition"],
+  ])("maps %s by message", (message, key) => {
+    expect(mapDbError({ code: "55000", message })).toBe(key);
+  });
+
+  it("maps the order unique violation on the quote", () => {
+    expect(mapDbError({ code: "23505", message: 'violates unique constraint "orders_quote_id_key"' })).toBe("errors.orderExists");
+  });
+
+  it.each(["quote_service_only", "order_service_only", "provenance_service_only", "item_reparent"])(
+    "maps %s to the generic not-allowed key",
+    (message) => {
+      expect(mapDbError({ code: "42501", message })).toBe("errors.notAllowedHere");
+    },
+  );
+
+  it("keeps a plain permission denial as forbidden", () => {
+    expect(mapDbError({ code: "42501", message: "denied" })).toBe("errors.forbidden");
+  });
+});

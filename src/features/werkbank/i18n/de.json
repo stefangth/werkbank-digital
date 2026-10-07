@@ -87,7 +87,13 @@
     "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",
     "inUse": "Das wird noch verwendet. Archiviere es stattdessen.",
     "forbidden": "Dafür fehlen dir die Rechte.",
-    "generic": "Das hat nicht geklappt. Versuch es bitte noch einmal."
+    "generic": "Das hat nicht geklappt. Versuch es bitte noch einmal.",
+    "quoteLocked": "Dieses Angebot ist kein Entwurf mehr und kann nicht geändert werden.",
+    "orderLocked": "Dieser Auftrag ist abgeschlossen und kann nicht geändert werden.",
+    "propertyMismatch": "Das Objekt gehört nicht zu diesem Kunden.",
+    "invalidTransition": "Das ist im aktuellen Status nicht möglich.",
+    "orderExists": "Zu diesem Angebot gibt es schon einen Auftrag.",
+    "notAllowedHere": "Das kannst Du hier nicht ändern."
   },
   "units": {
     "HUR": "Std",

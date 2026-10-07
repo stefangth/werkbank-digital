@@ -3,6 +3,12 @@ export type DbErrorKey =
   | "errors.itemNoTaken"
   | "errors.inUse"
   | "errors.forbidden"
+  | "errors.quoteLocked"
+  | "errors.orderLocked"
+  | "errors.propertyMismatch"
+  | "errors.invalidTransition"
+  | "errors.orderExists"
+  | "errors.notAllowedHere"
   | "errors.generic";
 
 /** Maps a PostgREST/Postgres error to an i18n key in the `werkbank` namespace. */
@@ -13,7 +19,16 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (code === "23505") {
     if (text.includes("customers_customer_no_unique")) return "errors.customerNoTaken";
     if (text.includes("catalog_items_item_no_unique")) return "errors.itemNoTaken";
+    if (text.includes("orders_quote_id_key")) return "errors.orderExists";
     return "errors.generic";
+  }
+  // The database raises these with a fixed message (and an errcode that is not unique to them).
+  if (text.includes("quote_locked")) return "errors.quoteLocked";
+  if (text.includes("order_locked")) return "errors.orderLocked";
+  if (text.includes("property_customer_mismatch")) return "errors.propertyMismatch";
+  if (text.includes("invalid_transition")) return "errors.invalidTransition";
+  if (/quote_service_only|order_service_only|provenance_service_only|item_reparent/.test(text)) {
+    return "errors.notAllowedHere";
   }
   if (code === "23503") return "errors.inUse";
   if (code === "42501" || code === "PGRST301") return "errors.forbidden";
