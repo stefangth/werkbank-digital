@@ -8,13 +8,20 @@ import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { SendQuoteDialog } from "./SendQuoteDialog";
 
 /** The edge-backed buttons of the quote page: preview and send for a draft, send again for a
- *  sent quote, and the PDF once it was sent. The send dialog lives here. */
-export function QuoteActions({ quote }: { quote: Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until"> }) {
+ *  sent quote, and the PDF whenever one was stored (also for rejected and superseded quotes).
+ *  The send dialog lives here. */
+export function QuoteActions({
+  quote,
+}: {
+  quote: Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until" | "pdf_path" | "accepted_pdf_path">;
+}) {
   const { t } = useTranslation("werkbank");
   const actions = useQuoteActions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const isDraft = quote.status === "draft";
-  const hasPdf = quote.status === "sent" || quote.status === "accepted";
+  const hasPdf = !!quote.pdf_path;
+  // The signed copy once it exists, otherwise the document as it was sent.
+  const pdfKind = quote.status === "accepted" && quote.accepted_pdf_path ? "accepted" : "sent";
 
   const blocked = (url: string) =>
     toast.error(t("quotes.page.pdfBlocked"), { action: { label: t("quotes.page.pdfOpen"), onClick: () => window.open(url, "_blank") } });
@@ -31,7 +38,7 @@ export function QuoteActions({ quote }: { quote: Pick<Quote, "id" | "customer_id
   };
 
   const openPdf = () =>
-    showPdf(() => actions.download.mutateAsync({ quoteId: quote.id, kind: quote.status === "accepted" ? "accepted" : "sent" }));
+    showPdf(() => actions.download.mutateAsync({ quoteId: quote.id, kind: pdfKind }));
   const preview = () => showPdf(() => actions.preview.mutateAsync(quote.id));
 
   return (

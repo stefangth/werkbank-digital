@@ -23,9 +23,14 @@ vi.mock("./SendQuoteDialog", () => ({
 let tab: { closed: boolean; close: ReturnType<typeof vi.fn>; location: { href: string } };
 import { QuoteActions } from "./QuoteActions";
 
-const quote = (status: string) => ({ id: "q1", status }) as never;
-const renderActions = (status: string) =>
-  renderWithProviders(<QuoteActions quote={quote(status)} />, { authOverrides: { currentOrg: anOrganization({ id: "org-1" }) as never } });
+const quote = (status: string, over: Record<string, unknown> = {}) => ({
+  id: "q1", status,
+  pdf_path: status === "draft" ? null : "org-1/quotes/q1.pdf",
+  accepted_pdf_path: status === "accepted" ? "org-1/quotes/q1-accepted.pdf" : null,
+  ...over,
+}) as never;
+const renderActions = (status: string, over: Record<string, unknown> = {}) =>
+  renderWithProviders(<QuoteActions quote={quote(status, over)} />, { authOverrides: { currentOrg: anOrganization({ id: "org-1" }) as never } });
 
 describe("QuoteActions", () => {
   beforeEach(async () => {
@@ -67,6 +72,23 @@ describe("QuoteActions", () => {
     await waitFor(() => expect(actions.download.mutateAsync).toHaveBeenCalledWith({ quoteId: "q1", kind: "accepted" }));
   });
 
+  it.each(["rejected", "superseded"])("a %s quote still opens the sent PDF", async (status) => {
+    renderActions(status);
+    fireEvent.click(screen.getByRole("button", { name: "PDF" }));
+    await waitFor(() => expect(actions.download.mutateAsync).toHaveBeenCalledWith({ quoteId: "q1", kind: "sent" }));
+  });
+
+  it("an accepted quote without an accepted PDF opens the sent one", async () => {
+    renderActions("accepted", { accepted_pdf_path: null });
+    fireEvent.click(screen.getByRole("button", { name: "PDF" }));
+    await waitFor(() => expect(actions.download.mutateAsync).toHaveBeenCalledWith({ quoteId: "q1", kind: "sent" }));
+  });
+
+  it("offers no PDF while nothing was stored", () => {
+    renderActions("draft");
+    expect(screen.queryByRole("button", { name: "PDF" })).not.toBeInTheDocument();
+  });
+
   it("toasts and closes the pre-opened tab when the PDF cannot be opened", async () => {
     actions.download.mutateAsync.mockRejectedValue(new Error("x"));
     renderActions("sent");
@@ -104,8 +126,8 @@ describe("QuoteActions", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Dein Browser hat den neuen Tab blockiert.", expect.anything()));
   });
 
-  it("shows nothing for a rejected quote", () => {
+  it("offers a rejected quote only its PDF", () => {
     renderActions("rejected");
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["PDF"]);
   });
 });
