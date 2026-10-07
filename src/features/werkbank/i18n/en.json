@@ -176,5 +176,18 @@
       "vatId": "Enter a valid VAT ID, for example DE123456789",
       "paymentTerms": "Enter whole days from 0 to 365"
     }
+  },
+  "properties": {
+    "errors": {
+      "customer": "Choose a customer",
+      "name": "Enter a name for the property",
+      "billingName": "Enter the name of the invoice recipient"
+    }
+  },
+  "contacts": {
+    "errors": {
+      "lastName": "Enter the last name",
+      "email": "Enter a valid email address"
+    }
   }
 }

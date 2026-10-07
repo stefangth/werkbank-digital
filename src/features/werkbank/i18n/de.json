@@ -176,5 +176,18 @@
       "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
       "paymentTerms": "Gib ganze Tage von 0 bis 365 ein"
     }
+  },
+  "properties": {
+    "errors": {
+      "customer": "Wähle einen Kunden",
+      "name": "Gib einen Namen für das Objekt ein",
+      "billingName": "Gib den Namen des Rechnungsempfängers ein"
+    }
+  },
+  "contacts": {
+    "errors": {
+      "lastName": "Gib den Nachnamen ein",
+      "email": "Gib eine gültige E-Mail-Adresse ein"
+    }
   }
 }
