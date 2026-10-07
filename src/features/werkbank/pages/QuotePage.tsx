@@ -37,7 +37,9 @@ export function QuotePage() {
   const { data: customer } = useCustomer(quote?.customer_id);
   const { update, remove, extend, revokeLink, revise, copy } = useQuoteMutations();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [locked, setLocked] = useState(false);
+  // Keyed by the quote id: the route reuses this component, so a lock must not carry over to
+  // the next quote the user navigates to.
+  const [lockedId, setLockedId] = useState<string | null>(null);
 
   if (isLoading) return <Skeleton className="h-48 w-full" />;
   if (isError) return <Alert variant="destructive">{t("quotes.page.loadFailed")}</Alert>;
@@ -55,8 +57,12 @@ export function QuotePage() {
   }
 
   const number = formatQuoteNumber(quote.quote_no, quote.version);
+  const locked = lockedId === quote.id;
+  // An expired quote can only be extended to today or later (Berlin calendar day).
+  const today = berlinDateKey(new Date());
+  const extendFrom = quote.valid_until > today ? quote.valid_until : today;
   const listRow = list?.find((q) => q.id === quote.id);
-  const display = quoteDisplayStatus({ status: quote.status, is_expired: listRow?.is_expired ?? quote.valid_until < berlinDateKey(new Date()) });
+  const display = quoteDisplayStatus({ status: quote.status, is_expired: listRow?.is_expired ?? quote.valid_until < today });
   const isDraft = quote.status === "draft";
   const isSent = quote.status === "sent";
   const versions = (list ?? []).filter((q) => q.quote_no === quote.quote_no).sort((a, b) => (a.version ?? 0) - (b.version ?? 0));
@@ -68,7 +74,7 @@ export function QuotePage() {
       {
         onError: (e) => {
           if (mapDbError(e) === "errors.quoteLocked") {
-            setLocked(true);
+            setLockedId(quote.id);
             void refetch();
           }
         },
@@ -98,7 +104,7 @@ export function QuotePage() {
             )}
             {isSent && (
               <>
-                <DatePopover value={quote.valid_until} minDate={quote.valid_until} onSelect={(validUntil) => extend.mutate({ id: quote.id, validUntil })}>
+                <DatePopover value={quote.valid_until} minDate={extendFrom} onSelect={(validUntil) => extend.mutate({ id: quote.id, validUntil })}>
                   <Button variant="secondary">{t("quotes.page.extend")}</Button>
                 </DatePopover>
                 {!quote.link_revoked_at && (

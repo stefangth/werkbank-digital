@@ -7,10 +7,10 @@ import { anOrganization } from "@/test/fixtures";
 import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
-const { client, toastError } = vi.hoisted(() => ({ client: {} as Record<string, unknown>, toastError: vi.fn() }));
+const { client, toastError, route } = vi.hoisted(() => ({ client: {} as Record<string, unknown>, toastError: vi.fn(), route: { id: "q1" } }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: client }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: toastError } }));
-vi.mock("react-router-dom", async (orig) => ({ ...(await orig<typeof import("react-router-dom")>()), useParams: () => ({ id: "q1" }) }));
+vi.mock("react-router-dom", async (orig) => ({ ...(await orig<typeof import("react-router-dom")>()), useParams: () => ({ id: route.id }) }));
 vi.mock("../components/LineItemsEditor", () => ({
   LineItemsEditor: ({ readOnly }: { readOnly: boolean }) => <div data-testid="items" data-readonly={String(readOnly)} />,
 }));
@@ -20,8 +20,8 @@ vi.mock("../components/ContactSelect", () => ({ ContactSelect: () => <div /> }))
 
 import { QuotePage } from "./QuotePage";
 
-const quoteRow = (status: string) => ({
-  id: "q1", org_id: "org-1", quote_no: "A-0042", version: 1, status, customer_id: "k1", property_id: null, contact_id: null,
+const quoteRow = (status: string, id = "q1") => ({
+  id, org_id: "org-1", quote_no: "A-0042", version: 1, status, customer_id: "k1", property_id: null, contact_id: null,
   location_note: null, subject: "Heizung", discount_percent: 0, intro_text: null, closing_text: null, payment_terms_text: null,
   valid_until: "2026-12-01", sent_at: null, sent_to: null, link_revoked_at: null, superseded_by: null,
 });
@@ -34,6 +34,7 @@ describe("QuotePage when the quote was sent in the meantime", () => {
     vi.clearAllMocks();
     status = "draft";
     quoteReads = 0;
+    route.id = "q1";
     const base = createFakeSupabase({
       "werkbank.quote_list": { data: [], error: null },
       "werkbank.document_totals": { data: null, error: null },
@@ -41,9 +42,13 @@ describe("QuotePage when the quote was sent in the meantime", () => {
     });
     // The quotes table: reads follow `status`; the first save finds the quote already sent and is
     // rejected by the database trigger.
+    let readId = "q1";
     const quotes = {
       select: () => quotes,
-      eq: () => quotes,
+      eq: (col: string, value: string) => {
+        if (col === "id") readId = value;
+        return quotes;
+      },
       update: () => ({
         eq: () => {
           status = "sent";
@@ -52,7 +57,8 @@ describe("QuotePage when the quote was sent in the meantime", () => {
       }),
       maybeSingle: () => {
         quoteReads += 1;
-        return Promise.resolve({ data: quoteRow(status), error: null });
+        // Another quote id is a separate, still editable draft.
+        return Promise.resolve({ data: readId === "q1" ? quoteRow(status) : quoteRow("draft", readId), error: null });
       },
     };
     const schema = base.schema.bind(base);
@@ -81,5 +87,22 @@ describe("QuotePage when the quote was sent in the meantime", () => {
     await waitFor(() => expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "true"));
     expect(screen.queryByRole("textbox", { name: "Betreff" })).not.toBeInTheDocument();
     expect(toastError).toHaveBeenCalledWith(message);
+  });
+
+  it("forgets the lock when the route moves on to another quote", async () => {
+    const ui = () => <MemoryRouter><QuotePage /></MemoryRouter>;
+    const view = renderWithProviders(ui(), {
+      authOverrides: { currentOrg: anOrganization({ id: "org-1" }) as never, hasRole: (() => true) as never },
+    });
+    const subject = await screen.findByRole("textbox", { name: "Betreff" });
+    fireEvent.change(subject, { target: { value: "Bad" } });
+    fireEvent.blur(subject);
+    const message = "Dieses Angebot ist kein Entwurf mehr und kann nicht geändert werden.";
+    expect(await screen.findByText(message)).toBeInTheDocument();
+
+    route.id = "q2";
+    view.rerender(ui());
+    await waitFor(() => expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "false"));
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
   });
 });

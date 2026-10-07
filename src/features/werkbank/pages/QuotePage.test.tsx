@@ -166,6 +166,23 @@ describe("QuotePage", () => {
     expect(mut.extend.mutate.mock.calls[0][0]).toEqual({ id: "q1", validUntil: "2026-12-20" });
   });
 
+  it("cannot extend an already expired quote to a day before today", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-12-15T10:00:00Z"));
+    try {
+      state.quote = quote({ status: "sent", valid_until: "2026-12-10" });
+      render();
+      fireEvent.click(await screen.findByRole("button", { name: "Verlängern" }));
+      const grid = await screen.findByRole("grid");
+      fireEvent.click(within(grid).getByText("12"));
+      expect(mut.extend.mutate).not.toHaveBeenCalled();
+      fireEvent.click(within(grid).getByText("15"));
+      expect(mut.extend.mutate.mock.calls[0][0]).toEqual({ id: "q1", validUntil: "2026-12-15" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("shows nothing in the history for a draft", async () => {
     render();
     await screen.findByRole("textbox", { name: "Betreff" });
