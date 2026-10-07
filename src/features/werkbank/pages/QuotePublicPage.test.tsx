@@ -176,6 +176,13 @@ describe("QuotePublicPage", () => {
     expect(document.title).toBe("Angebot A-0042-2");
   });
 
+  it("falls back to quote_no and version when an older function sends no display number", async () => {
+    const { number: _number, ...older } = { ...view.quote, version: 2 };
+    mount([{ data: { ...view, quote: older }, error: null }]);
+    expect(await screen.findByText("A-0042-2")).toBeInTheDocument();
+    expect(document.title).toBe("Angebot A-0042-2");
+  });
+
   it("sets the document title and a noindex meta while mounted", async () => {
     const { unmount } = mount([{ data: view, error: null }]);
     await screen.findByText("Badsanierung");

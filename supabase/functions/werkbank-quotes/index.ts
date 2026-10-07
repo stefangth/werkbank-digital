@@ -554,7 +554,10 @@ type RecordQuoteDecisionArgs =
   & Omit<GeneratedDecisionArgs, NullableDecisionArg | "p_decision">
   & { p_decision: Decision; p_method: "typed" | "drawn" | null }
   & { [K in Exclude<NullableDecisionArg, "p_method">]: string | null };
-type DecisionOutcome = "ok" | "not_found" | "superseded" | "revoked" | "decided" | "expired";
+const DECISION_OUTCOMES = ["ok", "not_found", "superseded", "revoked", "decided", "expired"] as const;
+type DecisionOutcome = typeof DECISION_OUTCOMES[number];
+const isDecisionOutcome = (v: unknown): v is DecisionOutcome =>
+  typeof v === "string" && (DECISION_OUTCOMES as readonly string[]).includes(v);
 
 /** Uploads bytes to a content-addressed path. True when this call stored them (false when the
  *  identical object was already there, which counts as success). Throws on any other error. */
@@ -663,13 +666,19 @@ async function decideQuote(
     console.error("werkbank-quotes: recording the decision failed", { quoteId: quote.id, error: rpcErr });
     return json({ error: "update_failed" }, 500);
   }
+  if (!isDecisionOutcome(outcome)) {
+    // Neither an error nor an answer this function knows: the commit state is unknown, so the
+    // stored files stay, as on an error.
+    console.error("werkbank-quotes: unknown answer from the decision call", { quoteId: quote.id, outcome });
+    return json({ error: "update_failed" }, 500);
+  }
   if (outcome !== "ok") {
     // The function answered definitively and recorded nothing for THIS request. The files are
     // content-addressed, though: when a decision stands ("decided", or "revoked" on a quote that
     // was decided before its link was revoked), it may reference these very paths (identical
     // bytes), so they stay. Unreferenced leftovers are harmless; a deleted accepted PDF is not.
     if (outcome !== "decided" && outcome !== "revoked") await removeStored(deps, quote, stored);
-    return blockedResponse(deps, quote, outcome as DecisionOutcome);
+    return blockedResponse(deps, quote, outcome);
   }
 
   // The decision is final from here: side effects are logged, never an error response.
