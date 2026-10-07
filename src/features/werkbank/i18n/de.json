@@ -1,11 +1,20 @@
 {
   "nav": {
-    "technicians": "Monteure"
+    "customers": "Kunden",
+    "catalog": "Leistungen",
+    "technicians": "Monteure",
+    "properties": "Liegenschaften"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
-    "body": "Hier siehst du bald Kunden, Angebote und Rechnungen. Leg zuerst deine Monteure an.",
-    "cta": "Monteure anlegen"
+    "body": "Angebote und Rechnungen folgen bald.",
+    "startList": {
+      "title": "So startest du",
+      "technicians": "Monteure anlegen",
+      "catalog": "Leistungen anlegen oder importieren",
+      "customers": "Kunden anlegen oder importieren",
+      "loadFailed": "Der Stand konnte nicht geladen werden."
+    }
   },
   "technicians": {
     "title": "Monteure",
@@ -62,5 +71,370 @@
       "savedInviteFailed": "Monteur gespeichert, aber die Einladung konnte nicht gesendet werden. Du kannst sie in der Liste erneut senden."
     },
     "invitationsFailed": "Die offenen Einladungen konnten nicht geladen werden, deshalb sind Erneut senden und Widerrufen nicht verfügbar. Lade die Seite bitte neu."
+  },
+  "common": {
+    "archive": "Archivieren",
+    "restore": "Wiederherstellen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "showArchived": "Archivierte anzeigen",
+    "search": "Suchen"
+  },
+  "errors": {
+    "customerNoTaken": "Diese Kundennummer ist schon vergeben.",
+    "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",
+    "inUse": "Das wird noch verwendet. Archiviere es stattdessen.",
+    "forbidden": "Dafür fehlen dir die Rechte.",
+    "generic": "Das hat nicht geklappt. Versuch es bitte noch einmal."
+  },
+  "units": {
+    "HUR": "Std",
+    "H87": "Stk",
+    "MTR": "m",
+    "MTK": "m²",
+    "MTQ": "m³",
+    "KGM": "kg",
+    "LTR": "l",
+    "LS": "pauschal"
+  },
+  "catalog": {
+    "title": "Leistungen",
+    "sub": "Deine Leistungen und Materialien mit Preisen. Du wählst sie später in Angeboten und Rechnungen aus.",
+    "add": "Leistung anlegen",
+    "loadFailed": "Deine Leistungen konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "searchLabel": "Leistungen durchsuchen",
+    "searchPlaceholder": "Nummer, Name oder Beschreibung",
+    "categoryFilter": "Kategorie",
+    "allCategories": "Alle Kategorien",
+    "empty": {
+      "title": "Noch keine Leistungen",
+      "body": "Leg deine erste Leistung mit Einheit und Preis an.",
+      "action": "Erste Leistung anlegen",
+      "reason": "Bitte einen Admin oder Produzenten, Leistungen anzulegen."
+    },
+    "noMatches": "Keine Leistung passt zu deiner Suche.",
+    "noMatchesReason": "Ändere die Suche oder den Filter.",
+    "archivedPill": "Archiviert",
+    "columns": {
+      "number": "Nr.",
+      "name": "Name",
+      "category": "Kategorie",
+      "unit": "Einheit",
+      "labour": "Lohn",
+      "material": "Material",
+      "net": "Netto",
+      "vat": "MwSt.",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "title": "Leistung löschen?",
+      "body": "\"{{name}}\" wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Löschen"
+    },
+    "dialog": {
+      "createTitle": "Leistung anlegen",
+      "editTitle": "Leistung bearbeiten",
+      "description": "Lohn und Material sind Nettopreise pro Einheit.",
+      "itemNo": "Artikelnummer (optional)",
+      "name": "Bezeichnung",
+      "descriptionField": "Beschreibung (optional)",
+      "category": "Kategorie (optional)",
+      "unit": "Einheit",
+      "vat": "MwSt.",
+      "labour": "Lohn",
+      "material": "Material",
+      "net": "Netto gesamt"
+    },
+    "errors": {
+      "name": "Gib eine Bezeichnung ein",
+      "unit": "Wähle eine Einheit",
+      "price": "Gib einen Betrag ab 0 mit höchstens zwei Nachkommastellen ein",
+      "vat": "Wähle einen Steuersatz"
+    }
+  },
+  "numbering": {
+    "title": "Nummernkreise",
+    "description": "So werden Nummern vergeben, wenn du etwas Neues anlegst.",
+    "customerHeading": "Kundennummern",
+    "prefix": "Präfix",
+    "prefixHint": "Höchstens 10 Zeichen, zum Beispiel K-.",
+    "nextValue": "Nächste Nummer",
+    "preview": "Nächste Kundennummer: {{number}}",
+    "save": "Speichern",
+    "saved": "Nummernkreis gespeichert",
+    "loadFailed": "Die Nummernkreise konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "errors": {
+      "prefixTooLong": "Das Präfix darf höchstens 10 Zeichen lang sein",
+      "nextValue": "Gib eine ganze Zahl ab 1 ein"
+    }
+  },
+  "customers": {
+    "errors": {
+      "kind": "Wähle die Art des Kunden",
+      "companyName": "Gib den Firmennamen ein",
+      "lastName": "Gib den Nachnamen ein",
+      "street": "Gib die Straße ein",
+      "postalCode": "Gib die Postleitzahl ein",
+      "postalCodeDe": "Eine deutsche Postleitzahl hat genau 5 Ziffern",
+      "city": "Gib den Ort ein",
+      "country": "Gib das Land als Kürzel aus zwei Großbuchstaben ein, zum Beispiel DE",
+      "email": "Gib eine gültige E-Mail-Adresse ein",
+      "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
+      "paymentTerms": "Gib ganze Tage von 0 bis 365 ein"
+    },
+    "title": "Kunden",
+    "sub": "Hausverwaltungen und Privatkunden. Liegenschaften und Rechnungen gehören immer zu einem Kunden.",
+    "add": "Kunde anlegen",
+    "loadFailed": "Deine Kunden konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "searchLabel": "Kunden durchsuchen",
+    "searchPlaceholder": "Name, Nummer, Ort oder E-Mail",
+    "kindFilter": "Art",
+    "allKinds": "Alle Arten",
+    "empty": {
+      "title": "Noch keine Kunden",
+      "body": "Leg deinen ersten Kunden an, eine Hausverwaltung oder einen Privatkunden.",
+      "action": "Ersten Kunden anlegen"
+    },
+    "noMatches": "Kein Kunde passt zu deiner Suche.",
+    "noMatchesReason": "Ändere die Suche oder den Filter.",
+    "archivedPill": "Archiviert",
+    "columns": {
+      "number": "Nr.",
+      "name": "Name",
+      "kind": "Art",
+      "city": "Ort",
+      "properties": "Liegenschaften",
+      "phone": "Telefon",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "title": "Kunde löschen?",
+      "body": "\"{{name}}\" und alle Ansprechpartner werden endgültig gelöscht. Das lässt sich nicht rückgängig machen. Solange es Liegenschaften gibt, ist das Löschen nicht möglich."
+    },
+    "dialog": {
+      "createTitle": "Kunde anlegen",
+      "editTitle": "Kunde bearbeiten",
+      "description": "Wähle zuerst die Art des Kunden.",
+      "kind": "Art des Kunden",
+      "customerNo": "Kundennummer (optional)",
+      "customerNoHint": "Leer lassen, dann vergibt die App die nächste Nummer.",
+      "companyName": "Firmenname",
+      "firstName": "Vorname (optional)",
+      "lastName": "Nachname",
+      "street": "Straße und Hausnummer",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "email": "E-Mail (optional)",
+      "invoiceEmail": "Rechnungs-E-Mail (optional)",
+      "phone": "Telefon (optional)",
+      "vatId": "USt-IdNr. (optional)",
+      "paymentTerms": "Zahlungsziel in Tagen",
+      "notes": "Notizen (optional)"
+    },
+    "toast": {
+      "created": "Kunde angelegt, Kundennummer {{number}}",
+      "archived": "Kunde archiviert",
+      "restored": "Kunde wiederhergestellt"
+    },
+    "country": {
+      "DE": "Deutschland",
+      "AT": "Österreich",
+      "CH": "Schweiz",
+      "other": "Anderes Land",
+      "otherCode": "Ländercode (zwei Buchstaben)"
+    },
+    "detail": {
+      "loadFailed": "Der Kunde konnte nicht geladen werden. Versuche es bitte noch einmal.",
+      "notFound": {
+        "title": "Kunde nicht gefunden",
+        "reason": "Er wurde gelöscht oder der Link stimmt nicht.",
+        "back": "Zu den Kunden"
+      },
+      "masterData": "Stammdaten",
+      "address": "Adresse",
+      "email": "E-Mail",
+      "invoiceEmail": "Rechnungs-E-Mail",
+      "phone": "Telefon",
+      "vatId": "USt-IdNr.",
+      "paymentTerms": "Zahlungsziel",
+      "paymentTermsValue": "{{count}} Tage",
+      "paymentTermsValue_one": "{{count}} Tag",
+      "notes": "Notizen",
+      "none": "Keine Angaben",
+      "properties": {
+        "title": "Liegenschaften",
+        "add": "Liegenschaft anlegen",
+        "empty": "Dieser Kunde hat noch keine Liegenschaften.",
+        "loadFailed": "Die Liegenschaften konnten nicht geladen werden."
+      }
+    }
+  },
+  "properties": {
+    "errors": {
+      "customer": "Wähle einen Kunden",
+      "name": "Gib einen Namen für das Objekt ein",
+      "billingName": "Gib den Namen des Rechnungsempfängers ein"
+    },
+    "title": "Liegenschaften",
+    "sub": "Die Objekte, an denen du arbeitest. Jede Liegenschaft gehört zu einem Kunden.",
+    "add": "Liegenschaft anlegen",
+    "loadFailed": "Deine Liegenschaften konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "searchLabel": "Liegenschaften durchsuchen",
+    "searchPlaceholder": "Name, Objekt-Nr., Adresse oder Kunde",
+    "empty": {
+      "title": "Noch keine Liegenschaften",
+      "body": "Leg deine erste Liegenschaft an und ordne sie einem Kunden zu.",
+      "action": "Erste Liegenschaft anlegen"
+    },
+    "noMatches": "Keine Liegenschaft passt zu deiner Suche.",
+    "noMatchesReason": "Ändere die Suche oder den Schalter.",
+    "archivedPill": "Archiviert",
+    "columns": {
+      "name": "Name",
+      "objectNo": "Objekt-Nr.",
+      "address": "Adresse",
+      "customer": "Kunde",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "title": "Liegenschaft löschen?",
+      "body": "\"{{name}}\" und alle Ansprechpartner vor Ort werden endgültig gelöscht. Das lässt sich nicht rückgängig machen."
+    },
+    "dialog": {
+      "createTitle": "Liegenschaft anlegen",
+      "editTitle": "Liegenschaft bearbeiten",
+      "description": "Wähle zuerst den Kunden, zu dem die Liegenschaft gehört.",
+      "customer": "Kunde",
+      "customerPlaceholder": "Kunde wählen",
+      "customerSearch": "Kunden suchen",
+      "customerNone": "Kein Kunde gefunden",
+      "customerArchived": "archiviert",
+      "name": "Name der Liegenschaft",
+      "objectNo": "Objekt-Nr. (optional)",
+      "hasBilling": "Abweichender Rechnungsempfänger",
+      "billingName": "Name des Rechnungsempfängers",
+      "accessNotes": "Zugang (optional)",
+      "notes": "Notizen (optional)"
+    },
+    "detail": {
+      "loadFailed": "Die Liegenschaft konnte nicht geladen werden. Versuche es bitte noch einmal.",
+      "notFound": {
+        "title": "Liegenschaft nicht gefunden",
+        "reason": "Sie wurde gelöscht oder der Link stimmt nicht.",
+        "back": "Zu den Liegenschaften"
+      },
+      "address": "Adresse",
+      "customer": "Kunde",
+      "billingTitle": "Rechnung geht an",
+      "billingRepresented": "{{billingName}}, vertreten durch {{customer}}",
+      "accessNotes": "Zugang",
+      "notes": "Notizen",
+      "none": "Keine Angaben"
+    }
+  },
+  "contacts": {
+    "errors": {
+      "lastName": "Gib den Nachnamen ein",
+      "email": "Gib eine gültige E-Mail-Adresse ein"
+    },
+    "title": "Ansprechpartner",
+    "add": "Ansprechpartner anlegen",
+    "loadFailed": "Die Ansprechpartner konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "empty": "Noch keine Ansprechpartner",
+    "primaryBadge": "Hauptansprechpartner",
+    "delete": {
+      "title": "Ansprechpartner löschen?",
+      "body": "{{name}} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen."
+    },
+    "dialog": {
+      "createTitle": "Ansprechpartner anlegen",
+      "editTitle": "Ansprechpartner bearbeiten",
+      "description": "Wer ist vor Ort oder im Büro der richtige Kontakt?",
+      "firstName": "Vorname (optional)",
+      "lastName": "Nachname",
+      "role": "Funktion (optional)",
+      "phone": "Telefon (optional)",
+      "mobile": "Mobil (optional)",
+      "email": "E-Mail (optional)",
+      "notes": "Notizen (optional)",
+      "isPrimary": "Hauptansprechpartner"
+    }
+  },
+  "kind": {
+    "property_manager": "Hausverwaltung",
+    "private": "Privat"
+  },
+  "import": {
+    "action": "Importieren",
+    "title": {
+      "customers": "Kunden importieren",
+      "properties": "Liegenschaften importieren",
+      "catalog_items": "Leistungen importieren"
+    },
+    "description": "Lade eine CSV- oder Excel-Datei hoch. Du ordnest die Spalten zu und prüfst die Zeilen, bevor etwas gespeichert wird.",
+    "propertiesHint": "Importiere zuerst die Kunden. Liegenschaften finden ihren Kunden über die Kundennummer.",
+    "steps": {
+      "upload": "Datei",
+      "map": "Spalten",
+      "review": "Prüfen",
+      "summary": "Ergebnis"
+    },
+    "upload": {
+      "label": "Datei auswählen",
+      "hint": "CSV oder Excel (.xlsx) mit höchstens {{max}} Zeilen. Die erste Zeile enthält die Spaltennamen."
+    },
+    "map": {
+      "intro": "Wir haben die Spalten deiner Datei zugeordnet, soweit es ging. Prüf die Zuordnung. Pflichtfelder sind mit * markiert.",
+      "columnFor": "Spalte für {{field}}",
+      "ignore": "Nicht importieren"
+    },
+    "review": {
+      "ready_one": "{{count}} Zeile ist bereit",
+      "ready_other": "{{count}} Zeilen sind bereit",
+      "invalid_one": "{{count}} Zeile hat Fehler und wird ausgelassen",
+      "invalid_other": "{{count}} Zeilen haben Fehler und werden ausgelassen",
+      "counts": "{{ready}}, {{invalid}}.",
+      "countsAllValid": "{{ready}}.",
+      "invalidList": "Zeilen mit Fehlern",
+      "submit_one": "{{count}} Zeile importieren",
+      "submit_other": "{{count}} Zeilen importieren",
+      "running": "Import läuft"
+    },
+    "summary": {
+      "counts": "{{created}} importiert, {{skipped}} übersprungen, {{errors}} Fehler",
+      "interrupted": "Der Import wurde nach {{done}} von {{total}} Zeilen unterbrochen. Die bereits importierten Zeilen sind gespeichert. Importiere nicht noch einmal die ganze Datei, sondern nur die nicht importierten Zeilen.",
+      "list": "Nicht importierte Zeilen",
+      "customerNumbers": "Kundennummern in einem anderen Format als deinem Nummernkreis bleiben erhalten, verschieben aber die nächste Nummer nicht. Prüf sie bei Bedarf unter Einstellungen, Nummernkreise."
+    },
+    "row": "Zeile {{row}}: {{message}}",
+    "reasons": {
+      "customer_no_taken": "Kundennummer schon vergeben",
+      "item_no_taken": "Artikelnummer schon vergeben",
+      "unknown_customer": "Kunde {{detail}} nicht gefunden",
+      "invalid": "Ungültige Angaben",
+      "other": "Nicht importiert",
+      "notSent": "Nicht gesendet, weil der Import unterbrochen wurde"
+    },
+    "errors": {
+      "tooManyRows": "Die Datei hat mehr als {{max}} Zeilen. Teile sie bitte auf.",
+      "read": "Die Datei konnte nicht gelesen werden. Prüf, ob es eine CSV- oder Excel-Datei ist.",
+      "noColumns": "Die Datei hat in der ersten Zeile keine Spaltennamen.",
+      "noRows": "Die Datei enthält keine Zeilen.",
+      "customerNo": "Gib die Kundennummer ein",
+      "billingName": "Rechnungsempfänger fehlt, obwohl eine Rechnungsadresse angegeben ist"
+    },
+    "fields": {
+      "customerNo": "Kundennummer",
+      "billingStreet": "Straße des Rechnungsempfängers",
+      "billingPostalCode": "PLZ des Rechnungsempfängers",
+      "billingCity": "Ort des Rechnungsempfängers",
+      "billingCountry": "Land des Rechnungsempfängers"
+    },
+    "back": "Zurück",
+    "continue": "Weiter",
+    "done": "Fertig"
   }
 }

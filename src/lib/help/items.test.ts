@@ -9,8 +9,9 @@ const DASH = /[—–]/; // em dash, en dash
 
 describe('help content', () => {
   it('has the expected item count and unique ids', () => {
-    expect(HELP_ITEMS.length).toBe(87);
-    expect(new Set(HELP_ITEMS.map((i) => i.id)).size).toBe(87);
+    const core = HELP_ITEMS.filter((i) => !i.kinds);
+    expect(core.length).toBe(87);
+    expect(new Set(HELP_ITEMS.map((i) => i.id)).size).toBe(HELP_ITEMS.length);
   });
 
   it('never uses the removed "open" status', () => {
@@ -59,5 +60,41 @@ describe('get-running step coverage', () => {
     for (const id of ['A3.13', 'A3.14', 'A3.15', 'A3.16', 'A3.17']) {
       expect(HELP_ITEMS.find((i) => i.id === id), `missing help item ${id}`).toBeTruthy();
     }
+  });
+});
+
+describe('handwerk help items', () => {
+  const hw = HELP_ITEMS.filter((i) => i.kinds?.includes('handwerk'));
+  const text = (i: (typeof hw)[number]) => `${i.surface} ${i.q.de} ${i.a.de} ${i.q.en} ${i.a.en}`;
+
+  it('are flagged for handwerk only, with the W id prefix, and use admin or producer', () => {
+    expect(hw.length).toBeGreaterThanOrEqual(10);
+    for (const i of hw) {
+      expect(i.kinds, i.id).toEqual(['handwerk']);
+      expect(i.id, i.id).toMatch(/^W\d\.\d+$/);
+      expect(['admin', 'producer'], i.id).toContain(i.role);
+      expect([3, 4], i.id).toContain(i.stage);
+    }
+    expect(HELP_ITEMS.filter((i) => i.id.startsWith('W') && !i.kinds?.includes('handwerk'))).toEqual([]);
+  });
+
+  it('use no vocabulary placeholders and no exclamation marks', () => {
+    for (const i of hw) {
+      expect(text(i), i.id).not.toMatch(/\{\{/);
+      expect(text(i), i.id).not.toContain('!');
+    }
+  });
+
+  it('cover customers, properties, contacts, catalog, 35a, units, import and number ranges', () => {
+    const all = hw.map(text).join(' ').toLowerCase();
+    for (const topic of ['kunden', 'liegenschaft', 'ansprechpartner', 'leistungen', '§35a', 'einheit', 'import', 'nummernkreis']) {
+      expect(all, topic).toContain(topic);
+    }
+    for (const topic of ['customers', 'properties', 'contacts', 'catalog', 'units', 'import', 'numbering']) {
+      expect(all, topic).toContain(topic);
+    }
+    // 35a and the units each get their own answer.
+    expect(hw.some((i) => i.a.de.includes('§35a') && /Lohn/.test(i.a.de))).toBe(true);
+    expect(hw.some((i) => /Stk/.test(i.a.de) && /pauschal/.test(i.a.de))).toBe(true);
   });
 });

@@ -709,4 +709,93 @@ export const HELP_ITEMS: readonly HelpItem[] = [
       de: 'Die Karte "So funktioniert das Buchen hier" ist nur lesbar und wird von deiner Organisation festgelegt, du stellst sie nicht selbst ein. Wenn deine Organisation {{artists}} direkt bucht, gibt es keine Antwortfrist zu zeigen, weil es nichts anzunehmen gibt.',
     },
   },
+  // ---------- WERKBANK (handwerk) ----------
+  {
+    id: 'W3.1', role: 'admin', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Kunden', updated: '2026-10-07',
+    q: { en: 'How do I create a customer, and what is the difference between property manager and private?', de: 'Wie lege ich einen Kunden an, und was ist der Unterschied zwischen Hausverwaltung und Privat?' },
+    a: {
+      en: 'Open Customers and choose Add customer. Pick the type first: a property manager needs a company name, a private customer needs a last name. The address, payment terms and an optional invoice email follow. Leave the customer number empty and the app assigns the next one, for example K-10001.',
+      de: 'Öffne Kunden und wähle Kunde anlegen. Wähle zuerst die Art: Eine Hausverwaltung braucht einen Firmennamen, ein Privatkunde einen Nachnamen. Danach folgen Adresse, Zahlungsziel und optional eine Rechnungs-E-Mail. Lässt du die Kundennummer leer, vergibt die App die nächste, zum Beispiel K-10001.',
+    },
+  },
+  {
+    id: 'W3.2', role: 'producer', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Kunden', updated: '2026-10-07',
+    q: { en: 'Can I change a customer later, and what happens if I archive or delete one?', de: 'Kann ich einen Kunden später ändern, und was passiert beim Archivieren oder Löschen?' },
+    a: {
+      en: 'You can edit a customer at any time, including switching between property manager and private. Archive hides a customer from the lists and pickers, and Show archived brings it back. Only admins can delete, and only a customer without properties. If properties exist, archive the customer instead.',
+      de: 'Du kannst einen Kunden jederzeit bearbeiten, auch von Hausverwaltung auf Privat wechseln. Archivieren blendet einen Kunden in Listen und Auswahlfeldern aus, mit Archivierte anzeigen holst du ihn zurück. Löschen dürfen nur Admins, und nur einen Kunden ohne Liegenschaften. Gibt es Liegenschaften, archiviere den Kunden stattdessen.',
+    },
+  },
+  {
+    id: 'W3.3', role: 'producer', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Liegenschaften', updated: '2026-10-07',
+    q: { en: 'How do I add a property, and what is the billing recipient for?', de: 'Wie lege ich eine Liegenschaft an, und wofür ist der Rechnungsempfänger?' },
+    a: {
+      en: 'Open Properties, choose Add property and pick the customer it belongs to. Every property belongs to exactly one customer. Tick Different invoice recipient when the invoice should go to someone else, for example a homeowners association represented by the property manager. The detail page then shows who the invoice goes to.',
+      de: 'Öffne Liegenschaften, wähle Liegenschaft anlegen und ordne sie einem Kunden zu. Jede Liegenschaft gehört zu genau einem Kunden. Setze den Haken bei Abweichender Rechnungsempfänger, wenn die Rechnung an jemand anderen gehen soll, zum Beispiel an eine Eigentümergemeinschaft, die von der Hausverwaltung vertreten wird. Die Detailseite zeigt dir dann, an wen die Rechnung geht.',
+    },
+  },
+  {
+    id: 'W3.4', role: 'admin', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Liegenschaften', updated: '2026-10-07',
+    q: { en: 'Why can I still see a property whose customer is archived?', de: 'Warum sehe ich eine Liegenschaft noch, deren Kunde archiviert ist?' },
+    a: {
+      en: 'Archiving a customer does not touch its properties. When you edit such a property, the archived customer still shows in the customer field and you can save without changing it. New properties can only be assigned to active customers.',
+      de: 'Das Archivieren eines Kunden ändert seine Liegenschaften nicht. Bearbeitest du so eine Liegenschaft, steht der archivierte Kunde weiter im Feld Kunde, und du kannst speichern, ohne etwas zu ändern. Neue Liegenschaften kannst du nur aktiven Kunden zuordnen.',
+    },
+  },
+  {
+    id: 'W3.5', role: 'producer', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Kunden und Liegenschaften · Ansprechpartner', updated: '2026-10-07',
+    q: { en: 'Where do I store the people I talk to at a customer or on site?', de: 'Wo speichere ich die Menschen, mit denen ich beim Kunden oder vor Ort spreche?' },
+    a: {
+      en: 'Open the detail page of a customer or a property and use the Contacts section. Add name, function, phone, mobile and email. Mark one contact as the primary contact, which is shown with a badge. Each customer and each property keeps its own list of contacts.',
+      de: 'Öffne die Detailseite eines Kunden oder einer Liegenschaft und nutze den Bereich Ansprechpartner. Trag Name, Funktion, Telefon, Mobil und E-Mail ein. Einen Kontakt markierst du als Hauptansprechpartner, er erscheint mit einer Markierung. Jeder Kunde und jede Liegenschaft führt seine eigene Liste.',
+    },
+  },
+  {
+    id: 'W3.6', role: 'admin', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Leistungen', updated: '2026-10-07',
+    q: { en: 'How do I create a catalog item?', de: 'Wie lege ich eine Leistung im Katalog an?' },
+    a: {
+      en: 'Open Services and choose Add service. Give it a name, a unit and the VAT rate (19, 7 or 0 percent), and enter the labour and the material price. Both are net prices per unit. The net total is calculated for you. Item number and category are optional and help you search and filter.',
+      de: 'Öffne Leistungen und wähle Leistung anlegen. Gib Bezeichnung, Einheit und Steuersatz (19, 7 oder 0 Prozent) an und trag Lohn und Material ein. Beides sind Nettopreise pro Einheit, die Summe netto rechnet die App für dich. Artikelnummer und Kategorie sind optional und helfen beim Suchen und Filtern.',
+    },
+  },
+  {
+    id: 'W3.7', role: 'producer', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Leistungen', updated: '2026-10-07',
+    q: { en: 'Why are labour and material entered separately, and what does §35a have to do with it?', de: 'Warum gebe ich Lohn und Material getrennt ein, und was hat das mit §35a zu tun?' },
+    a: {
+      en: 'Private customers and owners in a homeowners association can claim the labour portion of a craftsman invoice as a tax credit under §35a of the German income tax act, material does not count. To show that portion on an invoice later, the catalog stores labour and material apart. Enter both for every item, and use 0 when one of them does not apply.',
+      de: 'Privatkunden und Wohnungseigentümer einer WEG können den Lohnanteil einer Handwerkerrechnung nach §35a EStG steuerlich geltend machen, das Material zählt nicht. Damit dieser Anteil später auf der Rechnung ausgewiesen werden kann, speichert der Katalog Lohn und Material getrennt. Trag bei jeder Leistung beides ein und nimm 0, wenn eines nicht zutrifft.',
+    },
+  },
+  {
+    id: 'W4.1', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Leistungen · Einheiten', updated: '2026-10-07',
+    q: { en: 'Which units can I choose, and what does lump sum mean?', de: 'Welche Einheiten kann ich wählen, und was bedeutet pauschal?' },
+    a: {
+      en: 'The units are h (hours), pc (pieces), m, m², m³, kg and l, plus lump sum. Pick lump sum for a job you price as one package. The list is fixed so that your invoices later carry the standard unit codes.',
+      de: 'Zur Auswahl stehen Std, Stk, m, m², m³, kg und l, dazu pauschal für einen Festpreis. Nimm pauschal für eine Arbeit, die du als ein Paket abrechnest. Die Liste ist fest vorgegeben, damit deine Rechnungen später die Standard-Einheitencodes tragen.',
+    },
+  },
+  {
+    id: 'W4.2', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Importieren', updated: '2026-10-07',
+    q: { en: 'How do I import customers, properties or catalog items from a spreadsheet?', de: 'Wie importiere ich Kunden, Liegenschaften oder Leistungen aus einer Tabelle?' },
+    a: {
+      en: 'Use Import on the Customers, Properties or Catalog page and upload a CSV or Excel file with at most 5000 rows. The first row holds the column names. The app matches your columns where it can, and you check the mapping, review the rows and only then import. Rows with errors are skipped and listed, the rest is saved. Import customers before properties, because properties find their customer by customer number.',
+      de: 'Nutze Importieren auf der Seite Kunden, Liegenschaften oder Leistungen und lade eine CSV- oder Excel-Datei mit höchstens 5000 Zeilen hoch. Die erste Zeile enthält die Spaltennamen. Die App ordnet deine Spalten zu, soweit es geht, du prüfst die Zuordnung, siehst dir die Zeilen an und importierst erst dann. Zeilen mit Fehlern werden ausgelassen und aufgelistet, der Rest wird gespeichert. Importiere Kunden vor Liegenschaften, denn Liegenschaften finden ihren Kunden über die Kundennummer.',
+    },
+  },
+  {
+    id: 'W4.3', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Importieren', updated: '2026-10-07',
+    q: { en: 'What happens when I import a file a second time?', de: 'Was passiert, wenn ich eine Datei ein zweites Mal importiere?' },
+    a: {
+      en: 'Customers whose customer number is already taken and catalog items whose item number is already taken are skipped, nothing is overwritten. Properties are not checked for duplicates: importing the same properties file again creates them twice, so import each properties file only once. The result screen shows how many rows were imported, skipped or had errors, with the reason for each row.',
+      de: 'Kunden, deren Kundennummer schon vergeben ist, und Leistungen, deren Artikelnummer schon vergeben ist, werden übersprungen, nichts wird überschrieben. Liegenschaften werden nicht auf Dubletten geprüft: Importierst du dieselbe Liegenschaften-Datei noch einmal, entstehen sie doppelt. Importiere deshalb jede Liegenschaften-Datei nur einmal. Die Ergebnisseite zeigt, wie viele Zeilen importiert, übersprungen oder fehlerhaft waren, mit dem Grund je Zeile.',
+    },
+  },
+  {
+    id: 'W4.4', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Einstellungen · Nummernkreise', updated: '2026-10-07',
+    q: { en: 'How do I change the format of customer numbers?', de: 'Wie ändere ich das Format der Kundennummern?' },
+    a: {
+      en: 'Open Settings, then the Numbering tab. Set the prefix (up to 10 characters, K- by default) and the next number, and the preview shows what the next customer will get. Only admins can change it. Numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import. A number that is already taken is skipped, and the next customer gets the next free one.',
+      de: 'Öffne Einstellungen und dort den Tab Nummernkreise. Lege das Präfix fest (bis zu 10 Zeichen, standardmäßig K-) und die nächste Nummer, die Vorschau zeigt, was der nächste Kunde bekommt. Ändern dürfen das nur Admins. Nummern, die du von Hand eingibst oder in einem anderen Format importierst, bleiben erhalten, verschieben den Zähler aber nicht. Prüf die nächste Nummer deshalb nach einem großen Import. Ist eine Nummer schon vergeben, wird sie übersprungen und der nächste Kunde bekommt die nächste freie.',
+    },
+  },
 ] as const;

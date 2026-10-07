@@ -93,4 +93,23 @@ describe("createFakeSupabase — in() membership filtering", () => {
     const res = await fake.from("user_roles").select("*").in("role", ["admin", "producer"]);
     expect(res).toEqual({ data: null, error: null, count: null });
   });
+
+  it("schema().from resolves the schema-qualified seed and records the call", async () => {
+    const fake = createFakeSupabase({ "werkbank.customers": { data: [{ id: "c1" }], error: null } });
+    const res = await fake.schema("werkbank").from("customers").select("*");
+    expect(res).toEqual({ data: [{ id: "c1" }], error: null, count: null });
+    expect(fake.calls).toEqual([
+      { table: "werkbank.customers", method: "from", args: [] },
+      { table: "werkbank.customers", method: "select", args: ["*"] },
+    ]);
+  });
+
+  it("schema().rpc resolves the schema-qualified rpc seed and records the call", async () => {
+    const fake = createFakeSupabase({ "rpc:werkbank.import_customers": { data: [1], error: null } });
+    const res = await fake.schema("werkbank").rpc("import_customers", { p_rows: [] });
+    expect(res).toEqual({ data: [1], error: null });
+    expect(fake.calls).toEqual([
+      { table: "rpc:werkbank.import_customers", method: "rpc", args: [{ p_rows: [] }] },
+    ]);
+  });
 });

@@ -49,7 +49,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: ROUTES.PRODUCTIONS, icon: Theater, label: 'Productions', labelKey: 'nav.productions', section: 'catalog', roles: ['admin', 'producer'], kinds: PRODUCTION_KINDS },
   { to: ROUTES.ARTISTS, icon: Users, label: 'Artists', labelKey: 'nav.artists', section: 'catalog', roles: ['admin', 'producer'], kinds: PRODUCTION_KINDS },
   ...MODULE_UIS.flatMap((m) => m.navItems),
-  { to: ROUTES.HELP, icon: HelpCircle, label: 'Help', labelKey: 'nav.help', section: 'system', kinds: PRODUCTION_KINDS },
+  { to: ROUTES.HELP, icon: HelpCircle, label: 'Help', labelKey: 'nav.help', section: 'system', kinds: [...PRODUCTION_KINDS, 'handwerk'] },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings', labelKey: 'nav.settings', section: 'system', roles: ['admin', 'producer'] },
   { to: ROUTES.PLATFORM, icon: Building2, label: 'Platform', labelKey: 'nav.platform', section: 'system', superAdmin: true },
 ];

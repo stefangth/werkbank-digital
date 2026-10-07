@@ -4,6 +4,7 @@
   "lede": "$t(help:lede_{{kind}})",
   "lede_production": "Jede Frage hier unten stellt sich ein echter Admin, jemand aus dem Production Team oder ein Artist beim Arbeiten mit ShowFlow. Wähl deine Rolle, dann öffne eine Frage, um die Antwort zu sehen und den Screen, der sie beantwortet.",
   "lede_staffing": "Jede Frage hier unten stellt sich ein echter Admin, jemand aus dem Buchungsteam oder ein Teammitglied beim Arbeiten mit ShowFlow. Wähl deine Rolle, dann öffne eine Frage, um die Antwort zu sehen und den Screen, der sie beantwortet.",
+  "ledeNeutral": "Jede Frage hier unten stellt sich ein echter Admin oder Kollege aus dem Büro beim Arbeiten mit der App. Wähl deine Rolle, dann öffne eine Frage, um die Antwort zu sehen und den Screen, der sie beantwortet.",
   "tabs": {
     "admin": "Admin",
     "producer": "{{roleProducer}}",

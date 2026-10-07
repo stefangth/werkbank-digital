@@ -1,11 +1,20 @@
 {
   "nav": {
-    "technicians": "Technicians"
+    "customers": "Customers",
+    "catalog": "Services",
+    "technicians": "Technicians",
+    "properties": "Properties"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
-    "body": "Customers, quotes and invoices will appear here soon. Start by adding your technicians.",
-    "cta": "Add technicians"
+    "body": "Quotes and invoices will follow soon.",
+    "startList": {
+      "title": "How to start",
+      "technicians": "Add technicians",
+      "catalog": "Add or import services",
+      "customers": "Add or import customers",
+      "loadFailed": "Could not load your progress."
+    }
   },
   "technicians": {
     "title": "Technicians",
@@ -62,5 +71,370 @@
       "savedInviteFailed": "Technician saved, but the invitation could not be sent. You can send it again from the list."
     },
     "invitationsFailed": "Could not load the pending invitations, so resend and revoke are unavailable. Please reload the page."
+  },
+  "common": {
+    "archive": "Archive",
+    "restore": "Restore",
+    "delete": "Delete",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "showArchived": "Show archived",
+    "search": "Search"
+  },
+  "errors": {
+    "customerNoTaken": "This customer number is already taken.",
+    "itemNoTaken": "This item number is already taken.",
+    "inUse": "This is still in use. Archive it instead.",
+    "forbidden": "You do not have the rights for that.",
+    "generic": "That did not work. Please try again."
+  },
+  "units": {
+    "HUR": "h",
+    "H87": "pc",
+    "MTR": "m",
+    "MTK": "m²",
+    "MTQ": "m³",
+    "KGM": "kg",
+    "LTR": "l",
+    "LS": "lump sum"
+  },
+  "catalog": {
+    "title": "Services",
+    "sub": "Your services and materials with prices. You pick them later in quotes and invoices.",
+    "add": "Add service",
+    "loadFailed": "Could not load your services. Please try again.",
+    "searchLabel": "Search services",
+    "searchPlaceholder": "Number, name or description",
+    "categoryFilter": "Category",
+    "allCategories": "All categories",
+    "empty": {
+      "title": "No services yet",
+      "body": "Add your first service with a unit and a price.",
+      "action": "Add your first service",
+      "reason": "Ask an admin or producer to add services."
+    },
+    "noMatches": "No service matches your search.",
+    "noMatchesReason": "Change the search or the filter.",
+    "archivedPill": "Archived",
+    "columns": {
+      "number": "No.",
+      "name": "Name",
+      "category": "Category",
+      "unit": "Unit",
+      "labour": "Labour",
+      "material": "Material",
+      "net": "Net",
+      "vat": "VAT",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete service?",
+      "body": "\"{{name}}\" will be deleted for good. This cannot be undone.",
+      "confirm": "Delete"
+    },
+    "dialog": {
+      "createTitle": "Add service",
+      "editTitle": "Edit service",
+      "description": "Labour and material are net prices per unit.",
+      "itemNo": "Item number (optional)",
+      "name": "Name",
+      "descriptionField": "Description (optional)",
+      "category": "Category (optional)",
+      "unit": "Unit",
+      "vat": "VAT",
+      "labour": "Labour",
+      "material": "Material",
+      "net": "Net total"
+    },
+    "errors": {
+      "name": "Enter a name",
+      "unit": "Choose a unit",
+      "price": "Enter an amount of 0 or more with at most two decimals",
+      "vat": "Choose a VAT rate"
+    }
+  },
+  "numbering": {
+    "title": "Numbering",
+    "description": "How numbers are assigned when you create something new.",
+    "customerHeading": "Customer numbers",
+    "prefix": "Prefix",
+    "prefixHint": "At most 10 characters, for example K-.",
+    "nextValue": "Next number",
+    "preview": "Next customer number: {{number}}",
+    "save": "Save",
+    "saved": "Number range saved",
+    "loadFailed": "The number ranges could not be loaded. Please try again.",
+    "errors": {
+      "prefixTooLong": "The prefix can be at most 10 characters long",
+      "nextValue": "Enter a whole number of 1 or more"
+    }
+  },
+  "customers": {
+    "errors": {
+      "kind": "Choose the customer type",
+      "companyName": "Enter the company name",
+      "lastName": "Enter the last name",
+      "street": "Enter the street",
+      "postalCode": "Enter the postal code",
+      "postalCodeDe": "A German postal code has exactly 5 digits",
+      "city": "Enter the city",
+      "country": "Enter the country as two capital letters, for example DE",
+      "email": "Enter a valid email address",
+      "vatId": "Enter a valid VAT ID, for example DE123456789",
+      "paymentTerms": "Enter whole days from 0 to 365"
+    },
+    "title": "Customers",
+    "sub": "Property managers and private customers. Properties and invoices always belong to a customer.",
+    "add": "Add customer",
+    "loadFailed": "Your customers could not be loaded. Please try again.",
+    "searchLabel": "Search customers",
+    "searchPlaceholder": "Name, number, city or email",
+    "kindFilter": "Type",
+    "allKinds": "All types",
+    "empty": {
+      "title": "No customers yet",
+      "body": "Add your first customer, a property manager or a private customer.",
+      "action": "Add your first customer"
+    },
+    "noMatches": "No customer matches your search.",
+    "noMatchesReason": "Change the search or the filter.",
+    "archivedPill": "Archived",
+    "columns": {
+      "number": "No.",
+      "name": "Name",
+      "kind": "Type",
+      "city": "City",
+      "properties": "Properties",
+      "phone": "Phone",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete customer?",
+      "body": "\"{{name}}\" and all contacts will be deleted for good. This cannot be undone. Deleting is not possible while properties exist."
+    },
+    "dialog": {
+      "createTitle": "Add customer",
+      "editTitle": "Edit customer",
+      "description": "Pick the type of customer first.",
+      "kind": "Type of customer",
+      "customerNo": "Customer number (optional)",
+      "customerNoHint": "Leave empty and the app assigns the next number.",
+      "companyName": "Company name",
+      "firstName": "First name (optional)",
+      "lastName": "Last name",
+      "street": "Street and number",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country",
+      "email": "Email (optional)",
+      "invoiceEmail": "Invoice email (optional)",
+      "phone": "Phone (optional)",
+      "vatId": "VAT ID (optional)",
+      "paymentTerms": "Payment terms in days",
+      "notes": "Notes (optional)"
+    },
+    "toast": {
+      "created": "Customer added, customer number {{number}}",
+      "archived": "Customer archived",
+      "restored": "Customer restored"
+    },
+    "country": {
+      "DE": "Germany",
+      "AT": "Austria",
+      "CH": "Switzerland",
+      "other": "Other country",
+      "otherCode": "Country code (two letters)"
+    },
+    "detail": {
+      "loadFailed": "The customer could not be loaded. Please try again.",
+      "notFound": {
+        "title": "Customer not found",
+        "reason": "It was deleted or the link is wrong.",
+        "back": "Back to customers"
+      },
+      "masterData": "Master data",
+      "address": "Address",
+      "email": "Email",
+      "invoiceEmail": "Invoice email",
+      "phone": "Phone",
+      "vatId": "VAT ID",
+      "paymentTerms": "Payment terms",
+      "paymentTermsValue": "{{count}} days",
+      "paymentTermsValue_one": "{{count}} day",
+      "notes": "Notes",
+      "none": "No details",
+      "properties": {
+        "title": "Properties",
+        "add": "Add property",
+        "empty": "This customer has no properties yet.",
+        "loadFailed": "The properties could not be loaded."
+      }
+    }
+  },
+  "properties": {
+    "errors": {
+      "customer": "Choose a customer",
+      "name": "Enter a name for the property",
+      "billingName": "Enter the name of the invoice recipient"
+    },
+    "title": "Properties",
+    "sub": "The sites you work at. Every property belongs to a customer.",
+    "add": "Add property",
+    "loadFailed": "Your properties could not be loaded. Please try again.",
+    "searchLabel": "Search properties",
+    "searchPlaceholder": "Name, object no., address or customer",
+    "empty": {
+      "title": "No properties yet",
+      "body": "Add your first property and assign it to a customer.",
+      "action": "Add first property"
+    },
+    "noMatches": "No property matches your search.",
+    "noMatchesReason": "Change the search or the switch.",
+    "archivedPill": "Archived",
+    "columns": {
+      "name": "Name",
+      "objectNo": "Object no.",
+      "address": "Address",
+      "customer": "Customer",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete property?",
+      "body": "\"{{name}}\" and all on-site contacts will be deleted for good. This cannot be undone."
+    },
+    "dialog": {
+      "createTitle": "Add property",
+      "editTitle": "Edit property",
+      "description": "Pick the customer the property belongs to first.",
+      "customer": "Customer",
+      "customerPlaceholder": "Pick a customer",
+      "customerSearch": "Search customers",
+      "customerNone": "No customer found",
+      "customerArchived": "archived",
+      "name": "Property name",
+      "objectNo": "Object no. (optional)",
+      "hasBilling": "Different invoice recipient",
+      "billingName": "Name of the invoice recipient",
+      "accessNotes": "Access (optional)",
+      "notes": "Notes (optional)"
+    },
+    "detail": {
+      "loadFailed": "The property could not be loaded. Please try again.",
+      "notFound": {
+        "title": "Property not found",
+        "reason": "It was deleted or the link is wrong.",
+        "back": "Back to properties"
+      },
+      "address": "Address",
+      "customer": "Customer",
+      "billingTitle": "Invoice goes to",
+      "billingRepresented": "{{billingName}}, represented by {{customer}}",
+      "accessNotes": "Access",
+      "notes": "Notes",
+      "none": "No details"
+    }
+  },
+  "contacts": {
+    "errors": {
+      "lastName": "Enter the last name",
+      "email": "Enter a valid email address"
+    },
+    "title": "Contacts",
+    "add": "Add contact",
+    "loadFailed": "The contacts could not be loaded. Please try again.",
+    "empty": "No contacts yet",
+    "primaryBadge": "Primary contact",
+    "delete": {
+      "title": "Delete contact?",
+      "body": "{{name}} will be deleted for good. This cannot be undone."
+    },
+    "dialog": {
+      "createTitle": "Add contact",
+      "editTitle": "Edit contact",
+      "description": "Who is the right person on site or in the office?",
+      "firstName": "First name (optional)",
+      "lastName": "Last name",
+      "role": "Role (optional)",
+      "phone": "Phone (optional)",
+      "mobile": "Mobile (optional)",
+      "email": "Email (optional)",
+      "notes": "Notes (optional)",
+      "isPrimary": "Primary contact"
+    }
+  },
+  "kind": {
+    "property_manager": "Property manager",
+    "private": "Private"
+  },
+  "import": {
+    "action": "Import",
+    "title": {
+      "customers": "Import customers",
+      "properties": "Import properties",
+      "catalog_items": "Import services"
+    },
+    "description": "Upload a CSV or Excel file. You map the columns and check the rows before anything is saved.",
+    "propertiesHint": "Import the customers first. Properties find their customer by the customer number.",
+    "steps": {
+      "upload": "File",
+      "map": "Columns",
+      "review": "Check",
+      "summary": "Result"
+    },
+    "upload": {
+      "label": "Choose file",
+      "hint": "CSV or Excel (.xlsx) with at most {{max}} rows. The first row holds the column names."
+    },
+    "map": {
+      "intro": "We matched the columns of your file where we could. Check the mapping. Required fields are marked with *.",
+      "columnFor": "Column for {{field}}",
+      "ignore": "Do not import"
+    },
+    "review": {
+      "ready_one": "{{count}} row is ready",
+      "ready_other": "{{count}} rows are ready",
+      "invalid_one": "{{count}} row has errors and is left out",
+      "invalid_other": "{{count}} rows have errors and are left out",
+      "counts": "{{ready}}, {{invalid}}.",
+      "countsAllValid": "{{ready}}.",
+      "invalidList": "Rows with errors",
+      "submit_one": "Import {{count}} row",
+      "submit_other": "Import {{count}} rows",
+      "running": "Importing"
+    },
+    "summary": {
+      "counts": "{{created}} imported, {{skipped}} skipped, {{errors}} failed",
+      "interrupted": "The import was interrupted after {{done}} of {{total}} rows. The rows already imported are saved. Do not import the whole file again, only the rows that were not imported.",
+      "list": "Rows not imported",
+      "customerNumbers": "Customer numbers in a format other than your number range are kept but do not move the next number. Check it under Settings, Numbering if needed."
+    },
+    "row": "Row {{row}}: {{message}}",
+    "reasons": {
+      "customer_no_taken": "Customer number already taken",
+      "item_no_taken": "Item number already taken",
+      "unknown_customer": "Customer {{detail}} not found",
+      "invalid": "Invalid data",
+      "other": "Not imported",
+      "notSent": "Not sent because the import was interrupted"
+    },
+    "errors": {
+      "tooManyRows": "The file has more than {{max}} rows. Please split it.",
+      "read": "The file could not be read. Check that it is a CSV or Excel file.",
+      "noColumns": "The first row of the file has no column names.",
+      "noRows": "The file has no rows.",
+      "customerNo": "Enter the customer number",
+      "billingName": "Billing recipient is missing although a billing address is given"
+    },
+    "fields": {
+      "customerNo": "Customer number",
+      "billingStreet": "Billing street",
+      "billingPostalCode": "Billing postal code",
+      "billingCity": "Billing city",
+      "billingCountry": "Billing country"
+    },
+    "back": "Back",
+    "continue": "Continue",
+    "done": "Done"
   }
 }

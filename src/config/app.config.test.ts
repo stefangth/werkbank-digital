@@ -111,10 +111,15 @@ describe("requiredKindsForPath", () => {
   it("restricts every core production route to production and staffing", () => {
     for (const route of [
       ROUTES.GET_RUNNING, ROUTES.BOOKINGS, ROUTES.HIRE_ORDERS, ROUTES.HIRE_ORDER_DETAIL, ROUTES.HIRE_ORDER_EDIT,
-      ROUTES.HIRE_ORDER_TEMPLATE, ROUTES.AVAILABILITY, ROUTES.CHATS, ROUTES.PRODUCTIONS, ROUTES.ARTISTS, ROUTES.HELP,
+      ROUTES.HIRE_ORDER_TEMPLATE, ROUTES.AVAILABILITY, ROUTES.CHATS, ROUTES.PRODUCTIONS, ROUTES.ARTISTS,
     ]) {
       expect(ROUTE_KINDS[route]).toEqual(CORE);
     }
+  });
+
+  it("offers the help center to a module kind besides the core kinds", () => {
+    expect(ROUTE_KINDS[ROUTES.HELP]).toEqual(expect.arrayContaining(CORE));
+    expect(ROUTE_KINDS[ROUTES.HELP]).toHaveLength(CORE.length + 1);
   });
 
   it("matches a dynamic route against a concrete pathname", () => {

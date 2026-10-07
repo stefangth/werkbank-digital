@@ -2,6 +2,7 @@
   "eyebrow": "HELP",
   "hero": "What people ask, and where the app answers it",
   "lede": "Every question below is one a real admin, someone on the {{roleProducer}}, or one {{artist}} asks themselves while using ShowFlow. Pick your role, then open a question to see the answer and the screen that carries it.",
+  "ledeNeutral": "Every question below is one a real admin or office colleague asks while using the app. Pick your role, then open a question to see the answer and the screen that carries it.",
   "tabs": {
     "admin": "Admin",
     "producer": "{{roleProducer}}",

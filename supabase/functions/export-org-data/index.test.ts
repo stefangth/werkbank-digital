@@ -1,5 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { handle } from "./index.ts";
+import { handle, WERKBANK_ORDER } from "./index.ts";
+import type { Database } from "../_shared/database.types.ts";
 import { makeFakeDeps, makeRequest } from "../_shared/testing.ts";
 
 const AUTH = { Authorization: "Bearer jwt", "content-type": "application/json" };
@@ -32,4 +33,82 @@ Deno.test("non-super-admin is forbidden", async () => {
   const { deps } = makeFakeDeps({ authUser: { id: "u1" }, tables: { platform_admins: { data: null, error: null } } });
   const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
   assertEquals(res.status, 403);
+});
+
+const SUPER_ADMIN = { platform_admins: { data: { user_id: "sa" }, error: null } };
+const customerRows = (n: number, from = 0) =>
+  Array.from({ length: n }, (_, i) => ({ id: `c${from + i}`, org_id: "o1" }));
+
+Deno.test("bundle includes the werkbank tables filtered by org", async () => {
+  const { deps, calls } = makeFakeDeps({
+    authUser: { id: "sa" },
+    tables: {
+      ...SUPER_ADMIN,
+      "werkbank.customers": { data: [{ id: "c1", org_id: "o1" }], error: null },
+    },
+  });
+  const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
+  assertEquals(res.status, 200);
+  const { bundle } = await res.json();
+  assertEquals(bundle.werkbank.customers, [{ id: "c1", org_id: "o1" }]);
+  for (const t of ["properties", "contacts", "catalog_items", "number_ranges"]) {
+    assertEquals(bundle.werkbank[t], []);
+  }
+  const eqs = calls.filter((c) => c.table === "werkbank.customers" && c.method === "eq");
+  assertEquals(eqs.map((c) => c.args), [["org_id", "o1"]]);
+});
+
+Deno.test("werkbank tables are read in pages of 1000", async () => {
+  const { deps } = makeFakeDeps({
+    authUser: { id: "sa" },
+    tables: {
+      ...SUPER_ADMIN,
+      "werkbank.customers": [
+        { when: { __range: "0-999" }, data: customerRows(1000), error: null },
+        { when: { __range: "1000-1999" }, data: customerRows(3, 1000), error: null },
+      ],
+    },
+  });
+  const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
+  const { bundle } = await res.json();
+  assertEquals(bundle.werkbank.customers.length, 1003);
+});
+
+Deno.test("a werkbank read error returns 500", async () => {
+  const { deps } = makeFakeDeps({
+    authUser: { id: "sa" },
+    tables: {
+      ...SUPER_ADMIN,
+      "werkbank.customers": { data: null, error: { message: "boom" } },
+    },
+  });
+  const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
+  assertEquals(res.status, 500);
+  assertEquals((await res.json()).error, "Failed to read werkbank.customers");
+});
+
+// number_ranges has no id column (PK org_id, key): real PostgREST rejects order=id with 42703, which
+// the fake would accept, so the sort column per table is pinned here and type-checked in index.ts.
+type WerkbankRow<T extends keyof Database["werkbank"]["Tables"]> = keyof Database["werkbank"]["Tables"][T]["Row"];
+const _numberRangesHasNoId: "id" extends WerkbankRow<"number_ranges"> ? never : true = true;
+const _numberRangesHasKey: "key" extends WerkbankRow<"number_ranges"> ? true : never = true;
+void _numberRangesHasNoId;
+void _numberRangesHasKey;
+
+Deno.test("each werkbank table is paged in the order of a column it has", async () => {
+  const { deps, calls } = makeFakeDeps({ authUser: { id: "sa" }, tables: { ...SUPER_ADMIN } });
+  const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
+  assertEquals(res.status, 200);
+  const orders = Object.fromEntries(
+    calls.filter((c) => c.table.startsWith("werkbank.") && c.method === "order")
+      .map((c) => [c.table.slice("werkbank.".length), c.args[0]]),
+  );
+  assertEquals(orders, {
+    customers: "id",
+    properties: "id",
+    contacts: "id",
+    catalog_items: "id",
+    number_ranges: "key",
+  });
+  assertEquals(orders, { ...WERKBANK_ORDER });
 });

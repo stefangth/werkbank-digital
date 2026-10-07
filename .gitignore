@@ -48,6 +48,7 @@ playwright-report/
 
 # Isolated feature worktrees created inside this checkout.
 .worktrees/
+.claude/worktrees/
 
 # Dev-only visual-regression tooling for the Show Date Cockpit.
 # public/ref is a generated reference render (regeneration is documented in the

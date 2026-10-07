@@ -184,3 +184,10 @@ export function interpolateVocabulary(text: string, vocab: Vocabulary): string {
   );
 }
 // <<< ORG KIND REGISTRY MIRROR <<<
+
+/** Kinds that use the Showflow surface. Content without an explicit kind list belongs to these. */
+export const CORE_ORG_KINDS = ["production", "staffing"] as const satisfies readonly CoreOrgKind[];
+
+export function isCoreOrgKind(kind: OrgKind): kind is CoreOrgKind {
+  return (CORE_ORG_KINDS as readonly OrgKind[]).includes(kind);
+}

@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useLanguage } from '@/features/i18n/LanguageContext';
 import { useOrgKind } from '@/hooks/useOrgKind';
 import { selectItems, groupByStage, countParams, findItem, type HelpFilter } from '@/lib/help/filter';
+import { isCoreOrgKind } from '@/lib/orgKind';
 import type { HelpRole } from '@/lib/help/types';
 import { Button } from '@/components/ui/button';
 import { HelpRoleTabs } from '@/components/help/HelpRoleTabs';
@@ -72,7 +73,7 @@ export default function HelpPage() {
 
   const matched = selectItems(role, filter, query, orgKind);
   const groups = groupByStage(matched);
-  const c = countParams(role, filter, query, matched);
+  const c = countParams(role, filter, query, orgKind, matched);
   const countLabel = c.filtered
     ? t('count_filtered', { matched: c.matched, total: c.total })
     : t('count_unfiltered', { count: c.total, newCount: c.newCount });
@@ -98,7 +99,7 @@ export default function HelpPage() {
         <h1 className="mb-2 text-balance font-display text-3xl font-semibold tracking-tight text-foreground">
           {t('hero')}
         </h1>
-        <p className="max-w-[68ch] text-base leading-relaxed text-muted-foreground">{t('lede')}</p>
+        <p className="max-w-[68ch] text-base leading-relaxed text-muted-foreground">{isCoreOrgKind(orgKind) ? t('lede') : t('ledeNeutral')}</p>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -118,8 +119,8 @@ export default function HelpPage() {
         </div>
       )}
 
-      <HelpGlossary lang={lang} />
-      <HelpFooterCards />
+      {isCoreOrgKind(orgKind) && <HelpGlossary lang={lang} />}
+      {isCoreOrgKind(orgKind) && <HelpFooterCards />}
     </div>
   );
 }

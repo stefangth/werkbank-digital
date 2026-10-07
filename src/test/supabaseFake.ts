@@ -161,6 +161,22 @@ export function createFakeSupabase(seed: Record<string, TableSeed> = {}) {
       calls.push({ table: `rpc:${name}`, method: "rpc", args: [params] });
       return Promise.resolve(seed[`rpc:${name}`] ?? { data: null, error: null });
     },
+    // Non-public schema: tables are recorded and seeded as `<schema>.<table>`,
+    // functions as `rpc:<schema>.<fn>`.
+    schema(name: string) {
+      return {
+        from(table: string) {
+          const key = `${name}.${table}`;
+          calls.push({ table: key, method: "from", args: [] });
+          return builder(key);
+        },
+        rpc(fn: string, params?: unknown) {
+          const key = `rpc:${name}.${fn}`;
+          calls.push({ table: key, method: "rpc", args: [params] });
+          return Promise.resolve(seed[key] ?? { data: null, error: null });
+        },
+      };
+    },
     functions: {
       // Seed an edge-function result under `fn:<name>` (e.g. `fn:create-invitation`).
       invoke(name: string, opts?: { body?: unknown }) {

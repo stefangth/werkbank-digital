@@ -1,9 +1,14 @@
 import { HELP_ITEMS, type HelpItem } from './items';
 import type { HelpRole } from './types';
 import { STAGES } from './stages';
-import { DEFAULT_ORG_KIND, VOCABULARY, interpolateVocabulary, type OrgKind } from '@/lib/orgKind';
+import { CORE_ORG_KINDS, DEFAULT_ORG_KIND, VOCABULARY, interpolateVocabulary, type OrgKind } from '@/lib/orgKind';
 
 export type HelpFilter = 'all' | 'new';
+
+/** Whether an item is offered to a workspace kind. Items without `kinds` belong to the core kinds. */
+function offeredTo(item: HelpItem, kind: OrgKind): boolean {
+  return ((item.kinds ?? CORE_ORG_KINDS) as readonly OrgKind[]).includes(kind);
+}
 
 /** Items for one role, narrowed by the active filter + free-text search.
  *  Search matches across BOTH languages and the surface label, so an English
@@ -20,7 +25,7 @@ export function selectItems(
 ): HelpItem[] {
   const q = query.trim().toLowerCase();
   return HELP_ITEMS.filter((i) => {
-    if (i.role !== role) return false;
+    if (i.role !== role || !offeredTo(i, kind)) return false;
     if (filter === 'new' && i.status !== 'new') return false;
     if (!q) return true;
     const en = interpolateVocabulary(`${i.q.en} ${i.a.en}`, VOCABULARY[kind].en);
@@ -41,9 +46,10 @@ export function countParams(
   role: HelpRole,
   filter: HelpFilter,
   query: string,
-  matched: HelpItem[] = selectItems(role, filter, query),
+  kind: OrgKind,
+  matched: HelpItem[] = selectItems(role, filter, query, kind),
 ) {
-  const mine = HELP_ITEMS.filter((i) => i.role === role);
+  const mine = HELP_ITEMS.filter((i) => i.role === role && offeredTo(i, kind));
   return {
     filtered: filter !== 'all' || query.trim() !== '',
     matched: matched.length,
