@@ -1,7 +1,7 @@
 -- Werkbank Teil 3 (R2): quote and order locks, transitions, numbering and the three RPCs.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(99);
+SELECT plan(101);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -26,6 +26,10 @@ INSERT INTO werkbank.customers (id, org_id, customer_no, kind, last_name, street
 INSERT INTO werkbank.properties (id, org_id, customer_id, name, street, postal_code, city) VALUES
   ('dddddddd-0000-4000-d000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','Objekt 1','Weg 1','01067','Dresden'),
   ('dddddddd-0000-4000-d000-0000000000e2','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e2','Objekt 2','Weg 2','01067','Dresden');
+INSERT INTO werkbank.customers (id, org_id, customer_no, kind, last_name, street, postal_code, city) VALUES
+  ('cccccccc-0000-4000-c000-0000000000f1','bbbbbbbb-0000-4000-b000-0000000000e2','K-1','private','Fremd','Weg 9','01067','Dresden');
+INSERT INTO werkbank.properties (id, org_id, customer_id, name, street, postal_code, city) VALUES
+  ('dddddddd-0000-4000-d000-0000000000f1','bbbbbbbb-0000-4000-b000-0000000000e2','cccccccc-0000-4000-c000-0000000000f1','Fremdobjekt','Weg 9','01067','Dresden');
 INSERT INTO werkbank.catalog_items (id, org_id, name, unit_code, labour_price, material_price) VALUES
   ('77777777-0000-4000-a000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','Rohr','HUR',10,5);
 INSERT INTO werkbank.contacts (id, org_id, customer_id, last_name) VALUES
@@ -225,6 +229,10 @@ SELECT is((SELECT property_id FROM werkbank.quotes WHERE id = pg_temp.id('copy3'
   'copy_quote takes the given property of the new customer');
 SELECT throws_ok($$SELECT werkbank.copy_quote('11111111-0000-4000-a000-0000000000e1', 'cccccccc-0000-4000-c000-0000000000e1', 'dddddddd-0000-4000-d000-0000000000e2')$$,
   '23514', 'property_customer_mismatch', 'copy_quote rejects a property of another customer');
+SELECT throws_ok($$SELECT werkbank.copy_quote('11111111-0000-4000-a000-0000000000e1', 'cccccccc-0000-4000-c000-0000000000f1')$$,
+  '23503', NULL, 'copy_quote rejects a customer of another org');
+SELECT throws_ok($$SELECT werkbank.copy_quote('11111111-0000-4000-a000-0000000000e1', 'cccccccc-0000-4000-c000-0000000000e1', 'dddddddd-0000-4000-d000-0000000000f1')$$,
+  NULL, NULL, 'copy_quote rejects a property of another org');
 RESET ROLE;
 
 -- Deleting a draft revision restores the quote it superseded ---------------------------
