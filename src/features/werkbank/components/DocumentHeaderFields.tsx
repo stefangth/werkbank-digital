@@ -67,7 +67,7 @@ export function DocumentHeaderFields({
         <Fact label={t("quotes.header.locationNote")}>{doc.location_note ?? none}</Fact>
         {afterLocation}
         <Fact label={t("quotes.header.discount")}>
-          <Metric size="body">{String(doc.discount_percent).replace(".", ",")}</Metric>
+          <Metric size="body">{`${String(doc.discount_percent).replace(".", ",")} %`}</Metric>
         </Fact>
       </>
     );

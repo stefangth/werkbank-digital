@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Reorder, useDragControls } from "framer-motion";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
@@ -114,8 +114,21 @@ function SavedInput({
   multiline?: boolean;
   numeric?: boolean;
 }) {
+  const { t } = useTranslation("werkbank");
   const [value, setValue] = useState(initial);
   const [invalid, setInvalid] = useState(false);
+  const [syncedInitial, setSyncedInitial] = useState(initial);
+  const focused = useRef(false);
+  const errorId = `${useId()}-error`;
+  // A value that changed from outside (another tab, realtime) replaces the shown one, unless the
+  // user is editing this field right now (adjusting state while rendering).
+  if (initial !== syncedInitial) {
+    setSyncedInitial(initial);
+    if (!focused.current) {
+      setValue(initial);
+      setInvalid(false);
+    }
+  }
   const onChange = (next: string) => {
     setValue(next);
     const patch = toPatch(next);
@@ -128,13 +141,25 @@ function SavedInput({
     placeholder: label,
     value,
     "aria-invalid": invalid || undefined,
-    onBlur: () => saver.flush(field),
+    "aria-describedby": invalid ? errorId : undefined,
+    onFocus: () => { focused.current = true; },
+    onBlur: () => {
+      focused.current = false;
+      saver.flush(field);
+      // An invalid entry was never saved: show the saved value again.
+      if (invalid) {
+        setValue(initial);
+        setInvalid(false);
+      }
+    },
     className,
   };
-  return multiline ? (
-    <Textarea {...common} onChange={(e) => onChange(e.target.value)} />
-  ) : (
-    <Input {...common} inputMode={numeric ? "decimal" : "text"} onChange={(e) => onChange(e.target.value)} />
+  if (multiline) return <Textarea {...common} onChange={(e) => onChange(e.target.value)} />;
+  return (
+    <div className="flex flex-col gap-1">
+      <Input {...common} inputMode={numeric ? "decimal" : "text"} onChange={(e) => onChange(e.target.value)} />
+      {invalid && <p id={errorId} role="alert" className="m-0 text-sm text-destructive">{t("lineItems.invalidNumber")}</p>}
+    </div>
   );
 }
 
@@ -189,7 +214,7 @@ function RowFields({
       <div className="flex flex-1 items-center gap-3">
         {item.item_no && <Token className="text-muted-foreground">{item.item_no}</Token>}
         <span className="flex-1">{item.name}</span>
-        <Metric size="body">{`${item.quantity ?? 0} ${t(unitLabelKey(unit))}`}</Metric>
+        <Metric size="body">{`${new Intl.NumberFormat(i18n.language || "de", { maximumFractionDigits: 3 }).format(item.quantity ?? 0)} ${t(unitLabelKey(unit))}`}</Metric>
         <Metric size="body">{money(item.line_net)}</Metric>
       </div>
     );

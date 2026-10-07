@@ -555,6 +555,7 @@
     "vat": "MwSt.",
     "lineNet": "Netto",
     "deleteTitle": "Titel löschen",
+    "invalidNumber": "Bitte gib eine Zahl ein, zum Beispiel 12,50.",
     "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten."
   },
   "totals": {
@@ -624,6 +625,8 @@
       "copy": "Kopieren",
       "extend": "Verlängern",
       "revokeLink": "Link sperren",
+      "revokeTitle": "Link sperren?",
+      "revokeBody": "Der Kunde kann das Angebot dann nicht mehr über den Link öffnen.",
       "delete": "Entwurf löschen",
       "extendLabel": "Neues Gültigkeitsdatum",
       "extendConfirm": "Verlängern",

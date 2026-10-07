@@ -144,10 +144,24 @@ describe("QuotePage", () => {
     expect(navigate).toHaveBeenCalledWith(quotePath("q3"));
   });
 
+  it("shows the discount of a read only quote with a percent sign", async () => {
+    state.quote = quote({ status: "sent", discount_percent: 2.5 });
+    render();
+    expect(await screen.findByText("2,5 %")).toBeInTheDocument();
+  });
+
   it("blocks the link of a sent quote, and hides the button for accepted and already blocked ones", async () => {
     state.quote = quote({ status: "sent" });
     const { unmount } = render();
     fireEvent.click(await screen.findByRole("button", { name: "Link sperren" }));
+    // Blocking cannot be undone from the page, so it asks first.
+    expect(mut.revokeLink.mutate).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveTextContent("Link sperren?");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
+    expect(mut.revokeLink.mutate).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Link sperren" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Link sperren" }));
     expect(mut.revokeLink.mutate.mock.calls[0][0]).toBe("q1");
     unmount();
     state.quote = quote({ status: "accepted" });

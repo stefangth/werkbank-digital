@@ -141,6 +141,47 @@ describe("LineItemsEditor", () => {
     expect(mut.update.mutate).toHaveBeenCalledWith({ id: "i1", patch: { labour_price: 12.5 } });
   });
 
+  it("shows a message for an invalid number and reverts to the saved value on blur", () => {
+    renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    const labour = screen.getAllByLabelText("Lohn")[0];
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.focus(labour);
+    fireEvent.change(labour, { target: { value: "12,5x" } });
+    expect(labour).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("alert")).toHaveTextContent("Bitte gib eine Zahl ein");
+    expect(labour).toHaveAccessibleDescription(/Bitte gib eine Zahl ein/);
+    fireEvent.blur(labour);
+    expect(labour).toHaveValue("50");
+    expect(labour).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(mut.update.mutate).not.toHaveBeenCalled();
+  });
+
+  it("takes a changed server value when the field is not focused, but keeps the focused edit", () => {
+    const { rerender } = renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    const name = () => screen.getAllByLabelText("Bezeichnung")[0];
+    state.items = (state.items as DocumentItem[]).map((i) => (i.id === "i1" ? { ...i, name: "Fliesen neu" } : i));
+    rerender(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    expect(name()).toHaveValue("Fliesen neu");
+    fireEvent.focus(name());
+    fireEvent.change(name(), { target: { value: "Tippe" } });
+    state.items = (state.items as DocumentItem[]).map((i) => (i.id === "i1" ? { ...i, name: "Fremd" } : i));
+    rerender(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    expect(name()).toHaveValue("Tippe");
+  });
+
+  it("formats the read only quantity with the UI language, up to three decimals", async () => {
+    state.items = [row({ id: "i1", quantity: 1234.5 }), row({ id: "i2", quantity: 0.125 })];
+    const { unmount } = renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly />);
+    expect(screen.getByText(/^1\.234,5 /)).toBeInTheDocument();
+    expect(screen.getByText(/^0,125 /)).toBeInTheDocument();
+    unmount();
+    localStorage.setItem(STORAGE_KEY, "en");
+    await act(async () => { await i18n.changeLanguage("en"); });
+    renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly />);
+    expect(screen.getByText(/^1,234\.5 /)).toBeInTheDocument();
+  });
+
   it("persists the new order on drop", () => {
     renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
     fireEvent.click(screen.getByText("test-reverse"));

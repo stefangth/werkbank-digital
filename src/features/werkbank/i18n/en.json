@@ -555,6 +555,7 @@
     "vat": "VAT",
     "lineNet": "Net",
     "deleteTitle": "Delete title",
+    "invalidNumber": "Enter a number, for example 12.50.",
     "deleteTitleBody": "This title has items. Only the title is deleted, the items stay."
   },
   "totals": {
@@ -624,6 +625,8 @@
       "copy": "Copy",
       "extend": "Extend",
       "revokeLink": "Block link",
+      "revokeTitle": "Block this link?",
+      "revokeBody": "The customer can no longer open the quote through its link.",
       "delete": "Delete draft",
       "extendLabel": "New validity date",
       "extendConfirm": "Extend",
