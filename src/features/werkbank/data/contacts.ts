@@ -53,13 +53,16 @@ export async function createContact(client: Client, orgId: string, parent: Conta
   return { ...data, is_primary: true };
 }
 
-/** Updates a contact; ticking "primary" moves the primary flag to it (see `createContact`). */
+/** Updates a contact. A primary contact keeps its flag while it is edited: `is_primary` is left
+ *  out of the row update and `setPrimaryContact` (idempotent) moves the flag to it. A non-primary
+ *  form writes `is_primary: false`. */
 export async function updateContact(client: Client, parent: ContactParent, id: string, form: ContactForm): Promise<void> {
+  const { is_primary, ...row } = toContactRow(form);
   const { error } = await client.schema("werkbank").from("contacts")
-    .update({ ...toContactRow(form), is_primary: false })
+    .update(is_primary ? row : { ...row, is_primary: false })
     .eq("id", id);
   if (error) throw error;
-  if (form.is_primary) await setPrimaryContact(client, parent, id);
+  if (is_primary) await setPrimaryContact(client, parent, id);
 }
 
 export async function deleteContact(client: Client, id: string): Promise<void> {

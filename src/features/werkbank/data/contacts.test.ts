@@ -99,10 +99,14 @@ describe("updateContact and deleteContact", () => {
     expect(updates[0].args[0]).toMatchObject({ last_name: "Meier", is_primary: false });
   });
 
-  it("promotes the contact when the form marks it primary", async () => {
+  it("never sends is_primary false when updating a primary contact, then promotes it", async () => {
     const fake = createFakeSupabase({ [T]: { data: null, error: null } });
     await updateContact(asClient(fake), { customerId: "k1" }, "c1", { ...form, is_primary: true });
-    expect(fake.calls.filter((c) => c.method === "update").map((c) => (c.args[0] as { is_primary: boolean }).is_primary)).toEqual([false, false, true]);
+    const updates = fake.calls.filter((c) => c.method === "update").map((c) => c.args[0] as Record<string, unknown>);
+    expect(updates[0]).not.toHaveProperty("is_primary");
+    expect(updates[0]).toMatchObject({ last_name: "Meier" });
+    expect(updates.slice(1)).toEqual([{ is_primary: false }, { is_primary: true }]);
+    expect(updates.filter((u) => u.is_primary === false && "last_name" in u)).toHaveLength(0);
   });
 
   it("deletes by id and throws on error", async () => {
