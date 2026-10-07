@@ -218,10 +218,11 @@ SELECT throws_ok($$DELETE FROM werkbank.company_profiles$$, '42501', NULL, 'prod
 SELECT is((SELECT count(*)::int FROM werkbank.quote_acceptances), 1, 'producer reads the quote acceptance');
 RESET ROLE;
 
--- quote_acceptances: method required for an acceptance; invisible to a technician and another org.
+-- quote_acceptances: the method check constraint (run as superuser, past RLS); invisible to a
+-- technician and another org.
 SELECT throws_ok($$INSERT INTO werkbank.quote_acceptances (org_id, quote_id, decision, signer_name, document_sha256)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000a1','11111111-0000-4000-a000-0000000000a3','accepted','Kunde','abc')$$,
-  '23514', NULL, 'an acceptance without a method is rejected');
+  '23514', NULL, 'the method check constraint rejects an acceptance without a method (as superuser, not RLS)');
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000a3');
 SET LOCAL ROLE authenticated;
 SELECT is((SELECT count(*)::int FROM werkbank.quote_acceptances), 0, 'a technician sees no quote acceptances');

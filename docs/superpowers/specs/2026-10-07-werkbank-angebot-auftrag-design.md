@@ -150,11 +150,12 @@ A check per kind: `item` requires name, quantity > 0, unit, both prices and VAT;
 
 **`werkbank.quote_acceptances`**: `org_id`, `quote_id` (`unique`, composite FK, `on delete cascade`), `decision` (`accepted` or `rejected`), `comment`, `signer_name` (`not null`), `method` (`typed` or `drawn`, required when accepted), `typed_name`, `signature_image_path`, `decided_at`, `ip`, `user_agent`, `consent_text`, `document_sha256` (`not null`). Written only by the service role. Read by admin and producer.
 
-Indexes: `(org_id)` on every table, `(org_id, customer_id)` on quotes and orders, `(quote_id)` and `(order_id)` on items, `(org_id, status)` on quotes and orders, `(org_id, scheduled_date)` on orders.
+Indexes: `(org_id)` on every table, `(org_id, customer_id)` on quotes and orders, `(quote_id)` and `(order_id)` on items, `(org_id, status)` on quotes and orders, `(org_id, scheduled_date)` on orders, and one per remaining FK column: `(source_item_id)` and `(catalog_item_id)` on items, `(superseded_by)`, `(property_id)` and `(contact_id)` on quotes, `(property_id)` and `(contact_id)` on orders.
 
 ### R2. Locks, numbers and functions
 
 - **Quote lock (trigger):** once `status <> 'draft'`, header content and its items cannot change. Allowed afterwards: status transitions, `valid_until` (extend), `link_revoked_at`, `superseded_by`, and the send/accept columns, all only by the service role, except `valid_until` and `link_revoked_at`, which admin and producer may set.
+- **Draft touch (trigger):** inserting, updating or deleting an item of a draft quote sets the quote's `updated_at`, so the `send` guard (`updated_at` unchanged since the read) also catches item-only edits made while a send is running. Items of non-draft quotes are locked and never touch their quote.
 - **Order lock (trigger):** items and header content are editable in `open` and `in_progress`, locked in `done` and `cancelled`. Transitions: `open → in_progress → done`, `done → in_progress` (reopen), `open | in_progress → cancelled`. The trigger stamps `completed_at` and `cancelled_at`.
 - **Numbers:** ranges `quote` (prefix `A-`) and `order` (prefix `AU-`) are seeded like `customer`, padding 4. Triggers call `werkbank.next_number` the way `assign_customer_no` does. Gaps from deleted drafts are acceptable for quotes and orders.
 - **RPCs** (`security definer`, `set search_path = ''`, role check admin or producer of the row's org, `revoke all ... from public, anon`, `grant execute ... to authenticated`):

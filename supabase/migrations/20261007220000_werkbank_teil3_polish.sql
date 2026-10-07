@@ -56,6 +56,10 @@ begin
     raise exception 'not allowed' using errcode = '42501';
   end if;
   select * into v_q from werkbank.quotes where id = p_quote for update;
+  -- The row can be deleted between the check and the lock (a concurrent delete, e.g. of its org).
+  if not found then
+    raise exception 'not allowed' using errcode = '42501';
+  end if;
   if v_q.status not in ('sent', 'rejected') then
     raise exception 'invalid_transition' using errcode = '22023';
   end if;

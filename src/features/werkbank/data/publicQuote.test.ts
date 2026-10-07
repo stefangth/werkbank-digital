@@ -11,7 +11,7 @@ const fail = (status: number, body: unknown) => ({ data: null, error: { context:
 
 describe("fetchPublicQuote", () => {
   it("posts the view action with the token and returns the open view", async () => {
-    const view = { quote: { quote_no: "A-1" }, consent_text: "Ich nehme an" };
+    const view = { quote: { quote_no: "A-1", version: 1, number: "A-1" }, consent_text: "Ich nehme an" };
     const fake = createFakeSupabase({ [FN]: { data: view, error: null } });
     expect(await fetchPublicQuote(asClient(fake), TOKEN)).toEqual({ kind: "open", view });
     expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ action: "view", token: TOKEN }] });
@@ -25,6 +25,19 @@ describe("fetchPublicQuote", () => {
   it("keeps decision and pdf url of a decided link", async () => {
     const fake = createFakeSupabase({ [FN]: fail(410, { error: "decided", decision: "accepted", pdf_url: "https://x/y.pdf" }) });
     expect(await fetchPublicQuote(asClient(fake), TOKEN)).toEqual({ kind: "closed", reason: "decided", decision: "accepted", pdfUrl: "https://x/y.pdf" });
+  });
+
+  it("derives a missing number without changing the response object", async () => {
+    const data = { quote: { quote_no: "A-0042", version: 2 }, consent_text: "Ich nehme an" };
+    const fake = createFakeSupabase({ [FN]: { data, error: null } });
+    const state = await fetchPublicQuote(asClient(fake), TOKEN);
+    expect(state).toEqual({ kind: "open", view: { ...data, quote: { ...data.quote, number: "A-0042-2" } } });
+    expect(data.quote).toEqual({ quote_no: "A-0042", version: 2 });
+  });
+
+  it.each([null, {}, { quote: null }])("throws a PublicQuoteError for an answer without a quote (%j)", async (data) => {
+    const fake = createFakeSupabase({ [FN]: { data, error: null } });
+    await expect(fetchPublicQuote(asClient(fake), TOKEN)).rejects.toMatchObject({ name: "PublicQuoteError", code: "unknown" });
   });
 
   it("throws a PublicQuoteError for a technical failure", async () => {
