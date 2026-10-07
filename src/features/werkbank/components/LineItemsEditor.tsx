@@ -118,13 +118,13 @@ function SavedInput({
   const [value, setValue] = useState(initial);
   const [invalid, setInvalid] = useState(false);
   const [syncedInitial, setSyncedInitial] = useState(initial);
-  const focused = useRef(false);
+  const [focused, setFocused] = useState(false);
   const errorId = `${useId()}-error`;
   // A value that changed from outside (another tab, realtime) replaces the shown one, unless the
   // user is editing this field right now (adjusting state while rendering).
   if (initial !== syncedInitial) {
     setSyncedInitial(initial);
-    if (!focused.current) {
+    if (!focused) {
       setValue(initial);
       setInvalid(false);
     }
@@ -142,9 +142,9 @@ function SavedInput({
     value,
     "aria-invalid": invalid || undefined,
     "aria-describedby": invalid ? errorId : undefined,
-    onFocus: () => { focused.current = true; },
+    onFocus: () => setFocused(true),
     onBlur: () => {
-      focused.current = false;
+      setFocused(false);
       saver.flush(field);
       // An invalid entry was never saved: show the saved value again.
       if (invalid) {

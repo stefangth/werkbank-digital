@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarDays, ClipboardList } from "lucide-react";
@@ -101,14 +101,17 @@ export function OrdersPage() {
   const [params] = useSearchParams();
   const urlUnscheduled = params.get("unscheduled") === "1";
   const [unscheduled, setUnscheduled] = useState(urlUnscheduled);
-  // The page stays mounted when another dashboard link changes the params: apply them again.
-  useEffect(() => {
+  // The page stays mounted when another dashboard link changes the params: apply them again
+  // (adjusting state while rendering).
+  const [appliedUnscheduled, setAppliedUnscheduled] = useState(urlUnscheduled);
+  if (urlUnscheduled !== appliedUnscheduled) {
+    setAppliedUnscheduled(urlUnscheduled);
     setUnscheduled(urlUnscheduled);
     if (urlUnscheduled) {
       setFrom(null);
       setTo(null);
     }
-  }, [urlUnscheduled]);
+  }
   const emptyRange = !!from && !!to && from > to;
   const [creating, setCreating] = useState(false);
 

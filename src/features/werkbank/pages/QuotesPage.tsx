@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FileText } from "lucide-react";
@@ -92,11 +92,15 @@ export function QuotesPage() {
   const statusFromUrl = urlStatus && (QUOTE_DISPLAY_STATUSES as readonly string[]).includes(urlStatus) ? urlStatus : ALL;
   const [status, setStatus] = useState(statusFromUrl);
   const [noOrderOnly, setNoOrderOnly] = useState(urlNoOrder);
-  // The page stays mounted when another dashboard link changes the params: apply them again.
-  useEffect(() => {
+  // The page stays mounted when another dashboard link changes the params: apply them again
+  // (adjusting state while rendering).
+  const urlKey = `${statusFromUrl}|${urlNoOrder}`;
+  const [appliedUrlKey, setAppliedUrlKey] = useState(urlKey);
+  if (urlKey !== appliedUrlKey) {
+    setAppliedUrlKey(urlKey);
     setStatus(statusFromUrl);
     setNoOrderOnly(urlNoOrder);
-  }, [statusFromUrl, urlNoOrder]);
+  }
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(() => {
