@@ -56,7 +56,7 @@ export const ROUTE_KINDS: Record<string, readonly OrgKind[]> = {
   '/chats': ['production', 'staffing'],
   '/productions': ['production', 'staffing'],
   '/artists': ['production', 'staffing'],
-  '/help': ['production', 'staffing'],
+  '/help': ['production', 'staffing', 'handwerk'],
 };
 
 /**

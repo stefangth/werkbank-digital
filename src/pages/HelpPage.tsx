@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useLanguage } from '@/features/i18n/LanguageContext';
 import { useOrgKind } from '@/hooks/useOrgKind';
 import { selectItems, groupByStage, countParams, findItem, type HelpFilter } from '@/lib/help/filter';
+import { isCoreOrgKind } from '@/lib/orgKind';
 import type { HelpRole } from '@/lib/help/types';
 import { Button } from '@/components/ui/button';
 import { HelpRoleTabs } from '@/components/help/HelpRoleTabs';
@@ -72,7 +73,7 @@ export default function HelpPage() {
 
   const matched = selectItems(role, filter, query, orgKind);
   const groups = groupByStage(matched);
-  const c = countParams(role, filter, query, matched);
+  const c = countParams(role, filter, query, orgKind, matched);
   const countLabel = c.filtered
     ? t('count_filtered', { matched: c.matched, total: c.total })
     : t('count_unfiltered', { count: c.total, newCount: c.newCount });
@@ -118,7 +119,7 @@ export default function HelpPage() {
         </div>
       )}
 
-      <HelpGlossary lang={lang} />
+      {isCoreOrgKind(orgKind) && <HelpGlossary lang={lang} />}
       <HelpFooterCards />
     </div>
   );

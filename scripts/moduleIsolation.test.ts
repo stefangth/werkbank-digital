@@ -56,6 +56,12 @@ export const MODULES: readonly ModuleGuard[] = [
       "src/lib/settingsTabs.ts",
       "src/lib/settingsTabs.test.ts",
       "src/pages/SettingsPage.tsx",
+      // Help center: handwerk items and the nav entry / route offered to the kind.
+      "src/lib/help/items.ts",
+      "src/lib/help/items.test.ts",
+      "src/lib/help/filter.test.ts",
+      "src/components/layout/navItems.ts",
+      "src/config/app.config.ts",
       "scripts/moduleIsolation.test.ts",
     ],
   },

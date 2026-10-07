@@ -100,8 +100,11 @@ test.describe("Werkbank foundation", () => {
     await expect(page.getByRole("link", { name: /^einstellungen$/i })).toBeVisible();
 
     // The Showflow booking surface is hidden for this kind (German and English labels).
-    const hidden = /^(termine|dates|einsätze|hilfe|help|chats|loslegen|get running|verfügbarkeit|availability)(\s+\d+)?$/i;
+    const hidden = /^(termine|dates|einsätze|chats|loslegen|get running|verfügbarkeit|availability)(\s+\d+)?$/i;
     await expect(page.getByRole("link", { name: hidden })).toHaveCount(0);
+
+    // The help center is offered to this kind again.
+    await expect(page.getByRole("link", { name: /^(hilfe|help)$/i })).toBeVisible();
 
     // /dates is not a route for this kind: it redirects to the dashboard.
     await page.goto("/dates");

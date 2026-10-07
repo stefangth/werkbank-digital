@@ -36,7 +36,7 @@ describe("werkbank module UI", () => {
 
   it("shows an admin of a handwerk org Dashboard, Customers, Services, Technicians, Settings", () => {
     const labels = visibleNavItems(NAV_ITEMS, ctx(["admin"], "handwerk")).map((i) => i.label);
-    expect(labels).toEqual(["Dashboard", "Customers", "Properties", "Services", "Technicians", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Customers", "Properties", "Services", "Technicians", "Help", "Settings"]);
   });
 
   it("hides Technicians from a handwerk artist", () => {

@@ -1,5 +1,6 @@
 import type { Lang } from '@/i18n/config';
 import type { TermKey } from '@/i18n/terms';
+import type { OrgKind } from '@/lib/orgKind';
 
 export type HelpRole = 'admin' | 'producer' | 'artist';
 
@@ -14,6 +15,8 @@ export interface HelpItem {
   /** Index into STAGES (0..STAGES.length-1). */
   stage: number;
   status: HelpStatus;
+  /** Workspace kinds that see this item. Absent: the core kinds (CORE_ORG_KINDS). */
+  kinds?: readonly OrgKind[];
   /** The "where" chip: a stable label for the app surface the answer lives on. */
   surface: string;
   /** Provenance: when this answer was last authored/updated (ISO date). */

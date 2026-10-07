@@ -32,6 +32,8 @@ const SKIP_PATHS = [
   // Werkbank copy (namespace `werkbank`) is written in its own trade vocabulary and never uses
   // {{vocabulary}} placeholders, so the Showflow bare-noun ratchet does not apply to it.
   "werkbank.",
+  // Werkbank help items (ids W...) are written in the trade vocabulary, without placeholders.
+  "help-items.W",
   "settings.organization.kind",
   "getRunningV3.steps.workspace",
   "getRunningV3.body.workspace",

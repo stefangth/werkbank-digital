@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { selectItems, groupByStage, countParams, findItem } from './filter';
 import { HELP_ITEMS } from './items';
+import { CORE_ORG_KINDS } from '@/lib/orgKind';
 
 describe('help filter', () => {
   it('filters by role', () => {
@@ -34,13 +35,53 @@ describe('help filter', () => {
   });
 
   it('count params: unfiltered reports totals, filtered reports matched/total', () => {
-    const all = countParams('admin', 'all', '');
+    const all = countParams('admin', 'all', '', 'production');
     expect(all.filtered).toBe(false);
-    expect(all.total).toBe(HELP_ITEMS.filter((i) => i.role === 'admin').length);
+    expect(all.total).toBe(HELP_ITEMS.filter((i) => i.role === 'admin' && !i.kinds).length);
 
-    const filtered = countParams('admin', 'new', '');
+    const filtered = countParams('admin', 'new', '', 'production');
     expect(filtered.filtered).toBe(true);
     expect(filtered.matched).toBeLessThanOrEqual(filtered.total);
+  });
+});
+
+describe('help filter by org kind', () => {
+  it('handwerk sees only items flagged for handwerk', () => {
+    for (const role of ['admin', 'producer', 'artist'] as const) {
+      const items = selectItems(role, 'all', '', 'handwerk');
+      expect(items.every((i) => i.kinds?.includes('handwerk'))).toBe(true);
+    }
+    expect(selectItems('admin', 'all', '', 'handwerk').length).toBeGreaterThan(0);
+    expect(selectItems('producer', 'all', '', 'handwerk').length).toBeGreaterThan(0);
+    expect(selectItems('artist', 'all', '', 'handwerk')).toEqual([]);
+  });
+
+  it('production and staffing never see handwerk items', () => {
+    for (const kind of CORE_ORG_KINDS) {
+      for (const role of ['admin', 'producer', 'artist'] as const) {
+        expect(selectItems(role, 'all', '', kind).some((i) => i.kinds)).toBe(false);
+      }
+    }
+  });
+
+  it('the production result is unchanged: every unflagged item, in order', () => {
+    const expected = HELP_ITEMS.filter((i) => !i.kinds && i.role === 'producer').map((i) => i.id);
+    expect(selectItems('producer', 'all', '', 'production').map((i) => i.id)).toEqual(expected);
+    expect(expected.length).toBeGreaterThan(20);
+  });
+
+  it('search stays inside the kind', () => {
+    expect(selectItems('admin', 'all', 'Nummernkreis', 'handwerk').length).toBeGreaterThan(0);
+    expect(selectItems('admin', 'all', 'Nummernkreis', 'production')).toEqual([]);
+  });
+
+  it('count params are per kind', () => {
+    const hw = countParams('admin', 'all', '', 'handwerk');
+    const prod = countParams('admin', 'all', '', 'production');
+    expect(hw.total).toBe(HELP_ITEMS.filter((i) => i.role === 'admin' && i.kinds?.includes('handwerk')).length);
+    expect(hw.total).toBeGreaterThan(0);
+    expect(prod.total).toBe(HELP_ITEMS.filter((i) => i.role === 'admin' && !i.kinds).length);
+    expect(hw.newCount).toBeLessThanOrEqual(hw.total);
   });
 });
 
