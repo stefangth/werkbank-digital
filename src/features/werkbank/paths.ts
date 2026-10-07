@@ -7,4 +7,6 @@ export const PROPERTIES_PATH = "/properties";
 export const propertyPath = (id: string) => `${PROPERTIES_PATH}/${id}`;
 export const QUOTES_PATH = "/quotes";
 export const quotePath = (id: string) => `${QUOTES_PATH}/${id}`;
+export const ORDERS_PATH = "/orders";
+export const orderPath = (id: string) => `${ORDERS_PATH}/${id}`;
 export const PUBLIC_QUOTE_PATH = "/quote/:token";

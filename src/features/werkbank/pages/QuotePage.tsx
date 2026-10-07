@@ -20,11 +20,12 @@ import { QuoteHeaderForm } from "../components/QuoteHeaderForm";
 import { QuoteHistory } from "../components/QuoteHistory";
 import type { QuotePatch } from "../data/quotes";
 import { useCustomer } from "../hooks/useCustomers";
+import { useOrderIdForQuote, useOrderMutations } from "../hooks/useOrders";
 import { useQuote, useQuoteList, useQuoteMutations } from "../hooks/useQuotes";
 import { mapDbError } from "../lib/dbErrors";
 import { formatQuoteNumber } from "../lib/quoteNumber";
 import { QUOTE_STATUS_TONE, quoteDisplayStatus } from "../lib/quoteStatus";
-import { QUOTES_PATH, quotePath } from "../paths";
+import { QUOTES_PATH, orderPath, quotePath } from "../paths";
 
 /** One quote: header, line items, totals and (once sent) the history. A draft is edited in
  *  place; every other status is read only, with the actions that fit it. */
@@ -36,6 +37,9 @@ export function QuotePage() {
   const { data: list } = useQuoteList();
   const { data: customer } = useCustomer(quote?.customer_id);
   const { update, remove, extend, revokeLink, revise, copy } = useQuoteMutations();
+  const { createFromQuote } = useOrderMutations();
+  const hasOrder = !!list?.find((q) => q.id === quote?.id)?.has_order;
+  const { data: orderId } = useOrderIdForQuote(quote?.id, quote?.status === "accepted" && hasOrder);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Keyed by the quote id: the route reuses this component, so a lock must not carry over to
   // the next quote the user navigates to.
@@ -113,6 +117,19 @@ export function QuotePage() {
                   </Button>
                 )}
               </>
+            )}
+            {quote.status === "accepted" && !hasOrder && (
+              <Button
+                disabled={createFromQuote.isPending}
+                onClick={() => createFromQuote.mutate(quote.id, { onSuccess: (newId) => navigate(orderPath(newId)) })}
+              >
+                {t("quotes.page.createOrder")}
+              </Button>
+            )}
+            {quote.status === "accepted" && hasOrder && orderId && (
+              <Button asChild variant="secondary">
+                <Link to={orderPath(orderId)}>{t("quotes.page.toOrder")}</Link>
+              </Button>
             )}
             {(isSent || quote.status === "rejected") && (
               <Button disabled={revise.isPending} onClick={() => revise.mutate(quote.id, { onSuccess: (newId) => navigate(quotePath(newId)) })}>

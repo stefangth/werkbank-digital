@@ -4,7 +4,8 @@
     "catalog": "Services",
     "technicians": "Technicians",
     "properties": "Properties",
-    "quotes": "Quotes"
+    "quotes": "Quotes",
+    "orders": "Orders"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -628,7 +629,9 @@
       "preview": "Preview",
       "pdfFailed": "The PDF could not be opened.",
       "pdfBlocked": "Your browser blocked the new tab.",
-      "pdfOpen": "Open PDF"
+      "pdfOpen": "Open PDF",
+      "createOrder": "Create order",
+      "toOrder": "Go to order"
     },
     "header": {
       "customer": "Customer",
@@ -685,6 +688,85 @@
         "generic": "That did not work. Please try again.",
         "profileLoad": "Your company details could not be loaded. Reload the page."
       }
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "sub": "Plan jobs, assign technicians and follow the work.",
+    "add": "Create order",
+    "loadFailed": "The orders could not be loaded.",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "technicianFilter": "Technician",
+    "allTechnicians": "All technicians",
+    "range": {
+      "from": "From",
+      "to": "To",
+      "reset": "Reset date range"
+    },
+    "unscheduled": "Not scheduled",
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "action": {
+      "start": "Start",
+      "complete": "Done",
+      "reopen": "Reopen",
+      "cancel": "Cancel order"
+    },
+    "noMatches": "No order matches your filters.",
+    "noMatchesReason": "Try other filters.",
+    "empty": {
+      "title": "No orders yet",
+      "body": "Accept a quote or create a direct order.",
+      "action": "Create first order"
+    },
+    "columns": {
+      "number": "No.",
+      "customer": "Customer / property",
+      "subject": "Subject",
+      "when": "Date",
+      "technicians": "Technicians",
+      "gross": "Gross",
+      "status": "Status"
+    },
+    "new": {
+      "title": "New order",
+      "customer": "Customer",
+      "create": "Create order"
+    },
+    "page": {
+      "loadFailed": "The order could not be loaded.",
+      "back": "All orders",
+      "fromQuote": "From quote",
+      "notFound": {
+        "title": "Order not found",
+        "reason": "It may have been deleted.",
+        "back": "Back to orders"
+      }
+    },
+    "header": {
+      "notes": "Notes"
+    },
+    "schedule": {
+      "title": "Job",
+      "date": "Date",
+      "time": "Time",
+      "technicians": "Technicians",
+      "pickDate": "Pick a date",
+      "clear": "Remove date"
+    },
+    "comparison": {
+      "quote": "Quote",
+      "order": "Order",
+      "difference": "Difference",
+      "changed": "Changed",
+      "added": "New",
+      "removed_one": "{{count}} quote line is missing from the order.",
+      "removed_other": "{{count}} quote lines are missing from the order."
     }
   },
   "publicQuote": {

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import {
-  createOrder, createOrderFromQuote, fetchOrder, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
+  createOrder, createOrderFromQuote, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
 } from "./orders";
 
 const asClient = (fake: ReturnType<typeof createFakeSupabase>) => fake as unknown as SupabaseClient<Database>;
@@ -94,5 +94,17 @@ describe("createOrderFromQuote", () => {
     const fake = createFakeSupabase({ "rpc:werkbank.create_order_from_quote": { data: "o9", error: null } });
     expect(await createOrderFromQuote(asClient(fake), "q1")).toBe("o9");
     expect(fake.calls).toContainEqual(expect.objectContaining({ table: "rpc:werkbank.create_order_from_quote", args: [{ p_quote: "q1" }] }));
+  });
+});
+
+describe("fetchOrderIdForQuote", () => {
+  it("finds the order of a quote", async () => {
+    const fake = createFakeSupabase({ [O]: { data: { id: "o1" }, error: null } });
+    expect(await fetchOrderIdForQuote(asClient(fake), "q1")).toBe("o1");
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: O, method: "eq", args: ["quote_id", "q1"] }));
+  });
+  it("returns null when there is none", async () => {
+    const fake = createFakeSupabase({ [O]: { data: null, error: null } });
+    expect(await fetchOrderIdForQuote(asClient(fake), "q1")).toBeNull();
   });
 });

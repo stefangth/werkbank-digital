@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  createOrder, createOrderFromQuote, fetchOrder, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
+  createOrder, createOrderFromQuote, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
   type Order, type OrderDraft, type OrderPatch,
 } from "../data/orders";
 import { mapDbError } from "../lib/dbErrors";
@@ -27,6 +27,15 @@ export function useOrder(id: string | undefined) {
     queryKey: [...ORDERS_KEY, "detail", id],
     enabled: !!id,
     queryFn: () => fetchOrder(supabase, id!),
+  });
+}
+
+/** The order made from a quote, if any; the quote page links to it. */
+export function useOrderIdForQuote(quoteId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: [...ORDERS_KEY, "for-quote", quoteId],
+    enabled: !!quoteId && enabled,
+    queryFn: () => fetchOrderIdForQuote(supabase, quoteId!),
   });
 }
 

@@ -92,3 +92,10 @@ export async function createOrderFromQuote(client: Client, quoteId: string): Pro
   if (error) throw error;
   return data;
 }
+
+/** The id of the order made from a quote, or null while there is none. */
+export async function fetchOrderIdForQuote(client: Client, quoteId: string): Promise<string | null> {
+  const { data, error } = await client.schema("werkbank").from("orders").select("id").eq("quote_id", quoteId).maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}

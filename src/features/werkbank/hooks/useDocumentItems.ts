@@ -21,8 +21,9 @@ export function useDocumentItems(ref: DocumentRef | undefined) {
 }
 
 /** Item mutations of one document. Every outcome refreshes the items and the parent's domain
- *  (quotes or orders), because the totals live on the parent. */
-export function useItemMutations(ref: DocumentRef) {
+ *  (quotes or orders), because the totals live on the parent. `onLocked` runs when the database
+ *  rejects a write because the document was locked meanwhile (sent quote, closed order). */
+export function useItemMutations(ref: DocumentRef, onLocked?: () => void) {
   const orgId = useAuth().currentOrg?.id;
   const qc = useQueryClient();
   const { t } = useTranslation("werkbank");
@@ -31,7 +32,11 @@ export function useItemMutations(ref: DocumentRef) {
   function useWiring<V, R>(mutationFn: (vars: V) => Promise<R>) {
     return useMutation({
       mutationFn,
-      onError: (e) => toast.error(t(mapDbError(e))),
+      onError: (e) => {
+        const key = mapDbError(e);
+        toast.error(t(key));
+        if (key === "errors.quoteLocked" || key === "errors.orderLocked") onLocked?.();
+      },
       onSettled: () => Promise.all([key, "orderId" in ref ? ORDERS_KEY : QUOTES_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     });
   }

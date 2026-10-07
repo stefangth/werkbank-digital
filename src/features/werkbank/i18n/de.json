@@ -4,7 +4,8 @@
     "catalog": "Leistungen",
     "technicians": "Monteure",
     "properties": "Liegenschaften",
-    "quotes": "Angebote"
+    "quotes": "Angebote",
+    "orders": "Aufträge"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -628,7 +629,9 @@
       "preview": "Vorschau",
       "pdfFailed": "Das PDF konnte nicht geöffnet werden.",
       "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
-      "pdfOpen": "PDF öffnen"
+      "pdfOpen": "PDF öffnen",
+      "createOrder": "Auftrag anlegen",
+      "toOrder": "Zum Auftrag"
     },
     "header": {
       "customer": "Kunde",
@@ -685,6 +688,85 @@
         "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
         "profileLoad": "Die Firmendaten konnten nicht geladen werden. Lade die Seite neu."
       }
+    }
+  },
+  "orders": {
+    "title": "Aufträge",
+    "sub": "Plane Einsätze, weise Monteure zu und behalte die Arbeit im Blick.",
+    "add": "Auftrag anlegen",
+    "loadFailed": "Die Aufträge konnten nicht geladen werden.",
+    "statusFilter": "Status",
+    "allStatuses": "Alle Status",
+    "technicianFilter": "Monteur",
+    "allTechnicians": "Alle Monteure",
+    "range": {
+      "from": "Von",
+      "to": "Bis",
+      "reset": "Zeitraum zurücksetzen"
+    },
+    "unscheduled": "Nicht eingeplant",
+    "status": {
+      "open": "Offen",
+      "in_progress": "In Arbeit",
+      "done": "Erledigt",
+      "cancelled": "Storniert"
+    },
+    "action": {
+      "start": "Beginnen",
+      "complete": "Erledigt",
+      "reopen": "Wieder öffnen",
+      "cancel": "Stornieren"
+    },
+    "noMatches": "Kein Auftrag passt zu deinen Filtern.",
+    "noMatchesReason": "Versuche andere Filter.",
+    "empty": {
+      "title": "Noch keine Aufträge",
+      "body": "Nimm ein Angebot an oder lege einen direkten Auftrag an.",
+      "action": "Ersten Auftrag anlegen"
+    },
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde / Liegenschaft",
+      "subject": "Betreff",
+      "when": "Termin",
+      "technicians": "Monteure",
+      "gross": "Brutto",
+      "status": "Status"
+    },
+    "new": {
+      "title": "Neuer Auftrag",
+      "customer": "Kunde",
+      "create": "Auftrag erstellen"
+    },
+    "page": {
+      "loadFailed": "Der Auftrag konnte nicht geladen werden.",
+      "back": "Alle Aufträge",
+      "fromQuote": "Aus Angebot",
+      "notFound": {
+        "title": "Auftrag nicht gefunden",
+        "reason": "Vielleicht wurde er gelöscht.",
+        "back": "Zurück zu den Aufträgen"
+      }
+    },
+    "header": {
+      "notes": "Notizen"
+    },
+    "schedule": {
+      "title": "Einsatz",
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "technicians": "Monteure",
+      "pickDate": "Datum wählen",
+      "clear": "Termin entfernen"
+    },
+    "comparison": {
+      "quote": "Angebot",
+      "order": "Auftrag",
+      "difference": "Differenz",
+      "changed": "Geändert",
+      "added": "Neu",
+      "removed_one": "{{count}} Position des Angebots fehlt im Auftrag.",
+      "removed_other": "{{count}} Positionen des Angebots fehlen im Auftrag."
     }
   },
   "publicQuote": {
