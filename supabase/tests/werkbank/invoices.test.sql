@@ -50,15 +50,6 @@ SELECT is((SELECT count(*)::int FROM werkbank.document_items WHERE invoice_id = 
 SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, invoice_id, order_id, sort_order, kind, name)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','66666666-0000-4000-a000-0000000000e1','eeeeeeee-0000-4000-e000-0000000000e1',2,'title','X')$$,
   '23514', NULL, 'an item with invoice_id and order_id is rejected');
-SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, type)
-  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','cancellation')$$,
-  '23514', NULL, 'a cancellation without cancels_invoice_id is rejected');
-SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, cancels_invoice_id)
-  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','66666666-0000-4000-a000-0000000000e1')$$,
-  '23514', NULL, 'an invoice with cancels_invoice_id is rejected');
-SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, status, seller_snapshot, buyer_snapshot)
-  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','issued','{}','{}')$$,
-  '23514', NULL, 'issued without invoice_no is rejected');
 SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, service_date_from, service_date_to)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','2026-10-05','2026-10-04')$$,
   '23514', NULL, 'service_date_to before service_date_from is rejected');
@@ -85,6 +76,18 @@ SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e4');
 SET LOCAL ROLE authenticated;
 SELECT is((SELECT count(*)::int FROM werkbank.invoices), 0, 'admin of org B sees no invoices');
 RESET ROLE;
+
+-- Owner context: the lock trigger (a later migration) rejects these for users first, so the check
+-- constraints are proven where the trigger lets the write through.
+SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, type)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','cancellation')$$,
+  '23514', NULL, 'a cancellation without cancels_invoice_id is rejected');
+SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, cancels_invoice_id)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','66666666-0000-4000-a000-0000000000e1')$$,
+  '23514', NULL, 'an invoice with cancels_invoice_id is rejected');
+SELECT throws_ok($$INSERT INTO werkbank.invoices (org_id, customer_id, status, seller_snapshot, buyer_snapshot)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','issued','{}','{}')$$,
+  '23514', NULL, 'issued without invoice_no is rejected');
 
 -- Owner: an order can hold the status 'invoiced' (triggers off; the transition rules come later).
 SET session_replication_role = replica;
