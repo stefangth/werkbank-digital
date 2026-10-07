@@ -40,12 +40,15 @@ function quoteRow(over: Record<string, unknown> = {}) {
     subject: "Badsanierung", intro_text: "Vielen Dank.", closing_text: "Gruß", payment_terms_text: "14 Tage",
     discount_percent: 0, valid_until: "2026-11-06", status: "draft", sent_at: null, sent_to: null, pdf_path: null,
     pdf_sha256: null, accepted_pdf_path: null, access_token_hash: null, link_revoked_at: null,
+    updated_at: "2026-10-07T20:00:00.000Z",
     ...over,
   };
 }
 
 interface Setup {
   quote?: Record<string, unknown> | null;
+  /** What the guarded stamp update returns; null models zero matched rows. */
+  stamp?: Record<string, unknown> | null;
   items?: unknown[];
   orgKind?: string;
   role?: string | null;
@@ -57,9 +60,10 @@ function setup(s: Setup = {}) {
   const tables: Record<string, TableSeed> = {
     org_memberships: s.role === null ? [] : [{ when: { org_id: ORG }, data: { role: s.role ?? "producer" } }],
     organizations: [{ when: { id: ORG }, data: { org_kind: s.orgKind ?? "handwerk" } }],
+    // The quote is only found under its own org: a quote id paired with another org_id misses.
     "werkbank.quotes": [
-      { when: { __write: true }, data: { id: QUOTE } },
-      { data: s.quote === undefined ? quoteRow() : s.quote },
+      { when: { __write: true }, data: s.stamp === undefined ? { id: QUOTE } : s.stamp },
+      { when: { id: QUOTE, org_id: ORG }, data: s.quote === undefined ? quoteRow() : s.quote },
     ],
     "werkbank.document_items": { data: s.items ?? items, error: null },
     "werkbank.document_totals": { data: totals, error: null },
@@ -155,17 +159,18 @@ Deno.test("send uploads, stamps the quote in one update, then emails the custome
   assertEquals(res.status, 200);
   assertEquals(await res.json(), { ok: true, email_sent: true });
 
-  const path = `${ORG}/quotes/${QUOTE}.pdf`;
   const sequence = writes(t.calls).map((c) => `${c.table}:${c.method}`);
   const emailIndex = t.calls.findIndex((c) => c.table === "email");
   assertEquals(sequence, ["storage:werkbank-documents:upload", "werkbank.quotes:update"]);
   const updateIndex = t.calls.findIndex((c) => c.table === "werkbank.quotes" && c.method === "update");
   assert(emailIndex > updateIndex, "the email goes out after the quote is stamped");
 
+  const path = `${ORG}/quotes/${QUOTE}-${(await sha256Hex(PDF)).slice(0, 16)}.pdf`;
   const upload = t.calls.find((c) => c.method === "upload");
   assertExists(upload);
-  assertEquals(upload.args[0], path);
+  assertEquals(upload.args[0], path, "content-addressed path");
   assertEquals(upload.args[1], PDF);
+  assertEquals((upload.args[2] as { upsert?: boolean }).upsert, false, "never overwrites a stored PDF");
   assertEquals(t.rendered[0].watermark, undefined);
   assertEquals(t.rendered[0].date, "08.10.2026");
 
@@ -179,8 +184,10 @@ Deno.test("send uploads, stamps the quote in one update, then emails the custome
   assertEquals(patch.pdf_path, path);
   assertEquals(patch.pdf_sha256, await sha256Hex(PDF));
   assert(/^[0-9a-f]{64}$/.test(String(patch.pdf_sha256)));
-  // The guard against a concurrent send: only a draft is stamped.
+  // The guard against a concurrent send or edit: only the loaded, unchanged draft is stamped.
   assert(t.calls.some((c) => c.table === "werkbank.quotes" && c.method === "eq" && c.args[0] === "status" && c.args[1] === "draft"));
+  assert(t.calls.some((c) => c.table === "werkbank.quotes" && c.method === "eq" && c.args[0] === "updated_at" && c.args[1] === "2026-10-07T20:00:00.000Z"));
+  assertEquals(t.calls.filter((c) => c.method === "remove").length, 0);
 
   assertEquals(t.emails.length, 1);
   const email = t.emails[0];
@@ -312,4 +319,41 @@ Deno.test("a logo that cannot be read leaves the PDF without one", async () => {
   const res = await handle(request({ action: "preview", org_id: ORG, quote_id: QUOTE }), t.deps, t.render);
   assertEquals(res.status, 200);
   assertEquals(t.rendered[0].seller.logoDataUrl, undefined);
+});
+
+Deno.test("a losing send (guarded update matches no row) removes its upload and sends no email", async () => {
+  // Zero rows: a concurrent send won, or the draft was edited after it was loaded.
+  const t = setup({ stamp: null });
+  const res = await handle(request(sendBody()), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "invalid_state" });
+  const upload = t.calls.find((c) => c.method === "upload");
+  const remove = t.calls.find((c) => c.method === "remove");
+  assertExists(upload);
+  assertExists(remove);
+  assertEquals(remove.table, "storage:werkbank-documents");
+  assertEquals(remove.args[0], [upload.args[0]]);
+  assertEquals(t.emails, []);
+});
+
+Deno.test("an upload that finds the same bytes already stored is invalid_state", async () => {
+  const t = setup({ opts: { storageUploadResult: { data: null, error: { statusCode: "409", message: "The resource already exists" } } } });
+  const res = await handle(request(sendBody()), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "invalid_state" });
+  assertEquals(t.calls.filter((c) => c.table === "werkbank.quotes" && c.method === "update").length, 0);
+  assertEquals(t.emails, []);
+});
+
+Deno.test("another org's quote id under this org_id is not_found", async () => {
+  const t = setup();
+  const res = await handle(
+    request({ action: "preview", org_id: ORG, quote_id: "44444444-4444-4444-8444-444444444444" }),
+    t.deps,
+    t.render,
+  );
+  assertEquals(res.status, 404);
+  assertEquals(await res.json(), { error: "not_found" });
+  assert(t.calls.some((c) => c.table === "werkbank.quotes" && c.method === "eq" && c.args[0] === "org_id" && c.args[1] === ORG));
+  assertEquals(t.rendered.length, 0);
 });

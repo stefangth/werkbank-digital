@@ -139,6 +139,12 @@ async function loadDocument(deps: Deps, quote: QuoteRow): Promise<LoadedDocument
   };
 }
 
+/** Storage's "object exists" answer to an upload with upsert: false. */
+function isAlreadyExists(error: unknown): boolean {
+  const e = error as { statusCode?: unknown; status?: unknown; message?: unknown };
+  return String(e.statusCode) === "409" || e.status === 409 || /already exists/i.test(String(e.message ?? ""));
+}
+
 const itemCount = (items: ItemRow[]) => items.filter((i) => i.kind === "item").length;
 
 /** The org's logo as a data URL for the PDF, or undefined when there is none or it cannot be read. */
@@ -256,13 +262,22 @@ async function sendQuote(deps: Deps, render: RenderQuotePdf, quote: QuoteRow, bo
     return json({ error: "render_failed" }, 500);
   }
 
-  const path = `${quote.org_id}/quotes/${quote.id}.pdf`;
-  const { error: upErr } = await deps.admin.storage.from(DOCUMENTS_BUCKET)
-    .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+  // Content-addressed and never overwritten: a concurrent losing send cannot replace the
+  // winner's bytes, so the stored PDF always matches pdf_sha256 (the acceptance evidence).
+  const pdfSha256 = await sha256Hex(bytes);
+  const path = `${quote.org_id}/quotes/${quote.id}-${pdfSha256.slice(0, 16)}.pdf`;
+  const documents = deps.admin.storage.from(DOCUMENTS_BUCKET);
+  const { error: upErr } = await documents.upload(path, bytes, { contentType: "application/pdf", upsert: false });
   if (upErr) {
+    // The same bytes are already stored: another send of this very document is under way.
+    if (isAlreadyExists(upErr)) return json({ error: "invalid_state" }, 409);
     console.error("werkbank-quotes: upload failed", { quoteId: quote.id, error: upErr });
     return json({ error: "upload_failed" }, 500);
   }
+  const discardUpload = async () => {
+    const { error } = await documents.remove([path]);
+    if (error) console.warn("werkbank-quotes: could not remove an unused upload", { quoteId: quote.id, path, error });
+  };
 
   const { token, hash } = await newQuoteToken();
   const recipients = [...input.to, ...input.cc];
@@ -272,17 +287,21 @@ async function sendQuote(deps: Deps, render: RenderQuotePdf, quote: QuoteRow, bo
       sent_at: deps.now().toISOString(),
       sent_to: recipients,
       pdf_path: path,
-      pdf_sha256: await sha256Hex(bytes),
+      pdf_sha256: pdfSha256,
       access_token_hash: hash,
     })
-    .eq("id", quote.id).eq("org_id", quote.org_id).eq("status", "draft")
+    // Only the draft that was rendered: a concurrent send or an edit since loading yields 409.
+    .eq("id", quote.id).eq("org_id", quote.org_id).eq("status", "draft").eq("updated_at", quote.updated_at)
     .select("id").maybeSingle();
   if (updErr) {
     console.error("werkbank-quotes: stamping the quote failed", { quoteId: quote.id, error: updErr });
+    await discardUpload();
     return json({ error: "update_failed" }, 500);
   }
-  // Someone else sent it in the meantime.
-  if (!stamped) return json({ error: "invalid_state" }, 409);
+  if (!stamped) {
+    await discardUpload();
+    return json({ error: "invalid_state" }, 409);
+  }
 
   const emailSent = await emailQuote(deps, quote, profile, recipients, input.message, token, bytes, hash);
   return json({ ok: true, email_sent: emailSent });
