@@ -778,27 +778,32 @@ async function emailOffice(
   userIds: string[],
 ): Promise<void> {
   const base = brandAppUrl(brandForKind(WERKBANK_ORG_KIND.kind), appUrl(deps.env));
-  for (const uid of userIds) {
-    const { data } = await deps.admin.auth.admin.getUserById(uid);
-    const email = (data as { user?: { email?: string | null } | null } | null)?.user?.email;
-    if (!email) continue;
-    const result = await deps.sendEmail({
-      template_name: "quote-decided",
-      recipient_email: email,
-      org_id: quote.org_id,
-      locale: "de",
-      templateData: {
-        quote_no: displayNo(quote),
-        customer_name: customerName(customer),
-        signer_name: d.signerName,
-        decision: d.decision,
-        comment: d.comment ?? "",
-        link: `${base}/quotes/${quote.id}`,
-      },
-      idempotency_key: `quote-decided-${quote.id}-${uid}`,
-    });
-    if (!emailWasSent(result)) console.warn("werkbank-quotes: office email not delivered", { quoteId: quote.id, uid });
-  }
+  // Lookups and sends run in parallel; one member failing never stops the others.
+  await Promise.all(userIds.map(async (uid) => {
+    try {
+      const { data } = await deps.admin.auth.admin.getUserById(uid);
+      const email = (data as { user?: { email?: string | null } | null } | null)?.user?.email;
+      if (!email) return;
+      const result = await deps.sendEmail({
+        template_name: "quote-decided",
+        recipient_email: email,
+        org_id: quote.org_id,
+        locale: "de",
+        templateData: {
+          quote_no: displayNo(quote),
+          customer_name: customerName(customer),
+          signer_name: d.signerName,
+          decision: d.decision,
+          comment: d.comment ?? "",
+          link: `${base}/quotes/${quote.id}`,
+        },
+        idempotency_key: `quote-decided-${quote.id}-${uid}`,
+      });
+      if (!emailWasSent(result)) console.warn("werkbank-quotes: office email not delivered", { quoteId: quote.id, uid });
+    } catch (e) {
+      console.warn("werkbank-quotes: office email failed", { quoteId: quote.id, uid, error: String(e) });
+    }
+  }));
 }
 
 async function emailConfirmation(

@@ -56,4 +56,11 @@ describe("diffAgainstQuote", () => {
     const order = [item({ id: "o1", source_item_id: "q1" })];
     expect(diffAgainstQuote(order, withTitle).removedCount).toBe(1);
   });
+
+  it("counts a line whose source quote line no longer exists as added", () => {
+    const order = [item({ id: "o1", source_item_id: "q1" }), item({ id: "o-orphan", source_item_id: "gone" })];
+    const diff = diffAgainstQuote(order, quote);
+    expect([...diff.added]).toEqual(["o-orphan"]);
+    expect([...diff.changed]).toEqual([]);
+  });
 });

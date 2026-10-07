@@ -611,3 +611,18 @@ Deno.test("clientIpEvidence keeps the whole forwarded chain as best-effort evide
   assertEquals(long.length, 512);
   assert(long.startsWith("xff=10.0.0.0, 10.0.0.1"));
 });
+
+Deno.test("a failing member lookup does not stop the other office emails", async () => {
+  const t = setup();
+  const authAdmin = (t.deps.admin as unknown as {
+    auth: { admin: { getUserById: (id: string) => Promise<unknown> } };
+  }).auth.admin;
+  const original = authAdmin.getUserById;
+  authAdmin.getUserById = (id: string) => id === "u-admin" ? Promise.reject(new Error("lookup failed")) : original(id);
+
+  const res = await handle(request(rejectBody()), t.deps, t.render);
+  assertEquals(res.status, 200);
+  const decided = t.emails.filter((e) => e.template_name === "quote-decided");
+  assertEquals(decided.map((e) => e.recipient_email), ["planung@muster.de"]);
+  assertExists(t.emails.find((e) => e.template_name === "quote-decision-confirmation"));
+});
