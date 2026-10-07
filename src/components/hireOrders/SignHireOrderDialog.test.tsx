@@ -6,7 +6,7 @@ vi.mock("@/hooks/useHireOrders", () => ({
   useSignHireOrder: () => ({ mutate, isPending: false }),
 }));
 // SignaturePad is exercised in its own test; stub it to emit a typed value on click.
-vi.mock("./SignaturePad", () => ({
+vi.mock("@/components/common/SignaturePad", () => ({
   SignaturePad: ({ onChange }: { onChange: (v: unknown) => void }) => (
     <button onClick={() => onChange({ method: "typed", typedName: "Ann Lee" })}>set-sig</button>
   ),

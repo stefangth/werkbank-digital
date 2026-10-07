@@ -1,5 +1,5 @@
 // GENERATED FILE. Do not edit.
-// Source: src/lib/hireOrders/pdf/fontInflate.ts
+// Source: src/lib/pdf/fontInflate.ts
 // Regenerate: npm run sync:mirrors
 // Shared helper for both pdfDeps.ts runtime shims (browser and edge). Neither
 // shim is itself mirrored — they differ in font ORIGIN per runtime (embedded

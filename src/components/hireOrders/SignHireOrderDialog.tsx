@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { SignaturePad, type SignatureValue } from "./SignaturePad";
+import { SignaturePad, type SignatureValue } from "@/components/common/SignaturePad";
 import { useSignHireOrder } from "@/hooks/useHireOrders";
 
 const CONSENT_TEXT =

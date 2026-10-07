@@ -45,13 +45,22 @@ Deno.test("bundle includes the werkbank tables filtered by org", async () => {
     tables: {
       ...SUPER_ADMIN,
       "werkbank.customers": { data: [{ id: "c1", org_id: "o1" }], error: null },
+      "werkbank.quotes": { data: [{ id: "q1", org_id: "o1" }], error: null },
     },
   });
   const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
   assertEquals(res.status, 200);
   const { bundle } = await res.json();
   assertEquals(bundle.werkbank.customers, [{ id: "c1", org_id: "o1" }]);
-  for (const t of ["properties", "contacts", "catalog_items", "number_ranges"]) {
+  assertEquals(bundle.werkbank.quotes, [{ id: "q1", org_id: "o1" }]);
+  const quoteEqs = calls.filter((c) => c.table === "werkbank.quotes" && c.method === "eq");
+  assertEquals(quoteEqs.map((c) => c.args), [["org_id", "o1"]]);
+  for (
+    const t of [
+      "properties", "contacts", "catalog_items", "number_ranges",
+      "company_profiles", "orders", "order_technicians", "document_items", "quote_acceptances",
+    ]
+  ) {
     assertEquals(bundle.werkbank[t], []);
   }
   const eqs = calls.filter((c) => c.table === "werkbank.customers" && c.method === "eq");
@@ -99,16 +108,23 @@ Deno.test("each werkbank table is paged in the order of a column it has", async 
   const { deps, calls } = makeFakeDeps({ authUser: { id: "sa" }, tables: { ...SUPER_ADMIN } });
   const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
   assertEquals(res.status, 200);
-  const orders = Object.fromEntries(
-    calls.filter((c) => c.table.startsWith("werkbank.") && c.method === "order")
-      .map((c) => [c.table.slice("werkbank.".length), c.args[0]]),
-  );
+  const orders: Record<string, unknown[]> = {};
+  for (const c of calls.filter((c) => c.table.startsWith("werkbank.") && c.method === "order")) {
+    (orders[c.table.slice("werkbank.".length)] ??= []).push(c.args[0]);
+  }
   assertEquals(orders, {
-    customers: "id",
-    properties: "id",
-    contacts: "id",
-    catalog_items: "id",
-    number_ranges: "key",
+    customers: ["id"],
+    properties: ["id"],
+    contacts: ["id"],
+    catalog_items: ["id"],
+    number_ranges: ["key"],
+    company_profiles: ["org_id"],
+    quotes: ["id"],
+    orders: ["id"],
+    // composite key (order_id, artist_id): the second column keeps pages stable
+    order_technicians: ["order_id", "artist_id"],
+    document_items: ["id"],
+    quote_acceptances: ["id"],
   });
-  assertEquals(orders, { ...WERKBANK_ORDER });
+  assertEquals(Object.keys(orders).sort(), Object.keys(WERKBANK_ORDER).sort());
 });

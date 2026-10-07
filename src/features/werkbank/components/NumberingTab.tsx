@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NumberRange } from "../data/numberRanges";
-import { formatNumber } from "../data/numberRanges";
+import { formatNumber, NUMBER_RANGE_KEYS, type NumberRangeKey } from "../data/numberRanges";
 import { useNumberRange, useSaveNumberRange } from "../hooks/useNumberRanges";
 
 const MAX_PREFIX_LENGTH = 10;
@@ -22,9 +22,9 @@ function parseNextValue(text: string): number | null {
   return n >= 1 && n <= MAX_NEXT_VALUE ? n : null;
 }
 
-function RangeForm({ range }: { range: NumberRange }) {
+function RangeForm({ rangeKey, range }: { rangeKey: NumberRangeKey; range: NumberRange }) {
   const { t } = useTranslation("werkbank");
-  const save = useSaveNumberRange("customer");
+  const save = useSaveNumberRange(rangeKey);
   const [prefix, setPrefix] = useState(range.prefix);
   const [nextText, setNextText] = useState(String(range.next_value));
   const [submitted, setSubmitted] = useState(false);
@@ -51,9 +51,9 @@ function RangeForm({ range }: { range: NumberRange }) {
     <form onSubmit={onSubmit} noValidate className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="numbering-prefix">{t("numbering.prefix")}</Label>
+          <Label htmlFor={`numbering-prefix-${rangeKey}`}>{t("numbering.prefix")}</Label>
           <Input
-            id="numbering-prefix"
+            id={`numbering-prefix-${rangeKey}`}
             autoComplete="off"
             value={prefix}
             onChange={(e) => setPrefix(e.target.value)}
@@ -66,9 +66,9 @@ function RangeForm({ range }: { range: NumberRange }) {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="numbering-next">{t("numbering.nextValue")}</Label>
+          <Label htmlFor={`numbering-next-${rangeKey}`}>{t("numbering.nextValue")}</Label>
           <Input
-            id="numbering-next"
+            id={`numbering-next-${rangeKey}`}
             inputMode="numeric"
             autoComplete="off"
             value={nextText}
@@ -79,17 +79,37 @@ function RangeForm({ range }: { range: NumberRange }) {
         </div>
       </div>
       <p className="text-sm font-medium" aria-live="polite">
-        {preview !== null && t("numbering.preview", { number: preview })}
+        {preview !== null && t(`numbering.preview.${rangeKey}`, { number: preview })}
       </p>
       <Button type="submit" disabled={save.isPending}>{t("numbering.save")}</Button>
     </form>
   );
 }
 
-/** Settings tab "Nummernkreise" (admins of a handwerk org). Teil 3 and 4 add their keys here. */
+function RangeSection({ rangeKey }: { rangeKey: NumberRangeKey }) {
+  const { t } = useTranslation("werkbank");
+  const { data, isLoading, isError } = useNumberRange(rangeKey);
+  const headingId = `numbering-heading-${rangeKey}`;
+
+  return (
+    <div role="group" aria-labelledby={headingId} className="space-y-4">
+      <h3 id={headingId} className="text-sm font-semibold">{t(`numbering.headings.${rangeKey}`)}</h3>
+      {isLoading && <Skeleton className="h-24 w-full" />}
+      {isError && (
+        <Alert variant="destructive">
+          <AlertDescription>{t("numbering.loadFailed")}</AlertDescription>
+        </Alert>
+      )}
+      {/* Keyed on the loaded values: a refetch (after a save, a new customer or an import)
+          re-mounts the form, so it never shows or saves a stale next number. */}
+      {data && <RangeForm key={`${data.prefix}|${data.next_value}|${data.padding}`} rangeKey={rangeKey} range={data} />}
+    </div>
+  );
+}
+
+/** Settings tab "Nummernkreise" (admins of a handwerk org): one row per number range. */
 export function NumberingTab() {
   const { t } = useTranslation("werkbank");
-  const { data, isLoading, isError } = useNumberRange("customer");
 
   return (
     <Card>
@@ -97,17 +117,10 @@ export function NumberingTab() {
         <CardTitle className="font-display">{t("numbering.title")}</CardTitle>
         <CardDescription>{t("numbering.description")}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <h3 className="text-sm font-semibold">{t("numbering.customerHeading")}</h3>
-        {isLoading && <Skeleton className="h-24 w-full" />}
-        {isError && (
-          <Alert variant="destructive">
-            <AlertDescription>{t("numbering.loadFailed")}</AlertDescription>
-          </Alert>
-        )}
-        {/* Keyed on the loaded values: a refetch (after a save, a new customer or an import)
-            re-mounts the form, so it never shows or saves a stale next number. */}
-        {data && <RangeForm key={`${data.prefix}|${data.next_value}|${data.padding}`} range={data} />}
+      <CardContent className="space-y-8">
+        {NUMBER_RANGE_KEYS.map((key) => (
+          <RangeSection key={key} rangeKey={key} />
+        ))}
       </CardContent>
     </Card>
   );

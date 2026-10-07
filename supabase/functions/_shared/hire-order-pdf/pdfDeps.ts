@@ -16,13 +16,13 @@ export { renderToBuffer } from "npm:@react-pdf/renderer@^4";
 export type { ReactElement } from "npm:react@18.3.1";
 
 import { Font } from "npm:@react-pdf/renderer@^4";
-import { inflateFontGzB64 } from "./fontInflate.ts";
+import { inflateFontGzB64 } from "../pdf/fontInflate.ts";
 import {
   GEIST_MEDIUM_GZ_B64,
   GEIST_MONO_REGULAR_GZ_B64,
   GEIST_REGULAR_GZ_B64,
   GEIST_SEMIBOLD_GZ_B64,
-} from "./fonts.ts";
+} from "../pdf/fonts.ts";
 import { type FontFamilyDef, type FontFamilyKey } from "./pdfTheme.ts";
 
 const FONT_BUCKET_URL = `${Deno.env.get("SUPABASE_URL") ?? ""}/storage/v1/object/public/hire-order-fonts`;

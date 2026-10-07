@@ -101,8 +101,8 @@ real, issued PDF is unaffected.
 
 ## Regenerating the embedded Geist/Geist Mono bytes (`fonts.ts`)
 
-`src/lib/hireOrders/pdf/fonts.ts` (mirrored to
-`supabase/functions/_shared/hire-order-pdf/fonts.ts`) embeds the four Geist/Geist Mono TTFs
+`src/lib/pdf/fonts.ts` (mirrored to
+`supabase/functions/_shared/pdf/fonts.ts`) embeds the four Geist/Geist Mono TTFs
 directly as source, gzip-compressed at level 9 then base64-encoded (`GEIST_REGULAR_GZ_B64`,
 `GEIST_MEDIUM_GZ_B64`, `GEIST_SEMIBOLD_GZ_B64`, `GEIST_MONO_REGULAR_GZ_B64`). Gzipping matters
 here specifically: base64-of-raw-TTF for all four files came to ~709KB and was roughly 60% of the
@@ -123,9 +123,9 @@ by more than half with no loss of fidelity - see `fontInflate.test.ts` for the p
      --semibold <path/to/Geist-SemiBold.ttf> \
      --mono-regular <path/to/GeistMono-Regular.ttf>
    ```
-   This writes `src/lib/hireOrders/pdf/fonts.ts` directly - never hand-edit it or its generated
+   This writes `src/lib/pdf/fonts.ts` directly - never hand-edit it or its generated
    edge twin.
-3. `npm run sync:mirrors` to regenerate `supabase/functions/_shared/hire-order-pdf/fonts.ts`.
+3. `npm run sync:mirrors` to regenerate `supabase/functions/_shared/pdf/fonts.ts`.
 4. Run the golden-hash render tests
    (`deno test --allow-all --node-modules-dir=none supabase/functions/_shared/hire-order-pdf/render.test.ts`).
    A genuine font change is expected to fail `countersigned aggregate renders exactly as the
@@ -134,8 +134,8 @@ by more than half with no loss of fidelity - see `fontInflate.test.ts` for the p
    the change is reviewed and intended.
 
 **At render/registration time**, both `pdfDeps.ts` shims inflate these bytes back to plain
-base64 via `inflateFontGzB64` (`src/lib/hireOrders/pdf/fontInflate.ts`, mirrored to
-`supabase/functions/_shared/hire-order-pdf/fontInflate.ts`) before building the
+base64 via `inflateFontGzB64` (`src/lib/pdf/fontInflate.ts`, mirrored to
+`supabase/functions/_shared/pdf/fontInflate.ts`) before building the
 `data:font/ttf;base64,...` URI `Font.register` needs - `Font.register({ src: <Uint8Array> })`
 still fails on the edge runtime exactly as described in `fonts.ts`'s own header comment, so the
 gzip layer changes what's inside the base64 string, not the fact that a base64 data URI is
@@ -304,7 +304,7 @@ running the upload script:
    every family pins an exact release, package version, or commit, so the set is fully
    reproducible without the original attachment. Re-run steps 2-3 of "How to add (or replace) a
    family" below for each of the seven families (Geist/Geist Mono can also be re-derived from
-   `src/lib/hireOrders/pdf/fonts.ts`, which *is* committed, rather than re-fetched from Vercel -
+   `src/lib/pdf/fonts.ts`, which *is* committed, rather than re-fetched from Vercel -
    its `*_GZ_B64` constants are base64 of GZIPPED TTF bytes, so decoding needs a gunzip step on top
    of the base64 decode; `inflateFontGzB64` in `fontInflate.ts` does exactly that and is the
    easiest way to get plain bytes back out, e.g. via a short Node/Deno script that imports it).

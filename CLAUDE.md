@@ -5,6 +5,15 @@
 
 Guidance for AI coding agents (Claude Code and others) and new developers. Read this before writing any code.
 
+## Reuse before you build
+
+Before writing anything new, look for what already does the job, in this order: a native
+platform or browser feature (Postgres constraints and triggers, Supabase Storage signed URLs,
+`crypto.subtle`, `Intl`), then an existing module, component, hook, RPC or edge helper in this
+codebase, then an installed dependency. Build new only for the gap that is left, and write as
+little code as that gap needs. A spec names the existing pieces it reuses; a PR that adds a
+local copy of something that exists will be sent back.
+
 ## UI work: read this before writing a component
 
 `docs/ui-conventions.md` is the spec. It wins over `Design System/`, which is brand

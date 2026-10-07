@@ -4,7 +4,7 @@
 // one place the two differ. The Deno twin lives at
 // supabase/functions/_shared/hire-order-pdf/pdfDeps.ts.
 //
-// Geist and Geist Mono are base64-embedded from ./fonts.ts, exactly as the
+// Geist and Geist Mono are base64-embedded from @/lib/pdf/fonts.ts, exactly as the
 // edge shim does, so the DEFAULT theme renders with zero network I/O here
 // too. Earlier this file fetched every family (Geist included) from the
 // public `hire-order-fonts` Storage bucket, which is empty until an operator
@@ -25,13 +25,13 @@ export type { ReactElement } from "react";
 
 import { Font, pdf } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
-import { inflateFontGzB64 } from "./fontInflate.ts";
+import { inflateFontGzB64 } from "@/lib/pdf/fontInflate.ts";
 import {
   GEIST_MEDIUM_GZ_B64,
   GEIST_MONO_REGULAR_GZ_B64,
   GEIST_REGULAR_GZ_B64,
   GEIST_SEMIBOLD_GZ_B64,
-} from "./fonts.ts";
+} from "@/lib/pdf/fonts.ts";
 import { type FontFamilyDef, type FontFamilyKey } from "./pdfTheme.ts";
 
 /**
@@ -159,7 +159,7 @@ async function loadFontDataUrl(path: string, family: string, fetchImpl: typeof f
 
 /**
  * Register the families a theme uses. Geist and Geist Mono are base64-embedded
- * (./fonts.ts, shared with the edge through the mirror) so the DEFAULT theme
+ * (@/lib/pdf/fonts.ts, shared with the edge through the mirror) so the DEFAULT theme
  * never touches the network and can never fail. Anything else is fetched from
  * the public font bucket and embedded as a data URL; ALL of a family's weight
  * files must load for it to be registered at all - a partial set (some weights

@@ -159,7 +159,7 @@ const moduleIsolation = [
     ),
   },
   // The one core file that may mount a plugin component: the Settings page renders the
-  // Werkbank numbering tab. Same rules as core src, but the plugin ban names every plugin
+  // Werkbank numbering and company tabs. Same rules as core src, but the plugin ban names every plugin
   // path except that one component. Later in the list, so it wins for this file.
   {
     files: ["src/pages/SettingsPage.tsx"],
@@ -177,6 +177,7 @@ const moduleIsolation = [
             ...["data", "hooks", "lib", "pages", "schemas", "i18n"].map((dir) => `**/features/werkbank/${dir}/**`),
             "**/features/werkbank/components/*",
             "!**/features/werkbank/components/NumberingTab",
+            "!**/features/werkbank/components/CompanyTab",
             "**/_shared/werkbank",
             "**/_shared/werkbank/**",
           ],

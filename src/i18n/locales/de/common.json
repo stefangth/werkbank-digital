@@ -60,5 +60,11 @@
     "language": "Sprache",
     "profile": "Profil",
     "signOut": "Abmelden"
+  },
+  "signaturePad": {
+    "type": "Tippen",
+    "draw": "Zeichnen",
+    "legalName": "Dein vollständiger rechtlicher Name",
+    "clear": "Löschen"
   }
 }

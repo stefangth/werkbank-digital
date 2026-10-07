@@ -143,6 +143,9 @@ const App = () => (
             <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallbackPage />} />
             <Route path={ROUTES.UNSUBSCRIBE} element={<UnsubscribePage />} />
             <Route path={ROUTES.SANDBOX} element={<SandboxViewerPage />} />
+            {MODULE_UIS.flatMap((m) => m.publicRoutes).map((r) => (
+              <Route key={r.path} path={r.path} element={<SuspendedPage Page={r.Page} />} />
+            ))}
             <Route path={ROUTES.PRIVACY} element={<PrivacyPage />} />
             <Route path={ROUTES.IMPRESSUM} element={<ImpressumPage />} />
             {/* Legacy slug redirects (renamed in the today/dates/contracts slug pass).

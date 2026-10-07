@@ -21,7 +21,7 @@ interface Props {
  *  signing mark; Draw uses signature_pad (velocity-smoothed ink, retina/touch
  *  handled). Emits null when the active method has no content. */
 export function SignaturePad({ value, onChange, disabled }: Props) {
-  const { t } = useTranslation("hireOrdersPages");
+  const { t } = useTranslation("common");
   const typed = value?.method === "typed" ? value.typedName : "";
   const padRef = useRef<SignaturePadLib | null>(null);
   // Latest-callback ref so the stable (deps: []) `setCanvas` callback ref and the
