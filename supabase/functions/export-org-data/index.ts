@@ -19,6 +19,15 @@ const ORG_TABLES = [
   "airtable_sync_log", "airtable_sync_record_log",
 ] as const satisfies readonly OrgTable[];
 
+// Trade-business master data lives in its own schema; every table carries org_id.
+const WERKBANK_TABLES = [
+  "customers", "properties", "contacts", "catalog_items", "number_ranges",
+] as const satisfies readonly (keyof Database["werkbank"]["Tables"])[];
+
+// An org can hold far more rows than PostgREST returns in one response (default cap 1000),
+// so werkbank tables are read page by page.
+const PAGE_SIZE = 1000;
+
 export async function handle(req: Request, deps: Deps): Promise<Response> {
   if (req.method === "OPTIONS") return preflight();
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -52,6 +61,19 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     if (error) return json({ error: `Failed to read ${table}` }, 500);
     bundle[table] = data ?? [];
   }
+  const werkbank: Record<string, unknown[]> = {};
+  for (const table of WERKBANK_TABLES) {
+    const rows: unknown[] = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data, error } = await admin.schema("werkbank").from(table).select("*")
+        .eq("org_id", orgId).order("id").range(from, from + PAGE_SIZE - 1);
+      if (error) return json({ error: `Failed to read werkbank.${table}` }, 500);
+      rows.push(...(data ?? []));
+      if ((data ?? []).length < PAGE_SIZE) break;
+    }
+    werkbank[table] = rows;
+  }
+  bundle.werkbank = werkbank;
   return json({ success: true, bundle }, 200);
 }
 

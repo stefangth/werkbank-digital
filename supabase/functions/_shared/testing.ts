@@ -220,6 +220,8 @@ export function createFakeClient(opts: FakeClientOptions = {}) {
   // never reference `__write` in their `when`, so this is fully backward-compatible.
   const WRITE_METHODS = new Set(["update", "insert", "upsert", "delete"]);
 
+  // `table` is the plain table name, or `<schema>.<table>` for a non-default schema, so a
+  // schema table never collides with a public table of the same name.
   function builder(table: string): FakeChain {
     const seed: TableSeed = tables[table] ?? { data: [], error: null };
     // Local eq map — populated as .eq() calls are chained, used for array-seed matching
@@ -227,6 +229,7 @@ export function createFakeClient(opts: FakeClientOptions = {}) {
     // Local in map — populated as .in() calls are chained, used for membership filtering
     const localIn: Record<string, unknown[]> = {};
     let sawWrite = false;
+    let range: string | undefined;
     const chain: Record<string, unknown> = {};
     for (const m of CHAIN) {
       chain[m] = (...args: unknown[]) => {
@@ -239,6 +242,9 @@ export function createFakeClient(opts: FakeClientOptions = {}) {
         if (m === "in" && args.length >= 2 && Array.isArray(args[1])) {
           localIn[String(args[0])] = args[1] as unknown[];
         }
+        // Reserved `__range` match key ("<from>-<to>"), opt-in like `__write`, so a
+        // paginated read can be seeded page by page.
+        if (m === "range" && args.length >= 2) range = `${args[0]}-${args[1]}`;
         if (WRITE_METHODS.has(m)) sawWrite = true;
         return chain;
       };
@@ -255,7 +261,7 @@ export function createFakeClient(opts: FakeClientOptions = {}) {
       for (const [col, vals] of Object.entries(localIn)) {
         inKeys[`__in:${col}`] = JSON.stringify(vals);
       }
-      return { ...localEq, ...inKeys, __write: sawWrite };
+      return { ...localEq, ...inKeys, __write: sawWrite, ...(range !== undefined ? { __range: range } : {}) };
     };
     chain["single"] = () => {
       calls.push({ table, method: "single", args: [] });
@@ -280,6 +286,17 @@ export function createFakeClient(opts: FakeClientOptions = {}) {
 
   const client = {
     from(table: string) { calls.push({ table, method: "from", args: [] }); return builder(table); },
+    // Mirrors supabase-js `client.schema(name).from(table)`: recorded and seeded under
+    // `<schema>.<table>`.
+    schema(name: string) {
+      return {
+        from(table: string) {
+          const key = `${name}.${table}`;
+          calls.push({ table: key, method: "from", args: [] });
+          return builder(key);
+        },
+      };
+    },
     rpc(name: string, params?: unknown) {
       calls.push({ table: `rpc:${name}`, method: "rpc", args: [params] });
       if (name in rpcs) return Promise.resolve(rpcs[name]);

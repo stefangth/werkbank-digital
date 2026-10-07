@@ -40,6 +40,8 @@ export const MODULES: readonly ModuleGuard[] = [
       "e2e/werkbank-*.spec.ts",
       "src/modules/*.ts",
       "supabase/functions/_shared/modules.ts",
+      "supabase/functions/export-org-data/index.ts",
+      "supabase/functions/export-org-data/index.test.ts",
       "docs/**",
       "CLAUDE.md",
       "README.md",
