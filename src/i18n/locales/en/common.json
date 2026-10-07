@@ -56,5 +56,11 @@
     "language": "Language",
     "profile": "Profile",
     "signOut": "Sign out"
+  },
+  "signaturePad": {
+    "type": "Type",
+    "draw": "Draw",
+    "legalName": "Your full legal name",
+    "clear": "Clear"
   }
 }

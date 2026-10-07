@@ -444,12 +444,6 @@
     "signing": "Signieren...",
     "sign": "{{HireOrder}} signieren"
   },
-  "signaturePad": {
-    "type": "Tippen",
-    "draw": "Zeichnen",
-    "legalName": "Dein vollständiger rechtlicher Name",
-    "clear": "Löschen"
-  },
   "detailPage": {
     "loadErrorTitle": "Dieser {{HireOrder}} konnte nicht geladen werden",
     "loadErrorBody": "Du hast möglicherweise keinen Zugriff auf diesen {{HireOrder}} oder er existiert nicht mehr.",

@@ -418,12 +418,6 @@
     "signing": "Signing...",
     "sign": "Sign {{hireOrder}}"
   },
-  "signaturePad": {
-    "type": "Type",
-    "draw": "Draw",
-    "legalName": "Your full legal name",
-    "clear": "Clear"
-  },
   "detailPage": {
     "loadErrorTitle": "Could not load this {{hireOrder}}",
     "loadErrorBody": "You may not have access to this {{hireOrder}}, or it no longer exists.",
