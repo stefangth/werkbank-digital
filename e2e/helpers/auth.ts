@@ -8,6 +8,36 @@
  */
 import { expect, type Page } from "@playwright/test";
 
+/** The seeded account the committed `.env.development` auto-signs-in as on `npm run dev`. */
+const DEV_AUTOLOGIN_EMAIL = "admin@example.com";
+
+/**
+ * Stop the local dev server's auto-login (`VITE_DEV_AUTOLOGIN` in the committed
+ * `.env.development`, see src/features/auth/devAutoLogin.ts) from signing the
+ * page in as the seeded admin. Call it before the first `page.goto` in any spec
+ * that needs a signed-out page.
+ *
+ * Locally, Playwright drives `npm run dev`, so every fresh page boots, finds no
+ * session and signs in as admin@example.com. CI serves a production build where
+ * that path is stripped, so a spec that silently depends on being signed out
+ * passes in CI and fails locally. Other password sign-ins (`loginAs`) still go
+ * through, and in CI the route never matches, so this is a no-op there.
+ */
+export async function blockDevAutoLogin(page: Page): Promise<void> {
+  await page.route("**/auth/v1/token?grant_type=password", async (route) => {
+    const body = route.request().postDataJSON() as { email?: string };
+    if (body.email === DEV_AUTOLOGIN_EMAIL) {
+      await route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "dev auto-login disabled for a signed-out e2e page" }),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+}
+
 export async function loginAs(
   page: Page,
   email: string,
