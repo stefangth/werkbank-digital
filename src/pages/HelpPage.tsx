@@ -99,7 +99,7 @@ export default function HelpPage() {
         <h1 className="mb-2 text-balance font-display text-3xl font-semibold tracking-tight text-foreground">
           {t('hero')}
         </h1>
-        <p className="max-w-[68ch] text-base leading-relaxed text-muted-foreground">{t('lede')}</p>
+        <p className="max-w-[68ch] text-base leading-relaxed text-muted-foreground">{isCoreOrgKind(orgKind) ? t('lede') : t('ledeNeutral')}</p>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -120,7 +120,7 @@ export default function HelpPage() {
       )}
 
       {isCoreOrgKind(orgKind) && <HelpGlossary lang={lang} />}
-      <HelpFooterCards />
+      {isCoreOrgKind(orgKind) && <HelpFooterCards />}
     </div>
   );
 }

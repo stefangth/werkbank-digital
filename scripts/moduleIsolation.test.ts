@@ -60,6 +60,7 @@ export const MODULES: readonly ModuleGuard[] = [
       "src/lib/help/items.ts",
       "src/lib/help/items.test.ts",
       "src/lib/help/filter.test.ts",
+      "src/pages/HelpPage.test.tsx",
       "src/components/layout/navItems.ts",
       "src/config/app.config.ts",
       "scripts/moduleIsolation.test.ts",

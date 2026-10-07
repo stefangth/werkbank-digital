@@ -730,7 +730,7 @@ export const HELP_ITEMS: readonly HelpItem[] = [
     id: 'W3.3', role: 'producer', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Liegenschaften', updated: '2026-10-07',
     q: { en: 'How do I add a property, and what is the billing recipient for?', de: 'Wie lege ich eine Liegenschaft an, und wofür ist der Rechnungsempfänger?' },
     a: {
-      en: 'Open Properties, choose Add property and pick the customer it belongs to. Every property belongs to exactly one customer. Tick Different billing recipient when the invoice should go to someone else, for example a homeowners association represented by the property manager. The detail page then shows who the invoice goes to.',
+      en: 'Open Properties, choose Add property and pick the customer it belongs to. Every property belongs to exactly one customer. Tick Different invoice recipient when the invoice should go to someone else, for example a homeowners association represented by the property manager. The detail page then shows who the invoice goes to.',
       de: 'Öffne Liegenschaften, wähle Liegenschaft anlegen und ordne sie einem Kunden zu. Jede Liegenschaft gehört zu genau einem Kunden. Setze den Haken bei Abweichender Rechnungsempfänger, wenn die Rechnung an jemand anderen gehen soll, zum Beispiel an eine Eigentümergemeinschaft, die von der Hausverwaltung vertreten wird. Die Detailseite zeigt dir dann, an wen die Rechnung geht.',
     },
   },
@@ -754,7 +754,7 @@ export const HELP_ITEMS: readonly HelpItem[] = [
     id: 'W3.6', role: 'admin', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Leistungen', updated: '2026-10-07',
     q: { en: 'How do I create a catalog item?', de: 'Wie lege ich eine Leistung im Katalog an?' },
     a: {
-      en: 'Open Catalog and choose Add item. Give it a name, a unit and the VAT rate (19, 7 or 0 percent), and enter the labour and the material price. Both are net prices per unit. The net total is calculated for you. Item number and category are optional and help you search and filter.',
+      en: 'Open Services and choose Add service. Give it a name, a unit and the VAT rate (19, 7 or 0 percent), and enter the labour and the material price. Both are net prices per unit. The net total is calculated for you. Item number and category are optional and help you search and filter.',
       de: 'Öffne Leistungen und wähle Leistung anlegen. Gib Bezeichnung, Einheit und Steuersatz (19, 7 oder 0 Prozent) an und trag Lohn und Material ein. Beides sind Nettopreise pro Einheit, die Summe netto rechnet die App für dich. Artikelnummer und Kategorie sind optional und helfen beim Suchen und Filtern.',
     },
   },
@@ -762,16 +762,16 @@ export const HELP_ITEMS: readonly HelpItem[] = [
     id: 'W3.7', role: 'producer', stage: 3, status: 'new', kinds: ['handwerk'], surface: 'Leistungen', updated: '2026-10-07',
     q: { en: 'Why are labour and material entered separately, and what does §35a have to do with it?', de: 'Warum gebe ich Lohn und Material getrennt ein, und was hat das mit §35a zu tun?' },
     a: {
-      en: 'Private customers can claim the labour portion of a craftsman invoice as a tax credit under §35a of the German income tax act, material does not count. To show that portion on an invoice later, the catalog stores labour and material apart. Enter both for every item, and use 0 when one of them does not apply.',
-      de: 'Privatkunden können den Lohnanteil einer Handwerkerrechnung nach §35a EStG steuerlich geltend machen, das Material zählt nicht. Damit dieser Anteil später auf der Rechnung ausgewiesen werden kann, speichert der Katalog Lohn und Material getrennt. Trag bei jeder Leistung beides ein und nimm 0, wenn eines nicht zutrifft.',
+      en: 'Private customers and owners in a homeowners association can claim the labour portion of a craftsman invoice as a tax credit under §35a of the German income tax act, material does not count. To show that portion on an invoice later, the catalog stores labour and material apart. Enter both for every item, and use 0 when one of them does not apply.',
+      de: 'Privatkunden und Wohnungseigentümer einer WEG können den Lohnanteil einer Handwerkerrechnung nach §35a EStG steuerlich geltend machen, das Material zählt nicht. Damit dieser Anteil später auf der Rechnung ausgewiesen werden kann, speichert der Katalog Lohn und Material getrennt. Trag bei jeder Leistung beides ein und nimm 0, wenn eines nicht zutrifft.',
     },
   },
   {
     id: 'W4.1', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Leistungen · Einheiten', updated: '2026-10-07',
-    q: { en: 'Which units can I choose, and what does pauschal mean?', de: 'Welche Einheiten kann ich wählen, und was bedeutet pauschal?' },
+    q: { en: 'Which units can I choose, and what does lump sum mean?', de: 'Welche Einheiten kann ich wählen, und was bedeutet pauschal?' },
     a: {
-      en: 'The units are Std (hours), Stk (pieces), m, m², m³, kg and l, plus pauschal for a lump sum. Pick pauschal for a job you price as one package, and the price then counts once, not per unit. The list is fixed so that your invoices later carry the standard unit codes.',
-      de: 'Zur Auswahl stehen Std, Stk, m, m², m³, kg und l, dazu pauschal für einen Festpreis. Nimm pauschal für eine Arbeit, die du als ein Paket abrechnest, der Preis gilt dann einmal und nicht pro Einheit. Die Liste ist fest vorgegeben, damit deine Rechnungen später die Standard-Einheitencodes tragen.',
+      en: 'The units are h (hours), pc (pieces), m, m², m³, kg and l, plus lump sum. Pick lump sum for a job you price as one package. The list is fixed so that your invoices later carry the standard unit codes.',
+      de: 'Zur Auswahl stehen Std, Stk, m, m², m³, kg und l, dazu pauschal für einen Festpreis. Nimm pauschal für eine Arbeit, die du als ein Paket abrechnest. Die Liste ist fest vorgegeben, damit deine Rechnungen später die Standard-Einheitencodes tragen.',
     },
   },
   {
@@ -784,17 +784,17 @@ export const HELP_ITEMS: readonly HelpItem[] = [
   },
   {
     id: 'W4.3', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Importieren', updated: '2026-10-07',
-    q: { en: 'What happens to rows that already exist when I import again?', de: 'Was passiert mit Zeilen, die es schon gibt, wenn ich noch einmal importiere?' },
+    q: { en: 'What happens when I import a file a second time?', de: 'Was passiert, wenn ich eine Datei ein zweites Mal importiere?' },
     a: {
-      en: 'Rows whose customer number or item number is already taken are skipped, nothing is overwritten. The result screen shows how many rows were imported, skipped or had errors, with the reason for each row. You can fix the file and import it again, only the missing rows are added.',
-      de: 'Zeilen, deren Kundennummer oder Artikelnummer schon vergeben ist, werden übersprungen, nichts wird überschrieben. Die Ergebnisseite zeigt, wie viele Zeilen importiert, übersprungen oder fehlerhaft waren, mit dem Grund je Zeile. Du kannst die Datei korrigieren und erneut importieren, es kommen nur die fehlenden Zeilen dazu.',
+      en: 'Customers whose customer number is already taken and catalog items whose item number is already taken are skipped, nothing is overwritten. Properties are not checked for duplicates: importing the same properties file again creates them twice, so import each properties file only once. The result screen shows how many rows were imported, skipped or had errors, with the reason for each row.',
+      de: 'Kunden, deren Kundennummer schon vergeben ist, und Leistungen, deren Artikelnummer schon vergeben ist, werden übersprungen, nichts wird überschrieben. Liegenschaften werden nicht auf Dubletten geprüft: Importierst du dieselbe Liegenschaften-Datei noch einmal, entstehen sie doppelt. Importiere deshalb jede Liegenschaften-Datei nur einmal. Die Ergebnisseite zeigt, wie viele Zeilen importiert, übersprungen oder fehlerhaft waren, mit dem Grund je Zeile.',
     },
   },
   {
     id: 'W4.4', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Einstellungen · Nummernkreise', updated: '2026-10-07',
     q: { en: 'How do I change the format of customer numbers?', de: 'Wie ändere ich das Format der Kundennummern?' },
     a: {
-      en: 'Open Settings, then the Number ranges tab. Set the prefix (up to 10 characters, K- by default) and the next number, and the preview shows what the next customer will get. Only admins can change it. Numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import.',
+      en: 'Open Settings, then the Numbering tab. Set the prefix (up to 10 characters, K- by default) and the next number, and the preview shows what the next customer will get. Only admins can change it. Numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import.',
       de: 'Öffne Einstellungen und dort den Tab Nummernkreise. Lege das Präfix fest (bis zu 10 Zeichen, standardmäßig K-) und die nächste Nummer, die Vorschau zeigt, was der nächste Kunde bekommt. Ändern dürfen das nur Admins. Nummern, die du von Hand eingibst oder in einem anderen Format importierst, bleiben erhalten, verschieben den Zähler aber nicht. Prüf die nächste Nummer deshalb nach einem großen Import.',
     },
   },

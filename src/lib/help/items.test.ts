@@ -90,7 +90,7 @@ describe('handwerk help items', () => {
     for (const topic of ['kunden', 'liegenschaft', 'ansprechpartner', 'leistungen', '§35a', 'einheit', 'import', 'nummernkreis']) {
       expect(all, topic).toContain(topic);
     }
-    for (const topic of ['customers', 'properties', 'contacts', 'catalog', 'units', 'import', 'number range']) {
+    for (const topic of ['customers', 'properties', 'contacts', 'catalog', 'units', 'import', 'numbering']) {
       expect(all, topic).toContain(topic);
     }
     // 35a and the units each get their own answer.

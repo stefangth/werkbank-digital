@@ -6,8 +6,9 @@ import i18n from '@/i18n';
 import { STORAGE_KEY } from '@/i18n/config';
 
 // HelpPage only reads roles + currentOrg from auth; stub it so no AuthProvider is needed.
+const orgKind = vi.hoisted(() => ({ value: 'production' as string }));
 vi.mock('@/features/auth/AuthContext', () => ({
-  useAuth: () => ({ roles: ['admin'], currentOrg: { id: 'o1', name: 'Acme Shows' } }),
+  useAuth: () => ({ roles: ['admin'], currentOrg: { id: 'o1', name: 'Acme Shows', org_kind: orgKind.value } }),
 }));
 
 import HelpPage from './HelpPage';
@@ -22,7 +23,7 @@ function renderHelp(route = '/help') {
   );
 }
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => { localStorage.clear(); orgKind.value = 'production'; });
 afterEach(async () => { await i18n.changeLanguage('en'); });
 
 describe('HelpPage', () => {
@@ -99,5 +100,27 @@ describe('HelpPage deep links', () => {
     await i18n.changeLanguage('en');
     renderHelp('/help?item=NOPE');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+});
+
+describe('HelpPage chrome per org kind', () => {
+  it('keeps the Showflow lede, stuck card, footnote and glossary for core kinds', async () => {
+    await i18n.changeLanguage('en');
+    renderHelp();
+    expect(screen.getByText(/while using ShowFlow/)).toBeInTheDocument();
+    expect(screen.getByText('STILL NEED HELP')).toBeInTheDocument();
+    expect(screen.getByText(/journey work shipped in August 2026/)).toBeInTheDocument();
+    expect(screen.getByText('The words we use')).toBeInTheDocument();
+  });
+
+  it('shows a neutral lede and hides the Showflow footer and glossary for handwerk', async () => {
+    orgKind.value = 'handwerk';
+    await i18n.changeLanguage('en');
+    renderHelp();
+    expect(screen.getByText(/while using the app/)).toBeInTheDocument();
+    expect(screen.queryByText(/ShowFlow/)).toBeNull();
+    expect(screen.queryByText('STILL NEED HELP')).toBeNull();
+    expect(screen.queryByText(/journey work shipped/)).toBeNull();
+    expect(screen.queryByText('The words we use')).toBeNull();
   });
 });
