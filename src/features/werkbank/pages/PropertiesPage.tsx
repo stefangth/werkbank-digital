@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ImportDialog } from "../components/import/ImportDialog";
+import { PROPERTY_IMPORT_SPEC } from "../data/imports";
 import { ArchiveSwitch } from "../components/ArchiveSwitch";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { PropertyFormDialog } from "../components/PropertyFormDialog";
@@ -34,6 +37,7 @@ export function PropertiesPage() {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const canDelete = hasRole("admin");
+  const queryClient = useQueryClient();
 
   const { data: properties, isLoading, isError } = useProperties();
   const archive = useArchiveProperty();
@@ -42,6 +46,7 @@ export function PropertiesPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
   const [showArchived, setShowArchived] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [dialog, setDialog] = useState<{ open: boolean; property: PropertyListRow | null }>({
     open: false,
     property: null,
@@ -68,7 +73,14 @@ export function PropertiesPage() {
       <PageHeader
         title={t("properties.title")}
         sub={t("properties.sub")}
-        actions={<Button onClick={openCreate}>{t("properties.add")}</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              {t("import.action")}
+            </Button>
+            <Button onClick={openCreate}>{t("properties.add")}</Button>
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -173,6 +185,15 @@ export function PropertiesPage() {
         body={t("properties.delete.body", { name: toDelete?.name ?? "" })}
         onConfirm={confirmDelete}
         pending={remove.isPending}
+      />
+      <ImportDialog
+        spec={PROPERTY_IMPORT_SPEC}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onDone={() => {
+          void queryClient.invalidateQueries({ queryKey: ["werkbank", "properties"] });
+          void queryClient.invalidateQueries({ queryKey: ["werkbank", "customers"] });
+        }}
       />
     </div>
   );

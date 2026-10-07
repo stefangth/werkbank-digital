@@ -136,11 +136,11 @@ describe("CustomersPage", () => {
     expect(screen.getByRole("button", { name: "Wiederherstellen" })).toBeInTheDocument();
   });
 
-  it("shows the empty state with the create action, and no import action yet", async () => {
+  it("shows the empty state with the create action, and the import action next to it", async () => {
     seed([]);
     renderPage((r) => r === "producer");
     expect(await screen.findByText("Noch keine Kunden")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Importieren/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Importieren" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Ersten Kunden anlegen" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Kunde anlegen", { selector: "h2" })).toBeInTheDocument();
@@ -178,6 +178,14 @@ describe("CustomersPage", () => {
     fireEvent.click(within(cell.closest("tr") as HTMLElement).getByRole("button", { name: "Bearbeiten" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByLabelText("Firmenname")).toHaveValue("Muster Hausverwaltung GmbH");
+  });
+
+  it("opens the import dialog from the header action", async () => {
+    seed();
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Importieren" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Kunden importieren")).toBeInTheDocument();
   });
 
   it("shows a skeleton while loading", () => {

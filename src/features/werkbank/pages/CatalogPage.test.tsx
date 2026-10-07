@@ -155,6 +155,14 @@ describe("CatalogPage", () => {
     expect(within(dialog).getByLabelText("Bezeichnung")).toHaveValue("Rohr verlegen");
   });
 
+  it("opens the import dialog from the header action", async () => {
+    seed();
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Importieren" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Leistungen importieren")).toBeInTheDocument();
+  });
+
   it("shows a skeleton while loading", () => {
     Object.assign(client, createFakeSupabase({ "werkbank.catalog_items": { data: items, error: null } }));
     const { container } = renderPage();

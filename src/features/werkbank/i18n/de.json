@@ -362,6 +362,7 @@
     "private": "Privat"
   },
   "import": {
+    "action": "Importieren",
     "title": {
       "customers": "Kunden importieren",
       "properties": "Liegenschaften importieren",

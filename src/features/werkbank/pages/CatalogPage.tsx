@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Wrench } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ImportDialog } from "../components/import/ImportDialog";
+import { CATALOG_IMPORT_SPEC } from "../data/imports";
 import { ArchiveSwitch } from "../components/ArchiveSwitch";
 import { CatalogItemFormDialog } from "../components/CatalogItemFormDialog";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
@@ -34,6 +37,7 @@ export function CatalogPage() {
   const { t, i18n } = useTranslation("werkbank");
   const { hasRole } = useAuth();
   const canDelete = hasRole("admin");
+  const queryClient = useQueryClient();
 
   const { data: items, isLoading, isError } = useCatalogItems();
   const archive = useArchiveCatalogItem();
@@ -42,6 +46,7 @@ export function CatalogPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState(ALL);
   const [showArchived, setShowArchived] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [dialog, setDialog] = useState<{ open: boolean; item: CatalogItem | null }>({ open: false, item: null });
   const [toDelete, setToDelete] = useState<CatalogItem | null>(null);
 
@@ -78,7 +83,14 @@ export function CatalogPage() {
       <PageHeader
         title={t("catalog.title")}
         sub={t("catalog.sub")}
-        actions={<Button onClick={openCreate}>{t("catalog.add")}</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              {t("import.action")}
+            </Button>
+            <Button onClick={openCreate}>{t("catalog.add")}</Button>
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -198,6 +210,14 @@ export function CatalogPage() {
         body={t("catalog.delete.body", { name: toDelete?.name ?? "" })}
         onConfirm={confirmDelete}
         pending={remove.isPending}
+      />
+      <ImportDialog
+        spec={CATALOG_IMPORT_SPEC}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onDone={() => {
+          void queryClient.invalidateQueries({ queryKey: ["werkbank", "catalog"] });
+        }}
       />
     </div>
   );

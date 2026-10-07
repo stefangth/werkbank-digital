@@ -143,6 +143,14 @@ describe("PropertiesPage", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
+  it("opens the import dialog from the header action", async () => {
+    seed();
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Importieren" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Liegenschaften importieren")).toBeInTheDocument();
+  });
+
   it("shows a skeleton while loading and an alert when loading fails", async () => {
     seed();
     const { container, unmount } = renderPage();

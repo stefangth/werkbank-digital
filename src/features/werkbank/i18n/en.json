@@ -362,6 +362,7 @@
     "private": "Private"
   },
   "import": {
+    "action": "Import",
     "title": {
       "customers": "Import customers",
       "properties": "Import properties",

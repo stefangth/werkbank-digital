@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Building2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ImportDialog } from "../components/import/ImportDialog";
+import { CUSTOMER_IMPORT_SPEC } from "../data/imports";
 import { ArchiveSwitch } from "../components/ArchiveSwitch";
 import { CustomerFormDialog } from "../components/CustomerFormDialog";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
@@ -34,6 +37,7 @@ export function CustomersPage() {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const canDelete = hasRole("admin");
+  const queryClient = useQueryClient();
 
   const { data: customers, isLoading, isError } = useCustomers();
   const archive = useArchiveCustomer();
@@ -43,6 +47,7 @@ export function CustomersPage() {
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
   const [kind, setKind] = useState(ALL);
   const [showArchived, setShowArchived] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [dialog, setDialog] = useState<{ open: boolean; customer: CustomerListRow | null }>({
     open: false,
     customer: null,
@@ -71,7 +76,14 @@ export function CustomersPage() {
       <PageHeader
         title={t("customers.title")}
         sub={t("customers.sub")}
-        actions={<Button onClick={openCreate}>{t("customers.add")}</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              {t("import.action")}
+            </Button>
+            <Button onClick={openCreate}>{t("customers.add")}</Button>
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -192,6 +204,14 @@ export function CustomersPage() {
         body={t("customers.delete.body", { name: toDelete ? customerDisplayName(toDelete) : "" })}
         onConfirm={confirmDelete}
         pending={remove.isPending}
+      />
+      <ImportDialog
+        spec={CUSTOMER_IMPORT_SPEC}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onDone={() => {
+          void queryClient.invalidateQueries({ queryKey: ["werkbank", "customers"] });
+        }}
       />
     </div>
   );
