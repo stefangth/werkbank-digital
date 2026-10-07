@@ -78,6 +78,29 @@ describe("WerkbankDashboard", () => {
     await waitFor(() => expect(unscheduled).toHaveTextContent("2"));
   });
 
+  it("shows a skeleton while the counts load and no dash placeholder", () => {
+    authAs("admin");
+    renderDashboard();
+    expect(screen.queryByText("–")).not.toBeInTheDocument();
+    expect(document.querySelectorAll("section[aria-label='Open items'] [class*='animate-pulse']").length).toBe(2);
+  });
+
+  it("says so when a count cannot be loaded, and still shows the other tile", async () => {
+    authAs("admin");
+    Object.assign(client, createFakeSupabase({
+      "werkbank.quote_list": { data: null, error: { code: "500" } },
+      "werkbank.order_list": { data: [{ id: "o1", status: "open", scheduled_date: null }], error: null },
+      artists: { data: null, error: null, count: 0 },
+      "werkbank.catalog_items": { data: null, error: null, count: 0 },
+      "werkbank.customers": { data: null, error: null, count: 0 },
+      "werkbank.company_profiles": { data: null, error: null },
+    }));
+    renderDashboard();
+    expect(await screen.findByText("The count could not be loaded.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("link", { name: /Orders without a date/ })).toHaveTextContent("1"));
+    expect(screen.queryByText("–")).not.toBeInTheDocument();
+  });
+
   it("shows no tiles for a technician", () => {
     authAs("artist");
     renderDashboard();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -74,10 +74,6 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
   const [logoUploading, setLogoUploading] = useState(false);
   const schema = useMemo(() => companyProfileSchema(t), [t]);
   const form = useForm<CompanyProfileForm>({ resolver: zodResolver(schema), defaultValues: toFormValues(profile) });
-
-  useEffect(() => {
-    form.reset(toFormValues(profile));
-  }, [profile, form]);
 
   const submit = form.handleSubmit((values) => {
     if (save.isPending || logoUploading) return;

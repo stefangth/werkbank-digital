@@ -21,7 +21,8 @@
     "tiles": {
       "acceptedNoOrder": "Accepted, no order yet",
       "unscheduled": "Orders without a date",
-      "label": "Open items"
+      "label": "Open items",
+      "loadFailed": "The count could not be loaded."
     }
   },
   "technicians": {

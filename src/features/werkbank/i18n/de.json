@@ -21,7 +21,8 @@
     "tiles": {
       "acceptedNoOrder": "Angenommen, ohne Auftrag",
       "unscheduled": "Aufträge ohne Termin",
-      "label": "Offene Punkte"
+      "label": "Offene Punkte",
+      "loadFailed": "Die Anzahl konnte nicht geladen werden."
     }
   },
   "technicians": {

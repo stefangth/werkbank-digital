@@ -20,6 +20,9 @@ const optionalPattern = (pattern: RegExp, message: string) =>
 /** IBANs are typed in groups of four; the database stores them without spaces. */
 export const normalizeIban = (v: string): string => v.replace(/\s+/g, "").toUpperCase();
 
+/** VAT ids are typed in any case and in groups; the database wants them compact and uppercase. */
+export const normalizeVatId = (v: string): string => v.replace(/\s+/g, "").toUpperCase();
+
 export const companyProfileSchema = (t: TFunction) =>
   z
     .object({
@@ -30,7 +33,7 @@ export const companyProfileSchema = (t: TFunction) =>
       email: optionalPattern(EMAIL, t("customers.errors.email")),
       website: z.string(),
       tax_number: z.string(),
-      vat_id: optionalPattern(VAT_ID, t("company.errors.vatId")),
+      vat_id: z.string().transform(normalizeVatId).refine((v) => v === "" || VAT_ID.test(v), t("company.errors.vatId")),
       register_court: z.string(),
       register_number: z.string(),
       iban: z.string().transform(normalizeIban).refine((v) => v === "" || IBAN.test(v), t("company.errors.iban")),

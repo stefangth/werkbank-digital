@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchCompanyProfile, logoUrl, saveCompanyProfile, uploadLogo } from "../data/companyProfile";
+import { fetchCompanyProfile, type CompanyProfile, logoUrl, saveCompanyProfile, uploadLogo } from "../data/companyProfile";
 import { mapDbError } from "../lib/dbErrors";
 import type { CompanyProfileRow } from "../schemas/companyProfile";
 
@@ -23,7 +23,11 @@ export function useSaveCompanyProfile() {
   const qc = useQueryClient();
   const { t } = useTranslation("werkbank");
   return useMutation({
-    mutationFn: (row: CompanyProfileRow) => saveCompanyProfile(supabase, orgId!, row),
+    mutationFn: (row: CompanyProfileRow) => {
+      // The stored logo, so a replaced or removed one is cleaned up after the save.
+      const stored = qc.getQueryData<CompanyProfile | null>([...KEY, orgId]);
+      return saveCompanyProfile(supabase, orgId!, row, stored?.logo_path);
+    },
     onSuccess: () => toast.success(t("company.saved")),
     onError: (e) => toast.error(t(mapDbError(e))),
     onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
