@@ -142,4 +142,12 @@ describe("SignaturePad", () => {
     expect(canvas?.className).toContain("pointer-events-none");
     expect(canvas?.className).toContain("opacity-50");
   });
+
+  it("uses passed labels instead of the common namespace", () => {
+    const labels = { type: "Tippen", draw: "Zeichnen", legalName: "Ihr vollständiger Name", clear: "Löschen" };
+    render(<SignaturePad value={null} onChange={vi.fn()} labels={labels} />);
+    expect(screen.getByRole("tab", { name: "Tippen" })).toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Zeichnen" }), { button: 0 });
+    expect(screen.getByRole("button", { name: "Löschen" })).toBeInTheDocument();
+  });
 });

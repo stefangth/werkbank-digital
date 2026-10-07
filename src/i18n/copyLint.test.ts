@@ -59,13 +59,18 @@ const deContent = [
   ...Object.values(CUE_LABELS).map((l) => l.de),
 ];
 
+// Named exemption from the Du-form rule: the werkbank `publicQuote` subtree is the public,
+// no-login quote page a trade customer opens from an email. It is German only and addressed
+// formally with "Sie" (spec R5), unlike the in-app copy. Dashes are still linted for it.
+const FORMAL_EXEMPT = new Set(strings((resources.de as { werkbank?: { publicQuote?: unknown } }).werkbank?.publicQuote));
+
 describe('copy lint', () => {
   it('no em/en dashes anywhere', () => {
     for (const s of [...enContent, ...deContent]) expect(DASH.test(s), s).toBe(false);
   });
 
   it('German copy avoids formal "Sie" address', () => {
-    for (const s of deContent) expect(FORMAL.test(s), s).toBe(false);
+    for (const s of deContent) if (!FORMAL_EXEMPT.has(s)) expect(FORMAL.test(s), s).toBe(false);
   });
 
   // The countersign controls (CountersignFields) choose how the ARTIST signs an issued

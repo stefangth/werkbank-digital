@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isCompanyProfileComplete } from "./quotePreflight";
+import { isCompanyProfileComplete, quotePreflight } from "./quotePreflight";
 
 const full = {
   company_name: "Muster Bau GmbH",
@@ -29,5 +29,26 @@ describe("isCompanyProfileComplete", () => {
       expect(isCompanyProfileComplete({ ...full, [key]: "  " })).toBe(false);
       expect(isCompanyProfileComplete({ ...full, [key]: null })).toBe(false);
     }
+  });
+});
+
+describe("quotePreflight", () => {
+  const ok = { profile: full, itemCount: 1, recipients: ["kunde@example.com"], validUntil: "2026-11-06", today: "2026-10-07" };
+
+  it("passes when every rule holds", () => {
+    expect(quotePreflight(ok)).toEqual([]);
+  });
+  it("accepts a quote valid until today", () => {
+    expect(quotePreflight({ ...ok, validUntil: "2026-10-07" })).toEqual([]);
+  });
+  it("lists every blocker in a stable order", () => {
+    expect(quotePreflight({ profile: null, itemCount: 0, recipients: [], validUntil: "2026-10-06", today: "2026-10-07" }))
+      .toEqual(["profile_incomplete", "no_items", "no_recipient", "valid_until_past"]);
+  });
+  it("treats blank recipients as missing", () => {
+    expect(quotePreflight({ ...ok, recipients: ["  ", ""] })).toEqual(["no_recipient"]);
+  });
+  it("flags an incomplete profile", () => {
+    expect(quotePreflight({ ...ok, profile: { ...full, email: null } })).toEqual(["profile_incomplete"]);
   });
 });

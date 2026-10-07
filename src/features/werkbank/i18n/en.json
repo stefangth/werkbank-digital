@@ -3,7 +3,8 @@
     "customers": "Customers",
     "catalog": "Services",
     "technicians": "Technicians",
-    "properties": "Properties"
+    "properties": "Properties",
+    "quotes": "Quotes"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -87,7 +88,13 @@
     "itemNoTaken": "This item number is already taken.",
     "inUse": "This is still in use. Archive it instead.",
     "forbidden": "You do not have the rights for that.",
-    "generic": "That did not work. Please try again."
+    "generic": "That did not work. Please try again.",
+    "quoteLocked": "This quote is no longer a draft and cannot be changed.",
+    "orderLocked": "This order is closed and cannot be changed.",
+    "propertyMismatch": "The property does not belong to this customer.",
+    "invalidTransition": "That is not possible in the current status.",
+    "orderExists": "An order already exists for this quote.",
+    "notAllowedHere": "You cannot change that here."
   },
   "units": {
     "HUR": "h",
@@ -499,5 +506,263 @@
     "back": "Back",
     "continue": "Continue",
     "done": "Done"
+  },
+  "pickers": {
+    "catalog": {
+      "trigger": "Add catalog item",
+      "search": "Search items",
+      "none": "No item found"
+    },
+    "property": {
+      "placeholder": "Choose property",
+      "search": "Search properties",
+      "none": "No property found",
+      "needCustomer": "Choose a customer first",
+      "archived": "archived"
+    },
+    "contact": {
+      "placeholder": "Choose contact",
+      "none": "No selection",
+      "property": "Property",
+      "customer": "Customer"
+    }
+  },
+  "lineItems": {
+    "empty": "No line items yet.",
+    "addFree": "Free item",
+    "addTitle": "Add title",
+    "addText": "Add text",
+    "drag": "Move",
+    "name": "Description",
+    "title": "Title",
+    "text": "Text",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "labour": "Labour",
+    "material": "Material",
+    "vat": "VAT",
+    "lineNet": "Net",
+    "deleteTitle": "Delete title",
+    "deleteTitleBody": "This title has items. Only the title is deleted, the items stay."
+  },
+  "totals": {
+    "title": "Totals",
+    "net": "Net",
+    "discount": "Discount",
+    "vat": "VAT {{rate}} %",
+    "gross": "Gross",
+    "labour": "of which labour (§35a EStG)"
+  },
+  "quotes": {
+    "title": "Quotes",
+    "sub": "Write quotes, send them and follow the answer.",
+    "add": "Create quote",
+    "loadFailed": "The quotes could not be loaded.",
+    "searchLabel": "Search quotes",
+    "searchPlaceholder": "Number, customer or subject",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "superseded": "Superseded"
+    },
+    "noMatches": "No quote matches your search.",
+    "noMatchesReason": "Try another term or status.",
+    "empty": {
+      "title": "No quotes yet",
+      "body": "Create your first quote for a customer.",
+      "action": "Create first quote"
+    },
+    "notice": {
+      "acceptedNoOrder": "Accepted, no order yet",
+      "show": "Show"
+    },
+    "columns": {
+      "number": "No.",
+      "customer": "Customer",
+      "subject": "Subject",
+      "status": "Status",
+      "validUntil": "Valid until",
+      "net": "Net",
+      "gross": "Gross"
+    },
+    "new": {
+      "title": "New quote",
+      "customer": "Customer",
+      "create": "Create draft"
+    },
+    "page": {
+      "loadFailed": "The quote could not be loaded.",
+      "back": "All quotes",
+      "versions": "Versions",
+      "version": "Version {{count}}",
+      "notFound": {
+        "title": "Quote not found",
+        "reason": "It may have been deleted.",
+        "back": "Back to quotes"
+      },
+      "linkRevoked": "Link blocked",
+      "sentOn": "Sent on {{date}}",
+      "revise": "Revise",
+      "copy": "Copy",
+      "extend": "Extend",
+      "revokeLink": "Block link",
+      "delete": "Delete draft",
+      "extendLabel": "New validity date",
+      "extendConfirm": "Extend",
+      "deleteTitle": "Delete this draft?",
+      "deleteBody": "The draft {{number}} and its items are removed for good.",
+      "readOnly": "This quote has been sent. Revise it to change the content.",
+      "pdf": "PDF",
+      "resend": "Resend",
+      "send": "Send",
+      "preview": "Preview",
+      "pdfFailed": "The PDF could not be opened.",
+      "pdfBlocked": "Your browser blocked the new tab.",
+      "pdfOpen": "Open PDF"
+    },
+    "header": {
+      "customer": "Customer",
+      "property": "Property",
+      "contact": "Contact",
+      "locationNote": "Location note",
+      "subject": "Subject",
+      "validUntil": "Valid until",
+      "discount": "Discount in percent",
+      "intro": "Introduction",
+      "closing": "Closing text",
+      "paymentTerms": "Payment terms",
+      "none": "Not set",
+      "pickDate": "Pick a date"
+    },
+    "history": {
+      "title": "History",
+      "sent": "Sent",
+      "sentTo": "to {{recipients}}",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "by": "by {{name}}",
+      "comment": "Comment",
+      "signature": "Signature of {{name}}"
+    },
+    "sent": "The quote has been sent.",
+    "emailFailed": "The quote is sent, but the email did not go out.",
+    "send": {
+      "title": "Send quote",
+      "hint": "The customer gets the PDF and a link to accept or decline online.",
+      "resendTitle": "Send quote again",
+      "resendHint": "The customer gets the same PDF with a new link. Old links stop working afterwards.",
+      "to": "To",
+      "cc": "Copy (CC)",
+      "message": "Message",
+      "defaultMessage": "Hello,\n\nplease find our quote attached. We are happy to answer any questions.\n\nKind regards",
+      "preview": "Preview",
+      "submit": "Send",
+      "resend": "Send again",
+      "blockers": {
+        "profile_incomplete": "Your company details are incomplete. Add name, address, email and a tax number or VAT id in the settings.",
+        "no_items": "The quote has no item yet.",
+        "no_recipient": "Add at least one recipient.",
+        "valid_until_past": "The validity date has passed. Pick a later date."
+      },
+      "errors": {
+        "forbidden": "You do not have the rights for that.",
+        "notFound": "This quote no longer exists.",
+        "invalidState": "The quote was changed in the meantime. Reload the page.",
+        "invalidRecipient": "One of the email addresses is not valid.",
+        "tooManyRecipients": "There are too many recipients.",
+        "pdfMissing": "The stored PDF is missing. Revise the quote and send it again.",
+        "preflight": "The quote cannot be sent yet.",
+        "generic": "That did not work. Please try again.",
+        "profileLoad": "Your company details could not be loaded. Reload the page."
+      }
+    }
+  },
+  "publicQuote": {
+    "title": "Quote",
+    "metaDate": "Date",
+    "metaValidUntil": "Valid until",
+    "recipient": "Quote for",
+    "location": "Place of work",
+    "positions": "Services",
+    "quantityTimesPrice": "{{quantity}} {{unit}} × {{price}}",
+    "sectionSubtotal": "Subtotal {{title}}",
+    "totals": {
+      "net": "Total net",
+      "discount": "Discount ({{percent}} %)",
+      "vat": "VAT {{rate}} %",
+      "gross": "Total gross",
+      "labour": "Of which labour net"
+    },
+    "paymentTerms": "Payment terms",
+    "pdf": "Open quote as PDF",
+    "loading": "Loading the quote.",
+    "loadFailed": "The quote could not be loaded. Reload the page.",
+    "decide": {
+      "title": "Respond to the quote",
+      "name": "Your full name",
+      "signature": "Signature",
+      "comment": "Comment (optional)",
+      "accept": "Accept the quote with binding effect",
+      "reject": "Reject the quote",
+      "openReject": "Reject instead",
+      "back": "Back to accepting",
+      "sending": "Sending",
+      "rejectHint": "You can tell the supplier why you reject the quote."
+    },
+    "errors": {
+      "invalid_signer_name": "Enter your full name.",
+      "invalid_signature": "Sign the quote, typed or drawn.",
+      "consent_required": "Confirm the declaration of acceptance.",
+      "generic": "Your response could not be saved. Try again."
+    },
+    "closed": {
+      "not_found": {
+        "title": "Link not found",
+        "body": "This quote link does not exist. Check that you copied the full address."
+      },
+      "superseded": {
+        "title": "This quote was revised",
+        "body": "A newer version exists. Use the link in the latest email or ask the supplier."
+      },
+      "revoked": {
+        "title": "This link is no longer valid",
+        "body": "The supplier withdrew the link. Use the link in the latest email or ask the supplier."
+      },
+      "expired": {
+        "title": "This quote has expired",
+        "body": "The validity period is over. Ask the supplier for a new quote."
+      },
+      "decided_accepted": {
+        "title": "This quote was already accepted",
+        "body": "Nothing more is needed."
+      },
+      "decided_rejected": {
+        "title": "This quote was already rejected",
+        "body": "Nothing more is needed."
+      },
+      "nothingSigned": "Nothing was signed. Your input was not saved."
+    },
+    "thanks": {
+      "accepted": {
+        "title": "Thank you, the quote is accepted",
+        "body": "You will receive a confirmation by email."
+      },
+      "rejected": {
+        "title": "Thank you for your response",
+        "body": "The quote was rejected. You will receive a confirmation by email."
+      },
+      "pdf": "Open the accepted quote as PDF"
+    },
+    "signature": {
+      "type": "Type",
+      "draw": "Draw",
+      "legalName": "Your full name",
+      "clear": "Clear"
+    }
   }
 }

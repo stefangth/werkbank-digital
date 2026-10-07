@@ -3,7 +3,8 @@
     "customers": "Kunden",
     "catalog": "Leistungen",
     "technicians": "Monteure",
-    "properties": "Liegenschaften"
+    "properties": "Liegenschaften",
+    "quotes": "Angebote"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -87,7 +88,13 @@
     "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",
     "inUse": "Das wird noch verwendet. Archiviere es stattdessen.",
     "forbidden": "Dafür fehlen dir die Rechte.",
-    "generic": "Das hat nicht geklappt. Versuch es bitte noch einmal."
+    "generic": "Das hat nicht geklappt. Versuch es bitte noch einmal.",
+    "quoteLocked": "Dieses Angebot ist kein Entwurf mehr und kann nicht geändert werden.",
+    "orderLocked": "Dieser Auftrag ist abgeschlossen und kann nicht geändert werden.",
+    "propertyMismatch": "Das Objekt gehört nicht zu diesem Kunden.",
+    "invalidTransition": "Das ist im aktuellen Status nicht möglich.",
+    "orderExists": "Zu diesem Angebot gibt es schon einen Auftrag.",
+    "notAllowedHere": "Das kannst Du hier nicht ändern."
   },
   "units": {
     "HUR": "Std",
@@ -499,5 +506,263 @@
     "back": "Zurück",
     "continue": "Weiter",
     "done": "Fertig"
+  },
+  "pickers": {
+    "catalog": {
+      "trigger": "Katalogartikel hinzufügen",
+      "search": "Artikel suchen",
+      "none": "Kein Artikel gefunden"
+    },
+    "property": {
+      "placeholder": "Liegenschaft wählen",
+      "search": "Liegenschaft suchen",
+      "none": "Keine Liegenschaft gefunden",
+      "needCustomer": "Wähle zuerst einen Kunden",
+      "archived": "archiviert"
+    },
+    "contact": {
+      "placeholder": "Ansprechpartner wählen",
+      "none": "Keine Auswahl",
+      "property": "Liegenschaft",
+      "customer": "Kunde"
+    }
+  },
+  "lineItems": {
+    "empty": "Noch keine Positionen.",
+    "addFree": "Freie Position",
+    "addTitle": "Titel hinzufügen",
+    "addText": "Text hinzufügen",
+    "drag": "Verschieben",
+    "name": "Bezeichnung",
+    "title": "Titel",
+    "text": "Text",
+    "quantity": "Menge",
+    "unit": "Einheit",
+    "labour": "Lohn",
+    "material": "Material",
+    "vat": "MwSt.",
+    "lineNet": "Netto",
+    "deleteTitle": "Titel löschen",
+    "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten."
+  },
+  "totals": {
+    "title": "Summen",
+    "net": "Netto",
+    "discount": "Rabatt",
+    "vat": "MwSt. {{rate}} %",
+    "gross": "Brutto",
+    "labour": "davon Lohnanteil (§35a EStG)"
+  },
+  "quotes": {
+    "title": "Angebote",
+    "sub": "Schreibe Angebote, verschicke sie und behalte die Antwort im Blick.",
+    "add": "Angebot anlegen",
+    "loadFailed": "Die Angebote konnten nicht geladen werden.",
+    "searchLabel": "Angebote durchsuchen",
+    "searchPlaceholder": "Nummer, Kunde oder Betreff",
+    "statusFilter": "Status",
+    "allStatuses": "Alle Status",
+    "status": {
+      "draft": "Entwurf",
+      "sent": "Versendet",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "expired": "Abgelaufen",
+      "superseded": "Ersetzt"
+    },
+    "noMatches": "Kein Angebot passt zu deiner Suche.",
+    "noMatchesReason": "Versuche einen anderen Begriff oder Status.",
+    "empty": {
+      "title": "Noch keine Angebote",
+      "body": "Leg dein erstes Angebot für einen Kunden an.",
+      "action": "Erstes Angebot anlegen"
+    },
+    "notice": {
+      "acceptedNoOrder": "Angenommen, noch kein Auftrag",
+      "show": "Anzeigen"
+    },
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde",
+      "subject": "Betreff",
+      "status": "Status",
+      "validUntil": "Gültig bis",
+      "net": "Netto",
+      "gross": "Brutto"
+    },
+    "new": {
+      "title": "Neues Angebot",
+      "customer": "Kunde",
+      "create": "Entwurf anlegen"
+    },
+    "page": {
+      "loadFailed": "Das Angebot konnte nicht geladen werden.",
+      "back": "Alle Angebote",
+      "versions": "Versionen",
+      "version": "Version {{count}}",
+      "notFound": {
+        "title": "Angebot nicht gefunden",
+        "reason": "Vielleicht wurde es gelöscht.",
+        "back": "Zurück zu den Angeboten"
+      },
+      "linkRevoked": "Link gesperrt",
+      "sentOn": "Versendet am {{date}}",
+      "revise": "Überarbeiten",
+      "copy": "Kopieren",
+      "extend": "Verlängern",
+      "revokeLink": "Link sperren",
+      "delete": "Entwurf löschen",
+      "extendLabel": "Neues Gültigkeitsdatum",
+      "extendConfirm": "Verlängern",
+      "deleteTitle": "Diesen Entwurf löschen?",
+      "deleteBody": "Der Entwurf {{number}} und seine Positionen werden endgültig gelöscht.",
+      "readOnly": "Dieses Angebot ist versendet. Überarbeite es, um den Inhalt zu ändern.",
+      "pdf": "PDF",
+      "resend": "Erneut senden",
+      "send": "Senden",
+      "preview": "Vorschau",
+      "pdfFailed": "Das PDF konnte nicht geöffnet werden.",
+      "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
+      "pdfOpen": "PDF öffnen"
+    },
+    "header": {
+      "customer": "Kunde",
+      "property": "Liegenschaft",
+      "contact": "Ansprechpartner",
+      "locationNote": "Hinweis zum Ort",
+      "subject": "Betreff",
+      "validUntil": "Gültig bis",
+      "discount": "Rabatt in Prozent",
+      "intro": "Einleitung",
+      "closing": "Schlusstext",
+      "paymentTerms": "Zahlungsbedingungen",
+      "none": "Nicht gesetzt",
+      "pickDate": "Datum wählen"
+    },
+    "history": {
+      "title": "Verlauf",
+      "sent": "Versendet",
+      "sentTo": "an {{recipients}}",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "by": "von {{name}}",
+      "comment": "Kommentar",
+      "signature": "Unterschrift von {{name}}"
+    },
+    "sent": "Das Angebot wurde versendet.",
+    "emailFailed": "Das Angebot ist versendet, aber die E-Mail ist nicht rausgegangen.",
+    "send": {
+      "title": "Angebot senden",
+      "hint": "Der Kunde bekommt das PDF und einen Link, um online anzunehmen oder abzulehnen.",
+      "resendTitle": "Angebot erneut senden",
+      "resendHint": "Der Kunde bekommt dasselbe PDF mit einem neuen Link. Alte Links funktionieren danach nicht mehr.",
+      "to": "An",
+      "cc": "Kopie (CC)",
+      "message": "Nachricht",
+      "defaultMessage": "Guten Tag,\n\nanbei unser Angebot. Bei Rückfragen sind wir gern erreichbar.\n\nFreundliche Grüße",
+      "preview": "Vorschau",
+      "submit": "Senden",
+      "resend": "Erneut senden",
+      "blockers": {
+        "profile_incomplete": "Die Firmendaten sind unvollständig. Ergänze Name, Adresse, E-Mail und Steuernummer oder USt-IdNr. in den Einstellungen.",
+        "no_items": "Das Angebot hat noch keine Position.",
+        "no_recipient": "Gib mindestens einen Empfänger an.",
+        "valid_until_past": "Das Gültigkeitsdatum ist vorbei. Wähle ein späteres Datum."
+      },
+      "errors": {
+        "forbidden": "Dafür fehlen Dir die Rechte.",
+        "notFound": "Dieses Angebot gibt es nicht mehr.",
+        "invalidState": "Das Angebot wurde zwischenzeitlich geändert. Lade die Seite neu.",
+        "invalidRecipient": "Eine der E-Mail-Adressen ist nicht gültig.",
+        "tooManyRecipients": "Es sind zu viele Empfänger.",
+        "pdfMissing": "Das gespeicherte PDF fehlt. Überarbeite das Angebot und sende es neu.",
+        "preflight": "Das Angebot kann noch nicht gesendet werden.",
+        "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+        "profileLoad": "Die Firmendaten konnten nicht geladen werden. Lade die Seite neu."
+      }
+    }
+  },
+  "publicQuote": {
+    "title": "Angebot",
+    "metaDate": "Datum",
+    "metaValidUntil": "Gültig bis",
+    "recipient": "Angebot für",
+    "location": "Ausführungsort",
+    "positions": "Leistungen",
+    "quantityTimesPrice": "{{quantity}} {{unit}} × {{price}}",
+    "sectionSubtotal": "Summe {{title}}",
+    "totals": {
+      "net": "Summe netto",
+      "discount": "Nachlass ({{percent}} %)",
+      "vat": "Umsatzsteuer {{rate}} %",
+      "gross": "Gesamtbetrag brutto",
+      "labour": "Davon Lohnkosten netto"
+    },
+    "paymentTerms": "Zahlungsbedingungen",
+    "pdf": "Angebot als PDF öffnen",
+    "loading": "Das Angebot wird geladen.",
+    "loadFailed": "Das Angebot konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
+    "decide": {
+      "title": "Angebot beantworten",
+      "name": "Ihr vollständiger Name",
+      "signature": "Unterschrift",
+      "comment": "Anmerkung (optional)",
+      "accept": "Angebot verbindlich annehmen",
+      "reject": "Angebot ablehnen",
+      "openReject": "Stattdessen ablehnen",
+      "back": "Zurück zur Annahme",
+      "sending": "Wird gesendet",
+      "rejectHint": "Sie können dem Anbieter mitteilen, warum Sie das Angebot ablehnen."
+    },
+    "errors": {
+      "invalid_signer_name": "Bitte geben Sie Ihren vollständigen Namen an.",
+      "invalid_signature": "Bitte unterschreiben Sie das Angebot, getippt oder gezeichnet.",
+      "consent_required": "Bitte bestätigen Sie die Erklärung zur Annahme.",
+      "generic": "Ihre Antwort konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+    },
+    "closed": {
+      "not_found": {
+        "title": "Link nicht gefunden",
+        "body": "Dieser Angebotslink existiert nicht. Bitte prüfen Sie, ob Sie die vollständige Adresse kopiert haben."
+      },
+      "superseded": {
+        "title": "Dieses Angebot wurde überarbeitet",
+        "body": "Es gibt eine neuere Fassung. Bitte nutzen Sie den Link aus der neuesten E-Mail oder fragen Sie beim Anbieter nach."
+      },
+      "revoked": {
+        "title": "Dieser Link ist nicht mehr gültig",
+        "body": "Der Anbieter hat den Link zurückgezogen. Bitte nutzen Sie den Link aus der neuesten E-Mail oder fragen Sie beim Anbieter nach."
+      },
+      "expired": {
+        "title": "Dieses Angebot ist abgelaufen",
+        "body": "Die Gültigkeit ist beendet. Bitte fragen Sie beim Anbieter nach einem neuen Angebot."
+      },
+      "decided_accepted": {
+        "title": "Dieses Angebot wurde bereits angenommen",
+        "body": "Es sind keine weiteren Eingaben nötig."
+      },
+      "decided_rejected": {
+        "title": "Dieses Angebot wurde bereits abgelehnt",
+        "body": "Es sind keine weiteren Eingaben nötig."
+      },
+      "nothingSigned": "Es wurde nichts unterschrieben. Ihre Eingaben wurden nicht gespeichert."
+    },
+    "thanks": {
+      "accepted": {
+        "title": "Vielen Dank, das Angebot ist angenommen",
+        "body": "Sie erhalten eine Bestätigung per E-Mail."
+      },
+      "rejected": {
+        "title": "Vielen Dank für Ihre Antwort",
+        "body": "Das Angebot wurde abgelehnt. Sie erhalten eine Bestätigung per E-Mail."
+      },
+      "pdf": "Angenommenes Angebot als PDF öffnen"
+    },
+    "signature": {
+      "type": "Tippen",
+      "draw": "Zeichnen",
+      "legalName": "Ihr vollständiger Name",
+      "clear": "Löschen"
+    }
   }
 }

@@ -29,7 +29,8 @@ export type PageKey =
   | 'hireOrders'
   | 'customers'
   | 'properties'
-  | 'catalog';
+  | 'catalog'
+  | 'quotes';
 
 export interface MiniStepCopy {
   /** Short uppercase step label, e.g. "Booking engine". */

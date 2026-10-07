@@ -3,9 +3,9 @@
 // instead of the main bundle every Showflow user downloads; the core renders module
 // pages and dashboards inside Suspense (SuspendedPage).
 import { lazy } from "react";
-import { Building2, HardHat, Home, Wrench } from "lucide-react";
+import { Building2, FileText, HardHat, Home, Wrench } from "lucide-react";
 import type { ModuleUi } from "@/modules/ui";
-import { CATALOG_PATH, CUSTOMERS_PATH, PROPERTIES_PATH, TECHNICIANS_PATH } from "./paths";
+import { CATALOG_PATH, CUSTOMERS_PATH, PROPERTIES_PATH, PUBLIC_QUOTE_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 export const loadTechniciansPage = () =>
   import("./pages/TechniciansPage").then((m) => ({ default: m.TechniciansPage }));
@@ -27,6 +27,18 @@ export const loadPropertiesPage = () =>
 export const loadPropertyDetailPage = () =>
   import("./pages/PropertyDetailPage").then((m) => ({ default: m.PropertyDetailPage }));
 
+export const loadQuotesPage = () =>
+  import("./pages/QuotesPage").then((m) => ({ default: m.QuotesPage }));
+
+export const loadQuotePage = () =>
+  import("./pages/QuotePage").then((m) => ({ default: m.QuotePage }));
+
+export const loadQuotePublicPage = () =>
+  import("./pages/QuotePublicPage").then((m) => ({ default: m.QuotePublicPage }));
+
+const QuotePublicPage = lazy(loadQuotePublicPage);
+const QuotesPage = lazy(loadQuotesPage);
+const QuotePage = lazy(loadQuotePage);
 const PropertiesPage = lazy(loadPropertiesPage);
 const PropertyDetailPage = lazy(loadPropertyDetailPage);
 const CustomersPage = lazy(loadCustomersPage);
@@ -51,6 +63,15 @@ export const werkbankUi: ModuleUi = {
       icon: Home,
       label: "Properties",
       labelKey: "werkbank:nav.properties",
+      section: "workspace",
+      roles: ["admin", "producer"],
+      kinds: ["handwerk"],
+    },
+    {
+      to: QUOTES_PATH,
+      icon: FileText,
+      label: "Quotes",
+      labelKey: "werkbank:nav.quotes",
       section: "workspace",
       roles: ["admin", "producer"],
       kinds: ["handwerk"],
@@ -100,6 +121,18 @@ export const werkbankUi: ModuleUi = {
       Page: PropertyDetailPage,
     },
     {
+      path: QUOTES_PATH,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer"],
+      Page: QuotesPage,
+    },
+    {
+      path: `${QUOTES_PATH}/:id`,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer"],
+      Page: QuotePage,
+    },
+    {
       path: CATALOG_PATH,
       kinds: ["handwerk"],
       requiredRoles: ["admin", "producer"],
@@ -112,6 +145,6 @@ export const werkbankUi: ModuleUi = {
       Page: TechniciansPage,
     },
   ],
-  publicRoutes: [],
+  publicRoutes: [{ path: PUBLIC_QUOTE_PATH, Page: QuotePublicPage }],
   dashboards: { handwerk: WerkbankDashboard },
 };

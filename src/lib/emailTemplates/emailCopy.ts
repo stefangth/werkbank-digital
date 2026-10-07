@@ -19,6 +19,9 @@ export const EMAIL_TEMPLATE_KEYS = [
   "magic-link",
   "cron-health-alert",
   "airtable-sync-held",
+  "quote-sent",
+  "quote-decided",
+  "quote-decision-confirmation",
 ] as const;
 
 export type EmailTemplateKey = typeof EMAIL_TEMPLATE_KEYS[number];
@@ -344,6 +347,51 @@ export const EMAIL_COPY_DEFAULTS = {
   // hour, not once a day. The inbox snippet must not claim more than the body does.
   "airtable-sync-held.previewTextZeroImport": "The Airtable sync in {{orgName}} brought in nothing this time.",
   "airtable-sync-held.orgFallback": "your organization",
+
+  // Quote emails of the trade module. quote-sent and quote-decision-confirmation go to the
+  // business's customer, quote-decided to the office. Delivery forces the German base for
+  // the customer emails; these English lines render only for an org without German.
+  "quote-sent.subject": "Quote {{quoteNo}} · {{companyName}}",
+  "quote-sent.heading": "Your quote",
+  "quote-sent.greeting": "Hello,",
+  "quote-sent.intro": "{{companyName}} is sending you quote {{quoteNo}}. You will find the PDF attached.",
+  "quote-sent.acceptPrompt": "You can view the quote online and accept or decline it right away.",
+  "quote-sent.ctaLabel": "View quote",
+  "quote-sent.quoteLabel": "Quote:",
+  "quote-sent.subjectLabel": "Subject:",
+  "quote-sent.validUntilLabel": "Valid until:",
+  "quote-sent.pasteLink": "Or copy this link into your browser:",
+  "quote-sent.footer": "Questions? Simply reply to this email.",
+  "quote-sent.previewText": "Quote {{quoteNo}} from {{companyName}}",
+  "quote-sent.companyFallback": "Your contractor",
+
+  "quote-decided.subjectAccepted": "Quote {{quoteNo}} was accepted",
+  "quote-decided.subjectRejected": "Quote {{quoteNo}} was declined",
+  "quote-decided.headingAccepted": "Quote accepted",
+  "quote-decided.headingRejected": "Quote declined",
+  "quote-decided.introAccepted": "{{signerName}} accepted quote {{quoteNo}} for {{customerName}} online. You can create the order now.",
+  "quote-decided.introRejected": "{{signerName}} declined quote {{quoteNo}} for {{customerName}} online.",
+  "quote-decided.commentLabel": "Comment:",
+  "quote-decided.ctaLabel": "Open quote",
+  "quote-decided.footer": "You get this email because you manage quotes for this business.",
+  "quote-decided.previewText": "New decision on quote {{quoteNo}}",
+  "quote-decided.signerFallback": "The customer",
+  "quote-decided.customerFallback": "your customer",
+
+  "quote-decision-confirmation.subjectAccepted": "Confirmation: you accepted quote {{quoteNo}}",
+  "quote-decision-confirmation.subjectRejected": "Confirmation: you declined quote {{quoteNo}}",
+  "quote-decision-confirmation.headingAccepted": "Thank you for your order",
+  "quote-decision-confirmation.headingRejected": "Your answer has arrived",
+  "quote-decision-confirmation.greeting": "Hello {{signerName}},",
+  "quote-decision-confirmation.greetingAnonymous": "Hello,",
+  "quote-decision-confirmation.introAccepted": "You accepted quote {{quoteNo}}. {{companyName}} has received your acceptance. You will find the signed quote attached as a PDF.",
+  "quote-decision-confirmation.introRejected": "You declined quote {{quoteNo}}. {{companyName}} has received your answer.",
+  "quote-decision-confirmation.followupAccepted": "{{companyName}} will contact you to agree on the next steps.",
+  "quote-decision-confirmation.quoteLabel": "Quote:",
+  "quote-decision-confirmation.decidedAtLabel": "Date:",
+  "quote-decision-confirmation.footer": "Questions? Simply reply to this email.",
+  "quote-decision-confirmation.previewText": "Confirmation for quote {{quoteNo}}",
+  "quote-decision-confirmation.companyFallback": "The business",
 } as const;
 
 export type EmailCopyKey = keyof typeof EMAIL_COPY_DEFAULTS;
@@ -561,6 +609,51 @@ export const EMAIL_COPY_DE: EmailCopy = {
   "airtable-sync-held.previewTextHeld": "{{heldCount}} Airtable-{{heldRecord}} warten auf Dich in {{orgName}}.",
   "airtable-sync-held.previewTextZeroImport": "Der Airtable-Sync in {{orgName}} hat diesmal nichts übernommen.",
   "airtable-sync-held.orgFallback": "Deine Organisation",
+
+  // Customer emails (quote-sent, quote-decision-confirmation) use the formal Sie: the
+  // reader is the business's customer, not a user of the app (named exemption in
+  // emailCopy.test.ts). quote-decided goes to the office and uses Du like all app copy.
+  "quote-sent.subject": "Angebot {{quoteNo}} · {{companyName}}",
+  "quote-sent.heading": "Ihr Angebot",
+  "quote-sent.greeting": "Guten Tag,",
+  "quote-sent.intro": "{{companyName}} sendet Ihnen das Angebot {{quoteNo}}. Das PDF finden Sie im Anhang.",
+  "quote-sent.acceptPrompt": "Sie können das Angebot online ansehen und direkt annehmen oder ablehnen.",
+  "quote-sent.ctaLabel": "Angebot ansehen",
+  "quote-sent.quoteLabel": "Angebot:",
+  "quote-sent.subjectLabel": "Betreff:",
+  "quote-sent.validUntilLabel": "Gültig bis:",
+  "quote-sent.pasteLink": "Oder kopieren Sie diesen Link in Ihren Browser:",
+  "quote-sent.footer": "Bei Fragen antworten Sie einfach auf diese E-Mail.",
+  "quote-sent.previewText": "Angebot {{quoteNo}} von {{companyName}}",
+  "quote-sent.companyFallback": "Ihr Betrieb",
+
+  "quote-decided.subjectAccepted": "Angebot {{quoteNo}} wurde angenommen",
+  "quote-decided.subjectRejected": "Angebot {{quoteNo}} wurde abgelehnt",
+  "quote-decided.headingAccepted": "Angebot angenommen",
+  "quote-decided.headingRejected": "Angebot abgelehnt",
+  "quote-decided.introAccepted": "{{signerName}} hat das Angebot {{quoteNo}} für {{customerName}} online angenommen. Du kannst jetzt den Auftrag anlegen.",
+  "quote-decided.introRejected": "{{signerName}} hat das Angebot {{quoteNo}} für {{customerName}} online abgelehnt.",
+  "quote-decided.commentLabel": "Kommentar:",
+  "quote-decided.ctaLabel": "Angebot öffnen",
+  "quote-decided.footer": "Du bekommst diese E-Mail, weil Du in diesem Betrieb Angebote verwaltest.",
+  "quote-decided.previewText": "Neue Entscheidung zu Angebot {{quoteNo}}",
+  "quote-decided.signerFallback": "Der Kunde",
+  "quote-decided.customerFallback": "Deinen Kunden",
+
+  "quote-decision-confirmation.subjectAccepted": "Bestätigung: Sie haben das Angebot {{quoteNo}} angenommen",
+  "quote-decision-confirmation.subjectRejected": "Bestätigung: Sie haben das Angebot {{quoteNo}} abgelehnt",
+  "quote-decision-confirmation.headingAccepted": "Vielen Dank für Ihren Auftrag",
+  "quote-decision-confirmation.headingRejected": "Ihre Antwort ist angekommen",
+  "quote-decision-confirmation.greeting": "Guten Tag {{signerName}},",
+  "quote-decision-confirmation.greetingAnonymous": "Guten Tag,",
+  "quote-decision-confirmation.introAccepted": "Sie haben das Angebot {{quoteNo}} angenommen. {{companyName}} hat Ihre Annahme erhalten. Das unterschriebene Angebot finden Sie als PDF im Anhang.",
+  "quote-decision-confirmation.introRejected": "Sie haben das Angebot {{quoteNo}} abgelehnt. {{companyName}} hat Ihre Antwort erhalten.",
+  "quote-decision-confirmation.followupAccepted": "{{companyName}} meldet sich bei Ihnen, um die nächsten Schritte abzustimmen.",
+  "quote-decision-confirmation.quoteLabel": "Angebot:",
+  "quote-decision-confirmation.decidedAtLabel": "Datum:",
+  "quote-decision-confirmation.footer": "Bei Fragen antworten Sie einfach auf diese E-Mail.",
+  "quote-decision-confirmation.previewText": "Bestätigung zu Angebot {{quoteNo}}",
+  "quote-decision-confirmation.companyFallback": "Der Betrieb",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -295,6 +295,13 @@ export function createFakeClient(opts: FakeClientOptions = {}) {
           calls.push({ table: key, method: "from", args: [] });
           return builder(key);
         },
+        // `client.schema(name).rpc(fn)`: recorded as `rpc:<schema>.<fn>` and seeded through
+        // `rpcs["<schema>.<fn>"]`.
+        rpc(fn: string, params?: unknown) {
+          const key = `${name}.${fn}`;
+          calls.push({ table: `rpc:${key}`, method: "rpc", args: [params] });
+          return Promise.resolve(rpcs[key] ?? { data: null, error: null });
+        },
       };
     },
     rpc(name: string, params?: unknown) {

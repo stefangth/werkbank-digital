@@ -15,13 +15,19 @@ interface Props {
   value: SignatureValue | null;
   onChange: (v: SignatureValue | null) => void;
   disabled?: boolean;
+  /** Overrides the `common` namespace labels (a page in another language or register). */
+  labels?: { type: string; draw: string; legalName: string; clear: string };
 }
 
 /** Type-or-draw signature capture. Typed renders the name in a serif face as the
  *  signing mark; Draw uses signature_pad (velocity-smoothed ink, retina/touch
  *  handled). Emits null when the active method has no content. */
-export function SignaturePad({ value, onChange, disabled }: Props) {
+export function SignaturePad({ value, onChange, disabled, labels }: Props) {
   const { t } = useTranslation("common");
+  const text = labels ?? {
+    type: t("signaturePad.type"), draw: t("signaturePad.draw"),
+    legalName: t("signaturePad.legalName"), clear: t("signaturePad.clear"),
+  };
   const typed = value?.method === "typed" ? value.typedName : "";
   const padRef = useRef<SignaturePadLib | null>(null);
   // Latest-callback ref so the stable (deps: []) `setCanvas` callback ref and the
@@ -71,14 +77,14 @@ export function SignaturePad({ value, onChange, disabled }: Props) {
   return (
     <Tabs defaultValue="draw" onValueChange={() => onChange(null)}>
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="type">{t("signaturePad.type")}</TabsTrigger>
-        <TabsTrigger value="draw">{t("signaturePad.draw")}</TabsTrigger>
+        <TabsTrigger value="type">{text.type}</TabsTrigger>
+        <TabsTrigger value="draw">{text.draw}</TabsTrigger>
       </TabsList>
       <TabsContent value="type" className="space-y-2">
-        <Label htmlFor="sig-typed" className="text-xs text-muted-foreground">{t("signaturePad.legalName")}</Label>
+        <Label htmlFor="sig-typed" className="text-xs text-muted-foreground">{text.legalName}</Label>
         <Input
           id="sig-typed"
-          placeholder={t("signaturePad.legalName")}
+          placeholder={text.legalName}
           value={typed}
           disabled={disabled}
           onChange={(e) => {
@@ -102,7 +108,7 @@ export function SignaturePad({ value, onChange, disabled }: Props) {
         />
         <div className="flex justify-end">
           <Button type="button" variant="secondary" size="sm" onClick={clearDrawn} disabled={disabled}>
-            {t("signaturePad.clear")}
+            {text.clear}
           </Button>
         </div>
       </TabsContent>

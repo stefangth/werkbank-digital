@@ -52,6 +52,16 @@ describe("notificationTarget", () => {
     }
   });
 
+  it("routes a werkbank_quote notification to the quote page when an id is present", () => {
+    for (const ctx of [admin, producer, superAdmin]) {
+      expect(notificationTarget({ related_entity_type: "werkbank_quote", related_entity_id: "q-1" }, ctx)).toBe("/quotes/q-1");
+    }
+  });
+
+  it("returns null for a werkbank_quote notification with no id", () => {
+    expect(notificationTarget({ related_entity_type: "werkbank_quote", related_entity_id: null }, admin)).toBeNull();
+  });
+
   it("returns null for a hire_order notification with no id", () => {
     expect(notificationTarget({ related_entity_type: "hire_order", related_entity_id: null }, admin)).toBeNull();
   });
