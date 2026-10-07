@@ -615,7 +615,12 @@
       "extendConfirm": "Verlängern",
       "deleteTitle": "Diesen Entwurf löschen?",
       "deleteBody": "Der Entwurf {{number}} und seine Positionen werden endgültig gelöscht.",
-      "readOnly": "Dieses Angebot ist versendet. Überarbeite es, um den Inhalt zu ändern."
+      "readOnly": "Dieses Angebot ist versendet. Überarbeite es, um den Inhalt zu ändern.",
+      "pdf": "PDF",
+      "resend": "Erneut senden",
+      "send": "Senden",
+      "preview": "Vorschau",
+      "pdfFailed": "Das PDF konnte nicht geöffnet werden."
     },
     "header": {
       "customer": "Kunde",
@@ -640,6 +645,37 @@
       "by": "von {{name}}",
       "comment": "Kommentar",
       "signature": "Unterschrift von {{name}}"
+    },
+    "sent": "Das Angebot wurde versendet.",
+    "emailFailed": "Das Angebot ist versendet, aber die E-Mail ist nicht rausgegangen.",
+    "send": {
+      "title": "Angebot senden",
+      "hint": "Der Kunde bekommt das PDF und einen Link, um online anzunehmen oder abzulehnen.",
+      "resendTitle": "Angebot erneut senden",
+      "resendHint": "Der Kunde bekommt dasselbe PDF mit einem neuen Link. Alte Links funktionieren danach nicht mehr.",
+      "to": "An",
+      "cc": "Kopie (CC)",
+      "message": "Nachricht",
+      "defaultMessage": "Guten Tag,\n\nanbei unser Angebot. Bei Rückfragen sind wir gern erreichbar.\n\nFreundliche Grüße",
+      "preview": "Vorschau",
+      "submit": "Senden",
+      "resend": "Erneut senden",
+      "blockers": {
+        "profile_incomplete": "Die Firmendaten sind unvollständig. Ergänze Name, Adresse, E-Mail und Steuernummer oder USt-IdNr. in den Einstellungen.",
+        "no_items": "Das Angebot hat noch keine Position.",
+        "no_recipient": "Gib mindestens einen Empfänger an.",
+        "valid_until_past": "Das Gültigkeitsdatum ist vorbei. Wähle ein späteres Datum."
+      },
+      "errors": {
+        "forbidden": "Dafür fehlen Dir die Rechte.",
+        "notFound": "Dieses Angebot gibt es nicht mehr.",
+        "invalidState": "Das Angebot wurde zwischenzeitlich geändert. Lade die Seite neu.",
+        "invalidRecipient": "Eine der E-Mail-Adressen ist nicht gültig.",
+        "tooManyRecipients": "Es sind zu viele Empfänger.",
+        "pdfMissing": "Das gespeicherte PDF fehlt. Überarbeite das Angebot und sende es neu.",
+        "preflight": "Das Angebot kann noch nicht gesendet werden.",
+        "generic": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+      }
     }
   }
 }

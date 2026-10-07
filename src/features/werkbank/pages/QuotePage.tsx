@@ -15,6 +15,7 @@ import { DatePopover } from "../components/DatePopover";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { DocumentTotalsCard } from "../components/DocumentTotalsCard";
 import { LineItemsEditor } from "../components/LineItemsEditor";
+import { QuoteActions } from "../components/QuoteActions";
 import { QuoteHeaderForm } from "../components/QuoteHeaderForm";
 import { QuoteHistory } from "../components/QuoteHistory";
 import type { QuotePatch } from "../data/quotes";
@@ -84,6 +85,7 @@ export function QuotePage() {
         title={quote.subject ?? number}
         actions={
           <>
+            <QuoteActions quote={quote} />
             {isDraft && (
               <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>
                 {t("quotes.page.delete")}

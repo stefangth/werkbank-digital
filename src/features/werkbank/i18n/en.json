@@ -615,7 +615,12 @@
       "extendConfirm": "Extend",
       "deleteTitle": "Delete this draft?",
       "deleteBody": "The draft {{number}} and its items are removed for good.",
-      "readOnly": "This quote has been sent. Revise it to change the content."
+      "readOnly": "This quote has been sent. Revise it to change the content.",
+      "pdf": "PDF",
+      "resend": "Resend",
+      "send": "Send",
+      "preview": "Preview",
+      "pdfFailed": "The PDF could not be opened."
     },
     "header": {
       "customer": "Customer",
@@ -640,6 +645,37 @@
       "by": "by {{name}}",
       "comment": "Comment",
       "signature": "Signature of {{name}}"
+    },
+    "sent": "The quote has been sent.",
+    "emailFailed": "The quote is sent, but the email did not go out.",
+    "send": {
+      "title": "Send quote",
+      "hint": "The customer gets the PDF and a link to accept or decline online.",
+      "resendTitle": "Send quote again",
+      "resendHint": "The customer gets the same PDF with a new link. Old links stop working afterwards.",
+      "to": "To",
+      "cc": "Copy (CC)",
+      "message": "Message",
+      "defaultMessage": "Hello,\n\nplease find our quote attached. We are happy to answer any questions.\n\nKind regards",
+      "preview": "Preview",
+      "submit": "Send",
+      "resend": "Send again",
+      "blockers": {
+        "profile_incomplete": "Your company details are incomplete. Add name, address, email and a tax number or VAT id in the settings.",
+        "no_items": "The quote has no item yet.",
+        "no_recipient": "Add at least one recipient.",
+        "valid_until_past": "The validity date has passed. Pick a later date."
+      },
+      "errors": {
+        "forbidden": "You do not have the rights for that.",
+        "notFound": "This quote no longer exists.",
+        "invalidState": "The quote was changed in the meantime. Reload the page.",
+        "invalidRecipient": "One of the email addresses is not valid.",
+        "tooManyRecipients": "There are too many recipients.",
+        "pdfMissing": "The stored PDF is missing. Revise the quote and send it again.",
+        "preflight": "The quote cannot be sent yet.",
+        "generic": "That did not work. Please try again."
+      }
     }
   }
 }
