@@ -756,6 +756,12 @@
         "body": "Das Angebot wurde abgelehnt. Sie erhalten eine Bestätigung per E-Mail."
       },
       "pdf": "Angenommenes Angebot als PDF öffnen"
+    },
+    "signature": {
+      "type": "Tippen",
+      "draw": "Zeichnen",
+      "legalName": "Ihr vollständiger Name",
+      "clear": "Löschen"
     }
   }
 }

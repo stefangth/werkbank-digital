@@ -756,6 +756,12 @@
         "body": "The quote was rejected. You will receive a confirmation by email."
       },
       "pdf": "Open the accepted quote as PDF"
+    },
+    "signature": {
+      "type": "Type",
+      "draw": "Draw",
+      "legalName": "Your full name",
+      "clear": "Clear"
     }
   }
 }

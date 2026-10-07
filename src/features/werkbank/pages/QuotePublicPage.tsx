@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, FileText, XCircle } from "lucide-react";
@@ -42,10 +42,12 @@ function Shell({ children }: { children: React.ReactNode }) {
 function ClosedCard({ outcome, t }: { outcome: ClosedState & { fromDecide?: boolean }; t: TFn }) {
   const key = outcome.reason === "decided" ? `decided_${outcome.decision ?? "accepted"}` : outcome.reason;
   const Icon = outcome.reason === "decided" && outcome.decision === "accepted" ? CheckCircle2 : XCircle;
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (outcome.fromDecide) heading.current?.focus(); }, [outcome.fromDecide]);
   return (
     <Card className="space-y-3 p-6 text-center sm:p-8">
       <Icon className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-      <h1 className="font-display text-title font-semibold">{t(`publicQuote.closed.${key}.title` as never)}</h1>
+      <h1 ref={heading} tabIndex={-1} className="font-display text-title font-semibold focus:outline-none">{t(`publicQuote.closed.${key}.title` as never)}</h1>
       <p className="text-body text-muted-foreground">{t(`publicQuote.closed.${key}.body` as never)}</p>
       {outcome.fromDecide && outcome.reason !== "decided" && (
         <Alert><p className="text-control">{t("publicQuote.closed.nothingSigned")}</p></Alert>
@@ -219,7 +221,9 @@ function DecideForm({ view, token, t, onOutcome }: { view: PublicQuoteView; toke
         <>
           <div className="space-y-1.5">
             <Label>{t("publicQuote.decide.signature")}</Label>
-            <SignaturePad value={signature} onChange={setSignature} disabled={busy} />
+            <SignaturePad
+              labels={{ type: t("publicQuote.signature.type"), draw: t("publicQuote.signature.draw"), legalName: t("publicQuote.signature.legalName"), clear: t("publicQuote.signature.clear") }}
+              value={signature} onChange={setSignature} disabled={busy} />
           </div>
           <div className="flex items-start gap-3">
             <Checkbox id="pq-consent" checked={consent} onCheckedChange={(v) => setConsent(v === true)} disabled={busy} />
@@ -246,9 +250,26 @@ function DecideForm({ view, token, t, onOutcome }: { view: PublicQuoteView; toke
   );
 }
 
+function ThanksCard({ outcome, t }: { outcome: Extract<Outcome, { kind: "thanks" }>; t: TFn }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { heading.current?.focus(); }, []);
+  return (
+    <Card className="space-y-3 p-6 text-center sm:p-8">
+      <CheckCircle2 className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
+      <h1 ref={heading} tabIndex={-1} className="font-display text-title font-semibold focus:outline-none">{t(`publicQuote.thanks.${outcome.decision}.title`)}</h1>
+      <p className="text-body text-muted-foreground">{t(`publicQuote.thanks.${outcome.decision}.body`)}</p>
+      {outcome.pdfUrl && (
+        <a className="inline-block text-control font-medium text-accent-text hover:underline" href={outcome.pdfUrl} target="_blank" rel="noreferrer">
+          {t("publicQuote.thanks.pdf")}
+        </a>
+      )}
+    </Card>
+  );
+}
+
 /** The public, no-login page a customer opens from the quote email. German only, no AppLayout. */
 export function QuotePublicPage() {
-  const t = i18n.getFixedT("de", "werkbank");
+  const t = useMemo(() => i18n.getFixedT("de", "werkbank"), []);
   const { token = "" } = useParams<{ token: string }>();
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const { data, isLoading, isError } = useQuery({
@@ -258,23 +279,18 @@ export function QuotePublicPage() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+  const quoteNo = data?.kind === "open" ? data.view.quote.quote_no : null;
+  useEffect(() => {
+    const previous = document.title;
+    document.title = quoteNo ? `${t("publicQuote.title")} ${quoteNo}` : t("publicQuote.title");
+    const meta = document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex";
+    document.head.appendChild(meta);
+    return () => { document.title = previous; meta.remove(); };
+  }, [quoteNo, t]);
 
-  if (outcome?.kind === "thanks") {
-    return (
-      <Shell>
-        <Card className="space-y-3 p-6 text-center sm:p-8">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden />
-          <h1 className="font-display text-title font-semibold">{t(`publicQuote.thanks.${outcome.decision}.title`)}</h1>
-          <p className="text-body text-muted-foreground">{t(`publicQuote.thanks.${outcome.decision}.body`)}</p>
-          {outcome.pdfUrl && (
-            <a className="inline-block text-control font-medium text-accent-text hover:underline" href={outcome.pdfUrl} target="_blank" rel="noreferrer">
-              {t("publicQuote.thanks.pdf")}
-            </a>
-          )}
-        </Card>
-      </Shell>
-    );
-  }
+  if (outcome?.kind === "thanks") return <Shell><ThanksCard outcome={outcome} t={t} /></Shell>;
   if (outcome) return <Shell><ClosedCard outcome={outcome} t={t} /></Shell>;
   if (token === "") return <Shell><ClosedCard outcome={{ kind: "closed", reason: "not_found" }} t={t} /></Shell>;
   if (isLoading) return <Shell><Skeleton className="h-64 w-full" aria-label={t("publicQuote.loading")} /></Shell>;

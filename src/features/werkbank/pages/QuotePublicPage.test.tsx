@@ -7,8 +7,11 @@ import { createFakeSupabase } from "@/test/supabaseFake";
 const { client } = vi.hoisted(() => ({ client: {} as Record<string, unknown> }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: client }));
 vi.mock("@/components/common/SignaturePad", () => ({
-  SignaturePad: ({ onChange }: { onChange: (v: unknown) => void }) => (
-    <button type="button" onClick={() => onChange({ method: "typed", typedName: "Anna Muster" })}>signieren</button>
+  SignaturePad: ({ onChange, labels }: { onChange: (v: unknown) => void; labels?: { legalName: string } }) => (
+    <div>
+      <span>{labels?.legalName}</span>
+      <button type="button" onClick={() => onChange({ method: "typed", typedName: "Anna Muster" })}>signieren</button>
+    </div>
   ),
 }));
 
@@ -141,5 +144,38 @@ describe("QuotePublicPage", () => {
     await waitFor(() => expect(decideCalls()[0].args[0]).toEqual({
       action: "decide", token: TOKEN, decision: "rejected", signer_name: "Anna Muster", comment: "Zu teuer",
     }));
+  });
+
+  it("passes Sie labels to the signature pad", async () => {
+    mount([{ data: view, error: null }]);
+    expect(await screen.findByText("Ihr vollständiger Name", { selector: "span" })).toBeInTheDocument();
+  });
+
+  it("moves focus to the heading of the thank-you card", async () => {
+    mount([{ data: view, error: null }, { data: { ok: true }, error: null }]);
+    fireEvent.click(await screen.findByRole("button", { name: "Stattdessen ablehnen" }));
+    fireEvent.change(screen.getByLabelText("Ihr vollständiger Name"), { target: { value: "Anna" } });
+    fireEvent.click(screen.getByRole("button", { name: "Angebot ablehnen" }));
+    const heading = await screen.findByRole("heading", { name: "Vielen Dank für Ihre Antwort" });
+    await waitFor(() => expect(heading).toHaveFocus());
+  });
+
+  it("moves focus to the heading of a closed card after a decide", async () => {
+    mount([{ data: view, error: null }, fail(410, { error: "superseded" })]);
+    fireEvent.change(await screen.findByLabelText("Ihr vollständiger Name"), { target: { value: "Anna" } });
+    fireEvent.click(screen.getByRole("button", { name: "signieren" }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
+    const heading = await screen.findByRole("heading", { name: "Dieses Angebot wurde überarbeitet" });
+    await waitFor(() => expect(heading).toHaveFocus());
+  });
+
+  it("sets the document title and a noindex meta while mounted", async () => {
+    const { unmount } = mount([{ data: view, error: null }]);
+    await screen.findByText("Badsanierung");
+    expect(document.title).toBe("Angebot A-0042");
+    expect(document.querySelector('meta[name="robots"][content="noindex"]')).not.toBeNull();
+    unmount();
+    expect(document.querySelector('meta[name="robots"]')).toBeNull();
   });
 });
