@@ -8,6 +8,7 @@
 //
 // Public actions (no login; the link token is the credential, looked up by its SHA-256):
 //   view   { token } -> { quote, seller, items, totals, pdf_url, consent_text }
+//          quote.number is the display number (version suffix from version 2), as printed.
 //   decide { token, decision, signer_name, signature?, comment?, consent } -> { ok, pdf_url? }
 //   Both answer 404 not_found or 410 superseded | revoked | decided | expired, checked in that order.
 //   decide stores the accepted PDF and the signature under content-addressed paths first, then
@@ -50,6 +51,7 @@ import {
 } from "../_shared/werkbank/pdf/quoteData.ts";
 import { renderQuotePdf } from "../_shared/werkbank/pdf/quoteDocument.tsx";
 import { parseName, parseSignature, quoteConsentText } from "../_shared/werkbank/acceptance.ts";
+import { formatQuoteNumber } from "../_shared/werkbank/quoteDisplayNumber.ts";
 
 export type RenderQuotePdf = (data: QuotePdfData) => Promise<Uint8Array>;
 
@@ -159,6 +161,9 @@ function isAlreadyExists(error: unknown): boolean {
 }
 
 const itemCount = (items: ItemRow[]) => items.filter((i) => i.kind === "item").length;
+
+/** The number the customer sees everywhere: `A-0042`, from version 2 `A-0042-2`. */
+const displayNo = (quote: QuoteRow) => formatQuoteNumber(quote.quote_no, quote.version);
 
 /** The org's logo as a data URL for the PDF, or undefined when there is none or it cannot be read. */
 async function logoDataUrl(deps: Deps, path: string | null | undefined): Promise<string | undefined> {
@@ -374,7 +379,7 @@ async function emailQuote(
   const base = brandAppUrl(brandForKind(WERKBANK_ORG_KIND.kind), appUrl(deps.env));
   const link = `${base}/quote/${token}`;
   const replyTo = profile.email?.trim();
-  const attachment = { filename: `Angebot-${quote.quote_no}.pdf`, content_base64: encodeBase64(bytes) };
+  const attachment = { filename: `Angebot-${displayNo(quote)}.pdf`, content_base64: encodeBase64(bytes) };
   let allSent = true;
   for (const [i, recipient] of recipients.entries()) {
     const result = await deps.sendEmail({
@@ -385,7 +390,7 @@ async function emailQuote(
       locale: "de",
       ...(replyTo ? { reply_to: replyTo } : {}),
       templateData: {
-        quote_no: quote.quote_no,
+        quote_no: displayNo(quote),
         company_name: profile.company_name,
         subject: quote.subject ?? "",
         valid_until: formatDateDe(quote.valid_until),
@@ -500,6 +505,7 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
     quote: {
       quote_no: quote.quote_no,
       version: quote.version,
+      number: displayNo(quote),
       status: quote.status,
       date: sentDateKey(deps, quote),
       valid_until: quote.valid_until,
@@ -524,7 +530,7 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
     items: printed.sections,
     totals: printed.totals,
     pdf_url: pdfUrl,
-    consent_text: quoteConsentText(quote.quote_no),
+    consent_text: quoteConsentText(displayNo(quote)),
   });
 }
 
@@ -644,7 +650,7 @@ async function decideQuote(
       p_signature_image_path: signaturePath,
       p_ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
       p_user_agent: req.headers.get("user-agent") || null,
-      p_consent_text: decision === "accepted" ? quoteConsentText(quote.quote_no) : null,
+      p_consent_text: decision === "accepted" ? quoteConsentText(displayNo(quote)) : null,
       p_comment: comment,
       p_accepted_pdf_path: acceptedPath,
     });
@@ -655,8 +661,11 @@ async function decideQuote(
     return json({ error: "update_failed" }, 500);
   }
   if (outcome !== "ok") {
-    // The function answered definitively and recorded nothing: the new files are unused.
-    await removeStored(deps, quote, stored);
+    // The function answered definitively and recorded nothing for THIS request. The files are
+    // content-addressed, though: when a decision stands ("decided", or "revoked" on a quote that
+    // was decided before its link was revoked), it may reference these very paths (identical
+    // bytes), so they stay. Unreferenced leftovers are harmless; a deleted accepted PDF is not.
+    if (outcome !== "decided" && outcome !== "revoked") await removeStored(deps, quote, stored);
     return blockedResponse(deps, quote, outcome as DecisionOutcome);
   }
 
@@ -727,7 +736,7 @@ async function notifyOffice(deps: Deps, quote: QuoteRow, d: DecisionFacts, userI
     user_id: uid,
     type: accepted ? "quote_accepted" : "quote_rejected",
     title: accepted ? "Angebot angenommen" : "Angebot abgelehnt",
-    message: `${d.signerName} hat das Angebot ${quote.quote_no} ${accepted ? "angenommen" : "abgelehnt"}.`,
+    message: `${d.signerName} hat das Angebot ${displayNo(quote)} ${accepted ? "angenommen" : "abgelehnt"}.`,
     related_entity_type: "werkbank_quote",
     related_entity_id: quote.id,
   }));
@@ -753,7 +762,7 @@ async function emailOffice(
       org_id: quote.org_id,
       locale: "de",
       templateData: {
-        quote_no: quote.quote_no,
+        quote_no: displayNo(quote),
         customer_name: customerName(customer),
         signer_name: d.signerName,
         decision: d.decision,
@@ -784,7 +793,7 @@ async function emailConfirmation(
     locale: "de",
     ...(replyTo ? { reply_to: replyTo } : {}),
     templateData: {
-      quote_no: quote.quote_no,
+      quote_no: displayNo(quote),
       company_name: profile.company_name,
       signer_name: d.signerName,
       decision: d.decision,
@@ -793,7 +802,7 @@ async function emailConfirmation(
     ...(acceptedBytes
       ? {
         attachments: [{
-          filename: `Angebot-${quote.quote_no}-angenommen.pdf`,
+          filename: `Angebot-${displayNo(quote)}-angenommen.pdf`,
           content_base64: encodeBase64(acceptedBytes),
         }],
       }

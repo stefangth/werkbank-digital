@@ -53,6 +53,11 @@ Deno.test("private customer without property: recipient and location use the cus
   assertEquals(d.totals.labour, 400);
 });
 
+Deno.test("the printed number carries the version suffix from version 2", () => {
+  assertEquals(buildQuotePdfData(input({ quote: { ...quote, version: 1 } as QuoteRow })).number, "A-0042");
+  assertEquals(buildQuotePdfData(input({ quote: { ...quote, version: 2 } as QuoteRow })).number, "A-0042-2");
+});
+
 Deno.test("property billing recipient prints vertreten durch", () => {
   const d = buildQuotePdfData(input({ customer: hv, property }));
   assertEquals(d.recipient.lines, ["WEG Ahornweg 3", "vertreten durch Hausverwaltung Nord", "Postfach 5", "80000 München"]);

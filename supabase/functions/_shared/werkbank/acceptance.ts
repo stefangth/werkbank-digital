@@ -55,8 +55,9 @@ export function parseSignature(input: unknown): ParsedSignature | null {
 
 /**
  * The consent the signer confirms on the public page, shown there verbatim (the `view`
- * response) and stored with the acceptance. `{quote_no}` is the quote number with its
- * version suffix, so the text names the exact version that was shown.
+ * response) and stored with the acceptance. Callers pass the display number (formatQuoteNumber
+ * in quoteDisplayNumber.ts: `A-0042`, from version 2 `A-0042-2`), so the text names the exact
+ * version that was shown.
  */
 export const QUOTE_CONSENT_TEXT =
   "Ich nehme das Angebot {quote_no} in der hier angezeigten Fassung einschließlich der darin genannten Bedingungen verbindlich an und bestätige, dass ich berechtigt bin, diesen Auftrag zu erteilen. Mir ist bewusst, dass ich diese Erklärung elektronisch abgebe und sie rechtsverbindlich ist.";

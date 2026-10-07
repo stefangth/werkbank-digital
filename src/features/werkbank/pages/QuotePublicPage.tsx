@@ -70,7 +70,7 @@ function Document({ view, t }: { view: PublicQuoteView; t: TFn }) {
         <div className="space-y-1">
           <Eyebrow>{seller.company_name}</Eyebrow>
           <h1 className="font-display text-title font-semibold">
-            {t("publicQuote.title")} <Token>{quote.quote_no}</Token>
+            {t("publicQuote.title")} <Token>{quote.number}</Token>
           </h1>
           <p className="text-body text-muted-foreground">{quote.subject}</p>
         </div>
@@ -279,7 +279,7 @@ export function QuotePublicPage() {
     retry: false,
     refetchOnWindowFocus: false,
   });
-  const quoteNo = data?.kind === "open" ? data.view.quote.quote_no : null;
+  const quoteNo = data?.kind === "open" ? data.view.quote.number : null;
   useEffect(() => {
     const previous = document.title;
     document.title = quoteNo ? `${t("publicQuote.title")} ${quoteNo}` : t("publicQuote.title");

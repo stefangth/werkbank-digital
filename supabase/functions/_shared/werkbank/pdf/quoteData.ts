@@ -1,5 +1,6 @@
 // Pure mapping from database rows to the data the quote PDF prints. No DB access here.
 import type { Database } from "../../database.types.ts";
+import { formatQuoteNumber } from "../quoteDisplayNumber.ts";
 
 type W = Database["werkbank"]["Tables"];
 export type QuoteRow = W["quotes"]["Row"];
@@ -238,7 +239,7 @@ export function buildQuotePdfData(input: QuotePdfInput): QuotePdfData {
     },
     recipient: { lines: recipientLines(customer, property) },
     location: locationLines(customer, property),
-    number: quote.quote_no,
+    number: formatQuoteNumber(quote.quote_no, quote.version),
     date: input.date ?? formatDateDe(quote.sent_at ?? today),
     validUntil: formatDateDe(quote.valid_until),
     subject: quote.subject ?? "",

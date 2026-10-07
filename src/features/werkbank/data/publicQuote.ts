@@ -11,7 +11,8 @@ export type PublicQuoteRow =
 
 export type PublicQuoteView = {
   quote: {
-    quote_no: string; version: number; status: string; date: string; valid_until: string;
+    /** The display number the PDF prints: `A-0042`, from version 2 `A-0042-2`. */
+    quote_no: string; version: number; number: string; status: string; date: string; valid_until: string;
     subject: string; intro: string; closing: string; payment_terms: string;
     recipient_lines: string[]; location_lines: string[];
   };

@@ -124,6 +124,12 @@
       "source": "src/features/werkbank/lib/quotePreflight.ts",
       "target": "supabase/functions/_shared/werkbank/quotePreflight.ts",
       "why": "Quote send preflight as pure, import-free rules. The send dialog and the werkbank-quotes edge function check the same blockers, so the two runtimes cannot drift."
+    },
+    {
+      "mode": "file",
+      "source": "src/features/werkbank/lib/quoteDisplayNumber.ts",
+      "target": "supabase/functions/_shared/werkbank/quoteDisplayNumber.ts",
+      "why": "The quote display number (version suffix from version 2), import-free. The app, the PDF, the emails, the consent text and the public page print the same number."
     }
   ]
 }

@@ -357,3 +357,33 @@ Deno.test("another org's quote id under this org_id is not_found", async () => {
   assert(t.calls.some((c) => c.table === "werkbank.quotes" && c.method === "eq" && c.args[0] === "org_id" && c.args[1] === ORG));
   assertEquals(t.rendered.length, 0);
 });
+
+Deno.test("a revised quote (version 2) is sent as A-0042-2: PDF, filename and email", async () => {
+  const t = setup({ quote: quoteRow({ version: 2 }) });
+  const res = await handle(request(sendBody()), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(t.rendered[0].number, "A-0042-2");
+  assertEquals(t.emails[0].attachments?.[0].filename, "Angebot-A-0042-2.pdf");
+  assertEquals(t.emails[0].templateData?.quote_no, "A-0042-2");
+});
+
+Deno.test("a resend of a revised quote names the version too", async () => {
+  const t = setup({
+    quote: quoteRow({ version: 3, status: "sent", sent_at: "2026-10-01T08:00:00Z", pdf_path: `${ORG}/quotes/${QUOTE}.pdf`, pdf_sha256: "f".repeat(64) }),
+    opts: { storageDownloadResult: { data: new Blob([PDF]), error: null } },
+  });
+  const res = await handle(request({ ...sendBody(), action: "resend" }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(t.emails[0].attachments?.[0].filename, "Angebot-A-0042-3.pdf");
+  assertEquals(t.emails[0].templateData?.quote_no, "A-0042-3");
+});
+
+for (const status of ["rejected", "superseded", "accepted"]) {
+  Deno.test(`download-url signs the sent PDF of a ${status} quote`, async () => {
+    const path = `${ORG}/quotes/${QUOTE}.pdf`;
+    const t = setup({ quote: quoteRow({ status, pdf_path: path }) });
+    const res = await handle(request({ action: "download-url", org_id: ORG, quote_id: QUOTE, kind: "sent" }), t.deps, t.render);
+    assertEquals(res.status, 200);
+    assertEquals(await res.json(), { url: `https://signed.test/werkbank-documents/${path}` });
+  });
+}

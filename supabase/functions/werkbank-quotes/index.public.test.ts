@@ -457,10 +457,12 @@ Deno.test("a second decide that the function reports as decided: 410 and nothing
   assertEquals(rpcArgs(second.calls).length, 1);
   assertEquals(second.emails, []);
   assertEquals(notificationInserts(second.calls).length, 0);
-  assertEquals(removedPaths(second.calls).length, 2, "this request's own uploads are removed");
+  // Identical bytes land on identical paths: the winner's decision may reference these very
+  // objects, so a request that lost to a decision never removes anything.
+  assertEquals(removedPaths(second.calls), [], "nothing is removed once a decision stands");
 });
 
-for (const outcome of ["superseded", "revoked", "expired"] as const) {
+for (const outcome of ["superseded", "expired"] as const) {
   Deno.test(`the function reports ${outcome}: 410 ${outcome}, uploads removed, nothing sent`, async () => {
     const t = setup({ rpc: { data: outcome, error: null } });
     const res = await handle(request(acceptBody()), t.deps, t.render);
@@ -527,4 +529,53 @@ Deno.test("reject records the comment, renders nothing and confirms without atta
   assertEquals(confirmation.recipient_email, "kunde@example.com");
   assertEquals(confirmation.templateData?.decision, "rejected");
   assertEquals(confirmation.attachments, undefined);
+});
+
+// ── revised quotes (version 2) ──────────────────────────────────────────────
+
+Deno.test("view of a revised quote returns its display number and names it in the consent text", async () => {
+  const t = setup({ quote: quoteRow({ version: 2 }) });
+  const res = await handle(request({ action: "view", token: TOKEN }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.quote.number, "A-0042-2");
+  assertEquals(body.consent_text, quoteConsentText("A-0042-2"));
+});
+
+Deno.test("view of a version 1 quote returns the bare number", async () => {
+  const t = setup();
+  const body = await (await handle(request({ action: "view", token: TOKEN }), t.deps, t.render)).json();
+  assertEquals(body.quote.number, "A-0042");
+});
+
+Deno.test("accepting a revised quote names A-0042-2 in the PDF, consent, notification and emails", async () => {
+  const t = setup({ quote: quoteRow({ version: 2 }) });
+  const res = await handle(request(acceptBody()), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(t.rendered[0].number, "A-0042-2");
+  assertEquals(rpcArgs(t.calls)[0].p_consent_text, quoteConsentText("A-0042-2"));
+  const rows = notificationInserts(t.calls)[0].args[0] as Array<Record<string, unknown>>;
+  for (const r of rows) assert(String(r.message).includes("A-0042-2"), String(r.message));
+  for (const e of t.emails) assertEquals(e.templateData?.quote_no, "A-0042-2", e.template_name);
+  const confirmation = t.emails.find((e) => e.template_name === "quote-decision-confirmation");
+  assertEquals(confirmation?.attachments?.[0].filename, "Angebot-A-0042-2-angenommen.pdf");
+});
+
+Deno.test("a decide that loses to a decision keeps its uploads even when they were new", async () => {
+  // Default storage answers "stored" for both uploads: this request created them. The winner,
+  // with the same bytes, may still reference exactly these paths.
+  const t = setup({ rpc: { data: "decided", error: null }, reloaded: quoteRow({ status: "accepted", accepted_pdf_path: await acceptedPath() }) });
+  const res = await handle(request(acceptBody()), t.deps, t.render);
+  assertEquals(res.status, 410);
+  assertEquals(t.calls.filter((c) => c.method === "upload").length, 2);
+  assertEquals(removedPaths(t.calls), []);
+});
+
+Deno.test("the function reports revoked: 410, uploads kept (a decided quote can have its link revoked)", async () => {
+  const t = setup({ rpc: { data: "revoked", error: null } });
+  const res = await handle(request(acceptBody()), t.deps, t.render);
+  assertEquals(res.status, 410);
+  assertEquals(await res.json(), { error: "revoked" });
+  assertEquals(removedPaths(t.calls), []);
+  assertEquals(t.emails, []);
 });

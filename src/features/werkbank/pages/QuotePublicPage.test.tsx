@@ -21,7 +21,7 @@ const TOKEN = "b".repeat(64);
 const CONSENT = "Ich nehme das Angebot A-0042 in der hier angezeigten Fassung verbindlich an.";
 const view = {
   quote: {
-    quote_no: "A-0042", version: 1, status: "sent", date: "2026-10-07", valid_until: "2026-11-06",
+    quote_no: "A-0042", version: 1, number: "A-0042", status: "sent", date: "2026-10-07", valid_until: "2026-11-06",
     subject: "Badsanierung", intro: "Gerne bieten wir an.", closing: "Mit freundlichen Grüßen", payment_terms: "14 Tage netto",
     recipient_lines: ["Anna Muster", "Hauptstr. 1"], location_lines: ["Gartenweg 2"],
   },
@@ -168,6 +168,12 @@ describe("QuotePublicPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
     const heading = await screen.findByRole("heading", { name: "Dieses Angebot wurde überarbeitet" });
     await waitFor(() => expect(heading).toHaveFocus());
+  });
+
+  it("shows the display number of a revised quote in the heading and the title", async () => {
+    mount([{ data: { ...view, quote: { ...view.quote, version: 2, number: "A-0042-2" } }, error: null }]);
+    expect(await screen.findByText("A-0042-2")).toBeInTheDocument();
+    expect(document.title).toBe("Angebot A-0042-2");
   });
 
   it("sets the document title and a noindex meta while mounted", async () => {

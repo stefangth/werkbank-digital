@@ -1,9 +1,6 @@
 import type { DocumentItem } from "../data/documentItems";
 
-/** `A-0042` for version 1, `A-0042-2` from version 2. */
-export function formatQuoteNumber(quoteNo: string, version: number): string {
-  return version > 1 ? `${quoteNo}-${version}` : quoteNo;
-}
+export { formatQuoteNumber } from "./quoteDisplayNumber";
 
 /** Title id to the sum of `line_net` of the items up to the next title. Items before the first
  *  title belong to no section. Sums are rounded to cents. */
