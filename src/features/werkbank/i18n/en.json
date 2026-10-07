@@ -157,11 +157,19 @@
   "numbering": {
     "title": "Numbering",
     "description": "How numbers are assigned when you create something new.",
-    "customerHeading": "Customer numbers",
+    "headings": {
+      "customer": "Customer numbers",
+      "quote": "Quote numbers",
+      "order": "Order numbers"
+    },
     "prefix": "Prefix",
     "prefixHint": "At most 10 characters, for example K-.",
     "nextValue": "Next number",
-    "preview": "Next customer number: {{number}}",
+    "preview": {
+      "customer": "Next customer number: {{number}}",
+      "quote": "Next quote number: {{number}}",
+      "order": "Next order number: {{number}}"
+    },
     "save": "Save",
     "saved": "Number range saved",
     "loadFailed": "The number ranges could not be loaded. Please try again.",

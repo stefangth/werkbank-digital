@@ -19,6 +19,11 @@ describe("formatNumber", () => {
     expect(formatNumber("K-", 123456, 3)).toBe("K-123456");
   });
 
+  it("formats quote and order numbers", () => {
+    expect(formatNumber("A-", 42, 4)).toBe("A-0042");
+    expect(formatNumber("AU-", 1, 4)).toBe("AU-0001");
+  });
+
   it("works without a prefix", () => {
     expect(formatNumber("", 7, 3)).toBe("007");
   });
@@ -37,6 +42,12 @@ describe("fetchNumberRange", () => {
   it("returns the defaults when the row does not exist yet", async () => {
     const fake = createFakeSupabase({ "werkbank.number_ranges": { data: null, error: null } });
     await expect(fetchNumberRange(asClient(fake), "org-1", "customer")).resolves.toEqual({ prefix: "K-", next_value: 10001, padding: 0 });
+  });
+
+  it("returns the quote and order defaults when the rows do not exist yet", async () => {
+    const fake = createFakeSupabase({ "werkbank.number_ranges": { data: null, error: null } });
+    await expect(fetchNumberRange(asClient(fake), "org-1", "quote")).resolves.toEqual({ prefix: "A-", next_value: 1, padding: 4 });
+    await expect(fetchNumberRange(asClient(fake), "org-1", "order")).resolves.toEqual({ prefix: "AU-", next_value: 1, padding: 4 });
   });
 
   it("throws a database error", async () => {
@@ -67,6 +78,15 @@ describe("saveNumberRange", () => {
       [{ prefix: "KD", padding: 4 }],
     ]);
     expect(fake.calls.filter((c) => c.method === "eq").map((c) => c.args)).toEqual([["org_id", "org-1"], ["key", "customer"]]);
+  });
+
+  it("creates a missing quote row with the quote default counter", async () => {
+    const fake = createFakeSupabase({ "werkbank.number_ranges": { data: null, error: null } });
+    await saveNumberRange(asClient(fake), "org-1", "quote", { prefix: "AN-", padding: 4 });
+    expect(fake.calls.find((c) => c.method === "upsert")?.args).toEqual([
+      { org_id: "org-1", key: "quote", prefix: "AN-", next_value: 1, padding: 4 },
+      { onConflict: "org_id,key", ignoreDuplicates: true },
+    ]);
   });
 
   it("throws a database error of the prefix-only update", async () => {

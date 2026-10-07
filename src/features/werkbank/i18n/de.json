@@ -157,11 +157,19 @@
   "numbering": {
     "title": "Nummernkreise",
     "description": "So werden Nummern vergeben, wenn du etwas Neues anlegst.",
-    "customerHeading": "Kundennummern",
+    "headings": {
+      "customer": "Kundennummern",
+      "quote": "Angebotsnummern",
+      "order": "Auftragsnummern"
+    },
     "prefix": "Präfix",
     "prefixHint": "Höchstens 10 Zeichen, zum Beispiel K-.",
     "nextValue": "Nächste Nummer",
-    "preview": "Nächste Kundennummer: {{number}}",
+    "preview": {
+      "customer": "Nächste Kundennummer: {{number}}",
+      "quote": "Nächste Angebotsnummer: {{number}}",
+      "order": "Nächste Auftragsnummer: {{number}}"
+    },
     "save": "Speichern",
     "saved": "Nummernkreis gespeichert",
     "loadFailed": "Die Nummernkreise konnten nicht geladen werden. Versuche es bitte noch einmal.",

@@ -3,12 +3,17 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Client = SupabaseClient<Database>;
 
-export type NumberRangeKey = "customer";
+export type NumberRangeKey = "customer" | "quote" | "order";
+
+/** Settings tab order. */
+export const NUMBER_RANGE_KEYS: readonly NumberRangeKey[] = ["customer", "quote", "order"];
 export type NumberRange = { prefix: string; next_value: number; padding: number };
 
-/** What the database applies for a key without a row (Task 2: next_number creates it on first use). */
+/** What the database applies for a key without a row (werkbank.next_number creates it on first use). */
 const DEFAULTS: Record<NumberRangeKey, NumberRange> = {
   customer: { prefix: "K-", next_value: 10001, padding: 0 },
+  quote: { prefix: "A-", next_value: 1, padding: 4 },
+  order: { prefix: "AU-", next_value: 1, padding: 4 },
 };
 
 /** Mirrors the SQL `prefix || lpad(v::text, greatest(padding, length(v::text)), '0')`:
