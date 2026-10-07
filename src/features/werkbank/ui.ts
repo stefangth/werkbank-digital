@@ -112,5 +112,6 @@ export const werkbankUi: ModuleUi = {
       Page: TechniciansPage,
     },
   ],
+  publicRoutes: [],
   dashboards: { handwerk: WerkbankDashboard },
 };

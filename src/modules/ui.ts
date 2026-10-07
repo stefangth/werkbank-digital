@@ -18,10 +18,19 @@ export interface ModuleRoute {
   Page: ComponentType;
 }
 
+/** A page a module serves to anyone, with no login and no app shell (e.g. a link sent to a
+ *  customer). App.tsx renders it next to the other public pages, wrapped only in Suspense. */
+export interface ModulePublicRoute {
+  path: string;
+  Page: ComponentType;
+}
+
 export interface ModuleUi {
   /** Appended to the sidebar before Help. Set `kinds` on each item to scope it. */
   navItems: NavItem[];
   routes: ModuleRoute[];
+  /** Public pages: no ProtectedRoute, no AppLayout. */
+  publicRoutes: ModulePublicRoute[];
   /** The dashboard rendered at the dashboard route for a kind, replacing today's logic. */
   dashboards: Partial<Record<OrgKind, ComponentType>>;
 }
