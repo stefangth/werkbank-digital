@@ -21,7 +21,7 @@ export interface ImportField {
 export type ImportResult = {
   row: number;
   status: "created" | "skipped" | "error";
-  reason: "customer_no_taken" | "item_no_taken" | "unknown_customer" | "invalid" | null;
+  reason: "customer_no_taken" | "item_no_taken" | "property_exists" | "unknown_customer" | "invalid" | null;
   detail: string | null;
 };
 
