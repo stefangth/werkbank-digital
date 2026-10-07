@@ -680,5 +680,82 @@
         "profileLoad": "Your company details could not be loaded. Reload the page."
       }
     }
+  },
+  "publicQuote": {
+    "title": "Quote",
+    "metaDate": "Date",
+    "metaValidUntil": "Valid until",
+    "recipient": "Quote for",
+    "location": "Place of work",
+    "positions": "Services",
+    "quantityTimesPrice": "{{quantity}} {{unit}} × {{price}}",
+    "sectionSubtotal": "Subtotal {{title}}",
+    "totals": {
+      "net": "Total net",
+      "discount": "Discount ({{percent}} %)",
+      "vat": "VAT {{rate}} %",
+      "gross": "Total gross",
+      "labour": "Of which labour net"
+    },
+    "paymentTerms": "Payment terms",
+    "pdf": "Open quote as PDF",
+    "loading": "Loading the quote.",
+    "loadFailed": "The quote could not be loaded. Reload the page.",
+    "decide": {
+      "title": "Respond to the quote",
+      "name": "Your full name",
+      "signature": "Signature",
+      "comment": "Comment (optional)",
+      "accept": "Accept the quote with binding effect",
+      "reject": "Reject the quote",
+      "openReject": "Reject instead",
+      "back": "Back to accepting",
+      "sending": "Sending",
+      "rejectHint": "You can tell the supplier why you reject the quote."
+    },
+    "errors": {
+      "invalid_signer_name": "Enter your full name.",
+      "invalid_signature": "Sign the quote, typed or drawn.",
+      "consent_required": "Confirm the declaration of acceptance.",
+      "generic": "Your response could not be saved. Try again."
+    },
+    "closed": {
+      "not_found": {
+        "title": "Link not found",
+        "body": "This quote link does not exist. Check that you copied the full address."
+      },
+      "superseded": {
+        "title": "This quote was revised",
+        "body": "A newer version exists. Use the link in the latest email or ask the supplier."
+      },
+      "revoked": {
+        "title": "This link is no longer valid",
+        "body": "The supplier withdrew the link. Use the link in the latest email or ask the supplier."
+      },
+      "expired": {
+        "title": "This quote has expired",
+        "body": "The validity period is over. Ask the supplier for a new quote."
+      },
+      "decided_accepted": {
+        "title": "This quote was already accepted",
+        "body": "Nothing more is needed."
+      },
+      "decided_rejected": {
+        "title": "This quote was already rejected",
+        "body": "Nothing more is needed."
+      },
+      "nothingSigned": "Nothing was signed. Your input was not saved."
+    },
+    "thanks": {
+      "accepted": {
+        "title": "Thank you, the quote is accepted",
+        "body": "You will receive a confirmation by email."
+      },
+      "rejected": {
+        "title": "Thank you for your response",
+        "body": "The quote was rejected. You will receive a confirmation by email."
+      },
+      "pdf": "Open the accepted quote as PDF"
+    }
   }
 }

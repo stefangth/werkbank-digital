@@ -5,7 +5,7 @@
 import { lazy } from "react";
 import { Building2, FileText, HardHat, Home, Wrench } from "lucide-react";
 import type { ModuleUi } from "@/modules/ui";
-import { CATALOG_PATH, CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
+import { CATALOG_PATH, CUSTOMERS_PATH, PROPERTIES_PATH, PUBLIC_QUOTE_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 export const loadTechniciansPage = () =>
   import("./pages/TechniciansPage").then((m) => ({ default: m.TechniciansPage }));
@@ -33,6 +33,10 @@ export const loadQuotesPage = () =>
 export const loadQuotePage = () =>
   import("./pages/QuotePage").then((m) => ({ default: m.QuotePage }));
 
+export const loadQuotePublicPage = () =>
+  import("./pages/QuotePublicPage").then((m) => ({ default: m.QuotePublicPage }));
+
+const QuotePublicPage = lazy(loadQuotePublicPage);
 const QuotesPage = lazy(loadQuotesPage);
 const QuotePage = lazy(loadQuotePage);
 const PropertiesPage = lazy(loadPropertiesPage);
@@ -141,6 +145,6 @@ export const werkbankUi: ModuleUi = {
       Page: TechniciansPage,
     },
   ],
-  publicRoutes: [],
+  publicRoutes: [{ path: PUBLIC_QUOTE_PATH, Page: QuotePublicPage }],
   dashboards: { handwerk: WerkbankDashboard },
 };

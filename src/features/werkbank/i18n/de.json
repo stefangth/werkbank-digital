@@ -680,5 +680,82 @@
         "profileLoad": "Die Firmendaten konnten nicht geladen werden. Lade die Seite neu."
       }
     }
+  },
+  "publicQuote": {
+    "title": "Angebot",
+    "metaDate": "Datum",
+    "metaValidUntil": "Gültig bis",
+    "recipient": "Angebot für",
+    "location": "Ausführungsort",
+    "positions": "Leistungen",
+    "quantityTimesPrice": "{{quantity}} {{unit}} × {{price}}",
+    "sectionSubtotal": "Summe {{title}}",
+    "totals": {
+      "net": "Summe netto",
+      "discount": "Nachlass ({{percent}} %)",
+      "vat": "Umsatzsteuer {{rate}} %",
+      "gross": "Gesamtbetrag brutto",
+      "labour": "Davon Lohnkosten netto"
+    },
+    "paymentTerms": "Zahlungsbedingungen",
+    "pdf": "Angebot als PDF öffnen",
+    "loading": "Das Angebot wird geladen.",
+    "loadFailed": "Das Angebot konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
+    "decide": {
+      "title": "Angebot beantworten",
+      "name": "Ihr vollständiger Name",
+      "signature": "Unterschrift",
+      "comment": "Anmerkung (optional)",
+      "accept": "Angebot verbindlich annehmen",
+      "reject": "Angebot ablehnen",
+      "openReject": "Stattdessen ablehnen",
+      "back": "Zurück zur Annahme",
+      "sending": "Wird gesendet",
+      "rejectHint": "Sie können dem Anbieter mitteilen, warum Sie das Angebot ablehnen."
+    },
+    "errors": {
+      "invalid_signer_name": "Bitte geben Sie Ihren vollständigen Namen an.",
+      "invalid_signature": "Bitte unterschreiben Sie das Angebot, getippt oder gezeichnet.",
+      "consent_required": "Bitte bestätigen Sie die Erklärung zur Annahme.",
+      "generic": "Ihre Antwort konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+    },
+    "closed": {
+      "not_found": {
+        "title": "Link nicht gefunden",
+        "body": "Dieser Angebotslink existiert nicht. Bitte prüfen Sie, ob Sie die vollständige Adresse kopiert haben."
+      },
+      "superseded": {
+        "title": "Dieses Angebot wurde überarbeitet",
+        "body": "Es gibt eine neuere Fassung. Bitte nutzen Sie den Link aus der neuesten E-Mail oder fragen Sie beim Anbieter nach."
+      },
+      "revoked": {
+        "title": "Dieser Link ist nicht mehr gültig",
+        "body": "Der Anbieter hat den Link zurückgezogen. Bitte nutzen Sie den Link aus der neuesten E-Mail oder fragen Sie beim Anbieter nach."
+      },
+      "expired": {
+        "title": "Dieses Angebot ist abgelaufen",
+        "body": "Die Gültigkeit ist beendet. Bitte fragen Sie beim Anbieter nach einem neuen Angebot."
+      },
+      "decided_accepted": {
+        "title": "Dieses Angebot wurde bereits angenommen",
+        "body": "Es sind keine weiteren Eingaben nötig."
+      },
+      "decided_rejected": {
+        "title": "Dieses Angebot wurde bereits abgelehnt",
+        "body": "Es sind keine weiteren Eingaben nötig."
+      },
+      "nothingSigned": "Es wurde nichts unterschrieben. Ihre Eingaben wurden nicht gespeichert."
+    },
+    "thanks": {
+      "accepted": {
+        "title": "Vielen Dank, das Angebot ist angenommen",
+        "body": "Sie erhalten eine Bestätigung per E-Mail."
+      },
+      "rejected": {
+        "title": "Vielen Dank für Ihre Antwort",
+        "body": "Das Angebot wurde abgelehnt. Sie erhalten eine Bestätigung per E-Mail."
+      },
+      "pdf": "Angenommenes Angebot als PDF öffnen"
+    }
   }
 }

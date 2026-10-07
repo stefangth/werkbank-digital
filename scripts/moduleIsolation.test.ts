@@ -69,6 +69,8 @@ export const MODULES: readonly ModuleGuard[] = [
       // Notification deep links: the bell routes related_entity_type "werkbank_quote" to /quotes/:id.
       "src/lib/notifications/entityRoutes.ts",
       "src/lib/notifications/entityRoutes.test.ts",
+      // Copy lint: names the werkbank publicQuote subtree as the one Sie-form exemption.
+      "src/i18n/copyLint.test.ts",
     ],
   },
 ];
