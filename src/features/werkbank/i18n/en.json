@@ -2,7 +2,8 @@
   "nav": {
     "customers": "Customers",
     "catalog": "Services",
-    "technicians": "Technicians"
+    "technicians": "Technicians",
+    "properties": "Properties"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -245,12 +246,90 @@
       "customer": "Choose a customer",
       "name": "Enter a name for the property",
       "billingName": "Enter the name of the invoice recipient"
+    },
+    "title": "Properties",
+    "sub": "The sites you work at. Every property belongs to a customer.",
+    "add": "Add property",
+    "loadFailed": "Your properties could not be loaded. Please try again.",
+    "searchLabel": "Search properties",
+    "searchPlaceholder": "Name, object no., address or customer",
+    "empty": {
+      "title": "No properties yet",
+      "body": "Add your first property and assign it to a customer.",
+      "action": "Add first property"
+    },
+    "noMatches": "No property matches your search.",
+    "noMatchesReason": "Change the search or the switch.",
+    "archivedPill": "Archived",
+    "columns": {
+      "name": "Name",
+      "objectNo": "Object no.",
+      "address": "Address",
+      "customer": "Customer",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete property?",
+      "body": "\"{{name}}\" and all on-site contacts will be deleted for good. This cannot be undone."
+    },
+    "dialog": {
+      "createTitle": "Add property",
+      "editTitle": "Edit property",
+      "description": "Pick the customer the property belongs to first.",
+      "customer": "Customer",
+      "customerPlaceholder": "Pick a customer",
+      "customerSearch": "Search customers",
+      "customerNone": "No customer found",
+      "customerArchived": "archived",
+      "name": "Property name",
+      "objectNo": "Object no. (optional)",
+      "hasBilling": "Different invoice recipient",
+      "billingName": "Name of the invoice recipient",
+      "accessNotes": "Access (optional)",
+      "notes": "Notes (optional)"
+    },
+    "detail": {
+      "loadFailed": "The property could not be loaded. Please try again.",
+      "notFound": {
+        "title": "Property not found",
+        "reason": "It was deleted or the link is wrong.",
+        "back": "Back to properties"
+      },
+      "address": "Address",
+      "customer": "Customer",
+      "billingTitle": "Invoice goes to",
+      "billingRepresented": "{{billingName}}, represented by {{customer}}",
+      "accessNotes": "Access",
+      "notes": "Notes",
+      "none": "No details"
     }
   },
   "contacts": {
     "errors": {
       "lastName": "Enter the last name",
       "email": "Enter a valid email address"
+    },
+    "title": "Contacts",
+    "add": "Add contact",
+    "loadFailed": "The contacts could not be loaded. Please try again.",
+    "empty": "No contacts yet",
+    "primaryBadge": "Primary contact",
+    "delete": {
+      "title": "Delete contact?",
+      "body": "{{name}} will be deleted for good. This cannot be undone."
+    },
+    "dialog": {
+      "createTitle": "Add contact",
+      "editTitle": "Edit contact",
+      "description": "Who is the right person on site or in the office?",
+      "firstName": "First name (optional)",
+      "lastName": "Last name",
+      "role": "Role (optional)",
+      "phone": "Phone (optional)",
+      "mobile": "Mobile (optional)",
+      "email": "Email (optional)",
+      "notes": "Notes (optional)",
+      "isPrimary": "Primary contact"
     }
   },
   "kind": {

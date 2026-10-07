@@ -2,7 +2,8 @@
   "nav": {
     "customers": "Kunden",
     "catalog": "Leistungen",
-    "technicians": "Monteure"
+    "technicians": "Monteure",
+    "properties": "Liegenschaften"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -245,12 +246,90 @@
       "customer": "Wähle einen Kunden",
       "name": "Gib einen Namen für das Objekt ein",
       "billingName": "Gib den Namen des Rechnungsempfängers ein"
+    },
+    "title": "Liegenschaften",
+    "sub": "Die Objekte, an denen du arbeitest. Jede Liegenschaft gehört zu einem Kunden.",
+    "add": "Liegenschaft anlegen",
+    "loadFailed": "Deine Liegenschaften konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "searchLabel": "Liegenschaften durchsuchen",
+    "searchPlaceholder": "Name, Objekt-Nr., Adresse oder Kunde",
+    "empty": {
+      "title": "Noch keine Liegenschaften",
+      "body": "Leg deine erste Liegenschaft an und ordne sie einem Kunden zu.",
+      "action": "Erste Liegenschaft anlegen"
+    },
+    "noMatches": "Keine Liegenschaft passt zu deiner Suche.",
+    "noMatchesReason": "Ändere die Suche oder den Schalter.",
+    "archivedPill": "Archiviert",
+    "columns": {
+      "name": "Name",
+      "objectNo": "Objekt-Nr.",
+      "address": "Adresse",
+      "customer": "Kunde",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "title": "Liegenschaft löschen?",
+      "body": "\"{{name}}\" und alle Ansprechpartner vor Ort werden endgültig gelöscht. Das lässt sich nicht rückgängig machen."
+    },
+    "dialog": {
+      "createTitle": "Liegenschaft anlegen",
+      "editTitle": "Liegenschaft bearbeiten",
+      "description": "Wähle zuerst den Kunden, zu dem die Liegenschaft gehört.",
+      "customer": "Kunde",
+      "customerPlaceholder": "Kunde wählen",
+      "customerSearch": "Kunden suchen",
+      "customerNone": "Kein Kunde gefunden",
+      "customerArchived": "archiviert",
+      "name": "Name der Liegenschaft",
+      "objectNo": "Objekt-Nr. (optional)",
+      "hasBilling": "Abweichender Rechnungsempfänger",
+      "billingName": "Name des Rechnungsempfängers",
+      "accessNotes": "Zugang (optional)",
+      "notes": "Notizen (optional)"
+    },
+    "detail": {
+      "loadFailed": "Die Liegenschaft konnte nicht geladen werden. Versuche es bitte noch einmal.",
+      "notFound": {
+        "title": "Liegenschaft nicht gefunden",
+        "reason": "Sie wurde gelöscht oder der Link stimmt nicht.",
+        "back": "Zu den Liegenschaften"
+      },
+      "address": "Adresse",
+      "customer": "Kunde",
+      "billingTitle": "Rechnung geht an",
+      "billingRepresented": "{{billingName}}, vertreten durch {{customer}}",
+      "accessNotes": "Zugang",
+      "notes": "Notizen",
+      "none": "Keine Angaben"
     }
   },
   "contacts": {
     "errors": {
       "lastName": "Gib den Nachnamen ein",
       "email": "Gib eine gültige E-Mail-Adresse ein"
+    },
+    "title": "Ansprechpartner",
+    "add": "Ansprechpartner anlegen",
+    "loadFailed": "Die Ansprechpartner konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "empty": "Noch keine Ansprechpartner",
+    "primaryBadge": "Hauptansprechpartner",
+    "delete": {
+      "title": "Ansprechpartner löschen?",
+      "body": "{{name}} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen."
+    },
+    "dialog": {
+      "createTitle": "Ansprechpartner anlegen",
+      "editTitle": "Ansprechpartner bearbeiten",
+      "description": "Wer ist vor Ort oder im Büro der richtige Kontakt?",
+      "firstName": "Vorname (optional)",
+      "lastName": "Nachname",
+      "role": "Funktion (optional)",
+      "phone": "Telefon (optional)",
+      "mobile": "Mobil (optional)",
+      "email": "E-Mail (optional)",
+      "notes": "Notizen (optional)",
+      "isPrimary": "Hauptansprechpartner"
     }
   },
   "kind": {

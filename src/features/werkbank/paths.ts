@@ -3,3 +3,5 @@ export const TECHNICIANS_PATH = "/technicians";
 export const CATALOG_PATH = "/catalog";
 export const CUSTOMERS_PATH = "/customers";
 export const customerPath = (id: string) => `${CUSTOMERS_PATH}/${id}`;
+export const PROPERTIES_PATH = "/properties";
+export const propertyPath = (id: string) => `${PROPERTIES_PATH}/${id}`;
