@@ -7,6 +7,7 @@ import {
   addItem, deleteItem, fetchItems, refKey, reorderItems, updateItem, type DocumentRef, type ItemDraft,
 } from "../data/documentItems";
 import { mapDbError } from "../lib/dbErrors";
+import { ORDERS_KEY } from "./useOrders";
 import { QUOTES_KEY } from "./useQuotes";
 
 const ITEMS_KEY = ["werkbank", "items"] as const;
@@ -19,8 +20,8 @@ export function useDocumentItems(ref: DocumentRef | undefined) {
   });
 }
 
-/** Item mutations of one document. Every outcome refreshes the items and the quotes domain,
- *  because the totals live on the parent. */
+/** Item mutations of one document. Every outcome refreshes the items and the parent's domain
+ *  (quotes or orders), because the totals live on the parent. */
 export function useItemMutations(ref: DocumentRef) {
   const orgId = useAuth().currentOrg?.id;
   const qc = useQueryClient();
@@ -31,7 +32,7 @@ export function useItemMutations(ref: DocumentRef) {
     return useMutation({
       mutationFn,
       onError: (e) => toast.error(t(mapDbError(e))),
-      onSettled: () => Promise.all([key, QUOTES_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
+      onSettled: () => Promise.all([key, "orderId" in ref ? ORDERS_KEY : QUOTES_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     });
   }
 

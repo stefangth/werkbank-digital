@@ -524,6 +524,12 @@
       "none": "No selection",
       "property": "Property",
       "customer": "Customer"
+    },
+    "technician": {
+      "placeholder": "Choose technicians",
+      "search": "Search technicians",
+      "none": "No technician found",
+      "remove": "Remove {{name}}"
     }
   },
   "lineItems": {
