@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { WerkbankDataError } from "../lib/dbErrors";
 import { fetchAllPages } from "../lib/fetchAllPages";
 import type { DocumentTotals } from "./quotes";
 
@@ -97,7 +98,7 @@ export async function setOrderTechnicians(client: Client, orgId: string, orderId
 export async function deleteOrder(client: Client, id: string): Promise<void> {
   const { data, error } = await client.schema("werkbank").from("orders").delete().eq("id", id).select("id");
   if (error) throw error;
-  if (!data || data.length === 0) throw { code: "P0001", message: "invalid_transition" };
+  if (!data || data.length === 0) throw new WerkbankDataError("P0001", "invalid_transition");
 }
 
 /** Creates the order of an accepted quote and returns its id. */
