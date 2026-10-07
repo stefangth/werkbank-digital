@@ -66,6 +66,9 @@ export const MODULES: readonly ModuleGuard[] = [
       "scripts/moduleIsolation.test.ts",
       // Email registry: imports the three quote email templates from _shared/werkbank/emails.
       "supabase/functions/_shared/transactional-email-templates/registry.ts",
+      // Notification deep links: the bell routes related_entity_type "werkbank_quote" to /quotes/:id.
+      "src/lib/notifications/entityRoutes.ts",
+      "src/lib/notifications/entityRoutes.test.ts",
     ],
   },
 ];

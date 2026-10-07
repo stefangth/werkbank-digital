@@ -119,6 +119,11 @@ export function notificationTarget(n: NotificationEntityRef, ctx: NotificationRo
       return canReachPath(ROUTES.DASHBOARD, ctx) ? ROUTES.DASHBOARD : null;
     case "hire_order":
       return n.related_entity_id ? ROUTES.HIRE_ORDER_DETAIL.replace(":id", n.related_entity_id) : null;
+    // A module record: the module owns the route (registered through src/modules/ui.ts), so
+    // the path is spelled here rather than imported across the module boundary. Only the
+    // module's admins and producers receive these.
+    case "werkbank_quote":
+      return n.related_entity_id ? `/quotes/${n.related_entity_id}` : null;
     case "airtable_sync_log":
       return canReachPath(ROUTES.SETTINGS, ctx) ? `${ROUTES.SETTINGS}?tab=airtable` : null;
     case "cron_job":

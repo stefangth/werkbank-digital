@@ -111,7 +111,8 @@ export function formatDateDe(value: string): string {
   return m ? `${m[3]}.${m[2]}.${m[1]}` : value;
 }
 
-function customerName(c: CustomerRow): string {
+/** The customer's display name: the company for a property manager, else first and last name. */
+export function customerName(c: CustomerRow): string {
   if (c.kind === "property_manager") return clean(c.company_name) ?? "";
   return [clean(c.first_name), clean(c.last_name)].filter(Boolean).join(" ");
 }

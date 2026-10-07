@@ -6,6 +6,11 @@
 //   resend       { org_id, quote_id, to[], cc[], message } -> { ok, email_sent }   (sent quotes only)
 //   download-url { org_id, quote_id, kind }                -> { url }              (600 s)
 //
+// Public actions (no login; the link token is the credential, looked up by its SHA-256):
+//   view   { token } -> { quote, seller, items, totals, pdf_url, consent_text }
+//   decide { token, decision, signer_name, signature?, comment?, consent } -> { ok, pdf_url? }
+//   Both answer 404 not_found or 410 superseded | revoked | decided | expired, checked in that order.
+//
 // verify_jwt = false in config.toml because the public token actions live here too; the
 // internal actions authorize the caller themselves through requireOrgRole.
 //
@@ -30,6 +35,7 @@ import { quotePreflight } from "../_shared/werkbank/quotePreflight.ts";
 import { newQuoteToken, sha256Hex } from "../_shared/werkbank/quoteToken.ts";
 import {
   buildQuotePdfData,
+  customerName,
   type CustomerRow,
   type ItemRow,
   formatDateDe,
@@ -40,6 +46,7 @@ import {
   type TotalsRow,
 } from "../_shared/werkbank/pdf/quoteData.ts";
 import { renderQuotePdf } from "../_shared/werkbank/pdf/quoteDocument.tsx";
+import { parseName, parseSignature, quoteConsentText } from "../_shared/werkbank/acceptance.ts";
 
 export type RenderQuotePdf = (data: QuotePdfData) => Promise<Uint8Array>;
 
@@ -69,6 +76,9 @@ export async function handle(req: Request, deps: Deps, render: RenderQuotePdf = 
     case "resend":
     case "download-url":
       return internal(req, deps, render, body.action, body);
+    case "view":
+    case "decide":
+      return publicAction(req, deps, render, body.action, body);
     default:
       return json({ error: "unknown_action" }, 400);
   }
@@ -401,6 +411,365 @@ async function downloadUrl(deps: Deps, quote: QuoteRow, body: Body): Promise<Res
   const { data, error } = await deps.admin.storage.from(DOCUMENTS_BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
   if (error || !data?.signedUrl) return json({ error: "sign_failed" }, 500);
   return json({ url: data.signedUrl });
+}
+
+// ── public actions ───────────────────────────────────────────────────────────
+
+type PublicAction = "view" | "decide";
+type Decision = "accepted" | "rejected";
+
+const TOKEN_RE = /^[0-9a-f]{64}$/;
+const MAX_COMMENT_CHARS = 2000;
+
+/** What a link may still do: open, or one of the states the public page explains. */
+type LinkState =
+  | { open: true }
+  | { open: false; status: 404 | 410; error: "not_found" | "superseded" | "revoked" | "decided" | "expired" };
+
+/** The binding order: superseded, revoked, decided, expired (sent and past its Berlin date). */
+function linkState(quote: QuoteRow | null, today: string): LinkState {
+  if (!quote) return { open: false, status: 404, error: "not_found" };
+  if (quote.status === "superseded") return { open: false, status: 410, error: "superseded" };
+  if (quote.link_revoked_at) return { open: false, status: 410, error: "revoked" };
+  if (quote.status === "accepted" || quote.status === "rejected") return { open: false, status: 410, error: "decided" };
+  if (quote.status !== "sent") return { open: false, status: 404, error: "not_found" };
+  if (quote.valid_until < today) return { open: false, status: 410, error: "expired" };
+  return { open: true };
+}
+
+/** The 404/410 answer for a closed link; a decided one carries the decision and its PDF. */
+async function closedResponse(
+  deps: Deps,
+  quote: QuoteRow | null,
+  state: Exclude<LinkState, { open: true }>,
+): Promise<Response> {
+  if (state.error !== "decided" || !quote) return json({ error: state.error }, state.status);
+  const decision = quote.status as Decision;
+  const pdfUrl = decision === "accepted" && quote.accepted_pdf_path
+    ? await signedUrl(deps, DOCUMENTS_BUCKET, quote.accepted_pdf_path)
+    : null;
+  return json({ error: "decided", decision, ...(pdfUrl ? { pdf_url: pdfUrl } : {}) }, 410);
+}
+
+async function signedUrl(deps: Deps, bucket: string, path: string): Promise<string | null> {
+  const { data, error } = await deps.admin.storage.from(bucket).createSignedUrl(path, SIGNED_URL_TTL);
+  return error || !data?.signedUrl ? null : data.signedUrl;
+}
+
+async function publicAction(req: Request, deps: Deps, render: RenderQuotePdf, action: PublicAction, body: Body) {
+  // Only a well-formed token is hashed and looked up; anything else is simply unknown.
+  const token = typeof body.token === "string" ? body.token : "";
+  if (!TOKEN_RE.test(token)) return json({ error: "not_found" }, 404);
+
+  const { data, error } = await deps.admin.schema("werkbank").from("quotes")
+    .select("*").eq("access_token_hash", await sha256Hex(token)).maybeSingle();
+  if (error) return json({ error: "load_failed" }, 500);
+  const quote = (data ?? null) as unknown as QuoteRow | null;
+  const state = linkState(quote, berlinDateKey(deps.now()));
+  if (!state.open || !quote) return closedResponse(deps, quote, state as Exclude<LinkState, { open: true }>);
+
+  return action === "view" ? viewQuote(deps, quote) : decideQuote(req, deps, render, quote, body);
+}
+
+/** The sent document's date: the Berlin day of sent_at, as printed when it was sent. */
+const sentDateKey = (quote: QuoteRow) => berlinDateKey(quote.sent_at ? new Date(quote.sent_at) : new Date());
+
+/** Display data only: what the PDF prints, never the customer's email or phone or any id. */
+async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
+  const doc = await loadDocument(deps, quote);
+  if (!doc || !doc.profile) return json({ error: "load_failed" }, 500);
+  if (!quote.pdf_path) return json({ error: "pdf_missing" }, 500);
+  const printed = buildQuotePdfData({
+    quote,
+    items: doc.items,
+    totals: doc.totals,
+    customer: doc.customer,
+    property: doc.property,
+    profile: doc.profile,
+  });
+  const [pdfUrl, logoUrl] = await Promise.all([
+    signedUrl(deps, DOCUMENTS_BUCKET, quote.pdf_path),
+    doc.profile.logo_path ? signedUrl(deps, ASSETS_BUCKET, doc.profile.logo_path) : Promise.resolve(null),
+  ]);
+  if (!pdfUrl) return json({ error: "sign_failed" }, 500);
+  const { logoDataUrl: _logo, ...seller } = printed.seller;
+  return json({
+    quote: {
+      quote_no: quote.quote_no,
+      version: quote.version,
+      status: quote.status,
+      date: sentDateKey(quote),
+      valid_until: quote.valid_until,
+      subject: printed.subject,
+      intro: printed.intro,
+      closing: printed.closing,
+      payment_terms: printed.paymentTerms,
+      recipient_lines: printed.recipient.lines,
+      location_lines: printed.location,
+    },
+    seller: {
+      company_name: seller.companyName,
+      legal_form: seller.legalForm ?? null,
+      street: seller.street,
+      postal_code: seller.postalCode,
+      city: seller.city,
+      phone: seller.phone ?? null,
+      email: seller.email ?? null,
+      website: seller.website ?? null,
+      logo_url: logoUrl,
+    },
+    items: printed.sections,
+    totals: printed.totals,
+    pdf_url: pdfUrl,
+    consent_text: quoteConsentText(quote.quote_no),
+  });
+}
+
+async function decideQuote(
+  req: Request,
+  deps: Deps,
+  render: RenderQuotePdf,
+  quote: QuoteRow,
+  body: Body,
+): Promise<Response> {
+  const decision = body.decision;
+  if (decision !== "accepted" && decision !== "rejected") return json({ error: "bad_request" }, 400);
+  if (body.comment !== undefined && body.comment !== null && typeof body.comment !== "string") {
+    return json({ error: "bad_request" }, 400);
+  }
+  const comment = typeof body.comment === "string" && body.comment.trim() !== ""
+    ? body.comment.trim().slice(0, MAX_COMMENT_CHARS)
+    : null;
+  const signerName = parseName(body.signer_name);
+  if (!signerName) return json({ error: "invalid_signer_name" }, 422);
+  const signature = decision === "accepted" ? parseSignature(body.signature) : null;
+  if (decision === "accepted" && !signature) return json({ error: "invalid_signature" }, 422);
+  // Consent is the acceptance declaration; a rejection declares nothing to consent to.
+  if (decision === "accepted" && body.consent !== true) return json({ error: "consent_required" }, 422);
+  if (!quote.pdf_sha256) return json({ error: "pdf_missing" }, 500);
+
+  const doc = await loadDocument(deps, quote);
+  if (!doc || !doc.profile) return json({ error: "load_failed" }, 500);
+  const profile = doc.profile;
+
+  const now = deps.now();
+  const signaturePath = signature?.method === "drawn" ? `${quote.org_id}/signatures/${quote.id}.png` : null;
+  const w = deps.admin.schema("werkbank");
+
+  // The acceptance row comes first: its unique quote_id is the gate against a second decision.
+  const { error: insErr } = await w.from("quote_acceptances").insert({
+    org_id: quote.org_id,
+    quote_id: quote.id,
+    decision,
+    comment,
+    signer_name: signerName,
+    method: signature?.method ?? null,
+    typed_name: signature?.method === "typed" ? signature.typedName : null,
+    signature_image_path: signaturePath,
+    decided_at: now.toISOString(),
+    ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+    user_agent: req.headers.get("user-agent") || null,
+    consent_text: decision === "accepted" ? quoteConsentText(quote.quote_no) : null,
+    document_sha256: quote.pdf_sha256,
+  });
+  if (insErr) {
+    if ((insErr as { code?: string }).code === "23505") {
+      const { data: prior } = await w.from("quote_acceptances").select("decision")
+        .eq("org_id", quote.org_id).eq("quote_id", quote.id).maybeSingle();
+      const priorDecision = (prior as { decision?: string } | null)?.decision;
+      return json({ error: "decided", ...(priorDecision ? { decision: priorDecision } : {}) }, 410);
+    }
+    console.error("werkbank-quotes: recording the decision failed", { quoteId: quote.id, error: insErr });
+    return json({ error: "insert_failed" }, 500);
+  }
+
+  // Until the status update lands, a failure undoes the decision so the customer can try again.
+  const uploaded: string[] = [];
+  const rollback = async () => {
+    const { error: delErr } = await w.from("quote_acceptances").delete()
+      .eq("org_id", quote.org_id).eq("quote_id", quote.id);
+    if (delErr) console.error("werkbank-quotes: could not undo a decision", { quoteId: quote.id, error: delErr });
+    if (uploaded.length > 0) {
+      const { error: rmErr } = await deps.admin.storage.from(DOCUMENTS_BUCKET).remove(uploaded);
+      if (rmErr) console.warn("werkbank-quotes: could not remove unused uploads", { quoteId: quote.id, error: rmErr });
+    }
+  };
+
+  let acceptedBytes: Uint8Array | null = null;
+  let acceptedPath: string | null = null;
+  if (decision === "accepted" && signature) {
+    try {
+      const documents = deps.admin.storage.from(DOCUMENTS_BUCKET);
+      if (signature.method === "drawn" && signaturePath) {
+        const { error } = await documents.upload(signaturePath, signature.png, { contentType: "image/png", upsert: false });
+        if (error) throw new Error(`signature upload: ${JSON.stringify(error)}`);
+        uploaded.push(signaturePath);
+      }
+      acceptedBytes = await render(buildQuotePdfData({
+        quote,
+        items: doc.items,
+        totals: doc.totals,
+        customer: doc.customer,
+        property: doc.property,
+        profile,
+        logoDataUrl: await logoDataUrl(deps, profile.logo_path),
+        // The sent document as it was printed, plus the signature block.
+        date: formatDateDe(sentDateKey(quote)),
+        acceptance: {
+          name: signerName,
+          decidedAt: berlinDateKey(now),
+          signaturePngDataUrl: signature.method === "drawn"
+            ? `data:image/png;base64,${encodeBase64(signature.png)}`
+            : undefined,
+          typedName: signature.method === "typed" ? signature.typedName : undefined,
+        },
+      }));
+      const sha = await sha256Hex(acceptedBytes);
+      const path = `${quote.org_id}/quotes/${quote.id}-accepted-${sha.slice(0, 16)}.pdf`;
+      const { error } = await documents.upload(path, acceptedBytes, { contentType: "application/pdf", upsert: false });
+      if (error) throw new Error(`accepted pdf upload: ${JSON.stringify(error)}`);
+      uploaded.push(path);
+      acceptedPath = path;
+    } catch (e) {
+      console.error("werkbank-quotes: preparing the accepted PDF failed", { quoteId: quote.id, error: String(e) });
+      await rollback();
+      return json({ error: "render_failed" }, 500);
+    }
+  }
+
+  const patch = decision === "accepted" ? { status: "accepted", accepted_pdf_path: acceptedPath } : { status: "rejected" };
+  const { data: stamped, error: updErr } = await w.from("quotes").update(patch)
+    .eq("id", quote.id).eq("org_id", quote.org_id).eq("status", "sent")
+    .select("id").maybeSingle();
+  if (updErr || !stamped) {
+    if (updErr) console.error("werkbank-quotes: setting the decision failed", { quoteId: quote.id, error: updErr });
+    await rollback();
+    if (updErr) return json({ error: "update_failed" }, 500);
+    // Superseded, revoked or decided in the meantime: answer with the state the quote is in now.
+    const { data: reread } = await w.from("quotes").select("*").eq("id", quote.id).eq("org_id", quote.org_id).maybeSingle();
+    const current = (reread ?? null) as unknown as QuoteRow | null;
+    const state = linkState(current, berlinDateKey(now));
+    if (state.open) return json({ error: "update_failed" }, 500);
+    return closedResponse(deps, current, state);
+  }
+
+  // The decision is final from here: side effects are logged, never an error response.
+  const decided: DecisionFacts = { decision, signerName, comment, decidedAt: now };
+  const officeIds = await officeUserIds(deps, quote.org_id).catch((e) => {
+    console.error("werkbank-quotes: reading the office members failed", { quoteId: quote.id, error: String(e) });
+    return [] as string[];
+  });
+  await notifyOffice(deps, quote, decided, officeIds).catch((e) =>
+    console.error("werkbank-quotes: notifying the office failed", { quoteId: quote.id, error: String(e) })
+  );
+  await emailOffice(deps, quote, doc.customer, decided, officeIds).catch((e) =>
+    console.error("werkbank-quotes: emailing the office failed", { quoteId: quote.id, error: String(e) })
+  );
+  await emailConfirmation(deps, quote, profile, decided, acceptedBytes).catch((e) =>
+    console.error("werkbank-quotes: confirmation email failed", { quoteId: quote.id, error: String(e) })
+  );
+
+  const pdfUrl = acceptedPath ? await signedUrl(deps, DOCUMENTS_BUCKET, acceptedPath).catch(() => null) : null;
+  return json({ ok: true, ...(pdfUrl ? { pdf_url: pdfUrl } : {}) });
+}
+
+interface DecisionFacts {
+  decision: Decision;
+  signerName: string;
+  comment: string | null;
+  decidedAt: Date;
+}
+
+/** Every admin and producer membership of the org, de-duplicated by user. */
+async function officeUserIds(deps: Deps, orgId: string): Promise<string[]> {
+  const { data, error } = await deps.admin.from("org_memberships").select("user_id")
+    .eq("org_id", orgId).in("role", ["admin", "producer"]);
+  if (error) throw new Error(`memberships: ${JSON.stringify(error)}`);
+  return [...new Set(((data ?? []) as unknown as Array<{ user_id: string }>).map((m) => m.user_id))];
+}
+
+async function notifyOffice(deps: Deps, quote: QuoteRow, d: DecisionFacts, userIds: string[]): Promise<void> {
+  if (userIds.length === 0) return;
+  const accepted = d.decision === "accepted";
+  const rows = userIds.map((uid) => ({
+    org_id: quote.org_id,
+    user_id: uid,
+    type: accepted ? "quote_accepted" : "quote_rejected",
+    title: accepted ? "Angebot angenommen" : "Angebot abgelehnt",
+    message: `${d.signerName} hat das Angebot ${quote.quote_no} ${accepted ? "angenommen" : "abgelehnt"}.`,
+    related_entity_type: "werkbank_quote",
+    related_entity_id: quote.id,
+  }));
+  const { error } = await deps.admin.from("notifications").insert(rows);
+  if (error) throw new Error(`notifications: ${JSON.stringify(error)}`);
+}
+
+async function emailOffice(
+  deps: Deps,
+  quote: QuoteRow,
+  customer: CustomerRow,
+  d: DecisionFacts,
+  userIds: string[],
+): Promise<void> {
+  const base = brandAppUrl(brandForKind(WERKBANK_ORG_KIND.kind), appUrl(deps.env));
+  for (const uid of userIds) {
+    const { data } = await deps.admin.auth.admin.getUserById(uid);
+    const email = (data as { user?: { email?: string | null } | null } | null)?.user?.email;
+    if (!email) continue;
+    const result = await deps.sendEmail({
+      template_name: "quote-decided",
+      recipient_email: email,
+      org_id: quote.org_id,
+      locale: "de",
+      templateData: {
+        quote_no: quote.quote_no,
+        customer_name: customerName(customer),
+        signer_name: d.signerName,
+        decision: d.decision,
+        comment: d.comment ?? "",
+        link: `${base}/quotes/${quote.id}`,
+      },
+      idempotency_key: `quote-decided-${quote.id}-${uid}`,
+    });
+    if (!emailWasSent(result)) console.warn("werkbank-quotes: office email not delivered", { quoteId: quote.id, uid });
+  }
+}
+
+async function emailConfirmation(
+  deps: Deps,
+  quote: QuoteRow,
+  profile: ProfileRow,
+  d: DecisionFacts,
+  acceptedBytes: Uint8Array | null,
+): Promise<void> {
+  // The signer's address is the recipient of the sent email.
+  const recipient = quote.sent_to?.[0];
+  if (!recipient) return;
+  const replyTo = profile.email?.trim();
+  const result = await deps.sendEmail({
+    template_name: "quote-decision-confirmation",
+    recipient_email: recipient,
+    org_id: quote.org_id,
+    locale: "de",
+    ...(replyTo ? { reply_to: replyTo } : {}),
+    templateData: {
+      quote_no: quote.quote_no,
+      company_name: profile.company_name,
+      signer_name: d.signerName,
+      decision: d.decision,
+      decided_at: formatDateDe(berlinDateKey(d.decidedAt)),
+    },
+    ...(acceptedBytes
+      ? {
+        attachments: [{
+          filename: `Angebot-${quote.quote_no}-angenommen.pdf`,
+          content_base64: encodeBase64(acceptedBytes),
+        }],
+      }
+      : {}),
+    idempotency_key: `quote-decision-confirmation-${quote.id}`,
+  });
+  if (!emailWasSent(result)) console.warn("werkbank-quotes: confirmation email not delivered", { quoteId: quote.id });
 }
 
 if (import.meta.main) Deno.serve((req) => handle(req, realDeps()));
