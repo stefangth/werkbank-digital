@@ -1,6 +1,6 @@
 /**
  * Werkbank quote to order smoke (Teil 3): a Handwerksbetrieb admin fills the company profile,
- * writes a quote for a seeded customer, sends it, the customer accepts it online with a typed
+ * writes a quote (title, catalog item, text line) for a seeded customer, sends it, the customer accepts it online with a typed
  * signature in a fresh browser context, and the admin turns the accepted quote into a scheduled
  * order with a technician. The werkbank schema (service role) is the oracle for the stored state.
  *
@@ -29,6 +29,7 @@ const ORG_SLUG = `e2e-werkbank-ang-${stamp}`;
 const ORG_NAME = "E2E Werkbank Angebot";
 
 const CUSTOMER = "Hausverwaltung Angebot";
+const TITLE_LINE = "Wartung Heizungsanlage";
 const CATALOG_ITEM = "Stundensatz Geselle";
 const TEXT_LINE = "Anfahrt nach Vereinbarung";
 const SUBJECT = "Heizungswartung Musterstr. 5";
@@ -143,7 +144,7 @@ test.describe("Werkbank quote to order", () => {
     expect(data).toEqual([{ company_name: "Muster Haustechnik GmbH", tax_number: "201/123/45678" }]);
   });
 
-  test("the admin writes a quote with a catalog item and a text line", async ({ page }) => {
+  test("the admin writes a quote with a title, a catalog item and a text line", async ({ page }) => {
     await loginAsOrgAdmin(page);
     await navViaSidebar(page, /^angebote$/i);
     await expect(page).toHaveURL(/\/quotes/);
@@ -159,17 +160,26 @@ test.describe("Werkbank quote to order", () => {
     await page.getByLabel("Betreff", { exact: true }).fill(SUBJECT);
     await page.getByLabel("Betreff", { exact: true }).blur();
 
+    // A title first, stored before the next line is added so the order of the lines is fixed.
+    await page.getByRole("button", { name: "Titel hinzufügen" }).click();
+    await page.getByLabel("Titel", { exact: true }).fill(TITLE_LINE);
+    await page.getByLabel("Titel", { exact: true }).blur();
+    await expect.poll(async () => {
+      const { data } = await werkbank().from("document_items").select("kind, name").eq("quote_id", quoteId);
+      return data ?? [];
+    }, { timeout: 15_000 }).toEqual([{ kind: "title", name: TITLE_LINE }]);
+
     await page.getByRole("button", { name: "Katalogartikel hinzufügen" }).click();
     await page.getByRole("option", { name: new RegExp(CATALOG_ITEM) }).click();
     await page.getByRole("button", { name: "Text hinzufügen" }).click();
     await page.getByLabel("Text", { exact: true }).fill(TEXT_LINE);
     await page.getByLabel("Text", { exact: true }).blur();
 
-    // The editor saves on blur; the oracle waits for both rows to be stored.
+    // The editor saves on blur; the oracle waits for all three rows to be stored, in order.
     await expect.poll(async () => {
-      const { data } = await werkbank().from("document_items").select("kind").eq("quote_id", quoteId);
-      return (data ?? []).length;
-    }, { timeout: 15_000 }).toBe(2);
+      const { data } = await werkbank().from("document_items").select("kind, sort_order").eq("quote_id", quoteId);
+      return [...(data ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((r) => r.kind);
+    }, { timeout: 15_000 }).toEqual(["title", "item", "text"]);
 
     const { data: quote } = await werkbank().from("quotes").select("status, quote_no, subject").eq("id", quoteId).single();
     expect(quote).toMatchObject({ status: "draft", subject: SUBJECT });
@@ -218,6 +228,7 @@ test.describe("Werkbank quote to order", () => {
     try {
       await page.goto(`/quote/${token}`);
       await expect(page.getByRole("heading", { name: /^Angebot A-/ })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText(TITLE_LINE)).toBeVisible();
       await expect(page.getByText(CATALOG_ITEM)).toBeVisible();
       await expect(page.getByText(TEXT_LINE)).toBeVisible();
 
@@ -294,6 +305,12 @@ test.describe("Werkbank quote to order", () => {
     const row = page.getByRole("row", { name: new RegExp(orders![0].order_no) });
     await expect(row).toBeVisible({ timeout: 15_000 });
     await expect(row).toContainText(TECHNICIAN);
-    await expect(row).not.toContainText("Nicht eingeplant");
+    // The list shows the stored date and time (dd/MM/yyyy HH:mm) ...
+    const [y, m, d] = orders![0].scheduled_date!.split("-");
+    await expect(row).toContainText(`${d}/${m}/${y} 08:30`);
+    // ... and the Nicht eingeplant filter leaves the scheduled order out.
+    await page.getByRole("button", { name: "Nicht eingeplant" }).click();
+    await expect(page.getByRole("button", { name: "Nicht eingeplant" })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("row", { name: new RegExp(orders![0].order_no) })).toHaveCount(0);
   });
 });
