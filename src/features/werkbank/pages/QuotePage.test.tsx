@@ -6,10 +6,11 @@ import { anOrganization } from "@/test/fixtures";
 import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
-const { state, navigate, mut } = vi.hoisted(() => {
+const { state, navigate, mut, orderMut } = vi.hoisted(() => {
   const m = () => ({ mutate: vi.fn(), isPending: false });
   return {
-    state: { quote: null as unknown, list: [] as unknown[], acceptances: [] as unknown[], customerKind: "property_manager" },
+    orderMut: { createFromQuote: m() },
+    state: { orderId: null as string | null | undefined, quote: null as unknown, list: [] as unknown[], acceptances: [] as unknown[], customerKind: "property_manager" },
     navigate: vi.fn(),
     mut: { update: m(), remove: m(), extend: m(), revokeLink: m(), revise: m(), copy: m(), create: m() },
   };
@@ -23,6 +24,10 @@ vi.mock("../hooks/useQuotes", () => ({
   useQuote: () => ({ data: state.quote, isLoading: false, isError: false, refetch: vi.fn() }),
   useQuoteList: () => ({ data: state.list }),
   useQuoteMutations: () => mut,
+}));
+vi.mock("../hooks/useOrders", () => ({
+  useOrderIdForQuote: () => ({ data: state.orderId }),
+  useOrderMutations: () => orderMut,
 }));
 vi.mock("../hooks/useCustomers", () => ({ useCustomer: () => ({ data: { id: "k1", kind: state.customerKind } }) }));
 vi.mock("../hooks/useQuoteHistory", () => ({
@@ -40,7 +45,7 @@ vi.mock("../components/PropertyPicker", () => ({ PropertyPicker: () => <div>test
 vi.mock("../components/ContactSelect", () => ({ ContactSelect: () => <div>test-contact-select</div> }));
 
 import { QuotePage } from "./QuotePage";
-import { QUOTES_PATH, quotePath } from "../paths";
+import { QUOTES_PATH, orderPath, quotePath } from "../paths";
 
 const quote = (over: Record<string, unknown> = {}) => ({
   id: "q1", org_id: "org-1", quote_no: "A-0042", version: 1, status: "draft", customer_id: "k1", property_id: null, contact_id: null,
@@ -55,6 +60,7 @@ describe("QuotePage", () => {
     state.quote = quote();
     state.list = [listRow({})];
     state.acceptances = [];
+    state.orderId = null;
     state.customerKind = "property_manager";
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
@@ -224,5 +230,44 @@ describe("QuotePage", () => {
     fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Löschen" }));
     expect(mut.remove.mutate.mock.calls[0][0]).toBe("q1");
     expect(navigate).toHaveBeenCalledWith(QUOTES_PATH);
+  });
+
+  describe("order of an accepted quote", () => {
+    it("creates the order and opens it", async () => {
+      state.quote = quote({ status: "accepted" });
+      state.list = [listRow({ status: "accepted", has_order: false })];
+      orderMut.createFromQuote.mutate.mockImplementation((_id, opts) => opts.onSuccess("o9"));
+      render();
+      fireEvent.click(await screen.findByRole("button", { name: "Auftrag anlegen" }));
+      expect(orderMut.createFromQuote.mutate).toHaveBeenCalledWith("q1", expect.anything());
+      expect(navigate).toHaveBeenCalledWith(orderPath("o9"));
+    });
+
+    it("links to the existing order instead", async () => {
+      state.quote = quote({ status: "accepted" });
+      state.list = [listRow({ status: "accepted", has_order: true })];
+      state.orderId = "o5";
+      render();
+      expect(await screen.findByRole("link", { name: "Zum Auftrag" })).toHaveAttribute("href", orderPath("o5"));
+      expect(screen.queryByRole("button", { name: "Auftrag anlegen" })).not.toBeInTheDocument();
+    });
+
+    it("offers neither action while the order lookup is still loading", async () => {
+      state.quote = quote({ status: "accepted" });
+      state.list = [];
+      state.orderId = undefined;
+      render();
+      await screen.findByTestId("items");
+      expect(screen.queryByRole("button", { name: "Auftrag anlegen" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Zum Auftrag" })).not.toBeInTheDocument();
+    });
+
+    it("offers nothing for a quote that is not accepted", async () => {
+      state.quote = quote({ status: "sent" });
+      render();
+      await screen.findByTestId("items");
+      expect(screen.queryByRole("button", { name: "Auftrag anlegen" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Zum Auftrag" })).not.toBeInTheDocument();
+    });
   });
 });

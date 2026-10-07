@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Metric } from "@/components/ui/metric";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusPill } from "@/components/ui/status-pill";
 import { Token } from "@/components/ui/token";
 import type { CatalogItem } from "../data/catalog";
 import type { DocumentItem, DocumentRef, ItemDraft } from "../data/documentItems";
@@ -17,6 +18,9 @@ import { UNIT_CODES, unitLabelKey, type UnitCode } from "../lib/units";
 import { PRICE, toNumber } from "../schemas/catalogItem";
 import { CatalogItemCombobox } from "./CatalogItemCombobox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+
+/** Lines of an order that differ from its quote (ids), shown with a pill. */
+export type LineMarks = { changed: ReadonlySet<string>; added: ReadonlySet<string> };
 
 /** Inline edits are written this long after the last keystroke. */
 const SAVE_DELAY_MS = 500;
@@ -235,10 +239,19 @@ function RowFields({
   );
 }
 
+/** "Changed" or "New" next to a line that differs from the quote. */
+function MarkPill({ id, marks }: { id: string; marks?: LineMarks }) {
+  const { t } = useTranslation("werkbank");
+  if (marks?.added.has(id)) return <StatusPill tone="accent">{t("orders.comparison.added")}</StatusPill>;
+  if (marks?.changed.has(id)) return <StatusPill tone="waiting">{t("orders.comparison.changed")}</StatusPill>;
+  return null;
+}
+
 function EditableRow({
-  item, subtotal, update, onDelete, onDragEnd,
+  item, subtotal, marks, update, onDelete, onDragEnd,
 }: {
   item: DocumentItem;
+  marks?: LineMarks;
   subtotal: number | undefined;
   update: Mutation<{ id: string; patch: Patch }>;
   onDelete: () => void;
@@ -259,6 +272,7 @@ function EditableRow({
           <GripVertical className="h-4 w-4" />
         </button>
         <RowFields item={item} subtotal={subtotal} readOnly={false} saver={saver} update={(patch) => update.mutate({ id: item.id, patch })} onDelete={onDelete} />
+        <MarkPill id={item.id} marks={marks} />
       </div>
     </Reorder.Item>
   );
@@ -266,10 +280,19 @@ function EditableRow({
 
 /** The positions of a quote or order: add from the catalog or free, titles and text blocks,
  *  inline edits (debounced), drag to reorder, subtotals per title. `readOnly` shows plain text. */
-export function LineItemsEditor({ docRef, readOnly }: { docRef: DocumentRef; readOnly: boolean }) {
+export function LineItemsEditor({
+  docRef, readOnly, marks, onLocked,
+}: {
+  docRef: DocumentRef;
+  readOnly: boolean;
+  /** For an order: the lines that differ from its quote. */
+  marks?: LineMarks;
+  /** The database rejected a write because the document was locked meanwhile. */
+  onLocked?: () => void;
+}) {
   const { t } = useTranslation("werkbank");
   const { data: items } = useDocumentItems(docRef);
-  const { add, update, remove, reorder } = useItemMutations(docRef);
+  const { add, update, remove, reorder } = useItemMutations(docRef, onLocked);
   const [order, setOrder] = useState<DocumentItem[]>(items ?? []);
   const [syncedItems, setSyncedItems] = useState(items);
   const [titleToDelete, setTitleToDelete] = useState<DocumentItem | null>(null);
@@ -312,8 +335,9 @@ export function LineItemsEditor({ docRef, readOnly }: { docRef: DocumentRef; rea
       ) : readOnly ? (
         <div>
           {order.map((item) => (
-            <div key={item.id} data-row className="flex border-b px-3 py-2">
+            <div key={item.id} data-row className="flex items-center gap-2 border-b px-3 py-2">
               <RowFields item={item} subtotal={subtotals.get(item.id)} readOnly saver={noSaver} update={noop} onDelete={noop} />
+              <MarkPill id={item.id} marks={marks} />
             </div>
           ))}
         </div>
@@ -328,6 +352,7 @@ export function LineItemsEditor({ docRef, readOnly }: { docRef: DocumentRef; rea
               key={item.id}
               item={item}
               subtotal={subtotals.get(item.id)}
+              marks={marks}
               update={update}
               onDelete={() => requestDelete(item, index)}
               onDragEnd={persistOrder}

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ContactsSection } from "../components/ContactsSection";
 import { CustomerFormDialog } from "../components/CustomerFormDialog";
+import { DocumentsSection } from "../components/DocumentsSection";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { PropertyFormDialog } from "../components/PropertyFormDialog";
 import { useArchiveCustomer, useCustomer, useDeleteCustomer } from "../hooks/useCustomers";
@@ -156,6 +157,8 @@ export function CustomerDetailPage() {
           </ul>
         )}
       </section>
+
+      <DocumentsSection customerId={customer.id} />
 
       <ContactsSection parent={{ customerId: customer.id }} />
 

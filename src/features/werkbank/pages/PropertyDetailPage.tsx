@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ContactsSection } from "../components/ContactsSection";
+import { DocumentsSection } from "../components/DocumentsSection";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { PropertyFormDialog } from "../components/PropertyFormDialog";
 import { useCustomer } from "../hooks/useCustomers";
@@ -154,6 +155,8 @@ export function PropertyDetailPage() {
         <Note label={t("properties.detail.accessNotes")} value={property.access_notes} />
         <Note label={t("properties.detail.notes")} value={property.notes} />
       </div>
+
+      <DocumentsSection customerId={property.customer_id} propertyId={property.id} />
 
       <ContactsSection parent={{ propertyId: property.id }} />
 

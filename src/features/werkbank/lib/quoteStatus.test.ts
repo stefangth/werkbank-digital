@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { QUOTE_STATUS_TONE, quoteDisplayStatus } from "./quoteStatus";
+import { QUOTE_STATUS_TONE, isAcceptedWithoutOrder, quoteDisplayStatus } from "./quoteStatus";
 
 describe("quoteDisplayStatus", () => {
   it("derives expired from a sent quote past its validity", () => {
@@ -18,5 +18,14 @@ describe("quoteDisplayStatus", () => {
     expect(QUOTE_STATUS_TONE).toEqual({
       draft: "neutral", sent: "waiting", accepted: "confirmed", rejected: "risk", expired: "risk", superseded: "neutral",
     });
+  });
+});
+
+describe("isAcceptedWithoutOrder", () => {
+  it("is true only for an accepted quote that has no order", () => {
+    expect(isAcceptedWithoutOrder({ status: "accepted", has_order: false })).toBe(true);
+    expect(isAcceptedWithoutOrder({ status: "accepted", has_order: null })).toBe(true);
+    expect(isAcceptedWithoutOrder({ status: "accepted", has_order: true })).toBe(false);
+    expect(isAcceptedWithoutOrder({ status: "sent", has_order: false })).toBe(false);
   });
 });

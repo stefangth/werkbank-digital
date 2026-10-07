@@ -62,6 +62,17 @@ describe("LineItemsEditor", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it.each([[true], [false]])("marks changed and new lines against the quote (read only: %s)", (readOnly) => {
+    renderWithProviders(
+      <LineItemsEditor docRef={{ orderId: "o1" }} readOnly={readOnly} marks={{ changed: new Set(["i1"]), added: new Set(["i2"]) }} />,
+    );
+    const rows = document.querySelectorAll("[data-row]");
+    const rowOf = (name: string) => [...rows].find((r) => r.textContent?.includes(name) || [...r.querySelectorAll("input")].some((i) => i.value === name))!;
+    expect(rowOf("Fliesen")).toHaveTextContent("Geändert");
+    expect(rowOf("Silikon")).toHaveTextContent("Neu");
+    expect(rowOf("Bad")).not.toHaveTextContent(/Geändert|Neu/);
+  });
+
   it("adds a catalog item with the snapshot values after the last row", async () => {
     renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Katalogartikel hinzufügen" }));

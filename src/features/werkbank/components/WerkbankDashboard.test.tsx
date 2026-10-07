@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { renderWithProviders } from "@/test/renderWithProviders";
 import { createFakeSupabase } from "@/test/supabaseFake";
@@ -32,6 +32,20 @@ describe("WerkbankDashboard", () => {
         artists: { data: null, error: null, count: 2 },
         "werkbank.catalog_items": { data: null, error: null, count: 0 },
         "werkbank.customers": { data: null, error: null, count: 0 },
+        "werkbank.company_profiles": { data: null, error: null },
+        "werkbank.quote_list": { data: [
+          { id: "q1", status: "accepted", has_order: false },
+          { id: "q2", status: "accepted", has_order: false },
+          { id: "q3", status: "accepted", has_order: true },
+          { id: "q4", status: "sent", has_order: false },
+        ], error: null },
+        "werkbank.order_list": { data: [
+          { id: "o1", status: "open", scheduled_date: null },
+          { id: "o2", status: "in_progress", scheduled_date: null },
+          { id: "o3", status: "open", scheduled_date: "2026-11-03" },
+          { id: "o4", status: "done", scheduled_date: null },
+          { id: "o5", status: "cancelled", scheduled_date: null },
+        ], error: null },
       }),
     );
   });
@@ -51,5 +65,22 @@ describe("WerkbankDashboard", () => {
     expect(screen.getByRole("heading", { name: "Welcome to Werkbank Digital" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Add technicians" })).not.toBeInTheDocument();
     expect((client as unknown as ReturnType<typeof createFakeSupabase>).calls).toEqual([]);
+  });
+
+  it.each(["admin", "producer"] as const)("shows the two KPI tiles with counts and filtered links for %s", async (role) => {
+    authAs(role);
+    renderDashboard();
+    const accepted = (await screen.findByRole("link", { name: /Accepted, no order yet/ }));
+    expect(accepted).toHaveAttribute("href", "/quotes?status=accepted&noOrder=1");
+    await waitFor(() => expect(accepted).toHaveTextContent("2"));
+    const unscheduled = screen.getByRole("link", { name: /Orders without a date/ });
+    expect(unscheduled).toHaveAttribute("href", "/orders?unscheduled=1");
+    await waitFor(() => expect(unscheduled).toHaveTextContent("2"));
+  });
+
+  it("shows no tiles for a technician", () => {
+    authAs("artist");
+    renderDashboard();
+    expect(screen.queryByRole("link", { name: /Accepted, no order yet/ })).not.toBeInTheDocument();
   });
 });

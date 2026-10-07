@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapDbError } from "./dbErrors";
+import { mapDbError, WerkbankDataError } from "./dbErrors";
 
 describe("mapDbError", () => {
   it("maps the customer number unique violation (message)", () => {
@@ -64,5 +64,19 @@ describe("mapDbError quote and order errors", () => {
 
   it("keeps a plain permission denial as forbidden", () => {
     expect(mapDbError({ code: "42501", message: "denied" })).toBe("errors.forbidden");
+  });
+});
+
+describe("WerkbankDataError", () => {
+  it("is an Error that carries a database-style code", () => {
+    const err = new WerkbankDataError("P0001", "invalid_transition");
+    expect(err).toBeInstanceOf(Error);
+    expect(err.name).toBe("WerkbankDataError");
+    expect(err.code).toBe("P0001");
+    expect(err.message).toBe("invalid_transition");
+    expect(err.stack).toBeTruthy();
+  });
+  it("maps like the database error it stands in for", () => {
+    expect(mapDbError(new WerkbankDataError("P0001", "invalid_transition"))).toBe("errors.invalidTransition");
   });
 });

@@ -9,7 +9,8 @@ import { STORAGE_KEY } from "@/i18n/config";
 // Opt in to the v7 behaviour so the tests do not log the upgrade warnings.
 const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true } as const;
 
-const { customer, properties, archive, sections, deleteCustomer } = vi.hoisted(() => ({
+const { customer, properties, archive, sections, deleteCustomer, documents } = vi.hoisted(() => ({
+  documents: { props: [] as unknown[] },
   customer: { data: undefined as unknown, isLoading: false, isError: false },
   properties: { data: [] as unknown[], isLoading: false, isError: false },
   archive: { mutate: vi.fn(), isPending: false },
@@ -29,6 +30,12 @@ vi.mock("../hooks/useProperties", () => ({
   usePropertiesForCustomer: () => properties,
   useCreateProperty: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateProperty: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+vi.mock("../components/DocumentsSection", () => ({
+  DocumentsSection: (props: unknown) => {
+    documents.props.push(props);
+    return <div>documents-section</div>;
+  },
 }));
 vi.mock("../components/ContactsSection", () => ({
   ContactsSection: ({ parent }: { parent: unknown }) => {
@@ -68,11 +75,18 @@ describe("CustomerDetailPage", () => {
     Object.assign(customer, { data: base, isLoading: false, isError: false });
     Object.assign(properties, { data: [{ id: "p1", name: "WEG Musterstr. 5", object_no: "O-100", street: "Musterstraße 5", postal_code: "04109", city: "Leipzig", archived_at: null }], isLoading: false, isError: false });
     sections.parents = [];
+    documents.props = [];
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
   });
   afterAll(async () => {
     await act(async () => { await i18n.changeLanguage("en"); });
+  });
+
+  it("shows the customer's quotes and orders", () => {
+    renderPage();
+    expect(screen.getByText("documents-section")).toBeInTheDocument();
+    expect(documents.props[0]).toEqual({ customerId: "k1" });
   });
 
   it("shows name, number and kind in the header", () => {

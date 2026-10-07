@@ -9,27 +9,35 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: client }));
 
 import { StartList } from "./StartList";
 
-function renderList(counts: { artists: number; items: number; customers: number }) {
+const COMPLETE = {
+  company_name: "Muster GmbH", street: "Hauptstr. 1", postal_code: "01067", city: "Dresden",
+  email: "info@muster.example", tax_number: "201/123/45678", vat_id: null,
+};
+
+function renderList(counts: { artists: number; items: number; customers: number }, company: unknown = null, isAdmin = true) {
   Object.assign(
     client,
     createFakeSupabase({
       artists: { data: null, error: null, count: counts.artists },
       "werkbank.catalog_items": { data: null, error: null, count: counts.items },
       "werkbank.customers": { data: null, error: null, count: counts.customers },
+      "werkbank.company_profiles": { data: company, error: null },
     }),
   );
   return renderWithProviders(
     <MemoryRouter>
       <StartList orgId="org-1" />
     </MemoryRouter>,
+    { authOverrides: { hasRole: ((r: string) => (r === "admin" ? isAdmin : r === "producer")) as never } },
   );
 }
 
 describe("StartList", () => {
-  it("shows the three steps in order with their links", async () => {
+  it("shows the four steps in order with their links", async () => {
     renderList({ artists: 0, items: 0, customers: 0 });
     const links = await screen.findAllByRole("link");
     expect(links.map((l) => [l.textContent, l.getAttribute("href")])).toEqual([
+      ["Fill in company details", "/settings?tab=company"],
       ["Add technicians", "/technicians"],
       ["Add or import services", "/catalog"],
       ["Add or import customers", "/customers"],
@@ -47,5 +55,28 @@ describe("StartList", () => {
     expect(within(customers).getByTestId("step-done")).toBeInTheDocument();
     const catalog = screen.getByRole("link", { name: /Add or import services/ }).closest("li")!;
     expect(within(catalog).queryByTestId("step-done")).not.toBeInTheDocument();
+  });
+
+  it("marks the company step done once the profile is complete", async () => {
+    renderList({ artists: 0, items: 0, customers: 0 }, COMPLETE);
+    const company = (await screen.findByRole("link", { name: /Fill in company details/ })).closest("li")!;
+    await waitFor(() => expect(within(company).getByTestId("step-done")).toBeInTheDocument());
+  });
+
+  it("keeps the company step open while the profile is incomplete or missing", async () => {
+    renderList({ artists: 2, items: 0, customers: 0 }, { ...COMPLETE, email: "" });
+    const company = (await screen.findByRole("link", { name: /Fill in company details/ })).closest("li")!;
+    await waitFor(() => expect(screen.getByTestId("step-done")).toBeInTheDocument());
+    expect(within(company).queryByTestId("step-done")).not.toBeInTheDocument();
+  });
+
+  it("hides the company step from a producer", async () => {
+    renderList({ artists: 0, items: 0, customers: 0 }, null, false);
+    const links = await screen.findAllByRole("link");
+    expect(links.map((l) => l.textContent)).toEqual([
+      "Add technicians",
+      "Add or import services",
+      "Add or import customers",
+    ]);
   });
 });

@@ -60,4 +60,13 @@ describe("item hooks", () => {
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "quotes"] });
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "items", "quote_id:q1"] });
   });
+
+  it("also invalidates the orders domain for an order item mutation", async () => {
+    Object.assign(client, createFakeSupabase({ "werkbank.document_items": { data: null, error: null } }));
+    const { result, queryClient } = renderHookWithProviders(() => useItemMutations({ orderId: "o1" }), { authOverrides });
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    await act(async () => { await result.current.remove.mutateAsync("i1"); });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "orders"] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "items", "order_id:o1"] });
+  });
 });

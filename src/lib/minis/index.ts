@@ -11,6 +11,7 @@ import { customersMini } from './pages/customers';
 import { propertiesMini } from './pages/properties';
 import { catalogMini } from './pages/catalog';
 import { quotesMini } from './pages/quotes';
+import { ordersMini } from './pages/orders';
 
 export * from './types';
 export { resolveMiniRole } from './resolveMiniRole';
@@ -34,6 +35,7 @@ export const MINIS = {
   properties: propertiesMini,
   catalog: catalogMini,
   quotes: quotesMini,
+  orders: ordersMini,
 } as const satisfies Record<PageKey, MiniDef>;
 
 export type RegisteredPageKey = keyof typeof MINIS;

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import { useQuoteList, useQuoteMutations } from "../hooks/useQuotes";
 import { formatEuro } from "../lib/money";
 import { formatQuoteNumber } from "../lib/quoteNumber";
-import { QUOTE_DISPLAY_STATUSES, QUOTE_STATUS_TONE, quoteDisplayStatus } from "../lib/quoteStatus";
+import { QUOTE_DISPLAY_STATUSES, QUOTE_STATUS_TONE, isAcceptedWithoutOrder, quoteDisplayStatus } from "../lib/quoteStatus";
 import { useDebouncedValue } from "../lib/useDebouncedValue";
 import { quotePath } from "../paths";
 
@@ -85,17 +85,26 @@ export function QuotesPage() {
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
-  const [status, setStatus] = useState(ALL);
+  // The dashboard links here with ?status=accepted&noOrder=1; an unknown status is ignored.
+  const [params] = useSearchParams();
+  const urlStatus = params.get("status");
+  const [status, setStatus] = useState(
+    urlStatus && (QUOTE_DISPLAY_STATUSES as readonly string[]).includes(urlStatus) ? urlStatus : ALL,
+  );
+  const [noOrderOnly, setNoOrderOnly] = useState(params.get("noOrder") === "1");
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(() => {
     const needle = debouncedSearch.trim().toLowerCase();
     return (quotes ?? []).filter(
-      (q) => (status === ALL || quoteDisplayStatus(q) === status) && (!needle || matches(q, needle)),
+      (q) =>
+        (status === ALL || quoteDisplayStatus(q) === status) &&
+        (!noOrderOnly || isAcceptedWithoutOrder(q)) &&
+        (!needle || matches(q, needle)),
     );
-  }, [quotes, debouncedSearch, status]);
+  }, [quotes, debouncedSearch, status, noOrderOnly]);
 
-  const acceptedNoOrder = (quotes ?? []).filter((q) => q.status === "accepted" && !q.has_order).length;
+  const acceptedNoOrder = (quotes ?? []).filter(isAcceptedWithoutOrder).length;
 
   return (
     <div className="space-y-6">
@@ -126,7 +135,7 @@ export function QuotesPage() {
                 <span>{t("quotes.notice.acceptedNoOrder")}</span>
                 <Metric size="body">{acceptedNoOrder}</Metric>
               </p>
-              <Button variant="secondary" size="sm" onClick={() => setStatus("accepted")}>
+              <Button variant="secondary" size="sm" onClick={() => { setNoOrderOnly(true); setStatus("accepted"); }}>
                 {t("quotes.notice.show")}
               </Button>
             </div>
@@ -141,7 +150,7 @@ export function QuotesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={(v) => { setNoOrderOnly(false); setStatus(v); }}>
               <SelectTrigger className="w-[200px]" aria-label={t("quotes.statusFilter")}>
                 <SelectValue />
               </SelectTrigger>
@@ -154,6 +163,9 @@ export function QuotesPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button variant={noOrderOnly ? "default" : "secondary"} aria-pressed={noOrderOnly} onClick={() => setNoOrderOnly((on) => !on)}>
+              {t("quotes.noOrderFilter")}
+            </Button>
           </div>
 
           {visible.length === 0 ? (
