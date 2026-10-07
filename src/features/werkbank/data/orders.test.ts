@@ -79,6 +79,8 @@ describe("setOrderTechnicians", () => {
     await setOrderTechnicians(asClient(fake), "org-1", "o1", ["b", "c"]);
     const del = fake.calls.find((c) => c.table === T && c.method === "delete");
     expect(del).toBeTruthy();
+    const afterDelete = fake.calls.slice(fake.calls.indexOf(del!));
+    expect(afterDelete).toContainEqual(expect.objectContaining({ table: T, method: "eq", args: ["org_id", "org-1"] }));
     expect(fake.calls).toContainEqual(expect.objectContaining({ table: T, method: "in", args: ["artist_id", ["a"]] }));
     expect(fake.calls).toContainEqual(expect.objectContaining({ table: T, method: "insert", args: [[{ org_id: "org-1", order_id: "o1", artist_id: "c" }]] }));
   });

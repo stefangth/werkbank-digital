@@ -77,7 +77,7 @@ export async function setOrderTechnicians(client: Client, orgId: string, orderId
   const toDelete = [...current].filter((id) => !wanted.has(id));
   const toInsert = [...wanted].filter((id) => !current.has(id));
   if (toDelete.length) {
-    const res = await werkbank.from("order_technicians").delete().eq("order_id", orderId).in("artist_id", toDelete);
+    const res = await werkbank.from("order_technicians").delete().eq("org_id", orgId).eq("order_id", orderId).in("artist_id", toDelete);
     if (res.error) throw res.error;
   }
   if (toInsert.length) {

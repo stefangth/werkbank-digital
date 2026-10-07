@@ -387,7 +387,8 @@ async function emailQuote(
       template_name: "quote-sent",
       recipient_email: recipient,
       org_id: quote.org_id,
-      // Customer emails are German whatever language the office uses.
+      // The quote emails request German; that takes effect when the org has language packages enabled
+      // (on by default for Handwerk orgs), otherwise the English base copy is used.
       locale: "de",
       ...(replyTo ? { reply_to: replyTo } : {}),
       templateData: {
