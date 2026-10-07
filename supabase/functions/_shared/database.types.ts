@@ -3277,6 +3277,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      import_catalog_items: {
+        Args: { p_org: string; p_rows: Json }
+        Returns: Json
+      }
+      import_customers: { Args: { p_org: string; p_rows: Json }; Returns: Json }
+      import_properties: {
+        Args: { p_org: string; p_rows: Json }
+        Returns: Json
+      }
       next_number: { Args: { p_key: string; p_org: string }; Returns: string }
     }
     Enums: {
