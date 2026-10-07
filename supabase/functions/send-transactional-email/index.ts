@@ -62,6 +62,8 @@ export async function resolveFromAddress(
   return typeof value === 'string' ? value : brand.defaultFrom
 }
 
+const REPLY_TO_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export async function handle(req: Request, deps: Deps): Promise<Response> {
   if (req.method === 'OPTIONS') return preflight();
 
@@ -91,6 +93,8 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   let templateData: TemplateData = {}
   let orgId: string | null
   let attachments: EmailAttachment[] | undefined
+  let replyTo: string | undefined
+  let replyToInvalid = false
   // An explicit locale forces the email language (still entitlement-gated in
   // resolveOrgLocale); undefined means "resolve the org's live org_language".
   let localeOverride: ServerLocale | null = null
@@ -107,6 +111,13 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     if (Array.isArray(body.attachments) && body.attachments.length > 0) {
       attachments = body.attachments as EmailAttachment[]
     }
+    if (body.reply_to != null) {
+      if (typeof body.reply_to === 'string' && REPLY_TO_RE.test(body.reply_to)) {
+        replyTo = body.reply_to
+      } else {
+        replyToInvalid = true
+      }
+    }
     if (body.locale != null) {
       localeOverride = coerceLocale(body.locale)
     }
@@ -116,6 +127,10 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
 
   if (!templateName) {
     return json({ error: 'templateName is required' }, 400)
+  }
+
+  if (replyToInvalid) {
+    return json({ error: 'invalid reply_to' }, 400)
   }
 
   const template = TEMPLATES[templateName]
@@ -395,6 +410,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         },
         ...(resendAttachments ? { attachments: resendAttachments } : {}),
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     })
 

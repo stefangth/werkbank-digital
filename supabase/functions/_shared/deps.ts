@@ -20,6 +20,8 @@ export interface EmailMessage {
   idempotency_key?: string;
   /** Binary attachments (e.g. the issued hire-order PDF). Task 10 implements delivery. */
   attachments?: EmailAttachment[];
+  /** Optional Reply-To address (e.g. the sending business's own mailbox). */
+  reply_to?: string;
   /**
    * Force the language of the whole email (subject/copy/`<html lang>`) instead of
    * letting `send-transactional-email` resolve the org's live `org_language`. Used
