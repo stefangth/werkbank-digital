@@ -3,7 +3,8 @@
     "customers": "Customers",
     "catalog": "Services",
     "technicians": "Technicians",
-    "properties": "Properties"
+    "properties": "Properties",
+    "quotes": "Quotes"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -550,5 +551,95 @@
     "vat": "VAT {{rate}} %",
     "gross": "Gross",
     "labour": "of which labour (§35a EStG)"
+  },
+  "quotes": {
+    "title": "Quotes",
+    "sub": "Write quotes, send them and follow the answer.",
+    "add": "Create quote",
+    "loadFailed": "The quotes could not be loaded.",
+    "searchLabel": "Search quotes",
+    "searchPlaceholder": "Number, customer or subject",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "superseded": "Superseded"
+    },
+    "noMatches": "No quote matches your search.",
+    "noMatchesReason": "Try another term or status.",
+    "empty": {
+      "title": "No quotes yet",
+      "body": "Create your first quote for a customer.",
+      "action": "Create first quote"
+    },
+    "notice": {
+      "acceptedNoOrder": "Accepted, no order yet",
+      "show": "Show"
+    },
+    "columns": {
+      "number": "No.",
+      "customer": "Customer",
+      "subject": "Subject",
+      "status": "Status",
+      "validUntil": "Valid until",
+      "net": "Net",
+      "gross": "Gross"
+    },
+    "new": {
+      "title": "New quote",
+      "customer": "Customer",
+      "create": "Create draft"
+    },
+    "page": {
+      "loadFailed": "The quote could not be loaded.",
+      "back": "All quotes",
+      "versions": "Versions",
+      "version": "Version {{count}}",
+      "notFound": {
+        "title": "Quote not found",
+        "reason": "It may have been deleted.",
+        "back": "Back to quotes"
+      },
+      "linkRevoked": "Link blocked",
+      "sentOn": "Sent on {{date}}",
+      "revise": "Revise",
+      "copy": "Copy",
+      "extend": "Extend",
+      "revokeLink": "Block link",
+      "delete": "Delete draft",
+      "extendLabel": "New validity date",
+      "extendConfirm": "Extend",
+      "deleteTitle": "Delete this draft?",
+      "deleteBody": "The draft {{number}} and its items are removed for good.",
+      "readOnly": "This quote has been sent. Revise it to change the content."
+    },
+    "header": {
+      "customer": "Customer",
+      "property": "Property",
+      "contact": "Contact",
+      "locationNote": "Location note",
+      "subject": "Subject",
+      "validUntil": "Valid until",
+      "discount": "Discount in percent",
+      "intro": "Introduction",
+      "closing": "Closing text",
+      "paymentTerms": "Payment terms",
+      "none": "Not set",
+      "pickDate": "Pick a date"
+    },
+    "history": {
+      "title": "History",
+      "sent": "Sent",
+      "sentTo": "to {{recipients}}",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "by": "by {{name}}",
+      "comment": "Comment",
+      "signature": "Signature of {{name}}"
+    }
   }
 }

@@ -12,6 +12,7 @@ import { hireOrdersArt } from './HireOrdersMini';
 import { customersArt } from './CustomersMini';
 import { propertiesArt } from './PropertiesMini';
 import { catalogArt } from './CatalogMini';
+import { quotesArt } from './QuotesMini';
 
 export type ArtTuple = readonly [ReactNode, ReactNode, ReactNode, ReactNode];
 /** An illustration set is either static nodes, or a factory taking the org's workspace-type
@@ -33,6 +34,7 @@ export const ART: Record<RegisteredPageKey, ArtEntry> = {
   customers: customersArt,
   properties: propertiesArt,
   catalog: catalogArt,
+  quotes: quotesArt,
 };
 
 /** Resolve an ART entry to its four nodes, passing vocabulary to the factory forms. */

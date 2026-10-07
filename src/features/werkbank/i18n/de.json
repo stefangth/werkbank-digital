@@ -3,7 +3,8 @@
     "customers": "Kunden",
     "catalog": "Leistungen",
     "technicians": "Monteure",
-    "properties": "Liegenschaften"
+    "properties": "Liegenschaften",
+    "quotes": "Angebote"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -550,5 +551,95 @@
     "vat": "MwSt. {{rate}} %",
     "gross": "Brutto",
     "labour": "davon Lohnanteil (§35a EStG)"
+  },
+  "quotes": {
+    "title": "Angebote",
+    "sub": "Schreibe Angebote, verschicke sie und behalte die Antwort im Blick.",
+    "add": "Angebot anlegen",
+    "loadFailed": "Die Angebote konnten nicht geladen werden.",
+    "searchLabel": "Angebote durchsuchen",
+    "searchPlaceholder": "Nummer, Kunde oder Betreff",
+    "statusFilter": "Status",
+    "allStatuses": "Alle Status",
+    "status": {
+      "draft": "Entwurf",
+      "sent": "Versendet",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "expired": "Abgelaufen",
+      "superseded": "Ersetzt"
+    },
+    "noMatches": "Kein Angebot passt zu deiner Suche.",
+    "noMatchesReason": "Versuche einen anderen Begriff oder Status.",
+    "empty": {
+      "title": "Noch keine Angebote",
+      "body": "Leg dein erstes Angebot für einen Kunden an.",
+      "action": "Erstes Angebot anlegen"
+    },
+    "notice": {
+      "acceptedNoOrder": "Angenommen, noch kein Auftrag",
+      "show": "Anzeigen"
+    },
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde",
+      "subject": "Betreff",
+      "status": "Status",
+      "validUntil": "Gültig bis",
+      "net": "Netto",
+      "gross": "Brutto"
+    },
+    "new": {
+      "title": "Neues Angebot",
+      "customer": "Kunde",
+      "create": "Entwurf anlegen"
+    },
+    "page": {
+      "loadFailed": "Das Angebot konnte nicht geladen werden.",
+      "back": "Alle Angebote",
+      "versions": "Versionen",
+      "version": "Version {{count}}",
+      "notFound": {
+        "title": "Angebot nicht gefunden",
+        "reason": "Vielleicht wurde es gelöscht.",
+        "back": "Zurück zu den Angeboten"
+      },
+      "linkRevoked": "Link gesperrt",
+      "sentOn": "Versendet am {{date}}",
+      "revise": "Überarbeiten",
+      "copy": "Kopieren",
+      "extend": "Verlängern",
+      "revokeLink": "Link sperren",
+      "delete": "Entwurf löschen",
+      "extendLabel": "Neues Gültigkeitsdatum",
+      "extendConfirm": "Verlängern",
+      "deleteTitle": "Diesen Entwurf löschen?",
+      "deleteBody": "Der Entwurf {{number}} und seine Positionen werden endgültig gelöscht.",
+      "readOnly": "Dieses Angebot ist versendet. Überarbeite es, um den Inhalt zu ändern."
+    },
+    "header": {
+      "customer": "Kunde",
+      "property": "Liegenschaft",
+      "contact": "Ansprechpartner",
+      "locationNote": "Hinweis zum Ort",
+      "subject": "Betreff",
+      "validUntil": "Gültig bis",
+      "discount": "Rabatt in Prozent",
+      "intro": "Einleitung",
+      "closing": "Schlusstext",
+      "paymentTerms": "Zahlungsbedingungen",
+      "none": "Nicht gesetzt",
+      "pickDate": "Datum wählen"
+    },
+    "history": {
+      "title": "Verlauf",
+      "sent": "Versendet",
+      "sentTo": "an {{recipients}}",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "by": "von {{name}}",
+      "comment": "Kommentar",
+      "signature": "Unterschrift von {{name}}"
+    }
   }
 }

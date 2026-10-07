@@ -38,6 +38,7 @@ const SKIP_PATHS = [
   "minis.customers",
   "minis.properties",
   "minis.catalog",
+  "minis.quotes",
   "settings.organization.kind",
   "getRunningV3.steps.workspace",
   "getRunningV3.body.workspace",

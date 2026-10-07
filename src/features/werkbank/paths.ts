@@ -5,3 +5,5 @@ export const CUSTOMERS_PATH = "/customers";
 export const customerPath = (id: string) => `${CUSTOMERS_PATH}/${id}`;
 export const PROPERTIES_PATH = "/properties";
 export const propertyPath = (id: string) => `${PROPERTIES_PATH}/${id}`;
+export const QUOTES_PATH = "/quotes";
+export const quotePath = (id: string) => `${QUOTES_PATH}/${id}`;
