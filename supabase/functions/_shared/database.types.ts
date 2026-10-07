@@ -3174,6 +3174,30 @@ export type Database = {
         }
         Relationships: []
       }
+      number_ranges: {
+        Row: {
+          key: string
+          next_value: number
+          org_id: string
+          padding: number
+          prefix: string
+        }
+        Insert: {
+          key: string
+          next_value: number
+          org_id: string
+          padding?: number
+          prefix?: string
+        }
+        Update: {
+          key?: string
+          next_value?: number
+          org_id?: string
+          padding?: number
+          prefix?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           access_notes: string | null
@@ -3253,7 +3277,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      next_number: { Args: { p_key: string; p_org: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
