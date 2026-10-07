@@ -43,6 +43,11 @@ import { template as hireOrderCountersigned } from './hire-order-countersigned.t
 import { template as accountEmailChanged } from './account-email-changed.tsx'
 import { template as magicLink } from './magic-link.tsx'
 import { template as airtableSyncHeld } from './airtable-sync-held.tsx'
+// Quote emails of the Werkbank module (ADR 0013 allow-list entry in scripts/moduleIsolation.test.ts).
+// Removing the module removes these three imports and their TEMPLATES and SUBJECT_RESOLVERS entries.
+import { template as quoteSent } from '../werkbank/emails/quote-sent.tsx'
+import { template as quoteDecided } from '../werkbank/emails/quote-decided.tsx'
+import { template as quoteDecisionConfirmation } from '../werkbank/emails/quote-decision-confirmation.tsx'
 
 type RegisteredTemplateEntry = TemplateEntry & { family: EmailFamily }
 
@@ -60,6 +65,9 @@ export const TEMPLATES: Record<string, RegisteredTemplateEntry> = {
   'account-email-changed': { ...accountEmailChanged, family: 'steel' },
   'magic-link': { ...magicLink, family: 'violet' },
   'airtable-sync-held': { ...airtableSyncHeld, family: 'violet' },
+  'quote-sent': { ...quoteSent, family: 'pine' },
+  'quote-decided': { ...quoteDecided, family: 'pine' },
+  'quote-decision-confirmation': { ...quoteDecisionConfirmation, family: 'pine' },
 }
 
 export interface TemplatePresentation {
@@ -163,6 +171,20 @@ const SUBJECT_RESOLVERS = {
   'airtable-sync-held': (data, copy) => applyEmailTokens(copy['airtable-sync-held.subject'], {
     orgName: String(data.orgName || copy['airtable-sync-held.orgFallback']),
   }),
+  'quote-sent': (data, copy) => applyEmailTokens(copy['quote-sent.subject'], {
+    quoteNo: String(data.quote_no || ''),
+    companyName: String(data.company_name || copy['quote-sent.companyFallback']),
+  }),
+  'quote-decided': (data, copy) => applyEmailTokens(
+    data.decision === 'rejected' ? copy['quote-decided.subjectRejected'] : copy['quote-decided.subjectAccepted'],
+    { quoteNo: String(data.quote_no || '') },
+  ),
+  'quote-decision-confirmation': (data, copy) => applyEmailTokens(
+    data.decision === 'rejected'
+      ? copy['quote-decision-confirmation.subjectRejected']
+      : copy['quote-decision-confirmation.subjectAccepted'],
+    { quoteNo: String(data.quote_no || '') },
+  ),
 } satisfies Record<EmailTemplateKey, SubjectResolver>
 
 /** Extract the historical generic subject field without extending its lifetime. */

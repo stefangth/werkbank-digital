@@ -64,6 +64,8 @@ export const MODULES: readonly ModuleGuard[] = [
       "src/components/layout/navItems.ts",
       "src/config/app.config.ts",
       "scripts/moduleIsolation.test.ts",
+      // Email registry: imports the three quote email templates from _shared/werkbank/emails.
+      "supabase/functions/_shared/transactional-email-templates/registry.ts",
     ],
   },
 ];

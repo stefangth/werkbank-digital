@@ -9,6 +9,9 @@ import {
 } from "./emailCopy";
 import { EMAIL_TEMPLATE_COPY_FIELDS } from "./emailTemplateMeta";
 
+// The quote emails are rendered from defaults only, like cron-health-alert and magic-link.
+const QUOTE_TEMPLATE_PREFIXES = ["quote-sent.", "quote-decided.", "quote-decision-confirmation."];
+
 describe("legacyEmailOverridesToCopy", () => {
   it("translates the persisted legacy field names to flattened copy keys", () => {
     expect(legacyEmailOverridesToCopy({
@@ -153,11 +156,21 @@ describe("email copy registry", () => {
       .filter((key) =>
         !key.startsWith("cron-health-alert.") &&
         !key.startsWith("magic-link.") &&
-        !key.startsWith("airtable-sync-held."),
+        !key.startsWith("airtable-sync-held.") &&
+        !QUOTE_TEMPLATE_PREFIXES.some((prefix) => key.startsWith(prefix)),
       )
       .sort();
 
     expect(editableDefaultKeys).toEqual(metadataKeys);
+  });
+
+  it("keeps the quote emails deliverable without exposing them to the editor", () => {
+    // Rendered from defaults only: the email templates editor and its coverage list serve
+    // every org kind, and these three belong to one kind, so they stay out of both.
+    expect(EMAIL_COPY_DE["quote-sent.heading"]).toBe("Ihr Angebot");
+    expect(EMAIL_TEMPLATE_COPY_FIELDS.some(({ templateKey }) =>
+      QUOTE_TEMPLATE_PREFIXES.some((prefix) => prefix === `${templateKey}.`),
+    )).toBe(false);
   });
 
   it("keeps internal cron copy deliverable without exposing it to the editor", () => {
@@ -214,6 +227,10 @@ describe("email copy registry", () => {
   });
 });
 
+// Named exemption from the Du rule: these two emails go to a trade business's own customer,
+// who is not a user of the app, so their German copy uses the formal Sie (spec R5, R7).
+const CUSTOMER_FACING_PREFIXES = ["quote-sent.", "quote-decision-confirmation."];
+
 const emailTokensOf = (s: string): string[] =>
   (s.match(/\{\{(\w+)\}\}/g) ?? []).slice().sort();
 
@@ -240,9 +257,20 @@ describe("EMAIL_COPY_DE (German base)", () => {
 
   it("uses the informal Du, never the formal Sie/Ihr", () => {
     for (const [key, value] of Object.entries(EMAIL_COPY_DE)) {
+      if (CUSTOMER_FACING_PREFIXES.some((prefix) => key.startsWith(prefix))) continue;
       expect(value, `formal address in ${key}`).not.toMatch(
         /\b(Sie|Ihre?|Ihnen|Ihrem|Ihren|Ihres)\b/,
       );
+    }
+  });
+
+  it("addresses customers with Sie, never Du, in the customer-facing emails", () => {
+    const customerKeys = Object.keys(EMAIL_COPY_DE).filter((key) =>
+      CUSTOMER_FACING_PREFIXES.some((prefix) => key.startsWith(prefix)),
+    ) as (keyof typeof EMAIL_COPY_DE)[];
+    expect(customerKeys.length).toBeGreaterThan(0);
+    for (const key of customerKeys) {
+      expect(EMAIL_COPY_DE[key], `informal address in ${key}`).not.toMatch(/\b(Du|Dein\w*|Dir|Dich)\b/);
     }
   });
 });

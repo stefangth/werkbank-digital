@@ -479,6 +479,126 @@
     "html": "e582c06564ea2cb99ccbccab349796acd556b8825af3403abb6407a016e958ae",
     "text": "66669f105d64629898aabb8fb68924913c94507c28ac2bbe80f321fd64b520fa"
   },
+  "quote-decided/preview/production/en": {
+    "subject": "Quote A-0042 was accepted",
+    "html": "cc07cda05eb577bb7bb1c81c5b240daee9e8d018bcfb9d3f6c60492a6baf558a",
+    "text": "717bedd31ef79762b81ac8293c5cecee0e8904bca629a0fa0ef766aaef82cdc5"
+  },
+  "quote-decided/preview/production/de": {
+    "subject": "Angebot A-0042 wurde angenommen",
+    "html": "fcc53d37bcc174db4c6746da4065bd0dc25f283094e08ca75a76d55d9f540640",
+    "text": "004b5697ff24fcec76e3848842e7adaa0318a617a369c062736239ffa2f3628c"
+  },
+  "quote-decided/preview/staffing/en": {
+    "subject": "Quote A-0042 was accepted",
+    "html": "cc07cda05eb577bb7bb1c81c5b240daee9e8d018bcfb9d3f6c60492a6baf558a",
+    "text": "717bedd31ef79762b81ac8293c5cecee0e8904bca629a0fa0ef766aaef82cdc5"
+  },
+  "quote-decided/preview/staffing/de": {
+    "subject": "Angebot A-0042 wurde angenommen",
+    "html": "fcc53d37bcc174db4c6746da4065bd0dc25f283094e08ca75a76d55d9f540640",
+    "text": "004b5697ff24fcec76e3848842e7adaa0318a617a369c062736239ffa2f3628c"
+  },
+  "quote-decided/empty/production/en": {
+    "subject": "Quote  was accepted",
+    "html": "ac1004cf7e3863e1f82c64f6defac45e4819e1d0c3f0d98df1aae12b7ed5224a",
+    "text": "18ba93ea620026a00d4f80301cce99926e4dbf83d3873e27a706344adc279969"
+  },
+  "quote-decided/empty/production/de": {
+    "subject": "Angebot  wurde angenommen",
+    "html": "3a8532628d1a6410c135c20a2ae0bac1dee7288970a303fea5473738df17b7e0",
+    "text": "5ced1f43d27113b73cca44a0f0404569bd9dc344d8b51d090ea54c031244882d"
+  },
+  "quote-decided/empty/staffing/en": {
+    "subject": "Quote  was accepted",
+    "html": "ac1004cf7e3863e1f82c64f6defac45e4819e1d0c3f0d98df1aae12b7ed5224a",
+    "text": "18ba93ea620026a00d4f80301cce99926e4dbf83d3873e27a706344adc279969"
+  },
+  "quote-decided/empty/staffing/de": {
+    "subject": "Angebot  wurde angenommen",
+    "html": "3a8532628d1a6410c135c20a2ae0bac1dee7288970a303fea5473738df17b7e0",
+    "text": "5ced1f43d27113b73cca44a0f0404569bd9dc344d8b51d090ea54c031244882d"
+  },
+  "quote-decision-confirmation/preview/production/en": {
+    "subject": "Confirmation: you accepted quote A-0042",
+    "html": "3e30a9906e521833087e9cbb83a9caaae85fa85a105a83c45fafef0bcfb79f81",
+    "text": "78b76accb5e12c296e94a69e80670578adb679efa7f59ba9b44e99e3d2145eb7"
+  },
+  "quote-decision-confirmation/preview/production/de": {
+    "subject": "Bestätigung: Sie haben das Angebot A-0042 angenommen",
+    "html": "c7a800e1351cb3d163a3b0332b6df4f35873b03f99a2b28447a707004b37b5d0",
+    "text": "59352f61433016ac5e9d6c2fb71b10eabd8a9950dd4d0b79f4584c4a3e2e5df1"
+  },
+  "quote-decision-confirmation/preview/staffing/en": {
+    "subject": "Confirmation: you accepted quote A-0042",
+    "html": "3e30a9906e521833087e9cbb83a9caaae85fa85a105a83c45fafef0bcfb79f81",
+    "text": "78b76accb5e12c296e94a69e80670578adb679efa7f59ba9b44e99e3d2145eb7"
+  },
+  "quote-decision-confirmation/preview/staffing/de": {
+    "subject": "Bestätigung: Sie haben das Angebot A-0042 angenommen",
+    "html": "c7a800e1351cb3d163a3b0332b6df4f35873b03f99a2b28447a707004b37b5d0",
+    "text": "59352f61433016ac5e9d6c2fb71b10eabd8a9950dd4d0b79f4584c4a3e2e5df1"
+  },
+  "quote-decision-confirmation/empty/production/en": {
+    "subject": "Confirmation: you accepted quote ",
+    "html": "0bc4050df173b1c5c0ebf1cf804fd18d046ef4e6c323690408bcaf1ada9e078e",
+    "text": "d1b0cdf015c3eb9aefe5de423bce3caf0ed95ac88b1d518e063401cdf6489f3a"
+  },
+  "quote-decision-confirmation/empty/production/de": {
+    "subject": "Bestätigung: Sie haben das Angebot  angenommen",
+    "html": "6b8f5e95ff1651d2355cf95b7c40694e83fc7bdd5ce034d6bd7449a7ee090b52",
+    "text": "87e9f1a9285e6534ec3d6de8cc5bef64228823f4d963082e0c2f41be6fd2a1a0"
+  },
+  "quote-decision-confirmation/empty/staffing/en": {
+    "subject": "Confirmation: you accepted quote ",
+    "html": "0bc4050df173b1c5c0ebf1cf804fd18d046ef4e6c323690408bcaf1ada9e078e",
+    "text": "d1b0cdf015c3eb9aefe5de423bce3caf0ed95ac88b1d518e063401cdf6489f3a"
+  },
+  "quote-decision-confirmation/empty/staffing/de": {
+    "subject": "Bestätigung: Sie haben das Angebot  angenommen",
+    "html": "6b8f5e95ff1651d2355cf95b7c40694e83fc7bdd5ce034d6bd7449a7ee090b52",
+    "text": "87e9f1a9285e6534ec3d6de8cc5bef64228823f4d963082e0c2f41be6fd2a1a0"
+  },
+  "quote-sent/preview/production/en": {
+    "subject": "Quote A-0042 · Muster Sanitär GmbH",
+    "html": "06332de70fc2834da67f268535dd5b17e4358439065c068f2cc78cdf6a17543d",
+    "text": "88013d9a55174d1addc642b0390180785205ecebe5052420facce63b16f3d1e3"
+  },
+  "quote-sent/preview/production/de": {
+    "subject": "Angebot A-0042 · Muster Sanitär GmbH",
+    "html": "98a9195804fcf85ce0d37a4038c83b1f61865667e5bbe6057440539253089260",
+    "text": "c3aa74fa292623075197f708716f43bb639eef45ff95122bb73ed16dfff89a05"
+  },
+  "quote-sent/preview/staffing/en": {
+    "subject": "Quote A-0042 · Muster Sanitär GmbH",
+    "html": "06332de70fc2834da67f268535dd5b17e4358439065c068f2cc78cdf6a17543d",
+    "text": "88013d9a55174d1addc642b0390180785205ecebe5052420facce63b16f3d1e3"
+  },
+  "quote-sent/preview/staffing/de": {
+    "subject": "Angebot A-0042 · Muster Sanitär GmbH",
+    "html": "98a9195804fcf85ce0d37a4038c83b1f61865667e5bbe6057440539253089260",
+    "text": "c3aa74fa292623075197f708716f43bb639eef45ff95122bb73ed16dfff89a05"
+  },
+  "quote-sent/empty/production/en": {
+    "subject": "Quote  · Your contractor",
+    "html": "24f80287cb7a1dd646bd23465c6e3de9759261f47c593c881c106f9358fa98a4",
+    "text": "89ee2b3725a863b6d684b78b64f9bae288faa7dc365195e3a961d31bb1b48101"
+  },
+  "quote-sent/empty/production/de": {
+    "subject": "Angebot  · Ihr Betrieb",
+    "html": "e6a180b95622203714b57d1ec28c872846555fca4bb7df72df0c38e18d0c57a5",
+    "text": "8824374ec1eabfaa6b4dbee4dd09c4726c3fc505fc9da9481703c0d3e541a6ae"
+  },
+  "quote-sent/empty/staffing/en": {
+    "subject": "Quote  · Your contractor",
+    "html": "24f80287cb7a1dd646bd23465c6e3de9759261f47c593c881c106f9358fa98a4",
+    "text": "89ee2b3725a863b6d684b78b64f9bae288faa7dc365195e3a961d31bb1b48101"
+  },
+  "quote-sent/empty/staffing/de": {
+    "subject": "Angebot  · Ihr Betrieb",
+    "html": "e6a180b95622203714b57d1ec28c872846555fca4bb7df72df0c38e18d0c57a5",
+    "text": "8824374ec1eabfaa6b4dbee4dd09c4726c3fc505fc9da9481703c0d3e541a6ae"
+  },
   "tier-at-risk/preview/production/en": {
     "subject": "Phantom on 2026-09-10 is at risk",
     "html": "74ab88391eca97251d6fc787c8cf032cb0f359226352578309ba37f86fd59ec7",
