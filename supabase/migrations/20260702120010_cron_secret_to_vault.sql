@@ -43,7 +43,7 @@ begin
 
   if v_app_value is null or v_app_value = '' then
     -- No pre-existing secret (fresh environment): mint a fresh one so cron still works.
-    v_app_value := encode(gen_random_bytes(32), 'hex');
+    v_app_value := encode(extensions.gen_random_bytes(32), 'hex');
   end if;
 
   perform vault.create_secret(v_app_value, 'cron_secret', 'Shared secret for pg_cron → edge function authentication');
