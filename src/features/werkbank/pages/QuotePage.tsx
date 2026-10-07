@@ -39,7 +39,7 @@ export function QuotePage() {
   const { update, remove, extend, revokeLink, revise, copy } = useQuoteMutations();
   const { createFromQuote } = useOrderMutations();
   // The order lookup is the source of truth: undefined while it loads, null when there is none.
-  const { data: orderId } = useOrderIdForQuote(quote?.id, quote?.status === "accepted");
+  const { data: orderId, isError: orderLookupFailed, refetch: refetchOrder } = useOrderIdForQuote(quote?.id, quote?.status === "accepted");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingRevoke, setConfirmingRevoke] = useState(false);
   // Keyed by the quote id: the route reuses this component, so a lock must not carry over to
@@ -163,6 +163,12 @@ export function QuotePage() {
       )}
 
       {locked && <Alert variant="destructive">{t("errors.quoteLocked")}</Alert>}
+      {quote.status === "accepted" && orderLookupFailed && (
+        <Alert variant="destructive" className="flex items-center justify-between gap-3">
+          <span>{t("quotes.page.orderLookupFailed")}</span>
+          <Button type="button" variant="secondary" size="sm" onClick={() => void refetchOrder()}>{t("common.retry")}</Button>
+        </Alert>
+      )}
 
       <QuoteHeaderForm
         key={`${quote.id}-${isDraft}`}

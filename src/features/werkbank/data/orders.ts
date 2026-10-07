@@ -5,7 +5,7 @@ import type { DocumentTotals } from "./quotes";
 
 export type Order = Database["werkbank"]["Tables"]["orders"]["Row"];
 export type OrderListRow = Database["werkbank"]["Views"]["order_list"]["Row"];
-export type OrderWithTotals = Order & { totals: DocumentTotals | null; technician_ids: string[] };
+export type OrderWithTotals = Order & { totals: DocumentTotals | null; technician_ids: string[]; technician_names: string[] };
 
 /** The fields a user fills in; order_no, quote_id and the status stamps are service-only. */
 export type OrderDraft = {
@@ -31,19 +31,27 @@ export async function fetchOrderList(client: Client, orgId: string): Promise<Ord
   );
 }
 
-/** One order with its totals and technician ids, or null if missing. */
+/** One order with its totals and technician ids and names, or null if missing. The names come
+ *  from the `order_list` view (one row by id), so the page does not depend on the whole list. */
 export async function fetchOrder(client: Client, id: string): Promise<OrderWithTotals | null> {
   const werkbank = client.schema("werkbank");
-  const [order, totals, techs] = await Promise.all([
+  const [order, totals, techs, names] = await Promise.all([
     werkbank.from("orders").select("*").eq("id", id).maybeSingle(),
     werkbank.from("document_totals").select("*").eq("order_id", id).maybeSingle(),
     werkbank.from("order_technicians").select("artist_id").eq("order_id", id),
+    werkbank.from("order_list").select("technician_names").eq("id", id).maybeSingle(),
   ]);
   if (order.error) throw order.error;
   if (totals.error) throw totals.error;
   if (techs.error) throw techs.error;
+  if (names.error) throw names.error;
   return order.data
-    ? { ...order.data, totals: totals.data, technician_ids: (techs.data ?? []).map((r) => r.artist_id) }
+    ? {
+        ...order.data,
+        totals: totals.data,
+        technician_ids: (techs.data ?? []).map((r) => r.artist_id),
+        technician_names: names.data?.technician_names ?? [],
+      }
     : null;
 }
 

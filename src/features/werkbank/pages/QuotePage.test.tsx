@@ -10,7 +10,7 @@ const { state, navigate, mut, orderMut } = vi.hoisted(() => {
   const m = () => ({ mutate: vi.fn(), isPending: false });
   return {
     orderMut: { createFromQuote: m() },
-    state: { orderId: null as string | null | undefined, quote: null as unknown, list: [] as unknown[], acceptances: [] as unknown[], customerKind: "property_manager" },
+    state: { orderId: null as string | null | undefined, orderError: false, refetchOrder: vi.fn(), quote: null as unknown, list: [] as unknown[], acceptances: [] as unknown[], customerKind: "property_manager" },
     navigate: vi.fn(),
     mut: { update: m(), remove: m(), extend: m(), revokeLink: m(), revise: m(), copy: m(), create: m() },
   };
@@ -26,7 +26,7 @@ vi.mock("../hooks/useQuotes", () => ({
   useQuoteMutations: () => mut,
 }));
 vi.mock("../hooks/useOrders", () => ({
-  useOrderIdForQuote: () => ({ data: state.orderId }),
+  useOrderIdForQuote: () => ({ data: state.orderId, isError: state.orderError, refetch: state.refetchOrder }),
   useOrderMutations: () => orderMut,
 }));
 vi.mock("../hooks/useCustomers", () => ({ useCustomer: () => ({ data: { id: "k1", kind: state.customerKind } }) }));
@@ -61,6 +61,7 @@ describe("QuotePage", () => {
     state.list = [listRow({})];
     state.acceptances = [];
     state.orderId = null;
+    state.orderError = false;
     state.customerKind = "property_manager";
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
@@ -148,6 +149,17 @@ describe("QuotePage", () => {
     state.quote = quote({ status: "sent", discount_percent: 2.5 });
     render();
     expect(await screen.findByText("2,5 %")).toBeInTheDocument();
+  });
+
+  it("shows an error with retry when the order lookup fails, instead of neither action", async () => {
+    state.quote = quote({ status: "accepted" });
+    state.orderId = undefined;
+    state.orderError = true;
+    render();
+    expect(await screen.findByText("Der Auftrag konnte nicht geprüft werden.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Auftrag anlegen" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(state.refetchOrder).toHaveBeenCalled();
   });
 
   it("blocks the link of a sent quote, and hides the button for accepted and already blocked ones", async () => {

@@ -58,7 +58,7 @@ import { OrderPage } from "./OrderPage";
 const order = (over: Record<string, unknown> = {}) => ({
   id: "o1", org_id: "org-1", order_no: "AU-0007", status: "open", quote_id: null, customer_id: "k1", property_id: null, contact_id: null,
   location_note: null, subject: "Heizung", discount_percent: 0, notes: "Schlüssel beim Nachbarn", scheduled_date: null, scheduled_time: null,
-  technician_ids: [], totals: { gross_total: 142.8 }, ...over,
+  technician_ids: [], technician_names: [], totals: { gross_total: 142.8 }, ...over,
 });
 const item = (over: Record<string, unknown>) => ({ id: "i", kind: "item", name: "Position", quantity: 1, labour_price: 10, material_price: 0, source_item_id: null, ...over });
 
@@ -211,6 +211,26 @@ describe("OrderPage", () => {
     } finally {
       mut.setTechnicians.isPending = false;
     }
+  });
+
+  it("shows the technician names of the order itself, not of the list", async () => {
+    state.order = order({ status: "done", technician_ids: ["a1"], technician_names: ["Anna Berg"] });
+    state.list = [];
+    render();
+    expect(await screen.findByText("Anna Berg")).toBeInTheDocument();
+  });
+
+  it("shows no not-found state while the delete is still settling", async () => {
+    state.order = null;
+    mut.remove.isPending = true;
+    try {
+      render();
+      expect(screen.queryByText("Auftrag nicht gefunden")).not.toBeInTheDocument();
+    } finally {
+      mut.remove.isPending = false;
+    }
+    render();
+    expect(await screen.findByText("Auftrag nicht gefunden")).toBeInTheDocument();
   });
 
   it("deletes an open order only after confirming, then goes to the order list", async () => {

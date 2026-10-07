@@ -82,6 +82,7 @@
     "invitationsFailed": "Die offenen Einladungen konnten nicht geladen werden, deshalb sind Erneut senden und Widerrufen nicht verfügbar. Lade die Seite bitte neu."
   },
   "common": {
+    "retry": "Erneut versuchen",
     "archive": "Archivieren",
     "restore": "Wiederherstellen",
     "delete": "Löschen",
@@ -642,7 +643,8 @@
       "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
       "pdfOpen": "PDF öffnen",
       "createOrder": "Auftrag anlegen",
-      "toOrder": "Zum Auftrag"
+      "toOrder": "Zum Auftrag",
+      "orderLookupFailed": "Der Auftrag konnte nicht geprüft werden."
     },
     "header": {
       "customer": "Kunde",

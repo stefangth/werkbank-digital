@@ -82,6 +82,7 @@
     "invitationsFailed": "Could not load the pending invitations, so resend and revoke are unavailable. Please reload the page."
   },
   "common": {
+    "retry": "Try again",
     "archive": "Archive",
     "restore": "Restore",
     "delete": "Delete",
@@ -642,7 +643,8 @@
       "pdfBlocked": "Your browser blocked the new tab.",
       "pdfOpen": "Open PDF",
       "createOrder": "Create order",
-      "toOrder": "Go to order"
+      "toOrder": "Go to order",
+      "orderLookupFailed": "The order could not be checked."
     },
     "header": {
       "customer": "Customer",
