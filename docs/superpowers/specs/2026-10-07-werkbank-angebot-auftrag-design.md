@@ -202,7 +202,7 @@ New nav items in `src/features/werkbank/ui.ts` (section `workspace`, kinds `hand
 
 Internal:
 - `preview { quote_id }`: renders the PDF with a "Entwurf" watermark and returns `{ pdf_base64 }`. Persists nothing.
-- `send { quote_id, to[], cc[], message }`: re-runs the preflight on the server; renders the PDF; uploads it to `werkbank-documents/<org>/quotes/<id>.pdf`; computes SHA-256 with `crypto.subtle`; creates a 32-byte random token and stores only its hash; in one update sets `status = 'sent'`, `sent_at`, `sent_to`, `pdf_path`, `pdf_sha256`, `access_token_hash`; then sends the `quote-sent` email with the PDF attached, the link `<app>/quote/<token>` and `reply_to` = the profile email. If the email fails the quote stays `sent` and the response says so; the UI offers "Erneut senden".
+- `send { quote_id, to[], cc[], message }`: re-runs the preflight on the server; renders the PDF; uploads it to `werkbank-documents/<org>/quotes/<id>-<first 16 hex of its SHA-256>.pdf` without overwriting (a concurrent second send cannot replace the stored bytes); computes SHA-256 with `crypto.subtle`; creates a 32-byte random token and stores only its hash; in one update sets `status = 'sent'`, `sent_at`, `sent_to`, `pdf_path`, `pdf_sha256`, `access_token_hash`; then sends the `quote-sent` email with the PDF attached, the link `<app>/quote/<token>` and `reply_to` = the profile email. If the email fails the quote stays `sent` and the response says so; the UI offers "Erneut senden".
 - `resend { quote_id, to[], cc[], message }`: only for `sent`; a new token (the old link stops working), the same stored PDF, a new email.
 - `download-url { quote_id, kind: 'sent' | 'accepted' }`: a signed URL valid for 10 minutes.
 
