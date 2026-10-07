@@ -29,6 +29,8 @@ export const MODULES: readonly ModuleGuard[] = [
     forbidden: /werkbank|handwerk/i,
     allowed: [
       "src/features/werkbank/**",
+      "src/i18n/vocabularyLint.test.ts",
+      "src/test/supabaseFake.test.ts",
       "supabase/functions/werkbank-*/**",
       "supabase/functions/_shared/werkbank/**",
       "supabase/migrations/*_werkbank_*.sql",

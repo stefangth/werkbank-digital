@@ -29,6 +29,9 @@ const ALLOW: Record<string, string> = {
 // Key-path prefixes exempt from the scan: copy that legitimately names both vocabularies
 // (the workspace-type picker explains what each option means).
 const SKIP_PATHS = [
+  // Werkbank copy (namespace `werkbank`) is written in its own trade vocabulary and never uses
+  // {{vocabulary}} placeholders, so the Showflow bare-noun ratchet does not apply to it.
+  "werkbank.",
   "settings.organization.kind",
   "getRunningV3.steps.workspace",
   "getRunningV3.body.workspace",
