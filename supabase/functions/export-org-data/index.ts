@@ -39,7 +39,7 @@ export const WERKBANK_ORDER = {
 } as const satisfies { [T in keyof WerkbankTables]: keyof WerkbankTables[T]["Row"] & string };
 // order_technicians has a composite key (order_id, artist_id); the second column breaks ties so a
 // page boundary inside one order cannot skip or repeat a technician.
-const WERKBANK_TIEBREAK: Partial<Record<keyof typeof WERKBANK_ORDER, string>> = {
+const WERKBANK_TIEBREAK: { [T in keyof WerkbankTables]?: keyof WerkbankTables[T]["Row"] & string } = {
   order_technicians: "artist_id",
 };
 const WERKBANK_TABLES = Object.keys(WERKBANK_ORDER) as (keyof typeof WERKBANK_ORDER)[];
