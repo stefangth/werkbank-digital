@@ -194,6 +194,19 @@ describe("OrderPage", () => {
     expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "true");
   });
 
+  it("drops the lock when a closed order is reopened", async () => {
+    const view = render();
+    fireEvent.click(await screen.findByText("test-item-locked"));
+    state.order = order({ status: "done" });
+    view.rerender(<MemoryRouter><OrderPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole("button", { name: "Wieder öffnen" }));
+    state.order = order({ status: "in_progress" });
+    view.rerender(<MemoryRouter><OrderPage /></MemoryRouter>);
+    expect(await screen.findByTestId("items")).toHaveAttribute("data-readonly", "false");
+    expect(screen.queryByText("Dieser Auftrag ist abgeschlossen und kann nicht geändert werden.")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Betreff" })).toBeEnabled();
+  });
+
   it("locks on a technician save that finds the order closed", async () => {
     render();
     fireEvent.click(await screen.findByText("test-set-technician"));

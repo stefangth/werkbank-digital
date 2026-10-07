@@ -45,9 +45,10 @@ export function OrderPage() {
   const { data: quoteItems } = useDocumentItems(order?.quote_id ? { quoteId: order.quote_id } : undefined);
   const { data: orderItems } = useDocumentItems(order ? { orderId: order.id } : undefined);
   const { update, setStatus, setTechnicians, remove } = useOrderMutations();
-  // Keyed by the order id: the route reuses this component, so a lock must not carry over to
-  // the next order the user navigates to.
-  const [lockedId, setLockedId] = useState<string | null>(null);
+  // Keyed by the order id and the status it was set at: the route reuses this component, so a
+  // lock must not carry over to the next order, and it ends as soon as the status changes
+  // (e.g. the user reopens the order the lock was reported for).
+  const [lockedAt, setLockedAt] = useState<{ id: string; status: string } | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -72,13 +73,13 @@ export function OrderPage() {
   }
 
   const status = order.status as OrderStatus;
-  const locked = lockedId === order.id;
+  const locked = lockedAt?.id === order.id && lockedAt.status === order.status;
   const readOnly = locked || status === "done" || status === "cancelled";
   const listRow = list?.find((o) => o.id === order.id);
 
   // A save that hits an order closed meanwhile: fetch the real state, so the page turns read only.
   const lock = () => {
-    setLockedId(order.id);
+    setLockedAt({ id: order.id, status: order.status });
     void refetch();
   };
   const lockOnClosed = { onError: (e: unknown) => mapDbError(e) === "errors.orderLocked" && lock() };
