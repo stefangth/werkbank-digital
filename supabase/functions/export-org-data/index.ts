@@ -30,7 +30,18 @@ export const WERKBANK_ORDER = {
   contacts: "id",
   catalog_items: "id",
   number_ranges: "key",
+  company_profiles: "org_id",
+  quotes: "id",
+  orders: "id",
+  order_technicians: "order_id",
+  document_items: "id",
+  quote_acceptances: "id",
 } as const satisfies { [T in keyof WerkbankTables]: keyof WerkbankTables[T]["Row"] & string };
+// order_technicians has a composite key (order_id, artist_id); the second column breaks ties so a
+// page boundary inside one order cannot skip or repeat a technician.
+const WERKBANK_TIEBREAK: Partial<Record<keyof typeof WERKBANK_ORDER, string>> = {
+  order_technicians: "artist_id",
+};
 const WERKBANK_TABLES = Object.keys(WERKBANK_ORDER) as (keyof typeof WERKBANK_ORDER)[];
 
 // An org can hold far more rows than PostgREST returns in one response (default cap 1000),
@@ -74,8 +85,11 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   for (const table of WERKBANK_TABLES) {
     const rows: unknown[] = [];
     for (let from = 0; ; from += PAGE_SIZE) {
-      const { data, error } = await admin.schema("werkbank").from(table).select("*")
-        .eq("org_id", orgId).order(WERKBANK_ORDER[table]).range(from, from + PAGE_SIZE - 1);
+      const ordered = admin.schema("werkbank").from(table).select("*")
+        .eq("org_id", orgId).order(WERKBANK_ORDER[table]);
+      const tiebreak = WERKBANK_TIEBREAK[table];
+      const { data, error } = await (tiebreak ? ordered.order(tiebreak) : ordered)
+        .range(from, from + PAGE_SIZE - 1);
       if (error) return json({ error: `Failed to read werkbank.${table}` }, 500);
       rows.push(...(data ?? []));
       if ((data ?? []).length < PAGE_SIZE) break;

@@ -3039,6 +3039,87 @@ export type Database = {
         }
         Relationships: []
       }
+      company_profiles: {
+        Row: {
+          bank_name: string | null
+          bic: string | null
+          city: string
+          company_name: string
+          country_code: string
+          created_at: string
+          email: string | null
+          iban: string | null
+          legal_form: string | null
+          logo_path: string | null
+          org_id: string
+          payment_terms_text: string | null
+          phone: string | null
+          postal_code: string
+          quote_closing: string | null
+          quote_intro: string | null
+          quote_validity_days: number
+          register_court: string | null
+          register_number: string | null
+          street: string
+          tax_number: string | null
+          updated_at: string
+          vat_id: string | null
+          website: string | null
+        }
+        Insert: {
+          bank_name?: string | null
+          bic?: string | null
+          city: string
+          company_name: string
+          country_code?: string
+          created_at?: string
+          email?: string | null
+          iban?: string | null
+          legal_form?: string | null
+          logo_path?: string | null
+          org_id: string
+          payment_terms_text?: string | null
+          phone?: string | null
+          postal_code: string
+          quote_closing?: string | null
+          quote_intro?: string | null
+          quote_validity_days?: number
+          register_court?: string | null
+          register_number?: string | null
+          street: string
+          tax_number?: string | null
+          updated_at?: string
+          vat_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          bank_name?: string | null
+          bic?: string | null
+          city?: string
+          company_name?: string
+          country_code?: string
+          created_at?: string
+          email?: string | null
+          iban?: string | null
+          legal_form?: string | null
+          logo_path?: string | null
+          org_id?: string
+          payment_terms_text?: string | null
+          phone?: string | null
+          postal_code?: string
+          quote_closing?: string | null
+          quote_intro?: string | null
+          quote_validity_days?: number
+          register_court?: string | null
+          register_number?: string | null
+          street?: string
+          tax_number?: string | null
+          updated_at?: string
+          vat_id?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           created_at: string
@@ -3174,6 +3255,115 @@ export type Database = {
         }
         Relationships: []
       }
+      document_items: {
+        Row: {
+          catalog_item_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          item_no: string | null
+          kind: string
+          labour_price: number | null
+          line_net: number | null
+          material_price: number | null
+          name: string | null
+          order_id: string | null
+          org_id: string
+          quantity: number | null
+          quote_id: string | null
+          sort_order: number
+          source_item_id: string | null
+          unit_code: string | null
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          catalog_item_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_no?: string | null
+          kind: string
+          labour_price?: number | null
+          line_net?: number | null
+          material_price?: number | null
+          name?: string | null
+          order_id?: string | null
+          org_id: string
+          quantity?: number | null
+          quote_id?: string | null
+          sort_order: number
+          source_item_id?: string | null
+          unit_code?: string | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          catalog_item_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_no?: string | null
+          kind?: string
+          labour_price?: number | null
+          line_net?: number | null
+          material_price?: number | null
+          name?: string | null
+          order_id?: string | null
+          org_id?: string
+          quantity?: number | null
+          quote_id?: string | null
+          sort_order?: number
+          source_item_id?: string | null
+          unit_code?: string | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_items_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "order_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "document_items_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "document_items_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "document_items_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "document_items_source_fk"
+            columns: ["org_id", "source_item_id"]
+            isOneToOne: false
+            referencedRelation: "document_items"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       number_ranges: {
         Row: {
           key: string
@@ -3197,6 +3387,144 @@ export type Database = {
           prefix?: string
         }
         Relationships: []
+      }
+      order_technicians: {
+        Row: {
+          artist_id: string
+          created_at: string
+          order_id: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          order_id: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          order_id?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_technicians_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "order_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "order_technicians_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          id: string
+          location_note: string | null
+          notes: string | null
+          order_no: string
+          org_id: string
+          property_id: string | null
+          quote_id: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_id: string
+          discount_percent?: number
+          id?: string
+          location_note?: string | null
+          notes?: string | null
+          order_no: string
+          org_id: string
+          property_id?: string | null
+          quote_id?: string | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string
+          discount_percent?: number
+          id?: string
+          location_note?: string | null
+          notes?: string | null
+          order_no?: string
+          org_id?: string
+          property_id?: string | null
+          quote_id?: string | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_contact_fk"
+            columns: ["org_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -3272,11 +3600,368 @@ export type Database = {
           },
         ]
       }
+      quote_acceptances: {
+        Row: {
+          comment: string | null
+          consent_text: string | null
+          created_at: string
+          decided_at: string
+          decision: string
+          document_sha256: string
+          id: string
+          ip: string | null
+          method: string | null
+          org_id: string
+          quote_id: string
+          signature_image_path: string | null
+          signer_name: string
+          typed_name: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          comment?: string | null
+          consent_text?: string | null
+          created_at?: string
+          decided_at?: string
+          decision: string
+          document_sha256: string
+          id?: string
+          ip?: string | null
+          method?: string | null
+          org_id: string
+          quote_id: string
+          signature_image_path?: string | null
+          signer_name: string
+          typed_name?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          comment?: string | null
+          consent_text?: string | null
+          created_at?: string
+          decided_at?: string
+          decision?: string
+          document_sha256?: string
+          id?: string
+          ip?: string | null
+          method?: string | null
+          org_id?: string
+          quote_id?: string
+          signature_image_path?: string | null
+          signer_name?: string
+          typed_name?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_acceptances_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quote_acceptances_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          accepted_pdf_path: string | null
+          access_token_hash: string | null
+          closing_text: string | null
+          contact_id: string | null
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          id: string
+          intro_text: string | null
+          link_revoked_at: string | null
+          location_note: string | null
+          org_id: string
+          payment_terms_text: string | null
+          pdf_path: string | null
+          pdf_sha256: string | null
+          property_id: string | null
+          quote_no: string
+          sent_at: string | null
+          sent_to: string[] | null
+          status: string
+          subject: string | null
+          superseded_by: string | null
+          superseded_from_status: string | null
+          updated_at: string
+          valid_until: string
+          version: number
+        }
+        Insert: {
+          accepted_pdf_path?: string | null
+          access_token_hash?: string | null
+          closing_text?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_id: string
+          discount_percent?: number
+          id?: string
+          intro_text?: string | null
+          link_revoked_at?: string | null
+          location_note?: string | null
+          org_id: string
+          payment_terms_text?: string | null
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          property_id?: string | null
+          quote_no: string
+          sent_at?: string | null
+          sent_to?: string[] | null
+          status?: string
+          subject?: string | null
+          superseded_by?: string | null
+          superseded_from_status?: string | null
+          updated_at?: string
+          valid_until: string
+          version?: number
+        }
+        Update: {
+          accepted_pdf_path?: string | null
+          access_token_hash?: string | null
+          closing_text?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string
+          discount_percent?: number
+          id?: string
+          intro_text?: string | null
+          link_revoked_at?: string | null
+          location_note?: string | null
+          org_id?: string
+          payment_terms_text?: string | null
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          property_id?: string | null
+          quote_no?: string
+          sent_at?: string | null
+          sent_to?: string[] | null
+          status?: string
+          subject?: string | null
+          superseded_by?: string | null
+          superseded_from_status?: string | null
+          updated_at?: string
+          valid_until?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_contact_fk"
+            columns: ["org_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_superseded_by_fk"
+            columns: ["org_id", "superseded_by"]
+            isOneToOne: false
+            referencedRelation: "quote_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_superseded_by_fk"
+            columns: ["org_id", "superseded_by"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      document_totals: {
+        Row: {
+          discount_total: number | null
+          gross_total: number | null
+          labour_total: number | null
+          net_total: number | null
+          order_id: string | null
+          quote_id: string | null
+          vat_breakdown: Json | null
+          vat_total: number | null
+        }
+        Relationships: []
+      }
+      order_list: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          discount_percent: number | null
+          discount_total: number | null
+          gross_total: number | null
+          id: string | null
+          labour_total: number | null
+          location_note: string | null
+          net_total: number | null
+          notes: string | null
+          order_no: string | null
+          org_id: string | null
+          property_id: string | null
+          property_name: string | null
+          quote_id: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: string | null
+          subject: string | null
+          technician_ids: string[] | null
+          technician_names: string[] | null
+          updated_at: string | null
+          vat_breakdown: Json | null
+          vat_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_contact_fk"
+            columns: ["org_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "orders_quote_fk"
+            columns: ["org_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      quote_list: {
+        Row: {
+          accepted_pdf_path: string | null
+          closing_text: string | null
+          contact_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          discount_percent: number | null
+          discount_total: number | null
+          gross_total: number | null
+          has_order: boolean | null
+          id: string | null
+          intro_text: string | null
+          is_expired: boolean | null
+          labour_total: number | null
+          link_revoked_at: string | null
+          location_note: string | null
+          net_total: number | null
+          org_id: string | null
+          payment_terms_text: string | null
+          pdf_path: string | null
+          pdf_sha256: string | null
+          property_id: string | null
+          property_name: string | null
+          quote_no: string | null
+          sent_at: string | null
+          sent_to: string[] | null
+          status: string | null
+          subject: string | null
+          superseded_by: string | null
+          superseded_from_status: string | null
+          updated_at: string | null
+          valid_until: string | null
+          vat_breakdown: Json | null
+          vat_total: number | null
+          version: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_contact_fk"
+            columns: ["org_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_superseded_by_fk"
+            columns: ["org_id", "superseded_by"]
+            isOneToOne: false
+            referencedRelation: "quote_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotes_superseded_by_fk"
+            columns: ["org_id", "superseded_by"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
     }
     Functions: {
+      copy_quote: {
+        Args: { p_customer?: string; p_property?: string; p_quote: string }
+        Returns: string
+      }
+      create_order_from_quote: { Args: { p_quote: string }; Returns: string }
       import_catalog_items: {
         Args: { p_org: string; p_rows: Json }
         Returns: Json
@@ -3287,6 +3972,7 @@ export type Database = {
         Returns: Json
       }
       next_number: { Args: { p_key: string; p_org: string }; Returns: string }
+      revise_quote: { Args: { p_quote: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
