@@ -1,5 +1,5 @@
 export interface DisplayNameInput {
-  kind: "property_manager" | "private";
+  kind: string;
   company_name: string | null;
   first_name: string | null;
   last_name: string | null;

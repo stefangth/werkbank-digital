@@ -1,5 +1,6 @@
 {
   "nav": {
+    "customers": "Kunden",
     "catalog": "Leistungen",
     "technicians": "Monteure"
   },
@@ -175,6 +176,68 @@
       "email": "Gib eine gültige E-Mail-Adresse ein",
       "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
       "paymentTerms": "Gib ganze Tage von 0 bis 365 ein"
+    },
+    "title": "Kunden",
+    "sub": "Hausverwaltungen und Privatkunden. Liegenschaften und Rechnungen gehören immer zu einem Kunden.",
+    "add": "Kunde anlegen",
+    "loadFailed": "Deine Kunden konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "searchLabel": "Kunden durchsuchen",
+    "searchPlaceholder": "Name, Nummer, Ort oder E-Mail",
+    "kindFilter": "Art",
+    "allKinds": "Alle Arten",
+    "empty": {
+      "title": "Noch keine Kunden",
+      "body": "Leg deinen ersten Kunden an, eine Hausverwaltung oder einen Privatkunden.",
+      "action": "Ersten Kunden anlegen"
+    },
+    "noMatches": "Kein Kunde passt zu deiner Suche.",
+    "noMatchesReason": "Ändere die Suche oder den Filter.",
+    "archivedPill": "Archiviert",
+    "columns": {
+      "number": "Nr.",
+      "name": "Name",
+      "kind": "Art",
+      "city": "Ort",
+      "properties": "Liegenschaften",
+      "phone": "Telefon",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "title": "Kunde löschen?",
+      "body": "\"{{name}}\" und alle Ansprechpartner werden endgültig gelöscht. Das lässt sich nicht rückgängig machen. Solange es Liegenschaften gibt, ist das Löschen nicht möglich."
+    },
+    "dialog": {
+      "createTitle": "Kunde anlegen",
+      "editTitle": "Kunde bearbeiten",
+      "description": "Wähle zuerst die Art des Kunden.",
+      "kind": "Art des Kunden",
+      "customerNo": "Kundennummer (optional)",
+      "customerNoHint": "Leer lassen, dann vergibt die App die nächste Nummer.",
+      "companyName": "Firmenname",
+      "firstName": "Vorname (optional)",
+      "lastName": "Nachname",
+      "street": "Straße und Hausnummer",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "email": "E-Mail (optional)",
+      "invoiceEmail": "Rechnungs-E-Mail (optional)",
+      "phone": "Telefon (optional)",
+      "vatId": "USt-IdNr. (optional)",
+      "paymentTerms": "Zahlungsziel in Tagen",
+      "notes": "Notizen (optional)"
+    },
+    "toast": {
+      "created": "Kunde angelegt, Kundennummer {{number}}",
+      "archived": "Kunde archiviert",
+      "restored": "Kunde wiederhergestellt"
+    },
+    "country": {
+      "DE": "Deutschland",
+      "AT": "Österreich",
+      "CH": "Schweiz",
+      "other": "Anderes Land",
+      "otherCode": "Ländercode (zwei Buchstaben)"
     }
   },
   "properties": {
@@ -189,5 +252,9 @@
       "lastName": "Gib den Nachnamen ein",
       "email": "Gib eine gültige E-Mail-Adresse ein"
     }
+  },
+  "kind": {
+    "property_manager": "Hausverwaltung",
+    "private": "Privat"
   }
 }

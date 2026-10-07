@@ -1,5 +1,6 @@
 {
   "nav": {
+    "customers": "Customers",
     "catalog": "Services",
     "technicians": "Technicians"
   },
@@ -175,6 +176,68 @@
       "email": "Enter a valid email address",
       "vatId": "Enter a valid VAT ID, for example DE123456789",
       "paymentTerms": "Enter whole days from 0 to 365"
+    },
+    "title": "Customers",
+    "sub": "Property managers and private customers. Properties and invoices always belong to a customer.",
+    "add": "Add customer",
+    "loadFailed": "Your customers could not be loaded. Please try again.",
+    "searchLabel": "Search customers",
+    "searchPlaceholder": "Name, number, city or email",
+    "kindFilter": "Type",
+    "allKinds": "All types",
+    "empty": {
+      "title": "No customers yet",
+      "body": "Add your first customer, a property manager or a private customer.",
+      "action": "Add your first customer"
+    },
+    "noMatches": "No customer matches your search.",
+    "noMatchesReason": "Change the search or the filter.",
+    "archivedPill": "Archived",
+    "columns": {
+      "number": "No.",
+      "name": "Name",
+      "kind": "Type",
+      "city": "City",
+      "properties": "Properties",
+      "phone": "Phone",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete customer?",
+      "body": "\"{{name}}\" and all contacts will be deleted for good. This cannot be undone. Deleting is not possible while properties exist."
+    },
+    "dialog": {
+      "createTitle": "Add customer",
+      "editTitle": "Edit customer",
+      "description": "Pick the type of customer first.",
+      "kind": "Type of customer",
+      "customerNo": "Customer number (optional)",
+      "customerNoHint": "Leave empty and the app assigns the next number.",
+      "companyName": "Company name",
+      "firstName": "First name (optional)",
+      "lastName": "Last name",
+      "street": "Street and number",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country",
+      "email": "Email (optional)",
+      "invoiceEmail": "Invoice email (optional)",
+      "phone": "Phone (optional)",
+      "vatId": "VAT ID (optional)",
+      "paymentTerms": "Payment terms in days",
+      "notes": "Notes (optional)"
+    },
+    "toast": {
+      "created": "Customer added, customer number {{number}}",
+      "archived": "Customer archived",
+      "restored": "Customer restored"
+    },
+    "country": {
+      "DE": "Germany",
+      "AT": "Austria",
+      "CH": "Switzerland",
+      "other": "Other country",
+      "otherCode": "Country code (two letters)"
     }
   },
   "properties": {
@@ -189,5 +252,9 @@
       "lastName": "Enter the last name",
       "email": "Enter a valid email address"
     }
+  },
+  "kind": {
+    "property_manager": "Property manager",
+    "private": "Private"
   }
 }
