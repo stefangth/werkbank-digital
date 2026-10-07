@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { TFunction } from "i18next";
 import de from "../i18n/de.json";
 import { CATALOG_IMPORT, CUSTOMER_IMPORT, PROPERTY_IMPORT } from "./specs";
+import { validateRows } from "./validateRows";
 
 const t = ((key: string) => key) as unknown as TFunction;
 
@@ -37,6 +38,56 @@ describe("import specs", () => {
   });
 });
 
+const customer = {
+  customer_no: "",
+  kind: "",
+  company_name: "",
+  first_name: "",
+  last_name: "",
+  street: "Hauptstr. 1",
+  postal_code: "01067",
+  city: "Dresden",
+  country_code: "DE",
+  email: "",
+  invoice_email: "",
+  phone: "",
+  vat_id: "",
+  payment_terms_days: "14",
+  notes: "",
+};
+
+describe("CUSTOMER_IMPORT kind", () => {
+  const schema = CUSTOMER_IMPORT.schema(t);
+
+  it("does not require a kind column", () => {
+    expect(CUSTOMER_IMPORT.fields.find((f) => f.key === "kind")?.required).toBe(false);
+  });
+
+  it("derives property_manager from a company name when the kind is blank", () => {
+    expect(schema.parse({ ...customer, company_name: "Hausverwaltung Nord" }).kind).toBe("property_manager");
+  });
+
+  it("derives private when the kind and the company name are blank", () => {
+    expect(schema.parse({ ...customer, first_name: "Anna", last_name: "Meier" }).kind).toBe("private");
+  });
+
+  it("keeps a filled kind and still rejects an unknown one", () => {
+    expect(schema.parse({ ...customer, kind: "private", company_name: "Ignoriert", last_name: "Meier" }).kind).toBe("private");
+    expect(schema.safeParse({ ...customer, kind: "Sonstige", company_name: "X GmbH" }).success).toBe(false);
+  });
+
+  it("imports a sheet without an Art column", () => {
+    const rows = [
+      { Firma: "Hausverwaltung Nord", Vorname: "", Nachname: "", Straße: "Hafenstr. 1", PLZ: "20095", Ort: "Hamburg" },
+      { Firma: "", Vorname: "Anna", Nachname: "Meier", Straße: "Lindenweg 3", PLZ: "80331", Ort: "München" },
+    ];
+    const mapping = { kind: null, company_name: "Firma", first_name: "Vorname", last_name: "Nachname", street: "Straße", postal_code: "PLZ", city: "Ort" };
+    const checked = validateRows(rows, mapping, CUSTOMER_IMPORT, t);
+    expect(checked.invalid).toEqual([]);
+    expect(checked.valid.map((v) => v.form.kind)).toEqual(["property_manager", "private"]);
+  });
+});
+
 describe("PROPERTY_IMPORT", () => {
   const schema = PROPERTY_IMPORT.schema(t);
 
@@ -64,6 +115,18 @@ describe("PROPERTY_IMPORT", () => {
     expect(row).not.toHaveProperty("customer_id");
     expect(row).not.toHaveProperty("has_billing");
     expect(row).toMatchObject({ customer_no: "K-10001", name: "WEG Musterstr. 5", object_no: null, billing_name: null, billing_country_code: null });
+  });
+
+  it("rejects a billing address without a billing name instead of dropping it", () => {
+    for (const key of ["billing_street", "billing_postal_code", "billing_city"]) {
+      const r = schema.safeParse({ ...property, [key]: key === "billing_postal_code" ? "04109" : "Leipzig" });
+      expect(r.success, key).toBe(false);
+      expect(r.error?.issues.map((i) => i.message), key).toEqual(["import.errors.billingName"]);
+    }
+  });
+
+  it("does not count the defaulted billing country as a billing address", () => {
+    expect(schema.safeParse({ ...property, billing_country_code: "DE" }).success).toBe(true);
   });
 
   it("keeps the billing address when a billing name is set", () => {

@@ -66,6 +66,11 @@ describe("normalizeCell enum", () => {
     ["hv", "property_manager"],
     ["Privat", "private"],
     ["private", "private"],
+    ["Firma", "property_manager"],
+    ["Gewerblich", "property_manager"],
+    ["Gewerbe", "property_manager"],
+    ["Privatperson", "private"],
+    ["Privatkunde", "private"],
   ])("maps the customer kind %j to %j", (input, expected) => {
     expect(normalizeCell(input, "enum")).toBe(expected);
   });
@@ -98,7 +103,7 @@ describe("normalizeCell enum", () => {
   });
 
   it("passes unknown labels through for the schema to reject", () => {
-    expect(normalizeCell(" Firma ", "enum")).toBe("Firma");
+    expect(normalizeCell(" Sonstige ", "enum")).toBe("Sonstige");
   });
 });
 

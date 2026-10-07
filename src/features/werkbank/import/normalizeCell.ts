@@ -6,9 +6,13 @@ const ENUM_CODES: Record<string, string> = {
   hausverwaltung: "property_manager",
   hv: "property_manager",
   propertymanager: "property_manager",
+  firma: "property_manager",
+  gewerblich: "property_manager",
+  gewerbe: "property_manager",
   privat: "private",
   private: "private",
   privatkunde: "private",
+  privatperson: "private",
   // units (DE labels of units.* plus common spellings)
   std: "HUR",
   stunde: "HUR",

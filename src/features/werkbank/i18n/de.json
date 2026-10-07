@@ -421,7 +421,8 @@
       "read": "Die Datei konnte nicht gelesen werden. Prüf, ob es eine CSV- oder Excel-Datei ist.",
       "noColumns": "Die Datei hat in der ersten Zeile keine Spaltennamen.",
       "noRows": "Die Datei enthält keine Zeilen.",
-      "customerNo": "Gib die Kundennummer ein"
+      "customerNo": "Gib die Kundennummer ein",
+      "billingName": "Rechnungsempfänger fehlt, obwohl eine Rechnungsadresse angegeben ist"
     },
     "fields": {
       "customerNo": "Kundennummer",

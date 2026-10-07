@@ -421,7 +421,8 @@
       "read": "The file could not be read. Check that it is a CSV or Excel file.",
       "noColumns": "The first row of the file has no column names.",
       "noRows": "The file has no rows.",
-      "customerNo": "Enter the customer number"
+      "customerNo": "Enter the customer number",
+      "billingName": "Billing recipient is missing although a billing address is given"
     },
     "fields": {
       "customerNo": "Customer number",

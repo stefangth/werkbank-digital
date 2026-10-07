@@ -33,11 +33,21 @@ const ADDRESS = addressFields(
   true,
 );
 
+/** customerSchema with an optional kind (Ruling R16): a blank or unmapped kind becomes a property
+ *  manager when the row has a company name, otherwise private. A filled kind is kept as normalized, so
+ *  an unknown label is still rejected. */
+export const customerImportSchema = (t: TFunction) =>
+  z.preprocess((input) => {
+    const raw = input as Record<string, string>;
+    if ((raw.kind ?? "").trim() !== "") return raw;
+    return { ...raw, kind: (raw.company_name ?? "").trim() !== "" ? "property_manager" : "private" };
+  }, customerSchema(t));
+
 export const CUSTOMER_IMPORT: ImportSpecDefinition<CustomerForm> = {
   entity: "customers",
   fields: [
     { key: "customer_no", labelKey: "customers.dialog.customerNo", required: false, aliases: CUSTOMER_NO, kind: "text" },
-    { key: "kind", labelKey: "customers.dialog.kind", required: true, aliases: ["Art", "Kundenart", "Typ", "Kundentyp", "Kind", "Type", "Customer Type"], kind: "enum" },
+    { key: "kind", labelKey: "customers.dialog.kind", required: false, aliases: ["Art", "Kundenart", "Typ", "Kundentyp", "Kind", "Type", "Customer Type"], kind: "enum" },
     { key: "company_name", labelKey: "customers.dialog.companyName", required: false, aliases: ["Firma", "Firmenname", "Unternehmen", "Company", "Company Name"], kind: "text" },
     { key: "first_name", labelKey: "customers.dialog.firstName", required: false, aliases: ["Vorname", "First Name", "Given Name"], kind: "text" },
     { key: "last_name", labelKey: "customers.dialog.lastName", required: false, aliases: ["Nachname", "Familienname", "Last Name", "Surname", "Family Name"], kind: "text" },
@@ -49,7 +59,7 @@ export const CUSTOMER_IMPORT: ImportSpecDefinition<CustomerForm> = {
     { key: "payment_terms_days", labelKey: "customers.dialog.paymentTerms", required: false, aliases: ["Zahlungsziel", "Zahlungsziel Tage", "Zahlungsziel in Tagen", "Payment Terms", "Payment Terms Days"], kind: "integer", defaultValue: "14" },
     { key: "notes", labelKey: "customers.dialog.notes", required: false, aliases: NOTES, kind: "text" },
   ],
-  schema: customerSchema,
+  schema: customerImportSchema,
   toRpcRow: toCustomerRow,
 };
 
@@ -60,7 +70,9 @@ export type PropertyImportForm = Omit<PropertyForm, "customer_id"> & { customer_
 const PLACEHOLDER_CUSTOMER_ID = "00000000-0000-4000-8000-000000000000";
 
 /** propertySchema without customer_id, plus a required customer_no (Ruling R3). A sheet has no
- *  "Abweichender Rechnungsempfänger" tick, so has_billing is on when the billing name is filled.
+ *  "Abweichender Rechnungsempfänger" tick, so has_billing is on when the billing name is filled. A
+ *  billing street, postal code or city without a billing name is an error rather than dropped
+ *  silently (Ruling R16).
  *  propertySchema is refined, so it is reused as is with a placeholder customer_id instead of being
  *  rebuilt with `.omit`. */
 export const propertyImportSchema = (t: TFunction) =>
@@ -68,6 +80,12 @@ export const propertyImportSchema = (t: TFunction) =>
     const customerNo = (raw.customer_no ?? "").trim();
     if (customerNo === "") {
       ctx.addIssue({ code: "custom", path: ["customer_no"], message: t("import.errors.customerNo") });
+    }
+    const blank = (key: string) => (raw[key] ?? "").trim() === "";
+    const billingNameMissing =
+      blank("billing_name") && !(blank("billing_street") && blank("billing_postal_code") && blank("billing_city"));
+    if (billingNameMissing) {
+      ctx.addIssue({ code: "custom", path: ["billing_name"], message: t("import.errors.billingName") });
     }
     const parsed = propertySchema(t).safeParse({
       ...raw,
@@ -77,7 +95,7 @@ export const propertyImportSchema = (t: TFunction) =>
     if (!parsed.success) {
       for (const issue of parsed.error.issues) ctx.addIssue({ code: "custom", path: issue.path, message: issue.message });
     }
-    if (customerNo === "" || !parsed.success) return z.NEVER;
+    if (customerNo === "" || billingNameMissing || !parsed.success) return z.NEVER;
     const { customer_id: _placeholder, ...form } = parsed.data;
     return { ...form, customer_no: customerNo };
   });
