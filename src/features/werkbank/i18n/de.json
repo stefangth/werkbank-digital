@@ -161,5 +161,20 @@
       "prefixTooLong": "Das Präfix darf höchstens 10 Zeichen lang sein",
       "nextValue": "Gib eine ganze Zahl ab 1 ein"
     }
+  },
+  "customers": {
+    "errors": {
+      "kind": "Wähle die Art des Kunden",
+      "companyName": "Gib den Firmennamen ein",
+      "lastName": "Gib den Nachnamen ein",
+      "street": "Gib die Straße ein",
+      "postalCode": "Gib die Postleitzahl ein",
+      "postalCodeDe": "Eine deutsche Postleitzahl hat genau 5 Ziffern",
+      "city": "Gib den Ort ein",
+      "country": "Gib das Land als Kürzel aus zwei Großbuchstaben ein, zum Beispiel DE",
+      "email": "Gib eine gültige E-Mail-Adresse ein",
+      "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
+      "paymentTerms": "Gib ganze Tage von 0 bis 365 ein"
+    }
   }
 }

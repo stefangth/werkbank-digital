@@ -161,5 +161,20 @@
       "prefixTooLong": "The prefix can be at most 10 characters long",
       "nextValue": "Enter a whole number of 1 or more"
     }
+  },
+  "customers": {
+    "errors": {
+      "kind": "Choose the customer type",
+      "companyName": "Enter the company name",
+      "lastName": "Enter the last name",
+      "street": "Enter the street",
+      "postalCode": "Enter the postal code",
+      "postalCodeDe": "A German postal code has exactly 5 digits",
+      "city": "Enter the city",
+      "country": "Enter the country as two capital letters, for example DE",
+      "email": "Enter a valid email address",
+      "vatId": "Enter a valid VAT ID, for example DE123456789",
+      "paymentTerms": "Enter whole days from 0 to 365"
+    }
   }
 }
