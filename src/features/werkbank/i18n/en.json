@@ -405,6 +405,7 @@
     },
     "summary": {
       "counts": "{{created}} imported, {{skipped}} skipped, {{errors}} failed",
+      "interrupted": "The import was interrupted after {{done}} of {{total}} rows. The rows already imported are saved. Do not import the whole file again, only the rows that were not imported.",
       "list": "Rows not imported",
       "customerNumbers": "Customer numbers in a format other than your number range are kept but do not move the next number. Check it under Settings, Numbering if needed."
     },
@@ -414,7 +415,8 @@
       "item_no_taken": "Item number already taken",
       "unknown_customer": "Customer {{detail}} not found",
       "invalid": "Invalid data",
-      "other": "Not imported"
+      "other": "Not imported",
+      "notSent": "Not sent because the import was interrupted"
     },
     "errors": {
       "tooManyRows": "The file has more than {{max}} rows. Please split it.",

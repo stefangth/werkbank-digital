@@ -1,7 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import type { ImportClient, ImportResult } from "../import/types";
-import { CATALOG_IMPORT_SPEC, CUSTOMER_IMPORT_SPEC, PROPERTY_IMPORT_SPEC, importCatalogItems, importCustomers, importProperties } from "./imports";
+import {
+  CATALOG_IMPORT_SPEC,
+  CUSTOMER_IMPORT_SPEC,
+  ImportPartialError,
+  PROPERTY_IMPORT_SPEC,
+  importCatalogItems,
+  importCustomers,
+  importProperties,
+} from "./imports";
 
 const asClient = (fake: ReturnType<typeof createFakeSupabase>) => fake as unknown as ImportClient;
 const results: ImportResult[] = [{ row: 0, status: "created", reason: null, detail: null }];
@@ -68,6 +76,55 @@ describe("chunked import", () => {
   it("throws when the RPC result is not a list", async () => {
     const fake = createFakeSupabase({ "rpc:werkbank.import_customers": { data: { oops: true }, error: null } });
     await expect(importCustomers(asClient(fake), "org-1", rows)).rejects.toThrow("did not return a result list");
+  });
+});
+
+describe("a chunk that fails after others were committed", () => {
+  const created = (n: number) => Array.from({ length: n }, (_, row) => ({ row, status: "created", reason: null, detail: null }));
+  const many = Array.from({ length: 1200 }, (_, i) => ({ name: `Item ${i}` }));
+  const clientFor = (rpc: ReturnType<typeof vi.fn>) => ({ schema: () => ({ rpc }) }) as unknown as ImportClient;
+
+  it("keeps the results of the committed chunk and names the rows of the chunks not sent", async () => {
+    const boom = { message: "network", code: "XX000" };
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: created(500), error: null })
+      .mockResolvedValueOnce({ data: null, error: boom });
+    const error = await importCatalogItems(clientFor(rpc), "org-1", many).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ImportPartialError);
+    const partial = error as ImportPartialError;
+    expect(partial.results.map((r) => r.row)).toEqual(Array.from({ length: 500 }, (_, i) => i));
+    expect(partial.notSentRows).toEqual(Array.from({ length: 700 }, (_, i) => i + 500));
+    expect(partial.cause).toBe(boom);
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("also treats a non-list answer of a later chunk as a partial failure", async () => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: created(500), error: null })
+      .mockResolvedValueOnce({ data: { oops: true }, error: null });
+    const error = (await importCatalogItems(clientFor(rpc), "org-1", many).catch((e: unknown) => e)) as ImportPartialError;
+    expect(error).toBeInstanceOf(ImportPartialError);
+    expect(error.results).toHaveLength(500);
+    expect(error.notSentRows).toHaveLength(700);
+  });
+
+  it("reports original row indexes for customers sent numbered first", async () => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: created(500), error: null })
+      .mockResolvedValueOnce({ data: null, error: { message: "x" } });
+    const rowsIn: Record<string, unknown>[] = Array.from({ length: 600 }, (_, i) => ({ company_name: `Firma ${i}` }));
+    rowsIn[550] = { company_name: "Alt", customer_no: "K-1" };
+    const error = (await importCustomers(clientFor(rpc), "org-1", rowsIn).catch((e: unknown) => e)) as ImportPartialError;
+    expect(error.results.map((r) => r.row)).toContain(550);
+    expect(error.notSentRows).toHaveLength(100);
+    expect(error.notSentRows).not.toContain(550);
+  });
+
+  it("throws the plain error when the first chunk fails, as nothing was committed", async () => {
+    const boom = { message: "network", code: "XX000" };
+    const rpc = vi.fn().mockResolvedValueOnce({ data: null, error: boom });
+    await expect(importCatalogItems(clientFor(rpc), "org-1", many)).rejects.toBe(boom);
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
 });
 

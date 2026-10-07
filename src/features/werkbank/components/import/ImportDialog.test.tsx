@@ -11,6 +11,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: client }));
 
 import { ImportDialog } from "./ImportDialog";
 import type { ImportResult, ImportSpec } from "../../import/types";
+import { ImportPartialError } from "../../import/partialError";
 
 type FakeForm = { item_no: string; name: string; price: string };
 
@@ -126,6 +127,34 @@ describe("ImportDialog", () => {
     expect(await screen.findByText("Das hat nicht geklappt. Versuch es bitte noch einmal.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "2 Zeilen importieren" })).toBeEnabled();
     expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("moves to the summary with a warning when a later chunk failed after earlier ones were saved", async () => {
+    const spec = fakeSpec(
+      new ImportPartialError([{ row: 0, status: "created", reason: null, detail: null }], [1], new Error("network")),
+    );
+    const { onDone } = renderDialog(spec);
+    upload(CSV);
+    fireEvent.click(await screen.findByRole("button", { name: "Weiter" }));
+    fireEvent.click(await screen.findByRole("button", { name: "2 Zeilen importieren" }));
+
+    expect(await screen.findByText("1 importiert, 0 übersprungen, 1 Fehler")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Der Import wurde nach 1 von 2 Zeilen unterbrochen. Die bereits importierten Zeilen sind gespeichert. Importiere nicht noch einmal die ganze Datei, sondern nur die nicht importierten Zeilen.",
+      ),
+    ).toBeInTheDocument();
+    // valid row 1 is sheet row 4; invalid row 3 stays listed
+    const reasons = screen.getByRole("list", { name: "Nicht importierte Zeilen" });
+    expect(within(reasons).getByText("Zeile 3: Ungültige Angaben")).toBeInTheDocument();
+    expect(within(reasons).getByText("Zeile 4: Nicht gesendet, weil der Import unterbrochen wurde")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "2 Zeilen importieren" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Das hat nicht geklappt. Versuch es bitte noch einmal.")).not.toBeInTheDocument();
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(spec.run).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Fertig" }));
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 
   it("blocks the mapping until every required field has a column", async () => {

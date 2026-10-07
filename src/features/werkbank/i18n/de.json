@@ -405,6 +405,7 @@
     },
     "summary": {
       "counts": "{{created}} importiert, {{skipped}} übersprungen, {{errors}} Fehler",
+      "interrupted": "Der Import wurde nach {{done}} von {{total}} Zeilen unterbrochen. Die bereits importierten Zeilen sind gespeichert. Importiere nicht noch einmal die ganze Datei, sondern nur die nicht importierten Zeilen.",
       "list": "Nicht importierte Zeilen",
       "customerNumbers": "Kundennummern in einem anderen Format als deinem Nummernkreis bleiben erhalten, verschieben aber die nächste Nummer nicht. Prüf sie bei Bedarf unter Einstellungen, Nummernkreise."
     },
@@ -414,7 +415,8 @@
       "item_no_taken": "Artikelnummer schon vergeben",
       "unknown_customer": "Kunde {{detail}} nicht gefunden",
       "invalid": "Ungültige Angaben",
-      "other": "Nicht importiert"
+      "other": "Nicht importiert",
+      "notSent": "Nicht gesendet, weil der Import unterbrochen wurde"
     },
     "errors": {
       "tooManyRows": "Die Datei hat mehr als {{max}} Zeilen. Teile sie bitte auf.",

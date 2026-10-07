@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { ImportPartialError } from "../../import/partialError";
 import { guessColumns } from "../../import/guessColumns";
 import type { ColumnMapping, ImportResult, ImportSpec } from "../../import/types";
 import { validateRows, type ValidatedRows } from "../../import/validateRows";
@@ -39,11 +40,13 @@ interface Summary {
   skipped: number;
   errors: number;
   lines: { row: number; text: string }[];
+  /** Set when the import stopped after some chunks were saved: rows processed and rows to import. */
+  interrupted?: { done: number; total: number };
 }
 
 /** Folds the rows left out in review and the RPC results (whose `row` indexes the rows sent, i.e.
  *  `checked.valid`) into counts and one line per row that was not created. */
-function summarize<F>(checked: ValidatedRows<F>, results: ImportResult[], t: TFunction): Summary {
+function summarize<F>(checked: ValidatedRows<F>, results: ImportResult[], t: TFunction, notSentRows: number[] = []): Summary {
   const lines = checked.invalid.map((r) => ({ row: sheetRow(r.index), text: t("import.reasons.invalid") }));
   for (const r of results) {
     if (r.status === "created") continue;
@@ -53,7 +56,9 @@ function summarize<F>(checked: ValidatedRows<F>, results: ImportResult[], t: TFu
       text: r.reason ? t(`import.reasons.${r.reason}`, { detail: r.detail ?? "" }) : t("import.reasons.other"),
     });
   }
+  for (const i of notSentRows) lines.push({ row: sheetRow(checked.valid[i].index), text: t("import.reasons.notSent") });
   return {
+    interrupted: notSentRows.length > 0 ? { done: results.length, total: checked.valid.length } : undefined,
     created: results.filter((r) => r.status === "created").length,
     skipped: results.filter((r) => r.status === "skipped").length,
     errors: results.filter((r) => r.status === "error").length + checked.invalid.length,
@@ -138,7 +143,14 @@ export function ImportDialog<F>({
       setStep("summary");
       onDone();
     } catch (e) {
-      setRunError(t(mapDbError(e)));
+      if (e instanceof ImportPartialError) {
+        // Earlier chunks are saved: retrying the whole file would duplicate them, so end on the summary.
+        setSummary(summarize(checked, e.results, t, e.notSentRows));
+        setStep("summary");
+        onDone();
+      } else {
+        setRunError(t(mapDbError(e)));
+      }
     } finally {
       runningRef.current = false;
       setRunning(false);
@@ -276,6 +288,11 @@ export function ImportDialog<F>({
 
         {step === "summary" && summary && (
           <div className="space-y-4">
+            {summary.interrupted && (
+              <Alert variant="destructive">
+                <AlertDescription>{t("import.summary.interrupted", summary.interrupted)}</AlertDescription>
+              </Alert>
+            )}
             <p className="text-base font-medium">
               {t("import.summary.counts", { created: summary.created, skipped: summary.skipped, errors: summary.errors })}
             </p>

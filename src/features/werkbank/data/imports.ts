@@ -1,5 +1,6 @@
 import type { Json } from "@/integrations/supabase/types";
 import { CATALOG_IMPORT, CUSTOMER_IMPORT, PROPERTY_IMPORT, type PropertyImportForm } from "../import/specs";
+import { ImportPartialError } from "../import/partialError";
 import type { ImportClient, ImportResult, ImportSpec } from "../import/types";
 import type { CatalogItemForm } from "../schemas/catalogItem";
 import type { CustomerForm } from "../schemas/customer";
@@ -10,8 +11,12 @@ type RpcName = "import_customers" | "import_properties" | "import_catalog_items"
  *  take well under a second each. The chunks run one after another, each in its own transaction. */
 export const IMPORT_CHUNK_SIZE = 500;
 
+export { ImportPartialError };
+
 /** Sends the rows to one werkbank import RPC in chunks, in the order `order` gives (indexes into `rows`,
- *  default: as given). The results are mapped back to indexes into `rows` and returned sorted by `row`. */
+ *  default: as given). The results are mapped back to indexes into `rows` and returned sorted by `row`.
+ *  A failing first chunk throws its error (nothing was committed, a retry is safe); a failing later chunk
+ *  throws an ImportPartialError with the committed results and the rows not sent. */
 async function runImport(
   client: ImportClient,
   fn: RpcName,
@@ -22,10 +27,15 @@ async function runImport(
   const results: ImportResult[] = [];
   for (let start = 0; start < order.length; start += IMPORT_CHUNK_SIZE) {
     const sent = order.slice(start, start + IMPORT_CHUNK_SIZE);
-    const { data, error } = await client.schema("werkbank").rpc(fn, { p_org: orgId, p_rows: sent.map((i) => rows[i]) as Json });
-    if (error) throw error;
-    if (!Array.isArray(data)) throw new Error(`werkbank.${fn} did not return a result list`);
-    for (const result of data as unknown as ImportResult[]) results.push({ ...result, row: sent[result.row] });
+    try {
+      const { data, error } = await client.schema("werkbank").rpc(fn, { p_org: orgId, p_rows: sent.map((i) => rows[i]) as Json });
+      if (error) throw error;
+      if (!Array.isArray(data)) throw new Error(`werkbank.${fn} did not return a result list`);
+      for (const result of data as unknown as ImportResult[]) results.push({ ...result, row: sent[result.row] });
+    } catch (e) {
+      if (start === 0) throw e;
+      throw new ImportPartialError(results.sort((a, b) => a.row - b.row), order.slice(start).sort((a, b) => a - b), e);
+    }
   }
   return results.sort((a, b) => a.row - b.row);
 }
