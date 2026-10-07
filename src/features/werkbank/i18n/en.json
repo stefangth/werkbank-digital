@@ -170,6 +170,59 @@
       "nextValue": "Enter a whole number of 1 or more"
     }
   },
+  "company": {
+    "title": "Company data",
+    "description": "This is the sender data on your quotes. A quote can only be sent once name, address, email and a tax number or VAT ID are filled in.",
+    "sections": {
+      "company": "Company",
+      "contact": "Contact",
+      "legal": "Tax and register",
+      "bank": "Bank details",
+      "texts": "Quote defaults"
+    },
+    "fields": {
+      "companyName": "Company name",
+      "legalForm": "Legal form (optional)",
+      "street": "Street and number",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country",
+      "email": "Email",
+      "phone": "Phone (optional)",
+      "website": "Website (optional)",
+      "taxNumber": "Tax number",
+      "vatId": "VAT ID",
+      "registerCourt": "Register court (optional)",
+      "registerNumber": "Register number (optional)",
+      "iban": "IBAN (optional)",
+      "bic": "BIC (optional)",
+      "bankName": "Bank (optional)",
+      "quoteIntro": "Intro text for quotes (optional)",
+      "quoteClosing": "Closing text for quotes (optional)",
+      "paymentTerms": "Payment terms text (optional)",
+      "validity": "Quote valid for (days)"
+    },
+    "taxHint": "Enter a tax number, a VAT ID, or both.",
+    "logo": {
+      "label": "Logo",
+      "hint": "PNG or JPEG, at most 1 MB.",
+      "choose": "Choose logo",
+      "replace": "Replace logo",
+      "remove": "Remove logo",
+      "alt": "Your logo",
+      "tooLarge": "The logo is larger than 1 MB",
+      "wrongType": "Use a PNG or JPEG file",
+      "uploadFailed": "The logo could not be uploaded. Please try again."
+    },
+    "saved": "Company data saved",
+    "loadFailed": "The company data could not be loaded. Please try again.",
+    "errors": {
+      "companyName": "Enter the company name",
+      "vatId": "Enter a valid VAT ID, for example DE123456789",
+      "iban": "Enter a valid IBAN, for example DE89 3704 0044 0532 0130 00",
+      "validity": "Enter whole days from 1 to 365"
+    }
+  },
   "customers": {
     "errors": {
       "kind": "Choose the customer type",

@@ -95,7 +95,7 @@ describe("kind-aware settings tabs", () => {
 
   it("allows every tab for production and staffing, and the neutral tabs for any kind", () => {
     // "numbering" belongs to the handwerk plugin kind only (see its own test below).
-    for (const tab of [...SETTINGS_TAB_PARAMS.filter((t) => t !== "numbering"), "trust"]) {
+    for (const tab of [...SETTINGS_TAB_PARAMS.filter((t) => t !== "numbering" && t !== "company"), "trust"]) {
       expect(isSettingsTabAllowedForKind(tab, "production")).toBe(true);
       expect(isSettingsTabAllowedForKind(tab, "staffing")).toBe(true);
     }
@@ -153,5 +153,20 @@ describe("numbering tab", () => {
 
   it("falls back for an admin of a production org", () => {
     expect(resolveInitialTab("numbering", true, false, false, "production")).toBe("how-it-works");
+  });
+});
+
+describe("company tab", () => {
+  it("is offered to handwerk admins only", () => {
+    expect(SETTINGS_TAB_KINDS.company).toEqual(["handwerk"]);
+    expect(isSettingsTabAllowedForKind("company", "handwerk")).toBe(true);
+    expect(isSettingsTabAllowedForKind("company", "production")).toBe(false);
+    expect(isSettingsTabAllowedForKind("company", "staffing")).toBe(false);
+    expect(resolveInitialTab("company", true, false, false, "handwerk")).toBe("company");
+  });
+
+  it("falls back for a producer deep link and for a production org", () => {
+    expect(resolveInitialTab("company", false, false, true, "handwerk")).toBe("organization");
+    expect(resolveInitialTab("company", true, false, false, "production")).toBe("how-it-works");
   });
 });

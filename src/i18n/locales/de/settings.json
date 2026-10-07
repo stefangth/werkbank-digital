@@ -28,6 +28,7 @@
       "getRunning": "Loslegen",
       "permissions": "Rollen und Rechte",
       "numbering": "Nummernkreise",
+      "company": "Firmendaten",
       "trust": "Vertrauen und Daten",
       "castsCoverage": "{{Casts}} und Abdeckung",
       "skills": "{{Skills}}",
