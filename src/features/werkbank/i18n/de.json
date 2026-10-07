@@ -360,5 +360,71 @@
   "kind": {
     "property_manager": "Hausverwaltung",
     "private": "Privat"
+  },
+  "import": {
+    "title": {
+      "customers": "Kunden importieren",
+      "properties": "Liegenschaften importieren",
+      "catalog_items": "Leistungen importieren"
+    },
+    "description": "Lade eine CSV- oder Excel-Datei hoch. Du ordnest die Spalten zu und prüfst die Zeilen, bevor etwas gespeichert wird.",
+    "propertiesHint": "Importiere zuerst die Kunden. Liegenschaften finden ihren Kunden über die Kundennummer.",
+    "steps": {
+      "upload": "Datei",
+      "map": "Spalten",
+      "review": "Prüfen",
+      "summary": "Ergebnis"
+    },
+    "upload": {
+      "label": "Datei auswählen",
+      "hint": "CSV oder Excel (.xlsx) mit höchstens {{max}} Zeilen. Die erste Zeile enthält die Spaltennamen."
+    },
+    "map": {
+      "intro": "Wir haben die Spalten deiner Datei zugeordnet, soweit es ging. Prüf die Zuordnung. Pflichtfelder sind mit * markiert.",
+      "columnFor": "Spalte für {{field}}",
+      "ignore": "Nicht importieren"
+    },
+    "review": {
+      "ready_one": "{{count}} Zeile ist bereit",
+      "ready_other": "{{count}} Zeilen sind bereit",
+      "invalid_one": "{{count}} Zeile hat Fehler und wird ausgelassen",
+      "invalid_other": "{{count}} Zeilen haben Fehler und werden ausgelassen",
+      "counts": "{{ready}}, {{invalid}}.",
+      "countsAllValid": "{{ready}}.",
+      "invalidList": "Zeilen mit Fehlern",
+      "submit_one": "{{count}} Zeile importieren",
+      "submit_other": "{{count}} Zeilen importieren",
+      "running": "Import läuft"
+    },
+    "summary": {
+      "counts": "{{created}} importiert, {{skipped}} übersprungen, {{errors}} Fehler",
+      "list": "Nicht importierte Zeilen",
+      "customerNumbers": "Kundennummern in einem anderen Format als deinem Nummernkreis bleiben erhalten, verschieben aber die nächste Nummer nicht. Prüf sie bei Bedarf unter Einstellungen, Nummernkreise."
+    },
+    "row": "Zeile {{row}}: {{message}}",
+    "reasons": {
+      "customer_no_taken": "Kundennummer schon vergeben",
+      "item_no_taken": "Artikelnummer schon vergeben",
+      "unknown_customer": "Kunde {{detail}} nicht gefunden",
+      "invalid": "Ungültige Angaben",
+      "other": "Nicht importiert"
+    },
+    "errors": {
+      "tooManyRows": "Die Datei hat mehr als {{max}} Zeilen. Teile sie bitte auf.",
+      "read": "Die Datei konnte nicht gelesen werden. Prüf, ob es eine CSV- oder Excel-Datei ist.",
+      "noColumns": "Die Datei hat in der ersten Zeile keine Spaltennamen.",
+      "noRows": "Die Datei enthält keine Zeilen.",
+      "customerNo": "Gib die Kundennummer ein"
+    },
+    "fields": {
+      "customerNo": "Kundennummer",
+      "billingStreet": "Straße des Rechnungsempfängers",
+      "billingPostalCode": "PLZ des Rechnungsempfängers",
+      "billingCity": "Ort des Rechnungsempfängers",
+      "billingCountry": "Land des Rechnungsempfängers"
+    },
+    "back": "Zurück",
+    "continue": "Weiter",
+    "done": "Fertig"
   }
 }

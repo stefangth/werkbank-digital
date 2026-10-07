@@ -360,5 +360,71 @@
   "kind": {
     "property_manager": "Property manager",
     "private": "Private"
+  },
+  "import": {
+    "title": {
+      "customers": "Import customers",
+      "properties": "Import properties",
+      "catalog_items": "Import services"
+    },
+    "description": "Upload a CSV or Excel file. You map the columns and check the rows before anything is saved.",
+    "propertiesHint": "Import the customers first. Properties find their customer by the customer number.",
+    "steps": {
+      "upload": "File",
+      "map": "Columns",
+      "review": "Check",
+      "summary": "Result"
+    },
+    "upload": {
+      "label": "Choose file",
+      "hint": "CSV or Excel (.xlsx) with at most {{max}} rows. The first row holds the column names."
+    },
+    "map": {
+      "intro": "We matched the columns of your file where we could. Check the mapping. Required fields are marked with *.",
+      "columnFor": "Column for {{field}}",
+      "ignore": "Do not import"
+    },
+    "review": {
+      "ready_one": "{{count}} row is ready",
+      "ready_other": "{{count}} rows are ready",
+      "invalid_one": "{{count}} row has errors and is left out",
+      "invalid_other": "{{count}} rows have errors and are left out",
+      "counts": "{{ready}}, {{invalid}}.",
+      "countsAllValid": "{{ready}}.",
+      "invalidList": "Rows with errors",
+      "submit_one": "Import {{count}} row",
+      "submit_other": "Import {{count}} rows",
+      "running": "Importing"
+    },
+    "summary": {
+      "counts": "{{created}} imported, {{skipped}} skipped, {{errors}} failed",
+      "list": "Rows not imported",
+      "customerNumbers": "Customer numbers in a format other than your number range are kept but do not move the next number. Check it under Settings, Numbering if needed."
+    },
+    "row": "Row {{row}}: {{message}}",
+    "reasons": {
+      "customer_no_taken": "Customer number already taken",
+      "item_no_taken": "Item number already taken",
+      "unknown_customer": "Customer {{detail}} not found",
+      "invalid": "Invalid data",
+      "other": "Not imported"
+    },
+    "errors": {
+      "tooManyRows": "The file has more than {{max}} rows. Please split it.",
+      "read": "The file could not be read. Check that it is a CSV or Excel file.",
+      "noColumns": "The first row of the file has no column names.",
+      "noRows": "The file has no rows.",
+      "customerNo": "Enter the customer number"
+    },
+    "fields": {
+      "customerNo": "Customer number",
+      "billingStreet": "Billing street",
+      "billingPostalCode": "Billing postal code",
+      "billingCity": "Billing city",
+      "billingCountry": "Billing country"
+    },
+    "back": "Back",
+    "continue": "Continue",
+    "done": "Done"
   }
 }
