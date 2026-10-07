@@ -174,3 +174,9 @@ verify_jwt = false
 # response is a curated, display-safe snapshot (see index.ts).
 [functions.sandbox-view]
 verify_jwt = false
+
+# werkbank-quotes: quote preview, send, resend and download for the Werkbank module, plus
+# the public token actions a customer opens with no login. The internal actions authorize
+# the caller through requireOrgRole; the public ones by the SHA-256 of the link token.
+[functions.werkbank-quotes]
+verify_jwt = false

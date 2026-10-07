@@ -118,6 +118,12 @@
       "source": "src/features/werkbank/registry.ts",
       "target": "supabase/functions/_shared/werkbank/registry.ts",
       "why": "Werkbank org kind, brand and provisioning defaults as pure data with zero imports. The client manifest and the edge manifest register the same objects, so the two runtimes cannot drift."
+    },
+    {
+      "mode": "file",
+      "source": "src/features/werkbank/lib/quotePreflight.ts",
+      "target": "supabase/functions/_shared/werkbank/quotePreflight.ts",
+      "why": "Quote send preflight as pure, import-free rules. The send dialog and the werkbank-quotes edge function check the same blockers, so the two runtimes cannot drift."
     }
   ]
 }

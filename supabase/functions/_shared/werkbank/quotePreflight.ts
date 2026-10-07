@@ -1,3 +1,6 @@
+// GENERATED FILE. Do not edit.
+// Source: src/features/werkbank/lib/quotePreflight.ts
+// Regenerate: npm run sync:mirrors
 // Pure and import-free on purpose: mirrored byte for byte to the edge runtime
 // (supabase/functions/_shared/werkbank/quotePreflight.ts, see scripts/mirrors.manifest.json),
 // so the send dialog and the werkbank-quotes function check the same rules.
