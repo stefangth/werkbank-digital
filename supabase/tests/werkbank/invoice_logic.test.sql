@@ -2,7 +2,7 @@
 -- guard, and the RPCs create_invoice_from_order, finalize_invoice, cancel_invoice, copy_invoice.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(83);
+SELECT plan(93);
 
 -- Berlin dates must not depend on the session time zone.
 SET LOCAL timezone = 'UTC';
@@ -228,6 +228,8 @@ RESET ROLE;
 
 -- Service role: pdf once, send columns always ---------------------------------------------
 SET LOCAL ROLE service_role;
+SELECT throws_ok($$UPDATE werkbank.invoices SET pdf_path = 'a/invoices/d.pdf' WHERE id = '66666666-0000-4000-a000-0000000000c9'$$,
+  '55000', 'invoice_locked', 'the service role cannot set pdf_path on a draft');
 SELECT lives_ok(format($$UPDATE werkbank.invoices SET pdf_path = 'a/invoices/x.pdf', pdf_sha256 = 'abc' WHERE id = '%s'$$, pg_temp.id('inv1')),
   'the service role sets pdf_path and pdf_sha256 once');
 SELECT throws_ok(format($$UPDATE werkbank.invoices SET pdf_path = 'a/invoices/y.pdf' WHERE id = '%s'$$, pg_temp.id('inv1')),
@@ -267,9 +269,31 @@ SELECT results_eq(
 SELECT is((SELECT count(*)::int FROM werkbank.document_items WHERE invoice_id = pg_temp.id('can1')),
   (SELECT count(*)::int FROM werkbank.document_items WHERE invoice_id = pg_temp.id('inv1')),
   'the cancellation copies all items');
+SELECT throws_ok(format($$UPDATE werkbank.invoices SET customer_id = 'cccccccc-0000-4000-c000-0000000000c2' WHERE id = '%s'$$, pg_temp.id('can1')),
+  '55000', 'invoice_locked', 'the customer of a cancellation draft cannot change');
+SELECT throws_ok(format($$UPDATE werkbank.invoices SET discount_percent = 10 WHERE id = '%s'$$, pg_temp.id('can1')),
+  '55000', 'invoice_locked', 'the discount of a cancellation draft cannot change');
+SELECT throws_ok(format($$DELETE FROM werkbank.document_items WHERE invoice_id = '%s' AND kind = 'text'$$, pg_temp.id('can1')),
+  '55000', 'invoice_locked', 'an item of a cancellation draft cannot be deleted');
+SELECT throws_ok(format($$INSERT INTO werkbank.document_items (org_id, invoice_id, sort_order, kind, description)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000c1','%s',9,'text','Neu')$$, pg_temp.id('can1')),
+  '55000', 'invoice_locked', 'an item cannot be added to a cancellation draft');
+SELECT lives_ok(format($$UPDATE werkbank.invoices SET intro_text = 'Storno, neu formuliert', payment_due_days = 0
+  WHERE id = '%s'$$, pg_temp.id('can1')),
+  'the texts and payment days of a cancellation draft stay editable');
+SELECT lives_ok(format($$DELETE FROM werkbank.invoices WHERE id = '%s'$$, pg_temp.id('can1')),
+  'a cancellation draft can be deleted with its items');
+SELECT set_config('il.can1', werkbank.cancel_invoice(pg_temp.id('inv1'))::text, true);
 SELECT throws_ok(format($$SELECT werkbank.cancel_invoice('%s')$$, pg_temp.id('inv1')),
   '23505', NULL, 'a second cancellation of the same invoice fails');
 SELECT is((werkbank.finalize_invoice(pg_temp.id('can1'))).invoice_no, 'RE-0002', 'the cancellation draws RE-0002');
+SELECT is((SELECT buyer_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('can1')),
+  (SELECT buyer_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('inv1')),
+  'the cancellation keeps the original buyer although the customer street changed since');
+SELECT is((SELECT seller_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('can1')),
+  (SELECT to_jsonb(p) - 'org_id' - 'created_at' - 'updated_at' FROM werkbank.company_profiles p
+   WHERE p.org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1'),
+  'the cancellation takes a fresh seller snapshot');
 SELECT is((SELECT status FROM werkbank.invoices WHERE id = pg_temp.id('inv1')), 'cancelled',
   'finalizing the cancellation cancels the original');
 SELECT is((SELECT status FROM werkbank.orders WHERE id = '33333333-0000-4000-a000-0000000000c1'), 'done',
@@ -318,9 +342,9 @@ SELECT throws_ok($$UPDATE werkbank.number_ranges SET padding = 6
 SELECT throws_ok($$UPDATE werkbank.number_ranges SET next_value = 1
   WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1' AND key = 'invoice'$$,
   '55000', 'number_range_locked', 'the invoice counter never decreases');
-SELECT lives_ok($$UPDATE werkbank.number_ranges SET next_value = 100
+SELECT throws_ok($$UPDATE werkbank.number_ranges SET next_value = 100
   WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1' AND key = 'invoice'$$,
-  'the invoice counter may be raised');
+  '55000', 'number_range_locked', 'the invoice counter cannot be raised after the first issue');
 SELECT lives_ok($$UPDATE werkbank.number_ranges SET prefix = 'AN-'
   WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1' AND key = 'quote'$$,
   'other ranges are not guarded');
@@ -334,7 +358,10 @@ SET LOCAL ROLE authenticated;
 SELECT lives_ok($$UPDATE werkbank.number_ranges SET prefix = 'R-', padding = 5
   WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c2' AND key = 'invoice'$$,
   'without an issued invoice the prefix and padding may change');
-SELECT throws_ok($$UPDATE werkbank.number_ranges SET next_value = 4
+SELECT lives_ok($$UPDATE werkbank.number_ranges SET next_value = 50
+  WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c2' AND key = 'invoice'$$,
+  'without an issued invoice the counter may be raised');
+SELECT throws_ok($$UPDATE werkbank.number_ranges SET next_value = 49
   WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c2' AND key = 'invoice'$$,
   '55000', 'number_range_locked', 'the invoice counter never decreases, even without an issued invoice');
 

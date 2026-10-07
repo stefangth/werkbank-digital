@@ -51,13 +51,16 @@ revoke all on function werkbank.next_number(uuid, text) from public, anon, authe
 
 -- Invoice range guard -----------------------------------------------------------------------
 -- next_value of 'invoice' never decreases. Once the org has an issued (or cancelled) invoice,
--- prefix, padding, key and org cannot change and the row cannot be deleted. Error 55000
--- number_range_locked. An org delete (the org row is already gone) passes.
+-- prefix, padding, key and org cannot change, next_value moves only through next_number (owner
+-- context), and the row cannot be deleted. Error 55000 number_range_locked. An org delete (the
+-- org row is already gone) passes.
 create function werkbank.guard_invoice_range()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
+declare
+  v_owner boolean := current_user not in ('authenticated', 'anon', 'service_role');
 begin
   if not exists (select 1 from public.organizations o where o.id = old.org_id) then
     return case when tg_op = 'DELETE' then old else new end;
@@ -67,7 +70,8 @@ begin
   end if;
   if (tg_op = 'DELETE'
       or new.prefix is distinct from old.prefix or new.padding is distinct from old.padding
-      or new.key <> old.key or new.org_id <> old.org_id)
+      or new.key <> old.key or new.org_id <> old.org_id
+      or (not v_owner and new.next_value <> old.next_value))
      and exists (select 1 from werkbank.invoices i where i.org_id = old.org_id and i.status <> 'draft') then
     raise exception 'number_range_locked' using errcode = '55000';
   end if;
@@ -90,9 +94,13 @@ create trigger number_ranges_guard_invoice before update or delete on werkbank.n
 --   * Once status <> 'draft', nothing else changes: the owner context may only move the status
 --     and clear contact_id (FK set-null), the service role only the columns above. A non-draft
 --     row is never deleted, except by the cascade of an org delete. 55000 invoice_locked.
---   * The order of a cancellation stays the original's (a user cannot repoint it).
+--   * pdf_path, pdf_sha256, sent_at and sent_to stay null while the row is a draft.
+--   * A cancellation is a full reversal: outside the owner context its order (invalid_transition),
+--     customer, property, contact, discount and items (invoice_locked) cannot change, also as a
+--     draft. Its texts, service dates and payment_due_days stay editable, and the draft may be
+--     deleted.
 -- On document_items with an invoice: no insert, update or delete while the invoice is not a
--- draft; FK cascades and FK set-null actions are let through. Items never move to another
+-- draft, or (outside the owner context) when it is a cancellation; FK cascades and FK set-null actions are let through. Items never move to another
 -- invoice (22023 item_reparent).
 create function werkbank.lock_invoice()
 returns trigger
@@ -127,7 +135,8 @@ begin
         return new;
       end if;
     end if;
-    if exists (select 1 from werkbank.invoices i where i.id = v_invoice and i.status <> 'draft') then
+    if exists (select 1 from werkbank.invoices i
+               where i.id = v_invoice and (i.status <> 'draft' or (i.type = 'cancellation' and not v_owner))) then
       raise exception 'invoice_locked' using errcode = '55000';
     end if;
     return case when tg_op = 'DELETE' then old else new end;
@@ -173,6 +182,9 @@ begin
   end if;
   if (not v_owner and v_changed && v_final_cols)
      or (v_user and v_changed && v_service_cols)
+     or (not v_owner and old.status = 'draft' and v_changed && v_service_cols)
+     or (not v_owner and old.type = 'cancellation'
+         and v_changed && array['customer_id', 'property_id', 'contact_id', 'discount_percent'])
      or (old.pdf_path is not null and new.pdf_path is distinct from old.pdf_path)
      or (old.pdf_sha256 is not null and new.pdf_sha256 is distinct from old.pdf_sha256) then
     raise exception 'invoice_locked' using errcode = '55000';
@@ -358,7 +370,8 @@ grant execute on function werkbank.create_invoice_from_order(uuid) to authentica
 -- Issue a draft. Order of work: lock the row, require draft, collect the blockers and raise
 -- invoice_not_ready (detail: comma-separated, in the order no_items, no_service_date,
 -- profile_incomplete, no_buyer_address), require the order (of an invoice) to be done, and only
--- then draw the number, so a failed issue never touches the range. Then stamp the dates and the
+-- then draw the number, so a failed issue never touches the range. A cancellation copies the
+-- original's buyer_snapshot; its seller_snapshot is taken fresh. Then stamp the dates and the
 -- snapshots and move the linked documents: invoice with order: order done -> invoiced;
 -- cancellation: original issued -> cancelled, its order invoiced -> done.
 -- Snapshots: seller = the company profile row without org_id, created_at, updated_at. buyer =
@@ -463,7 +476,8 @@ begin
     issued_at = now(),
     status = 'issued',
     seller_snapshot = to_jsonb(v_p) - 'org_id' - 'created_at' - 'updated_at',
-    buyer_snapshot = v_buyer
+    -- A cancellation reverses the original towards the same buyer.
+    buyer_snapshot = case when v_inv.type = 'cancellation' then v_orig.buyer_snapshot else v_buyer end
   where id = p_invoice
   returning * into v_inv;
 
