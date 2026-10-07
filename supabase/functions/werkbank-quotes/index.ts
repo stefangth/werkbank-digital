@@ -539,7 +539,7 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
  *  entry is trusted: the whole chain is kept next to x-real-ip and cf-connecting-ip as the proxies
  *  reported them, e.g. "real=203.0.113.5; xff=1.2.3.4, 203.0.113.5". Capped at 512 characters. */
 export function clientIpEvidence(headers: Headers): string | null {
-  const clean = (v: string | null) => (v ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  const clean = (v: string | null) => (v ?? "").trim();
   const xff = clean(headers.get("x-forwarded-for")).split(",").map((p) => p.trim()).filter(Boolean).join(", ");
   const parts = [
     ["real", clean(headers.get("x-real-ip"))],
