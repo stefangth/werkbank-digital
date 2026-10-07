@@ -26,7 +26,10 @@ export type PageKey =
   | 'productions'
   | 'artists'
   | 'platform'
-  | 'hireOrders';
+  | 'hireOrders'
+  | 'customers'
+  | 'properties'
+  | 'catalog';
 
 export interface MiniStepCopy {
   /** Short uppercase step label, e.g. "Booking engine". */

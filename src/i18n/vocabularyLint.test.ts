@@ -34,6 +34,10 @@ const SKIP_PATHS = [
   "werkbank.",
   // Werkbank help items (ids W...) are written in the trade vocabulary, without placeholders.
   "help-items.W",
+  // The Werkbank list-page minis belong to the trade kind and use its own words, no {{vocabulary}} placeholders.
+  "minis.customers",
+  "minis.properties",
+  "minis.catalog",
   "settings.organization.kind",
   "getRunningV3.steps.workspace",
   "getRunningV3.body.workspace",

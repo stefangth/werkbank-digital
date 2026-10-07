@@ -57,6 +57,12 @@ describe("CatalogPage", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it("shows the page mini above the list", async () => {
+    seed();
+    renderPage();
+    expect(await screen.findByRole("region", { name: "So funktionieren Leistungen" })).toBeInTheDocument();
+  });
+
   it("renders the columns and a formatted row", async () => {
     seed();
     renderPage();

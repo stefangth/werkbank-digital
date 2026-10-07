@@ -67,6 +67,12 @@ describe("CustomersPage", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it("shows the page mini above the list", async () => {
+    seed();
+    renderPage();
+    expect(await screen.findByRole("region", { name: "So funktionieren Kunden" })).toBeInTheDocument();
+  });
+
   it("renders the columns, the display names and the kind as a pill", async () => {
     seed();
     renderPage();

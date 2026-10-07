@@ -7,6 +7,9 @@ import { productionsMini } from './pages/productions';
 import { artistsMini } from './pages/artists';
 import { platformMini } from './pages/platform';
 import { hireOrdersMini } from './pages/hireOrders';
+import { customersMini } from './pages/customers';
+import { propertiesMini } from './pages/properties';
+import { catalogMini } from './pages/catalog';
 
 export * from './types';
 export { resolveMiniRole } from './resolveMiniRole';
@@ -26,6 +29,9 @@ export const MINIS = {
   artists: artistsMini,
   platform: platformMini,
   hireOrders: hireOrdersMini,
+  customers: customersMini,
+  properties: propertiesMini,
+  catalog: catalogMini,
 } as const satisfies Record<PageKey, MiniDef>;
 
 export type RegisteredPageKey = keyof typeof MINIS;

@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PageMini } from "@/components/minis/PageMini";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -82,6 +83,8 @@ export function PropertiesPage() {
           </div>
         }
       />
+
+      <PageMini page="properties" />
 
       {isLoading ? (
         <Skeleton className="h-32 w-full" />

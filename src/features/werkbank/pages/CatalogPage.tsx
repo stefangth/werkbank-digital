@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PageMini } from "@/components/minis/PageMini";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,6 +93,8 @@ export function CatalogPage() {
           </div>
         }
       />
+
+      <PageMini page="catalog" />
 
       {isLoading ? (
         <Skeleton className="h-32 w-full" />

@@ -62,6 +62,12 @@ describe("PropertiesPage", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it("shows the page mini above the list", async () => {
+    seed();
+    renderPage();
+    expect(await screen.findByRole("region", { name: "So funktionieren Liegenschaften" })).toBeInTheDocument();
+  });
+
   it("renders the columns with address and customer name", async () => {
     seed();
     renderPage();
