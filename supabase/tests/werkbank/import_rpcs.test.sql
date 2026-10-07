@@ -1,7 +1,7 @@
 -- Werkbank Teil 2: import RPCs (import_customers, import_properties, import_catalog_items).
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(28);
+SELECT plan(30);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -12,12 +12,14 @@ VALUES
   ('aaaaaaaa-0000-4000-a000-0000000000d4','authenticated','authenticated','im-admin-b@test.com',now(),'{"provider":"email"}','{}',now(),now());
 INSERT INTO public.organizations (id, name, slug, org_kind) VALUES
   ('bbbbbbbb-0000-4000-b000-0000000000d1','IM Org A','im-org-a','handwerk'),
-  ('bbbbbbbb-0000-4000-b000-0000000000d2','IM Org B','im-org-b','handwerk');
+  ('bbbbbbbb-0000-4000-b000-0000000000d2','IM Org B','im-org-b','handwerk'),
+  ('bbbbbbbb-0000-4000-b000-0000000000d3','IM Org C','im-org-c','handwerk');
 INSERT INTO public.org_memberships (org_id, user_id, role) VALUES
   ('bbbbbbbb-0000-4000-b000-0000000000d1','aaaaaaaa-0000-4000-a000-0000000000d1','admin'),
   ('bbbbbbbb-0000-4000-b000-0000000000d1','aaaaaaaa-0000-4000-a000-0000000000d2','producer'),
   ('bbbbbbbb-0000-4000-b000-0000000000d1','aaaaaaaa-0000-4000-a000-0000000000d3','artist'),
-  ('bbbbbbbb-0000-4000-b000-0000000000d2','aaaaaaaa-0000-4000-a000-0000000000d4','admin');
+  ('bbbbbbbb-0000-4000-b000-0000000000d2','aaaaaaaa-0000-4000-a000-0000000000d4','admin'),
+  ('bbbbbbbb-0000-4000-b000-0000000000d3','aaaaaaaa-0000-4000-a000-0000000000d2','producer');
 SET session_replication_role = DEFAULT;
 
 CREATE OR REPLACE FUNCTION pg_temp.act_as(_uid text) RETURNS void LANGUAGE plpgsql AS $$
@@ -56,14 +58,14 @@ SELECT is((SELECT archived_at FROM werkbank.customers WHERE customer_no = 'K-200
   'archived_at from the JSON is ignored');
 SELECT is((SELECT country_code || ':' || payment_terms_days FROM werkbank.customers WHERE last_name = 'Schmidt'), 'DE:14',
   'column defaults apply to omitted keys');
-SELECT is((SELECT customer_no FROM werkbank.customers WHERE last_name = 'Schmidt'), 'K-10001',
+SELECT is((SELECT customer_no FROM werkbank.customers WHERE last_name = 'Schmidt'), 'K-20001',
   'a row without customer_no gets an automatic number');
 SELECT is((SELECT next_value FROM werkbank.number_ranges WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000d1' AND key = 'customer'),
-  20001::bigint, 'range is raised above the highest imported number');
+  20002::bigint, 'range is raised above the highest imported number');
 
 INSERT INTO werkbank.customers (org_id, kind, last_name, street, postal_code, city)
 VALUES ('bbbbbbbb-0000-4000-b000-0000000000d1', 'private', 'Neu', 'D 4', '01069', 'Dresden');
-SELECT is((SELECT customer_no FROM werkbank.customers WHERE last_name = 'Neu'), 'K-20001', 'the next new customer gets K-20001');
+SELECT is((SELECT customer_no FROM werkbank.customers WHERE last_name = 'Neu'), 'K-20002', 'the next new customer gets K-20002');
 
 -- Re-import of an existing number is skipped and leaves the row unchanged.
 INSERT INTO res SELECT 'c2', werkbank.import_customers('bbbbbbbb-0000-4000-b000-0000000000d1',
@@ -77,7 +79,18 @@ INSERT INTO res SELECT 'c3', werkbank.import_customers('bbbbbbbb-0000-4000-b000-
   '[{"customer_no":"ALT-7","kind":"private","last_name":"Alt","street":"E 5","postal_code":"01069","city":"Dresden"}]'::jsonb);
 SELECT is((SELECT r->0->>'status' FROM res WHERE name = 'c3'), 'created', 'ALT-7 is created');
 SELECT is((SELECT next_value FROM werkbank.number_ranges WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000d1' AND key = 'customer'),
-  20002::bigint, 'ALT-7 leaves next_value unchanged');
+  20003::bigint, 'ALT-7 leaves next_value unchanged');
+
+-- Fresh org without customers or range row: numberless rows after an explicit K-10001 must not collide.
+INSERT INTO res SELECT 'c4', werkbank.import_customers('bbbbbbbb-0000-4000-b000-0000000000d3', $j$[
+  {"customer_no":"K-10001","kind":"private","last_name":"Eins","street":"A 1","postal_code":"01069","city":"Dresden"},
+  {"kind":"private","last_name":"Zwei","street":"A 2","postal_code":"01069","city":"Dresden"},
+  {"kind":"private","last_name":"Drei","street":"A 3","postal_code":"01069","city":"Dresden"}
+]$j$::jsonb);
+SELECT is((SELECT jsonb_agg(e->>'status' ORDER BY (e->>'row')::int) FROM res, jsonb_array_elements(r) e WHERE name = 'c4'),
+  '["created","created","created"]'::jsonb, 'numberless rows after an explicit K-10001 are created');
+SELECT is((SELECT string_agg(customer_no, ',' ORDER BY customer_no) FROM werkbank.customers WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000d3'),
+  'K-10001,K-10002,K-10003', 'generated numbers continue after the explicit one');
 
 -- Properties.
 INSERT INTO res SELECT 'p1', werkbank.import_properties('bbbbbbbb-0000-4000-b000-0000000000d1', $j$[

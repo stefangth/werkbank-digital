@@ -35,6 +35,20 @@ begin
   values (p_org, 'customer', 'K-', 10001, 0)
   on conflict do nothing;
 
+  -- Raise the range before the loop too, over existing customers and the explicit numbers in p_rows, so
+  -- numberless rows after an explicit K-10001 do not collide with it.
+  update werkbank.number_ranges nr set next_value = greatest(nr.next_value, m.max_no + 1)
+  from (select max(substr(s.no, length(nr2.prefix) + 1)::bigint) as max_no
+        from werkbank.number_ranges nr2
+        join (select c.customer_no as no from werkbank.customers c where c.org_id = p_org
+              union all
+              select btrim(e->>'customer_no') from jsonb_array_elements(p_rows) e
+              where jsonb_typeof(e) = 'object') s on true
+        where nr2.org_id = p_org and nr2.key = 'customer'
+          and left(s.no, length(nr2.prefix)) = nr2.prefix
+          and substr(s.no, length(nr2.prefix) + 1) ~ '^[0-9]{1,18}$') m
+  where nr.org_id = p_org and nr.key = 'customer' and m.max_no is not null;
+
   for v_i, v_row in select o - 1, e from jsonb_array_elements(p_rows) with ordinality as t(e, o) loop
     begin
       if jsonb_typeof(v_row) <> 'object' then
