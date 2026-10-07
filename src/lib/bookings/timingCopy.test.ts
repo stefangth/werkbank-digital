@@ -235,9 +235,9 @@ describe("describeTonightStandalone", () => {
       [times, { ...direct, confirmation_digest: false }],
       [{ ...times, windowHours: Number.NaN }, classic],
     ];
-    for (const [t, flow] of cases) {
-      expect(describeTonight(t, flow, tt)).toBeNull();
-      expect(describeTonightStandalone(t, flow, tt)).toBeNull();
+    for (const [caseTimes, flow] of cases) {
+      expect(describeTonight(caseTimes, flow, tt)).toBeNull();
+      expect(describeTonightStandalone(caseTimes, flow, tt)).toBeNull();
     }
   });
 
