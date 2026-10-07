@@ -112,6 +112,13 @@ The order matters; each step names why.
    entry; regenerate the types without `werkbank`; run `supabase functions delete` for each
    `werkbank-*` function (the deploy workflow never deletes functions).
 
+Storage is not covered by any of these steps: neither the org delete nor
+`drop schema werkbank` touches the buckets `werkbank-assets` and `werkbank-documents`, and
+their objects hold customer data (logos, quote PDFs, signatures). After the export in step 1,
+empty both buckets through the Storage API (dashboard or CLI; direct deletes from
+`storage.objects` are blocked) and delete them, and drop the five `Werkbank ...` policies on
+`storage.objects` in the removal migration of step 4.
+
 At go-live the mirror image applies: apply the `*_werkbank_schema` migration in
 production first, then add `werkbank` to "Exposed schemas".
 
