@@ -32,6 +32,9 @@ export const MODULES: readonly ModuleGuard[] = [
       "supabase/functions/werkbank-*/**",
       "supabase/functions/_shared/werkbank/**",
       "supabase/migrations/*_werkbank_*.sql",
+      // ADR-0014: points the dispatch base URL at this fork's own project. Already applied
+      // to production under this name, so it cannot be renamed into the pattern above.
+      "supabase/migrations/20261007130000_functions_base_url_werkbank.sql",
       "supabase/tests/werkbank/**",
       "public/werkbank/**",
       "e2e/werkbank-*.spec.ts",
