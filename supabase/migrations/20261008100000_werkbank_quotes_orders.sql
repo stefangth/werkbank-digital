@@ -171,7 +171,7 @@ create table werkbank.document_items (
   constraint document_items_kind_fields check (
     case kind
       when 'item' then
-        btrim(coalesce(name, '')) <> '' and quantity > 0 and unit_code is not null
+        btrim(coalesce(name, '')) <> '' and quantity is not null and quantity > 0 and unit_code is not null
         and labour_price is not null and material_price is not null and vat_rate is not null
       when 'title' then
         btrim(coalesce(name, '')) <> '' and quantity is null and unit_code is null

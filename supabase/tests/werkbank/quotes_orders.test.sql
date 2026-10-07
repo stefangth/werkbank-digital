@@ -1,7 +1,7 @@
 -- Werkbank Teil 3: quotes, orders, order_technicians, document_items, company_profiles, quote_acceptances.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(44);
+SELECT plan(45);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -99,6 +99,26 @@ SELECT is((SELECT count(*)::int FROM werkbank.orders), 1, 'producer A reads the 
 SELECT is((SELECT count(*)::int FROM werkbank.document_items), 4, 'producer A reads the items');
 SELECT is((SELECT count(*)::int FROM werkbank.order_technicians), 1, 'producer A reads the technicians');
 
+-- Technician A (artist role) and admin B see nothing while rows exist in every table.
+RESET ROLE;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f3');
+SET LOCAL ROLE authenticated;
+SELECT is((SELECT count(*)::int FROM werkbank.quotes) + (SELECT count(*)::int FROM werkbank.orders)
+  + (SELECT count(*)::int FROM werkbank.document_items) + (SELECT count(*)::int FROM werkbank.company_profiles)
+  + (SELECT count(*)::int FROM werkbank.order_technicians)
+  + (SELECT count(*)::int FROM werkbank.quote_acceptances), 0, 'technician A sees no rows');
+RESET ROLE;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f4');
+SET LOCAL ROLE authenticated;
+SELECT is((SELECT count(*)::int FROM werkbank.quotes) + (SELECT count(*)::int FROM werkbank.orders)
+  + (SELECT count(*)::int FROM werkbank.document_items) + (SELECT count(*)::int FROM werkbank.company_profiles)
+  + (SELECT count(*)::int FROM werkbank.order_technicians)
+  + (SELECT count(*)::int FROM werkbank.quote_acceptances), 0, 'admin B sees no rows of org A');
+RESET ROLE;
+
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f2');
+SET LOCAL ROLE authenticated;
+
 -- Checks.
 SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, order_id, sort_order, kind, name)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','11111111-0000-4000-a000-0000000000f1','33333333-0000-4000-a000-0000000000f1',9,'title','X')$$,
@@ -109,6 +129,9 @@ SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, sort_order, kind
 SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, sort_order, kind, name, quantity, labour_price, material_price, vat_rate)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','11111111-0000-4000-a000-0000000000f1',9,'item','NoUnit',1,1,1,19)$$,
   '23514', NULL, 'an item row without unit fails');
+SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, sort_order, kind, name, unit_code, labour_price, material_price, vat_rate)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','11111111-0000-4000-a000-0000000000f1',9,'item','NoQty','H87',1,1,19)$$,
+  '23514', NULL, 'an item row without quantity fails');
 SELECT throws_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, sort_order, kind, name, labour_price)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000f1','11111111-0000-4000-a000-0000000000f1',9,'title','Priced',5)$$,
   '23514', NULL, 'a title row with a price fails');
@@ -179,20 +202,6 @@ INSERT INTO werkbank.quote_acceptances (org_id, quote_id, decision, signer_name,
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f2');
 SET LOCAL ROLE authenticated;
 SELECT is((SELECT count(*)::int FROM werkbank.quote_acceptances), 1, 'producer A reads quote acceptances');
-RESET ROLE;
-
--- Technician A (artist role) and admin B see nothing.
-SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f3');
-SET LOCAL ROLE authenticated;
-SELECT is((SELECT count(*)::int FROM werkbank.quotes) + (SELECT count(*)::int FROM werkbank.orders)
-  + (SELECT count(*)::int FROM werkbank.document_items) + (SELECT count(*)::int FROM werkbank.company_profiles)
-  + (SELECT count(*)::int FROM werkbank.quote_acceptances), 0, 'technician A sees no rows');
-RESET ROLE;
-SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f4');
-SET LOCAL ROLE authenticated;
-SELECT is((SELECT count(*)::int FROM werkbank.quotes) + (SELECT count(*)::int FROM werkbank.orders)
-  + (SELECT count(*)::int FROM werkbank.document_items) + (SELECT count(*)::int FROM werkbank.company_profiles)
-  + (SELECT count(*)::int FROM werkbank.quote_acceptances), 0, 'admin B sees no rows of org A');
 RESET ROLE;
 
 -- Org delete cascades.
