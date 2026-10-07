@@ -3,7 +3,7 @@
 -- paths the earlier files did not cover.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(57);
+SELECT plan(62);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -278,6 +278,26 @@ SELECT throws_ok($$UPDATE storage.objects SET name = 'bbbbbbbb-0000-4000-b000-00
 SELECT is(pg_temp.row_count($q$DELETE FROM storage.objects WHERE bucket_id = 'werkbank-assets'
   AND name = 'bbbbbbbb-0000-4000-b000-0000000000a1/logo.png'$q$), 1, 'admin deletes an asset');
 RESET ROLE;
+
+-- 7. A scheduled time never outlives its date: the orders trigger clears it.
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000a1');
+SET LOCAL ROLE authenticated;
+INSERT INTO werkbank.orders (id, org_id, customer_id)
+  VALUES ('33333333-0000-4000-a000-0000000000c1','bbbbbbbb-0000-4000-b000-0000000000a1','cccccccc-0000-4000-c000-0000000000a1');
+SELECT lives_ok($$UPDATE werkbank.orders SET scheduled_date = '2026-11-02', scheduled_time = '08:30'
+  WHERE id = '33333333-0000-4000-a000-0000000000c1'$$, 'an order takes a date with a time');
+SELECT is((SELECT scheduled_time::text FROM werkbank.orders WHERE id = '33333333-0000-4000-a000-0000000000c1'), '08:30:00',
+  'date and time are stored');
+UPDATE werkbank.orders SET scheduled_date = null WHERE id = '33333333-0000-4000-a000-0000000000c1';
+SELECT is((SELECT scheduled_time FROM werkbank.orders WHERE id = '33333333-0000-4000-a000-0000000000c1'), null,
+  'clearing the date clears the time');
+UPDATE werkbank.orders SET scheduled_time = '09:00' WHERE id = '33333333-0000-4000-a000-0000000000c1';
+SELECT is((SELECT scheduled_time FROM werkbank.orders WHERE id = '33333333-0000-4000-a000-0000000000c1'), null,
+  'setting a time without a date stores null');
+RESET ROLE;
+SELECT ok(NOT has_function_privilege('anon', 'werkbank.clear_order_time_without_date()', 'EXECUTE')
+  AND NOT has_function_privilege('public', 'werkbank.clear_order_time_without_date()', 'EXECUTE'),
+  'the clear-time function is not executable by anon or public');
 
 -- 6. The touch trigger does not get in the way of cascades: a draft quote with items and a
 -- whole org delete cleanly.

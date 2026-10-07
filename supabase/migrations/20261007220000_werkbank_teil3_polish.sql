@@ -197,3 +197,25 @@ create trigger document_items_touch_draft_quote after insert or update or delete
 update storage.buckets
 set file_size_limit = 1048576, allowed_mime_types = array['image/png', 'image/jpeg']
 where id = 'werkbank-assets';
+
+-- 8. A scheduled time never outlives its date. The check constraint orders_time_needs_date would
+-- reject the pair; this BEFORE trigger clears the time instead, so clearing the date in the UI
+-- (or setting a time before a date) cannot fail the write. Named orders_a_* so it fires first
+-- (BEFORE triggers run in name order), ahead of orders_transition; the constraint is checked
+-- after all BEFORE triggers.
+create function werkbank.clear_order_time_without_date()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.scheduled_date is null then
+    new.scheduled_time := null;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function werkbank.clear_order_time_without_date() from public, anon;
+
+create trigger orders_a_clear_time before insert or update on werkbank.orders
+  for each row execute function werkbank.clear_order_time_without_date();
