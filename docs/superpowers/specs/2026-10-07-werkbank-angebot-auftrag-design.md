@@ -47,8 +47,8 @@ What this spec builds on instead of writing new code. Paths are exact.
 
 | Need | Existing piece | Use |
 |---|---|---|
-| PDF rendering on the edge | `_shared/hire-order-pdf/pdfDeps.ts` (`renderToBuffer`, `registerFonts`), `fontInflate.ts`, the Geist font bucket | Move the kind-neutral shim and font loading to `_shared/pdf/` (R11); hire orders and Werkbank both import it. Only the quote document itself is new |
-| Signature capture | `src/components/hireOrders/SignaturePad.tsx` (`SignaturePad`, `SignatureValue`) | Move to `src/components/ui/signature-pad.tsx` with its copy passed as props (R11) |
+| PDF rendering on the edge | `@react-pdf/renderer` (npm, already used), the embedded Geist fonts in `fonts.ts` + `inflateFontGzB64` (`fontInflate.ts`, mirrored pair under `src/lib/hireOrders/pdf/` and `_shared/hire-order-pdf/`) | Move only the two font files to a neutral `src/lib/pdf/` / `_shared/pdf/` mirror pair (R11); Werkbank imports react-pdf from npm directly. The hire-order `pdfDeps.ts` (themes, font bucket) stays as is. Only the quote document is new |
+| Signature capture | `src/components/hireOrders/SignaturePad.tsx` (`SignaturePad`, `SignatureValue`) | Move to `src/components/common/SignaturePad.tsx`; its four strings move from `hireOrdersPages:signaturePad.*` to `common:signaturePad.*` (R11) |
 | Signature validation | `generate-hire-orders/index.ts`: `decodePngOrNull`, `MAX_SIGNATURE_PNG_CHARS`, IP from `x-forwarded-for`, `user-agent` | Same rules in `_shared/werkbank/acceptance.ts` |
 | Audit row shape | `public.hire_order_signatures` | Same columns in `werkbank.quote_acceptances`, without a user id |
 | Public token endpoint | `sandbox-view` (`verify_jwt = false`, `not_found` 404, `revoked`/`expired` 410) | Same response contract; tokens stored as SHA-256 (`crypto.subtle`), not plaintext |
@@ -212,7 +212,7 @@ Public (body `{ token }`, looked up by the token's SHA-256):
 
 No extra rate limit: a 256-bit token cannot be guessed and a decision is final, so a throttle would protect nothing.
 
-The quote document (`_shared/werkbank/pdf/quoteDocument.tsx`) is the only new PDF code. It uses `_shared/pdf/pdfDeps.ts` and the Geist fonts. Layout: letterhead with logo and sender line, recipient block (the property's billing recipient with "vertreten durch" as in Teil 2, else the customer), number, date, valid until, subject, intro, numbered sections (1, 1.1) with subtotals, text lines, totals per VAT rate, §35a labour share for private customers, closing text, payment terms, a footer with company, register, tax and bank data. The function needs its own `deno.json` like `generate-hire-orders`.
+The quote document (`_shared/werkbank/pdf/quoteDocument.tsx`) is the only new PDF code. It imports react-pdf from npm and registers the embedded Geist fonts from `_shared/pdf/` in a small `_shared/werkbank/pdf/fonts.ts`. Layout: letterhead with logo and sender line, recipient block (the property's billing recipient with "vertreten durch" as in Teil 2, else the customer), number, date, valid until, subject, intro, numbered sections (1, 1.1) with subtotals, text lines, totals per VAT rate, §35a labour share for private customers, closing text, payment terms, a footer with company, register, tax and bank data. The function needs its own `deno.json` like `generate-hire-orders`.
 
 ### R7. Emails and notifications
 
@@ -239,12 +239,16 @@ The quote document (`_shared/werkbank/pdf/quoteDocument.tsx`) is the only new PD
 - Edge errors return `{ error: code }`; the UI maps codes to `werkbank` copy and shows a sonner toast.
 - A save on a quote that was sent meanwhile fails on the lock; the page refetches and shows it read-only.
 
+### R12. Org data export
+
+`export-org-data` adds the six new tables to its Werkbank list (Teil 2 R11 pattern). Storage objects are not exported, as for hire orders.
+
 ### R11. Core changes (kind-neutral, no behaviour change for Showflow)
 
 Each is small and makes an existing piece usable instead of copying it:
 
-1. **PDF shim:** move `pdfDeps.ts` and `fontInflate.ts` from `_shared/hire-order-pdf/` to `_shared/pdf/`; hire-order code imports them from there. The browser twin under `src/lib/hireOrders/pdf/` is untouched (Werkbank renders on the edge only).
-2. **SignaturePad:** move to `src/components/ui/signature-pad.tsx`, labels passed as props; `SignHireOrderDialog` passes its `hireOrdersPages` strings.
+1. **Fonts:** move `fonts.ts` and `fontInflate.ts` (and their tests) from `src/lib/hireOrders/pdf/` to `src/lib/pdf/`, retarget their entries in `scripts/mirrors.manifest.json` to `_shared/pdf/`, and update the imports in both `pdfDeps.ts` files and `scripts/compress-fonts.mjs`. Werkbank renders on the edge only and imports `npm:@react-pdf/renderer@^4` directly.
+2. **SignaturePad:** move to `src/components/common/SignaturePad.tsx` (with its test); move its keys to `common:signaturePad.*` in EN and DE; `SignHireOrderDialog` imports the new path.
 3. **Reply-To:** optional `reply_to` on `EmailMessage` and in the Resend request of `send-transactional-email`.
 4. **Public module routes:** `ModuleUi.publicRoutes` in `src/modules/ui.ts`; `App.tsx` renders them without `ProtectedRoute` and `AppLayout`, like `ROUTES.SANDBOX`. Core never names the module.
 5. **Allow-lists:** `scripts/moduleIsolation.test.ts` and the ESLint negations get named entries for the touch points: the email registry and email copy keys, `entityRoutes.ts`, the settings tab list, help items and minis.
@@ -255,19 +259,16 @@ Test-first; tests import the real modules.
 
 - **pgTAP (`supabase/tests/werkbank/`):** RLS per role on every new table (admin and producer read and write; producer cannot edit the company profile; technicians and other orgs see nothing; acceptances are not writable by `authenticated`); every check of R1; the property-customer and artist-org triggers; quote and order locks and transitions; number assignment for both ranges; `revise_quote`, `copy_quote`, `create_order_from_quote` including refusals; `document_totals` for mixed VAT rates, discount, rounding edge cases and the labour share; storage policies; the isolation test (RLS everywhere, function grants, nothing in `public` depends on `werkbank`).
 - **Vitest:** data layer with `supabaseFake`; `quotePreflight`; `LineItemsEditor` (add from catalog, reorder, subtotal per title, inline edit); pickers; the quote and order pages (role gating, read-only after send, comparison line); the send dialog; the public page in every state; settings tabs; `mapDbError`; copy lint and key parity; `moduleIsolation.test.ts`.
-- **Deno (`werkbank-quotes`):** every action with `makeFakeDeps`: authorization, preflight refusal, send order of steps (PDF stored before the status change, email last), email failure leaves `sent`, resend rotates the token, `view` states, `decide` validation, double decision, notification and confirmation email; the quote document renders for a sample quote (smoke test on bytes and page count). The moved PDF shim and `reply_to` keep the existing hire-order and email tests green.
+- **Deno (`werkbank-quotes`):** every action with `makeFakeDeps`: authorization, preflight refusal, send order of steps (PDF stored before the status change, email last), email failure leaves `sent`, resend rotates the token, `view` states, `decide` validation, double decision, notification and confirmation email; the quote document renders for a sample quote (smoke test on bytes and page count). The moved fonts and `reply_to` keep the existing hire-order and email tests green.
 - **Playwright (`e2e/werkbank-angebot.spec.ts`):** an admin creates a quote with a title, a catalog item and a text line, sends it (email captured by the local stack), opens the link, signs and accepts, sees the notification and creates the order, assigns a technician and a date.
 
 ## Delivery
 
-Six PRs, each green on its own:
+Three PRs (owner ruling: at most three), each green on its own:
 
-1. **Core prep:** R11 items 1 to 4. No Werkbank feature.
-2. **Database:** R1 to R4, types (`--schema public,graphql_public,werkbank`), mirrors.
-3. **Company profile and numbering:** R8.
-4. **Quotes in the app:** R5 quotes list and page without sending, line editor, pickers, R10.
-5. **Sending and acceptance:** R6, R7, the send dialog, the public page.
-6. **Orders and the rest:** R5 orders and the customer and property sections, R9, Playwright.
+1. **Foundation:** R11 items 1 to 4 (core prep, Showflow behaviour unchanged), R1 to R4, types (`--schema public,graphql_public,werkbank`) and mirrors, R8 (company profile and numbering tabs).
+2. **Quotes end to end:** R5 quotes list and page, line editor and pickers, R6, R7, the send dialog, the public page, R10.
+3. **Orders and the rest:** R5 orders and the customer and property sections, R9, Playwright.
 
 ## Go-live checklist additions
 
@@ -284,4 +285,4 @@ Six PRs, each green on its own:
 - **Preview latency.** The PDF preview is a server round trip (one to two seconds). Acceptable because it is an explicit action, not live.
 - **Signature legal weight.** A simple electronic signature with an audit trail (name, image, time, IP, user agent, document hash). Sufficient for a work order (no written form required); not a qualified signature.
 - **Section subtotals after a discount.** Subtotals are shown before the overall discount, which is applied once in the totals. The PDF says so ("Rabatt auf die Gesamtsumme").
-- **Moving core files.** The PDF shim and `SignaturePad` moves touch hire-order code; the existing hire-order tests guard them, and PR 1 contains nothing else.
+- **Moving core files.** The font and `SignaturePad` moves touch hire-order code; the existing hire-order tests guard them, and PR 1 contains nothing else.
