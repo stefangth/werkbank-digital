@@ -29,6 +29,11 @@ describe("diffAgainstQuote", () => {
     expect([...diffAgainstQuote(material, quote).changed]).toEqual(["o1"]);
   });
 
+  it("marks a changed VAT rate", () => {
+    const order = [item({ id: "o1", source_item_id: "q1", vat_rate: 7 }), item({ id: "o2", source_item_id: "q2", quantity: 2 })];
+    expect([...diffAgainstQuote(order, quote).changed]).toEqual(["o1"]);
+  });
+
   it("compares in cents, so float noise is not a change", () => {
     const q = [item({ id: "q1", labour_price: 0.1 + 0.2 })];
     const o = [item({ id: "o1", source_item_id: "q1", labour_price: 0.3 })];

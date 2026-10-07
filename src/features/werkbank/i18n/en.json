@@ -574,6 +574,7 @@
     "searchPlaceholder": "Number, customer or subject",
     "statusFilter": "Status",
     "allStatuses": "All statuses",
+    "noOrderFilter": "Without order",
     "status": {
       "draft": "Draft",
       "sent": "Sent",

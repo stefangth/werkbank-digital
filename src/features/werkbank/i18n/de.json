@@ -574,6 +574,7 @@
     "searchPlaceholder": "Nummer, Kunde oder Betreff",
     "statusFilter": "Status",
     "allStatuses": "Alle Status",
+    "noOrderFilter": "Ohne Auftrag",
     "status": {
       "draft": "Entwurf",
       "sent": "Versendet",

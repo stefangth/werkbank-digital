@@ -93,6 +93,25 @@ describe("QuotesPage", () => {
     expect(notice.parentElement).toHaveTextContent("1");
   });
 
+  it("Anzeigen in the notice lists only accepted quotes without an order, with a visible filter to clear", async () => {
+    render();
+    const notice = (await screen.findByText("Angenommen, noch kein Auftrag")).closest("div")!;
+    const toggle = screen.getByRole("button", { name: "Ohne Auftrag" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(within(notice).getByRole("button", { name: "Anzeigen" }));
+    expect(rowsShown().map((r) => within(r).getAllByRole("cell")[0].textContent)).toEqual(["A-0004"]);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    expect(rowsShown().map((r) => within(r).getAllByRole("cell")[0].textContent)).toEqual(["A-0004", "A-0005"]);
+  });
+
+  it("shows the no-order filter as active when opened from the dashboard link", async () => {
+    state.search = "?status=accepted&noOrder=1";
+    render();
+    expect(await screen.findByRole("button", { name: "Ohne Auftrag" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("shows no notice when every accepted quote has an order", async () => {
     state.rows = [q({ id: "q5", status: "accepted", has_order: true })];
     render();

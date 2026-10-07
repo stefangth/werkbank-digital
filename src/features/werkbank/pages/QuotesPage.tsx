@@ -135,7 +135,7 @@ export function QuotesPage() {
                 <span>{t("quotes.notice.acceptedNoOrder")}</span>
                 <Metric size="body">{acceptedNoOrder}</Metric>
               </p>
-              <Button variant="secondary" size="sm" onClick={() => { setNoOrderOnly(false); setStatus("accepted"); }}>
+              <Button variant="secondary" size="sm" onClick={() => { setNoOrderOnly(true); setStatus("accepted"); }}>
                 {t("quotes.notice.show")}
               </Button>
             </div>
@@ -163,6 +163,9 @@ export function QuotesPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button variant={noOrderOnly ? "default" : "secondary"} aria-pressed={noOrderOnly} onClick={() => setNoOrderOnly((on) => !on)}>
+              {t("quotes.noOrderFilter")}
+            </Button>
           </div>
 
           {visible.length === 0 ? (
