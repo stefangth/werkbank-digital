@@ -62,5 +62,32 @@
       "savedInviteFailed": "Monteur gespeichert, aber die Einladung konnte nicht gesendet werden. Du kannst sie in der Liste erneut senden."
     },
     "invitationsFailed": "Die offenen Einladungen konnten nicht geladen werden, deshalb sind Erneut senden und Widerrufen nicht verfügbar. Lade die Seite bitte neu."
+  },
+  "common": {
+    "archive": "Archivieren",
+    "restore": "Wiederherstellen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "showArchived": "Archivierte anzeigen",
+    "search": "Suchen"
+  },
+  "errors": {
+    "customerNoTaken": "Diese Kundennummer ist schon vergeben.",
+    "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",
+    "inUse": "Das wird noch verwendet. Archiviere es stattdessen.",
+    "forbidden": "Dafür fehlen dir die Rechte.",
+    "generic": "Das hat nicht geklappt. Versuch es bitte noch einmal."
+  },
+  "units": {
+    "HUR": "Std",
+    "H87": "Stk",
+    "MTR": "m",
+    "MTK": "m²",
+    "MTQ": "m³",
+    "KGM": "kg",
+    "LTR": "l",
+    "LS": "pauschal"
   }
 }
