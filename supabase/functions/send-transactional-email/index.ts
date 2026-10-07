@@ -62,7 +62,10 @@ export async function resolveFromAddress(
   return typeof value === 'string' ? value : brand.defaultFrom
 }
 
-const REPLY_TO_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Exactly one plain address: no whitespace, commas, semicolons, angle brackets or
+// quotes, one '@', a dot in the domain, at most 254 characters.
+const REPLY_TO_RE = /^[^\s@,;<>"']+@[^\s@,;<>"']+\.[^\s@,;<>"']+$/
+const REPLY_TO_MAX = 254
 
 export async function handle(req: Request, deps: Deps): Promise<Response> {
   if (req.method === 'OPTIONS') return preflight();
@@ -112,7 +115,8 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
       attachments = body.attachments as EmailAttachment[]
     }
     if (body.reply_to != null) {
-      if (typeof body.reply_to === 'string' && REPLY_TO_RE.test(body.reply_to)) {
+      if (typeof body.reply_to === 'string' && body.reply_to.length <= REPLY_TO_MAX &&
+        REPLY_TO_RE.test(body.reply_to)) {
         replyTo = body.reply_to
       } else {
         replyToInvalid = true

@@ -75,3 +75,39 @@ Deno.test("reply_to: invalid address returns 400 and does not call Resend", asyn
   assertEquals(await res.json(), { error: "invalid reply_to" });
   assertEquals(fetchCalls.some((c) => c.url.includes("resend.com")), false);
 });
+
+for (
+  const [label, value] of [
+    ["comma list", "a@b.co,evil@x.io"],
+    ["semicolon list", "a@b.co;evil@x.io"],
+    ["comma in local part", "a,evil@b.co"],
+    ["angle brackets", "Evil <a@b.co>"],
+    ["quotes", '"a"@b.co'],
+    ["whitespace", "a@b.co evil@x.io"],
+    ["255 chars", `${"a".repeat(245)}@example.com`],
+  ]
+) {
+  Deno.test(`reply_to: ${label} is rejected`, async () => {
+    const { fetchImpl, fetchCalls } = recordingFetch();
+    const { deps } = makeFakeDeps({ envVars: ENV, tables: happyPathTables(), fetchImpl });
+    const res = await handle(
+      authedReq({ body: { templateName: KNOWN_TEMPLATE, recipientEmail: "rt4@test.com", reply_to: value } }),
+      deps,
+    );
+    assertEquals(res.status, 400);
+    assertEquals(fetchCalls.some((c) => c.url.includes("resend.com")), false);
+  });
+}
+
+Deno.test("reply_to: 254 chars is accepted", async () => {
+  const { fetchImpl, fetchCalls } = recordingFetch();
+  const { deps } = makeFakeDeps({ envVars: ENV, tables: happyPathTables(), fetchImpl });
+  const addr = `${"a".repeat(242)}@example.com`;
+  assertEquals(addr.length, 254);
+  const res = await handle(
+    authedReq({ body: { templateName: KNOWN_TEMPLATE, recipientEmail: "rt5@test.com", reply_to: addr } }),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(sentBody(fetchCalls).reply_to, addr);
+});
