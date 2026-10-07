@@ -7,8 +7,14 @@
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
-    "body": "Hier siehst du bald Kunden, Angebote und Rechnungen. Leg zuerst deine Monteure an.",
-    "cta": "Monteure anlegen"
+    "body": "Angebote und Rechnungen folgen bald.",
+    "startList": {
+      "title": "So startest du",
+      "technicians": "Monteure anlegen",
+      "catalog": "Leistungen anlegen oder importieren",
+      "customers": "Kunden anlegen oder importieren",
+      "loadFailed": "Der Stand konnte nicht geladen werden."
+    }
   },
   "technicians": {
     "title": "Monteure",
