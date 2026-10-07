@@ -26,8 +26,22 @@ export async function fetchNumberRange(client: Client, orgId: string, key: Numbe
   return { prefix: data.prefix, next_value: Number(data.next_value), padding: data.padding };
 }
 
-export async function saveNumberRange(client: Client, orgId: string, key: NumberRangeKey, values: NumberRange): Promise<void> {
-  const { error } = await client.schema("werkbank").from("number_ranges")
-    .upsert({ org_id: orgId, key, prefix: values.prefix, next_value: values.next_value, padding: values.padding }, { onConflict: "org_id,key" });
+/** What the settings tab saves. `next_value` is left out when the admin did not change it, so a
+ *  prefix-only save never moves the counter (numbers assigned since the page loaded stay counted). */
+export type NumberRangeSave = { prefix: string; padding: number; next_value?: number };
+
+export async function saveNumberRange(client: Client, orgId: string, key: NumberRangeKey, values: NumberRangeSave): Promise<void> {
+  if (values.next_value !== undefined) {
+    const { error } = await client.schema("werkbank").from("number_ranges")
+      .upsert({ org_id: orgId, key, prefix: values.prefix, next_value: values.next_value, padding: values.padding }, { onConflict: "org_id,key" });
+    if (error) throw error;
+    return;
+  }
+  // Without a row nothing has been numbered yet, so the default next value is still right; an existing
+  // row is left alone here (do nothing on conflict) and only its prefix and padding are updated.
+  const { error: insertError } = await client.schema("werkbank").from("number_ranges")
+    .upsert({ org_id: orgId, key, prefix: values.prefix, next_value: DEFAULTS[key].next_value, padding: values.padding }, { onConflict: "org_id,key", ignoreDuplicates: true });
+  if (insertError) throw insertError;
+  const { error } = await client.schema("werkbank").from("number_ranges").update({ prefix: values.prefix, padding: values.padding }).eq("org_id", orgId).eq("key", key);
   if (error) throw error;
 }

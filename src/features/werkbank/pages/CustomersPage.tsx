@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Building2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import { ArchiveSwitch } from "../components/ArchiveSwitch";
 import { CustomerFormDialog } from "../components/CustomerFormDialog";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import type { CustomerListRow } from "../data/customers";
-import { useArchiveCustomer, useCustomers, useDeleteCustomer } from "../hooks/useCustomers";
+import { useArchiveCustomer, useCustomers, useDeleteCustomer, useRefreshAfterCustomerImport } from "../hooks/useCustomers";
 import { customerDisplayName } from "../lib/displayName";
 import { useDebouncedValue } from "../lib/useDebouncedValue";
 import { customerPath } from "../paths";
@@ -38,7 +37,7 @@ export function CustomersPage() {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const canDelete = hasRole("admin");
-  const queryClient = useQueryClient();
+  const refreshAfterImport = useRefreshAfterCustomerImport();
 
   const { data: customers, isLoading, isError } = useCustomers();
   const archive = useArchiveCustomer();
@@ -212,9 +211,7 @@ export function CustomersPage() {
         spec={CUSTOMER_IMPORT_SPEC}
         open={importOpen}
         onOpenChange={setImportOpen}
-        onDone={() => {
-          void queryClient.invalidateQueries({ queryKey: ["werkbank", "customers"] });
-        }}
+        onDone={refreshAfterImport}
       />
     </div>
   );

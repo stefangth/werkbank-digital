@@ -9,7 +9,14 @@ const { client } = vi.hoisted(() => ({ client: {} as Record<string, unknown> }))
 vi.mock("@/integrations/supabase/client", () => ({ supabase: client }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
-import { useArchiveCustomer, useCreateCustomer, useCustomer, useCustomers, useDeleteCustomer } from "./useCustomers";
+import {
+  useArchiveCustomer,
+  useCreateCustomer,
+  useCustomer,
+  useCustomers,
+  useDeleteCustomer,
+  useRefreshAfterCustomerImport,
+} from "./useCustomers";
 
 const authOverrides = { currentOrg: { id: "org-1" } } as unknown as Partial<AuthContextType>;
 
@@ -69,6 +76,8 @@ describe("useCreateCustomer", () => {
     });
     expect(created?.customer_no).toBe("K-10001");
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "customers"] });
+    // The new customer may have taken a number, so the numbering tab must not keep a stale counter.
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "number-ranges"] });
   });
 
   it("toasts the customer number copy for a duplicate customer_no", async () => {
@@ -78,6 +87,17 @@ describe("useCreateCustomer", () => {
       await result.current.mutateAsync(form).catch(() => undefined);
     });
     expect(toast.error).toHaveBeenCalledWith("This customer number is already taken.");
+  });
+});
+
+describe("useRefreshAfterCustomerImport", () => {
+  it("invalidates the customers domain and the number ranges", () => {
+    seed({ data: [], error: null });
+    const { result, queryClient } = renderHookWithProviders(() => useRefreshAfterCustomerImport(), { authOverrides });
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    act(() => result.current());
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "customers"] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "number-ranges"] });
   });
 });
 

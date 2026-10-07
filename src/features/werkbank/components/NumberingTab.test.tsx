@@ -65,6 +65,29 @@ describe("NumberingTab", () => {
     ]);
   });
 
+  it("saves a prefix change without the loaded next number, so the counter does not move back", async () => {
+    const fake = seed({ data: { prefix: "K-", next_value: 10050, padding: 0 }, error: null });
+    renderTab();
+    await screen.findByLabelText("Präfix");
+    fireEvent.change(screen.getByLabelText("Präfix"), { target: { value: "KD-" } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(fake.calls.some((c) => c.method === "update")).toBe(true));
+    const writes = fake.calls.filter((c) => c.method === "upsert" || c.method === "update");
+    expect(writes.some((c) => JSON.stringify(c.args).includes("10050"))).toBe(false);
+    expect(fake.calls.find((c) => c.method === "update")?.args).toEqual([{ prefix: "KD-", padding: 0 }]);
+  });
+
+  it("shows the refetched range after the data changes", async () => {
+    const range = { prefix: "K-", next_value: 10001, padding: 0 };
+    seed({ data: range, error: null });
+    const { queryClient } = renderTab();
+    expect(await screen.findByLabelText("Nächste Nummer")).toHaveValue("10001");
+    range.next_value = 10007;
+    await act(async () => { await queryClient.invalidateQueries({ queryKey: ["werkbank", "number-ranges"] }); });
+    await waitFor(() => expect(screen.getByLabelText("Nächste Nummer")).toHaveValue("10007"));
+    expect(screen.getByText("Nächste Kundennummer: K-10007")).toBeInTheDocument();
+  });
+
   it("rejects a next number of 0", async () => {
     const fake = seed({ data: null, error: null });
     renderTab();

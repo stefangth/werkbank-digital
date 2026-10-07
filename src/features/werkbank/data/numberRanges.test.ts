@@ -57,6 +57,24 @@ describe("saveNumberRange", () => {
     }));
   });
 
+  it("without next_value never writes the counter of an existing row", async () => {
+    const fake = createFakeSupabase({ "werkbank.number_ranges": { data: null, error: null } });
+    await saveNumberRange(asClient(fake), "org-1", "customer", { prefix: "KD", padding: 4 });
+    const writes = fake.calls.filter((c) => c.method === "upsert" || c.method === "update");
+    expect(writes.map((c) => c.args)).toEqual([
+      // creates a missing row with the default counter, leaves an existing row alone
+      [{ org_id: "org-1", key: "customer", prefix: "KD", next_value: 10001, padding: 4 }, { onConflict: "org_id,key", ignoreDuplicates: true }],
+      [{ prefix: "KD", padding: 4 }],
+    ]);
+    expect(fake.calls.filter((c) => c.method === "eq").map((c) => c.args)).toEqual([["org_id", "org-1"], ["key", "customer"]]);
+  });
+
+  it("throws a database error of the prefix-only update", async () => {
+    const error = { code: "42501", message: "denied" };
+    const fake = createFakeSupabase({ "werkbank.number_ranges": { data: null, error } });
+    await expect(saveNumberRange(asClient(fake), "org-1", "customer", { prefix: "K-", padding: 0 })).rejects.toBe(error);
+  });
+
   it("throws a database error", async () => {
     const error = { code: "42501", message: "denied" };
     const fake = createFakeSupabase({ "werkbank.number_ranges": { data: null, error } });

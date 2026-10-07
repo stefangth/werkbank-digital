@@ -38,8 +38,13 @@ function RangeForm({ range }: { range: NumberRange }) {
     e.preventDefault();
     setSubmitted(true);
     if (prefixError || nextValue === null) return;
-    // The padding is not editable here; it is written back as stored.
-    save.mutate({ prefix, next_value: nextValue, padding: range.padding });
+    // The padding is not editable here; it is written back as stored. The next number is only sent
+    // when the admin changed it, so saving a new prefix never moves the counter.
+    save.mutate(
+      nextValue === range.next_value
+        ? { prefix, padding: range.padding }
+        : { prefix, next_value: nextValue, padding: range.padding },
+    );
   };
 
   return (
@@ -100,7 +105,9 @@ export function NumberingTab() {
             <AlertDescription>{t("numbering.loadFailed")}</AlertDescription>
           </Alert>
         )}
-        {data && <RangeForm range={data} />}
+        {/* Keyed on the loaded values: a refetch (after a save, a new customer or an import)
+            re-mounts the form, so it never shows or saves a stale next number. */}
+        {data && <RangeForm key={`${data.prefix}|${data.next_value}|${data.padding}`} range={data} />}
       </CardContent>
     </Card>
   );

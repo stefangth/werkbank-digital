@@ -1,7 +1,7 @@
 -- Werkbank Teil 2: number ranges and automatic customer numbers.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(13);
+SELECT plan(16);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -64,6 +64,19 @@ SELECT is(pg_temp.upd_count($$prefix = 'KD', next_value = 5, padding = 4$$), 1, 
 INSERT INTO werkbank.customers (id, org_id, kind, company_name, street, postal_code, city)
 VALUES ('cccccccc-0000-4000-c000-0000000000b6','bbbbbbbb-0000-4000-b000-0000000000f1','property_manager','Fuenfte GmbH','Hauptstr. 7','01067','Dresden');
 SELECT is((SELECT customer_no FROM werkbank.customers WHERE id = 'cccccccc-0000-4000-c000-0000000000b6'), 'KD0005', 'edited range yields KD0005');
+
+-- A number typed by hand inside the range is skipped by the next automatic number (Ruling R15).
+INSERT INTO werkbank.customers (id, org_id, customer_no, kind, company_name, street, postal_code, city)
+VALUES ('cccccccc-0000-4000-c000-0000000000b7','bbbbbbbb-0000-4000-b000-0000000000f1','KD0006','property_manager','Hand GmbH','Hauptstr. 8','01067','Dresden');
+INSERT INTO werkbank.customers (id, org_id, kind, company_name, street, postal_code, city)
+VALUES ('cccccccc-0000-4000-c000-0000000000b8','bbbbbbbb-0000-4000-b000-0000000000f1','property_manager','Sechste GmbH','Hauptstr. 9','01067','Dresden');
+SELECT is((SELECT customer_no FROM werkbank.customers WHERE id = 'cccccccc-0000-4000-c000-0000000000b8'), 'KD0007', 'auto number skips the hand-typed KD0006');
+
+-- A counter lowered below existing numbers skips forward to the first free one.
+SELECT is(pg_temp.upd_count($$next_value = 5$$), 1, 'admin A lowers next_value to 5');
+INSERT INTO werkbank.customers (id, org_id, kind, company_name, street, postal_code, city)
+VALUES ('cccccccc-0000-4000-c000-0000000000b9','bbbbbbbb-0000-4000-b000-0000000000f1','property_manager','Siebte GmbH','Hauptstr. 10','01067','Dresden');
+SELECT is((SELECT customer_no FROM werkbank.customers WHERE id = 'cccccccc-0000-4000-c000-0000000000b9'), 'KD0008', 'lowered counter skips KD0005..KD0007 and yields KD0008');
 
 -- Producer cannot update.
 RESET ROLE;

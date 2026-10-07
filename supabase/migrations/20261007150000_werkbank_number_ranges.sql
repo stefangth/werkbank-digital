@@ -58,15 +58,27 @@ $$;
 
 revoke all on function werkbank.next_number(uuid, text) from public, anon, authenticated;
 
+-- Skips numbers already taken in the org (typed by hand, imported, or left behind by a lowered counter), so
+-- one such number never blocks automatic numbering. Bounded: after 1000 taken candidates the last one is used
+-- and the unique constraint reports the collision.
 create function werkbank.assign_customer_no()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_no text;
+  v_attempt integer := 0;
 begin
   if new.customer_no is null then
-    new.customer_no := werkbank.next_number(new.org_id, 'customer');
+    loop
+      v_no := werkbank.next_number(new.org_id, 'customer');
+      v_attempt := v_attempt + 1;
+      exit when v_attempt >= 1000
+        or not exists (select 1 from werkbank.customers c where c.org_id = new.org_id and c.customer_no = v_no);
+    end loop;
+    new.customer_no := v_no;
   end if;
   return new;
 end;

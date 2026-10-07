@@ -12,6 +12,7 @@ import {
   updateCustomer,
 } from "../data/customers";
 import { mapDbError } from "../lib/dbErrors";
+import { RANGES_KEY } from "./useNumberRanges";
 import type { CustomerForm } from "../schemas/customer";
 
 const CUSTOMERS_KEY = ["werkbank", "customers"] as const;
@@ -34,20 +35,35 @@ export function useCustomer(id: string | undefined) {
 }
 
 /** Shared mutation wiring: a database error toasts its translated copy, and every outcome
- *  refreshes the customers domain (list and detail). */
-function useCustomerMutation<V, R = void>(mutationFn: (vars: V) => Promise<R>) {
+ *  refreshes the customers domain (list and detail) plus any `alsoInvalidate` keys. */
+function useCustomerMutation<V, R = void>(
+  mutationFn: (vars: V) => Promise<R>,
+  alsoInvalidate: readonly (readonly unknown[])[] = [],
+) {
   const qc = useQueryClient();
   const { t } = useTranslation("werkbank");
   return useMutation({
     mutationFn,
     onError: (e) => toast.error(t(mapDbError(e))),
-    onSettled: () => qc.invalidateQueries({ queryKey: CUSTOMERS_KEY }),
+    onSettled: () =>
+      Promise.all([CUSTOMERS_KEY, ...alsoInvalidate].map((queryKey) => qc.invalidateQueries({ queryKey }))),
   });
 }
 
+/** A new customer may take a number from the range, so the numbering tab is refreshed too. */
 export function useCreateCustomer() {
   const orgId = useAuth().currentOrg?.id;
-  return useCustomerMutation((form: CustomerForm) => createCustomer(supabase, orgId!, form));
+  return useCustomerMutation((form: CustomerForm) => createCustomer(supabase, orgId!, form), [RANGES_KEY]);
+}
+
+/** Runs after a customer import: refreshes the customers domain and the customer number range,
+ *  which the import advances. */
+export function useRefreshAfterCustomerImport() {
+  const qc = useQueryClient();
+  return () => {
+    void qc.invalidateQueries({ queryKey: CUSTOMERS_KEY });
+    void qc.invalidateQueries({ queryKey: RANGES_KEY });
+  };
 }
 
 export function useUpdateCustomer() {
