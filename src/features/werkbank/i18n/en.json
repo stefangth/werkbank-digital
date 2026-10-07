@@ -504,5 +504,51 @@
     "back": "Back",
     "continue": "Continue",
     "done": "Done"
+  },
+  "pickers": {
+    "catalog": {
+      "trigger": "Add catalog item",
+      "search": "Search items",
+      "none": "No item found"
+    },
+    "property": {
+      "placeholder": "Choose property",
+      "search": "Search properties",
+      "none": "No property found",
+      "needCustomer": "Choose a customer first",
+      "archived": "archived"
+    },
+    "contact": {
+      "placeholder": "Choose contact",
+      "none": "No selection",
+      "property": "Property",
+      "customer": "Customer"
+    }
+  },
+  "lineItems": {
+    "empty": "No line items yet.",
+    "addFree": "Free item",
+    "addTitle": "Add title",
+    "addText": "Add text",
+    "drag": "Move",
+    "name": "Description",
+    "title": "Title",
+    "text": "Text",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "labour": "Labour",
+    "material": "Material",
+    "vat": "VAT",
+    "lineNet": "Net",
+    "deleteTitle": "Delete title",
+    "deleteTitleBody": "This title has items. Only the title is deleted, the items stay."
+  },
+  "totals": {
+    "title": "Totals",
+    "net": "Net",
+    "discount": "Discount",
+    "vat": "VAT {{rate}} %",
+    "gross": "Gross",
+    "labour": "of which labour (§35a EStG)"
   }
 }

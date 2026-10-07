@@ -504,5 +504,51 @@
     "back": "Zurück",
     "continue": "Weiter",
     "done": "Fertig"
+  },
+  "pickers": {
+    "catalog": {
+      "trigger": "Katalogartikel hinzufügen",
+      "search": "Artikel suchen",
+      "none": "Kein Artikel gefunden"
+    },
+    "property": {
+      "placeholder": "Liegenschaft wählen",
+      "search": "Liegenschaft suchen",
+      "none": "Keine Liegenschaft gefunden",
+      "needCustomer": "Wähle zuerst einen Kunden",
+      "archived": "archiviert"
+    },
+    "contact": {
+      "placeholder": "Ansprechpartner wählen",
+      "none": "Keine Auswahl",
+      "property": "Liegenschaft",
+      "customer": "Kunde"
+    }
+  },
+  "lineItems": {
+    "empty": "Noch keine Positionen.",
+    "addFree": "Freie Position",
+    "addTitle": "Titel hinzufügen",
+    "addText": "Text hinzufügen",
+    "drag": "Verschieben",
+    "name": "Bezeichnung",
+    "title": "Titel",
+    "text": "Text",
+    "quantity": "Menge",
+    "unit": "Einheit",
+    "labour": "Lohn",
+    "material": "Material",
+    "vat": "MwSt.",
+    "lineNet": "Netto",
+    "deleteTitle": "Titel löschen",
+    "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten."
+  },
+  "totals": {
+    "title": "Summen",
+    "net": "Netto",
+    "discount": "Rabatt",
+    "vat": "MwSt. {{rate}} %",
+    "gross": "Brutto",
+    "labour": "davon Lohnanteil (§35a EStG)"
   }
 }
