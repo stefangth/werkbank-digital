@@ -101,3 +101,51 @@ describe("normalizeCell enum", () => {
     expect(normalizeCell(" Firma ", "enum")).toBe("Firma");
   });
 });
+
+describe("normalizeCell country", () => {
+  it.each([
+    ["de", "DE"],
+    ["De", "DE"],
+    ["Deutschland", "DE"],
+    ["germany", "DE"],
+    ["D", "DE"],
+    ["Österreich", "AT"],
+    ["oesterreich", "AT"],
+    ["Austria", "AT"],
+    ["A", "AT"],
+    ["Schweiz", "CH"],
+    ["Switzerland", "CH"],
+    ["ch", "CH"],
+    ["fr", "FR"],
+  ])("turns %j into %j", (input, expected) => {
+    expect(normalizeCell(input, "country")).toBe(expected);
+  });
+
+  it("leaves other names for the schema to reject", () => {
+    expect(normalizeCell("Frankreich", "country")).toBe("Frankreich");
+    expect(normalizeCell("", "country")).toBe("");
+  });
+});
+
+describe("normalizeCell vat_id", () => {
+  it("uppercases and drops spaces", () => {
+    expect(normalizeCell("de 123 456 789", "vat_id")).toBe("DE123456789");
+    expect(normalizeCell("", "vat_id")).toBe("");
+  });
+});
+
+describe("normalizeCell enum percent cells", () => {
+  it.each([
+    [0.19, "19"],
+    ["0.19", "19"],
+    ["0.07", "7"],
+    [0.07, "7"],
+    ["0,19", "19"],
+  ])("maps the XLSX percent value %j to %j", (input, expected) => {
+    expect(normalizeCell(input, "enum")).toBe(expected);
+  });
+
+  it("does not map other fractions", () => {
+    expect(normalizeCell("0.16", "enum")).toBe("0.16");
+  });
+});

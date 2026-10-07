@@ -23,7 +23,7 @@ const addressFields = (prefix: "" | "billing_", labels: { street: string; postal
   { key: `${prefix}street`, labelKey: labels.street, required, aliases: aliases.street, kind: "text" },
   { key: `${prefix}postal_code`, labelKey: labels.postal, required, aliases: aliases.postal, kind: "postal_code" },
   { key: `${prefix}city`, labelKey: labels.city, required, aliases: aliases.city, kind: "text" },
-  { key: `${prefix}country_code`, labelKey: labels.country, required: false, aliases: aliases.country, kind: "text", defaultValue: "DE" },
+  { key: `${prefix}country_code`, labelKey: labels.country, required: false, aliases: aliases.country, kind: "country", defaultValue: "DE" },
 ];
 
 const ADDRESS = addressFields(
@@ -45,7 +45,7 @@ export const CUSTOMER_IMPORT: ImportSpecDefinition<CustomerForm> = {
     { key: "email", labelKey: "customers.dialog.email", required: false, aliases: ["E-Mail", "Mail", "E-Mail-Adresse", "Email Address"], kind: "text" },
     { key: "invoice_email", labelKey: "customers.dialog.invoiceEmail", required: false, aliases: ["Rechnungs-E-Mail", "Rechnungsmail", "E-Mail Rechnung", "Invoice Email", "Billing Email"], kind: "text" },
     { key: "phone", labelKey: "customers.dialog.phone", required: false, aliases: ["Telefon", "Tel", "Telefonnummer", "Phone", "Phone Number"], kind: "text" },
-    { key: "vat_id", labelKey: "customers.dialog.vatId", required: false, aliases: ["USt-IdNr", "USt-ID", "UStId", "Umsatzsteuer-ID", "VAT ID", "VAT Number"], kind: "text" },
+    { key: "vat_id", labelKey: "customers.dialog.vatId", required: false, aliases: ["USt-IdNr", "USt-ID", "UStId", "Umsatzsteuer-ID", "VAT ID", "VAT Number"], kind: "vat_id" },
     { key: "payment_terms_days", labelKey: "customers.dialog.paymentTerms", required: false, aliases: ["Zahlungsziel", "Zahlungsziel Tage", "Zahlungsziel in Tagen", "Payment Terms", "Payment Terms Days"], kind: "integer", defaultValue: "14" },
     { key: "notes", labelKey: "customers.dialog.notes", required: false, aliases: NOTES, kind: "text" },
   ],

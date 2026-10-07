@@ -31,6 +31,15 @@ describe("validateRows", () => {
     });
   });
 
+  it("normalizes country names before the postal code is padded, and uppercases the VAT id", () => {
+    const headers = [...customerHeaders, "Land", "USt-IdNr"];
+    const mapping = guessColumns(headers, CUSTOMER_IMPORT.fields);
+    const cells = ["", "HV", "Muster GmbH", "", "", "Hauptstr. 1", "1067", "Dresden", "deutschland", "de123456789"];
+    const { valid, invalid } = validateRows([row(cells, headers)], mapping, CUSTOMER_IMPORT, t);
+    expect(invalid).toEqual([]);
+    expect(valid[0].form).toMatchObject({ country_code: "DE", postal_code: "01067", vat_id: "DE123456789" });
+  });
+
   it("puts a private customer without last name into invalid with the schema message", () => {
     const rows = [row(["", "Privat", "", "Anna", "", "Ring 2", "04109", "Leipzig"])];
     const { valid, invalid } = validateRows(rows, customerMapping, CUSTOMER_IMPORT, t);
@@ -64,7 +73,7 @@ describe("validateRows", () => {
   it("normalizes catalog prices, units and VAT", () => {
     const headers = ["Bezeichnung", "Einheit", "Lohn", "Material", "MwSt."];
     const mapping = guessColumns(headers, CATALOG_IMPORT.fields);
-    const { valid, invalid } = validateRows([row(["Heizkörper", "Stk", "12,50", "1.234,50", "7 %"], headers)], mapping, CATALOG_IMPORT, t);
+    const { valid, invalid } = validateRows([row(["Heizkörper", "Stk", "12,50", "1.234,50", "0.07"], headers)], mapping, CATALOG_IMPORT, t);
     expect(invalid).toEqual([]);
     expect(valid[0].form).toMatchObject({ unit_code: "H87", labour_price: "12.50", material_price: "1234.50", vat_rate: "7" });
   });

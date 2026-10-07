@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import type { ZodType } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
-export type ImportCellKind = "text" | "money" | "postal_code" | "integer" | "enum";
+export type ImportCellKind = "text" | "money" | "postal_code" | "integer" | "enum" | "country" | "vat_id";
 
 /** One importable column of an entity. `required` fields must be mapped to a sheet column before
  *  the review step; `defaultValue` fills a blank or unmapped cell (the same default the database

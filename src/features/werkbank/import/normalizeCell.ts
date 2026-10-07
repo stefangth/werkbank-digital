@@ -49,9 +49,42 @@ const enumKey = (value: string) =>
     .replace(/ü/g, "ue")
     .replace(/[\s._%-]/g, "");
 
+/** Country names and one-letter car codes for the countries the forms offer, keyed like `countryKey`. */
+const COUNTRY_CODES: Record<string, string> = {
+  deutschland: "DE",
+  germany: "DE",
+  d: "DE",
+  oesterreich: "AT",
+  austria: "AT",
+  a: "AT",
+  schweiz: "CH",
+  switzerland: "CH",
+};
+
+const countryKey = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/ö/g, "oe")
+    .replace(/[^a-z]/g, "");
+
+/** "de", "Deutschland", "Germany" and "D" become "DE" (likewise AT and CH); any other two-letter
+ *  code is uppercased. Anything else passes through for the schema to reject. */
+function normalizeCountry(text: string): string {
+  const key = countryKey(text);
+  const code = COUNTRY_CODES[key];
+  if (code) return code;
+  return /^[a-z]{2}$/i.test(text) ? text.toUpperCase() : text;
+}
+
+/** Excel stores a cell formatted as "19 %" as 0.19. Only 19, 7 and 0 are valid rates, so 0.19 and
+ *  0.07 are unambiguous. */
+const PERCENT_CELLS: Record<string, string> = { "0.19": "19", "0.07": "7" };
+
 function normalizeEnum(text: string): string {
   const code = ENUM_CODES[enumKey(text)];
   if (code) return code;
+  const percent = PERCENT_CELLS[text.replace(",", ".")];
+  if (percent) return percent;
   // VAT rates: "19 %", "19,00", "19.0", 19
   const rate = /^(\d+)(?:[.,]0+)?\s*%?$/.exec(text);
   return rate ? String(Number(rate[1])) : text;
@@ -85,6 +118,10 @@ export function normalizeCell(value: unknown, kind: ImportCellKind, countryCode?
       return /^\d+\.0+$/.test(text) ? text.replace(/\.0+$/, "") : text;
     case "enum":
       return normalizeEnum(text);
+    case "country":
+      return normalizeCountry(text);
+    case "vat_id":
+      return text.replace(/\s/g, "").toUpperCase();
     case "text":
       return text;
   }
