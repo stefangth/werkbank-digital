@@ -17,7 +17,8 @@ create table werkbank.company_profiles (
   city text not null check (btrim(city) <> ''),
   country_code text not null default 'DE' check (country_code ~ '^[A-Z]{2}$'),
   phone text,
-  email text check (email ~ '^[^@\s]+@[^@\s]+$'),
+  -- Dotted domain, like REPLY_TO_RE in send-transactional-email (the address is the quote reply-to).
+  email text check (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
   website text,
   tax_number text,
   vat_id text check (vat_id ~ '^[A-Z]{2}[0-9A-Za-z+*.]{2,12}$'),

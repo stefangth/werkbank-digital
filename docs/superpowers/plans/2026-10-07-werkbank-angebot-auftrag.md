@@ -98,7 +98,7 @@
 ### Task 5: Tables, checks, RLS (R1)
 
 **Files:**
-- Create: `supabase/migrations/20261008100000_werkbank_quotes_orders.sql`
+- Create: `supabase/migrations/20261007180000_werkbank_quotes_orders.sql`
 - Test: `supabase/tests/werkbank/quotes_orders.test.sql`
 
 **Interfaces:**
@@ -114,7 +114,7 @@
 ### Task 6: Locks, numbers and RPCs (R2)
 
 **Files:**
-- Create: `supabase/migrations/20261008110000_werkbank_quote_order_logic.sql`
+- Create: `supabase/migrations/20261007190000_werkbank_quote_order_logic.sql`
 - Test: `supabase/tests/werkbank/quote_order_logic.test.sql`
 
 **Interfaces:**
@@ -141,7 +141,7 @@
 ### Task 7: Totals views and storage (R3, R4)
 
 **Files:**
-- Create: `supabase/migrations/20261008120000_werkbank_totals_storage.sql`
+- Create: `supabase/migrations/20261007200000_werkbank_totals_storage.sql`
 - Test: `supabase/tests/werkbank/totals_storage.test.sql`
 
 **Interfaces:**

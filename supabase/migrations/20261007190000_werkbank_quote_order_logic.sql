@@ -8,6 +8,9 @@
 -- definer RPC the JWT claims still say `authenticated`, so the triggers use current_user instead.
 -- Every definer function checks the caller's org role before it writes, so trusting current_user
 -- here only trusts code that already did that check.
+-- Every change diff (to_jsonb(new) against to_jsonb(old)) leaves out generated columns: in a
+-- BEFORE UPDATE trigger they are still NULL in NEW (document_items.line_net), so they would always
+-- look changed and block the FK set-null actions on locked documents.
 -- Three contexts are told apart: the user (`authenticated`, `anon`), the service role, and the
 -- owner context (definer RPCs and FK actions). Only the owner context may delete children of a
 -- locked document (FK cascades) or clear a reference through an FK set-null action.
@@ -86,7 +89,9 @@ end;
 $$;
 revoke all on function werkbank.assign_quote_no() from public, anon;
 
-create trigger quotes_assign_no before insert on werkbank.quotes
+-- Triggers fire in name order: the z_ prefix runs numbering after quotes_lock, which must still
+-- see whether the user supplied a number.
+create trigger quotes_z_assign_no before insert on werkbank.quotes
   for each row execute function werkbank.assign_quote_no();
 
 create function werkbank.assign_order_no()
@@ -113,7 +118,8 @@ end;
 $$;
 revoke all on function werkbank.assign_order_no() from public, anon;
 
-create trigger orders_assign_no before insert on werkbank.orders
+-- z_ prefix: runs after orders_transition, which rejects a number supplied by the user.
+create trigger orders_z_assign_no before insert on werkbank.orders
   for each row execute function werkbank.assign_order_no();
 
 -- Quote lock --------------------------------------------------------------------------
@@ -158,7 +164,8 @@ begin
       v_changed := array(
         select n.key from jsonb_each(to_jsonb(new)) n
         where n.value is distinct from to_jsonb(old) -> n.key and n.key <> 'updated_at'
-          and not (n.key in ('catalog_item_id', 'source_item_id') and n.value = 'null'::jsonb));
+          and not (n.key in ('catalog_item_id', 'source_item_id') and n.value = 'null'::jsonb)
+          and n.key not in (select a.attname from pg_catalog.pg_attribute a where a.attrelid = tg_relid and a.attgenerated <> ''));
       if cardinality(v_changed) = 0 then
         return new;
       end if;
@@ -173,7 +180,8 @@ begin
   -- werkbank.quotes
   if tg_op = 'INSERT' then
     -- An unknown status is left to the check constraint (23514).
-    if v_user and (new.status in ('sent', 'accepted', 'rejected', 'superseded') or new.version <> 1 or new.sent_at is not null or new.sent_to is not null
+    if v_user and (new.status in ('sent', 'accepted', 'rejected', 'superseded') or new.version <> 1
+        or new.quote_no is not null or new.sent_at is not null or new.sent_to is not null
         or new.pdf_path is not null or new.pdf_sha256 is not null or new.accepted_pdf_path is not null
         or new.access_token_hash is not null or new.superseded_by is not null
         or new.superseded_from_status is not null) then
@@ -184,7 +192,8 @@ begin
 
   v_changed := array(
     select n.key from jsonb_each(to_jsonb(new)) n
-    where n.value is distinct from to_jsonb(old) -> n.key and n.key <> 'updated_at');
+    where n.value is distinct from to_jsonb(old) -> n.key and n.key <> 'updated_at'
+      and n.key not in (select a.attname from pg_catalog.pg_attribute a where a.attrelid = tg_relid and a.attgenerated <> ''));
 
   if v_user and v_changed && v_service_cols then
     raise exception 'quote_service_only' using errcode = '42501';
@@ -224,7 +233,8 @@ create trigger document_items_lock_quote before insert or update or delete on we
 -- On orders: a new order starts 'open'. Transitions: open -> in_progress -> done,
 -- done -> in_progress (reopen, keeps completed_at), open | in_progress -> cancelled; anything else
 -- raises 22023 invalid_transition. completed_at and cancelled_at are stamped here and cannot be
--- written directly. In done and cancelled the header is locked (55000 order_locked); only the
+-- written directly, and a user never sets order_no (42501 order_service_only). In done and
+-- cancelled the header is locked (55000 order_locked); only the
 -- status may change. FK actions that clear contact_id still run.
 -- On document_items with an order, and on order_technicians: no insert, update or delete while the
 -- order is done or cancelled. FK cascades and FK set-null actions are let through.
@@ -256,7 +266,8 @@ begin
       v_changed := array(
         select n.key from jsonb_each(to_jsonb(new)) n
         where n.value is distinct from to_jsonb(old) -> n.key and n.key <> 'updated_at'
-          and not (n.key in ('catalog_item_id', 'source_item_id') and n.value = 'null'::jsonb));
+          and not (n.key in ('catalog_item_id', 'source_item_id') and n.value = 'null'::jsonb)
+          and n.key not in (select a.attname from pg_catalog.pg_attribute a where a.attrelid = tg_relid and a.attgenerated <> ''));
       if cardinality(v_changed) = 0 then
         return new;
       end if;
@@ -282,6 +293,10 @@ begin
     raise exception 'provenance_service_only' using errcode = '42501';
   end if;
   if tg_op = 'INSERT' then
+    -- The number comes from assign_order_no; only the service side and owner context may set one.
+    if v_user and new.order_no is not null then
+      raise exception 'order_service_only' using errcode = '42501';
+    end if;
     if new.status <> 'open' then
       raise exception 'invalid_transition' using errcode = '22023';
     end if;
@@ -303,7 +318,8 @@ begin
       select n.key from jsonb_each(to_jsonb(new)) n
       where n.value is distinct from to_jsonb(old) -> n.key
         and n.key not in ('updated_at', 'status', 'completed_at', 'cancelled_at')
-        and not (v_owner and n.key = 'contact_id' and n.value = 'null'::jsonb));
+        and not (v_owner and n.key = 'contact_id' and n.value = 'null'::jsonb)
+        and n.key not in (select a.attname from pg_catalog.pg_attribute a where a.attrelid = tg_relid and a.attgenerated <> ''));
     if cardinality(v_changed) > 0 then
       raise exception 'order_locked' using errcode = '55000';
     end if;

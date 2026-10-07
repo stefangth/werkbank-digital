@@ -7,7 +7,8 @@ import { addressFields, refineAddress } from "./address";
 export type CompanyProfileRow = Omit<Database["werkbank"]["Tables"]["company_profiles"]["Insert"], "org_id">;
 
 // Same patterns as the check constraints on werkbank.company_profiles.
-const EMAIL = /^[^@\s]+@[^@\s]+$/;
+// Dotted domain, like REPLY_TO_RE in send-transactional-email (the address becomes the reply-to).
+const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const VAT_ID = /^[A-Z]{2}[0-9A-Za-z+*.]{2,12}$/;
 const IBAN = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/;
 const DIGITS = /^\d+$/;

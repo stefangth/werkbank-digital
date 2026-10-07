@@ -1,7 +1,7 @@
 -- Werkbank Teil 3 (R2): quote and order locks, transitions, numbering and the three RPCs.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(93);
+SELECT plan(99);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -26,6 +26,8 @@ INSERT INTO werkbank.customers (id, org_id, customer_no, kind, last_name, street
 INSERT INTO werkbank.properties (id, org_id, customer_id, name, street, postal_code, city) VALUES
   ('dddddddd-0000-4000-d000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','Objekt 1','Weg 1','01067','Dresden'),
   ('dddddddd-0000-4000-d000-0000000000e2','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e2','Objekt 2','Weg 2','01067','Dresden');
+INSERT INTO werkbank.catalog_items (id, org_id, name, unit_code, labour_price, material_price) VALUES
+  ('77777777-0000-4000-a000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','Rohr','HUR',10,5);
 INSERT INTO werkbank.contacts (id, org_id, customer_id, last_name) VALUES
   ('eeeeeeee-0000-4000-e000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','Kontakt'),
   ('eeeeeeee-0000-4000-e000-0000000000e2','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1','Weg');
@@ -62,8 +64,17 @@ INSERT INTO werkbank.quotes (id, org_id, customer_id, property_id, contact_id, s
           'dddddddd-0000-4000-d000-0000000000e1','eeeeeeee-0000-4000-e000-0000000000e1','Küche', current_date + 30);
 SELECT is((SELECT quote_no FROM werkbank.quotes WHERE id = '11111111-0000-4000-a000-0000000000e1'), 'A-0001', 'first quote gets A-0001');
 SELECT is((SELECT quote_no FROM werkbank.quotes WHERE id = '11111111-0000-4000-a000-0000000000e2'), 'A-0002', 'second quote gets A-0002');
+SELECT throws_ok($$INSERT INTO werkbank.quotes (org_id, quote_no, customer_id, valid_until)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','A-0099','cccccccc-0000-4000-c000-0000000000e1', current_date + 30)$$,
+  '42501', 'quote_service_only', 'a user cannot choose the quote number');
+RESET ROLE;
+-- The service side may set a number (revise_quote does); the trigger skips it later.
+SET LOCAL ROLE service_role;
 INSERT INTO werkbank.quotes (org_id, quote_no, customer_id, valid_until)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','A-0003','cccccccc-0000-4000-c000-0000000000e1', current_date + 30);
+RESET ROLE;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e2');
+SET LOCAL ROLE authenticated;
 INSERT INTO werkbank.quotes (id, org_id, customer_id, contact_id, valid_until)
   VALUES ('11111111-0000-4000-a000-0000000000e3','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1',
           'eeeeeeee-0000-4000-e000-0000000000e2', current_date + 30);
@@ -72,8 +83,16 @@ SELECT is((SELECT quote_no FROM werkbank.quotes WHERE id = '11111111-0000-4000-a
 INSERT INTO werkbank.orders (id, org_id, customer_id)
   VALUES ('33333333-0000-4000-a000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1');
 SELECT is((SELECT order_no FROM werkbank.orders WHERE id = '33333333-0000-4000-a000-0000000000e1'), 'AU-0001', 'first order gets AU-0001');
+SELECT throws_ok($$INSERT INTO werkbank.orders (org_id, order_no, customer_id)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','AU-0099','cccccccc-0000-4000-c000-0000000000e1')$$,
+  '42501', 'order_service_only', 'a user cannot choose the order number');
+RESET ROLE;
+SET LOCAL ROLE service_role;
 INSERT INTO werkbank.orders (org_id, order_no, customer_id)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','AU-0002','cccccccc-0000-4000-c000-0000000000e1');
+RESET ROLE;
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e2');
+SET LOCAL ROLE authenticated;
 INSERT INTO werkbank.orders (id, org_id, customer_id)
   VALUES ('33333333-0000-4000-a000-0000000000e2','bbbbbbbb-0000-4000-b000-0000000000e1','cccccccc-0000-4000-c000-0000000000e1');
 SELECT is((SELECT order_no FROM werkbank.orders WHERE id = '33333333-0000-4000-a000-0000000000e2'), 'AU-0003',
@@ -88,8 +107,9 @@ SELECT results_eq(
 SELECT lives_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, sort_order, kind, name)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','11111111-0000-4000-a000-0000000000e1',0,'title','Bad')$$,
   'producer adds a title to a draft quote');
-SELECT lives_ok($$INSERT INTO werkbank.document_items (id, org_id, quote_id, sort_order, kind, name, quantity, unit_code, labour_price, material_price, vat_rate)
-  VALUES ('22222222-0000-4000-a000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','11111111-0000-4000-a000-0000000000e1',1,'item','Rohr',2,'HUR',10,5,19)$$,
+SELECT lives_ok($$INSERT INTO werkbank.document_items (id, org_id, quote_id, sort_order, kind, name, quantity, unit_code, labour_price, material_price, vat_rate, catalog_item_id)
+  VALUES ('22222222-0000-4000-a000-0000000000e1','bbbbbbbb-0000-4000-b000-0000000000e1','11111111-0000-4000-a000-0000000000e1',1,'item','Rohr',2,'HUR',10,5,19,
+          '77777777-0000-4000-a000-0000000000e1')$$,
   'producer adds an item to a draft quote');
 SELECT lives_ok($$INSERT INTO werkbank.document_items (org_id, quote_id, sort_order, kind, description)
   VALUES ('bbbbbbbb-0000-4000-b000-0000000000e1','11111111-0000-4000-a000-0000000000e1',2,'text','Hinweis')$$,
@@ -310,6 +330,19 @@ SET LOCAL ROLE service_role;
 SELECT throws_ok($$DELETE FROM werkbank.document_items WHERE order_id = pg_temp.id('order') AND kind = 'item'$$,
   '55000', 'order_locked', 'service role cannot delete an item of a done order');
 RESET ROLE;
+-- Deleting a catalog item clears catalog_item_id through the FK action on locked documents:
+-- quote 1 (superseded), the revision (accepted), copy1 (sent) and the done order.
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e1');
+SET LOCAL ROLE authenticated;
+SELECT lives_ok($$DELETE FROM werkbank.catalog_items WHERE id = '77777777-0000-4000-a000-0000000000e1'$$,
+  'admin deletes a catalog item used by sent, accepted and superseded quotes and a done order');
+RESET ROLE;
+SELECT results_eq(
+  $$SELECT count(*)::int, count(catalog_item_id)::int FROM werkbank.document_items
+    WHERE (quote_id IN ('11111111-0000-4000-a000-0000000000e1', pg_temp.id('rev'), pg_temp.id('copy1')) OR order_id = pg_temp.id('order'))
+      AND kind = 'item'$$,
+  $$VALUES (4, 0)$$,
+  'the FK action cleared catalog_item_id on the locked items');
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e2');
 SET LOCAL ROLE authenticated;
 SELECT throws_ok($$UPDATE werkbank.orders SET status = 'cancelled' WHERE id = pg_temp.id('order')$$,
@@ -325,6 +358,12 @@ SELECT throws_ok($$UPDATE werkbank.orders SET status = 'open' WHERE id = pg_temp
 SELECT throws_ok($$UPDATE werkbank.document_items SET name = 'x' WHERE order_id = pg_temp.id('order') AND kind = 'item'$$,
   '55000', 'order_locked', 'an item of a cancelled order cannot be edited');
 RESET ROLE;
+-- Deleting a source line in the owner context (as a cascade would) clears source_item_id on the
+-- cancelled order's item through the FK set-null action.
+SELECT lives_ok($$DELETE FROM werkbank.document_items WHERE quote_id = pg_temp.id('rev') AND kind = 'item'$$,
+  'the owner context deletes the source line of a cancelled order item');
+SELECT is((SELECT count(source_item_id)::int FROM werkbank.document_items WHERE order_id = pg_temp.id('order') AND kind = 'item'), 0,
+  'the FK action cleared source_item_id on the locked order item');
 
 -- Authorization -----------------------------------------------------------------------
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000e3');

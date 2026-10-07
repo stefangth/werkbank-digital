@@ -68,6 +68,11 @@ describe("companyProfileSchema", () => {
   it("rejects a malformed email", () => {
     expect(parse({ email: "nope" }).success).toBe(false);
   });
+
+  it("requires a dot in the email domain, like the reply-to check of the mail function", () => {
+    expect(parse({ email: "info@firma" }).success).toBe(false);
+    expect(parse({ email: "info@firma.de" }).success).toBe(true);
+  });
 });
 
 describe("toCompanyProfileRow", () => {
