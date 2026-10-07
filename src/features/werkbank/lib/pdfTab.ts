@@ -8,8 +8,9 @@ export function openPendingTab(): Window | null {
 }
 
 /** Shows `url` in the pending tab; if the browser refused the tab, `onBlocked` gets the url
- *  (to offer a link the user can click). */
+ *  (to offer a link the user can click). A tab the user closed meanwhile is their decision: no
+ *  tab is opened again and nothing is reported. */
 export function showInTab(tab: Window | null, url: string, onBlocked: (url: string) => void): void {
-  if (tab && !tab.closed) tab.location.href = url;
-  else onBlocked(url);
+  if (!tab) onBlocked(url);
+  else if (!tab.closed) tab.location.href = url;
 }

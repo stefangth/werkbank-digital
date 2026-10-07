@@ -20,7 +20,17 @@ import { quotePreflight, type QuoteBlocker } from "../lib/quotePreflight";
 
 type SendableQuote = Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until">;
 
-const splitAddresses = (value: string): string[] => value.split(/[,;\s]+/).filter(Boolean);
+/** Addresses separated by comma, semicolon or whitespace; an address typed twice is kept once
+ *  (compared case-insensitively). */
+const splitAddresses = (value: string): string[] => {
+  const seen = new Set<string>();
+  return value.split(/[,;\s]+/).filter((a) => {
+    const key = a.toLowerCase();
+    if (!a || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 /** Send a draft, or (for a quote that is already sent) mail it again with a new link. The
  *  recipient is prefilled with the contact's email, else the customer's. Sending stays disabled
@@ -91,7 +101,10 @@ export function SendQuoteDialog({
   const preview = () => {
     const tab = openPendingTab();
     return actions.preview.mutateAsync(quote.id)
-      .then((url) => showInTab(tab, url, (u) => toast.error(t("quotes.page.pdfBlocked"), { action: { label: t("quotes.page.pdfOpen"), onClick: () => window.open(u, "_blank") } })))
+      .then((url) => {
+        setError(null);
+        showInTab(tab, url, (u) => toast.error(t("quotes.page.pdfBlocked"), { action: { label: t("quotes.page.pdfOpen"), onClick: () => window.open(u, "_blank") } }));
+      })
       .catch((e) => {
         tab?.close();
         setError(e instanceof QuoteActionError ? e : new QuoteActionError("unknown"));

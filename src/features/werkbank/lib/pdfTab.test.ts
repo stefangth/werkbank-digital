@@ -9,6 +9,13 @@ describe("showInTab", () => {
     expect(tab.location.href).toBe("https://x");
     expect(blocked).not.toHaveBeenCalled();
   });
+  it("does nothing when the user closed the pending tab before the PDF arrived", () => {
+    const tab = { closed: true, location: { href: "" } } as unknown as Window;
+    const blocked = vi.fn();
+    showInTab(tab, "https://x", blocked);
+    expect(blocked).not.toHaveBeenCalled();
+    expect(tab.location.href).toBe("");
+  });
   it("falls back when no tab could be opened", () => {
     const blocked = vi.fn();
     showInTab(null, "https://x", blocked);

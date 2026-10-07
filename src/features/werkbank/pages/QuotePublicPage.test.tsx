@@ -119,7 +119,7 @@ describe("QuotePublicPage", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
     expect(await screen.findByText("Dieses Angebot wurde überarbeitet")).toBeInTheDocument();
-    expect(screen.getByText("Es wurde nichts unterschrieben. Ihre Eingaben wurden nicht gespeichert.")).toBeInTheDocument();
+    expect(screen.getByText("Es wurde nichts unterschrieben. Ihre Eingaben wurden nicht gespeichert.").closest("[role='alert']")).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Angebot verbindlich annehmen" })).not.toBeInTheDocument();
     expect(screen.queryByText("Vielen Dank, das Angebot ist angenommen")).not.toBeInTheDocument();
   });
@@ -130,7 +130,26 @@ describe("QuotePublicPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "signieren" }));
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
-    expect(await screen.findByText("Bitte geben Sie Ihren vollständigen Namen an.")).toBeInTheDocument();
+    const message = await screen.findByText("Bitte geben Sie Ihren vollständigen Namen an.");
+    expect(screen.getByRole("button", { name: "Angebot verbindlich annehmen" })).toBeEnabled();
+    // The error is announced and tied to the name field.
+    expect(message.closest("[role='alert']")).not.toBeNull();
+    const name = screen.getByLabelText("Ihr vollständiger Name");
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(name).toHaveAccessibleDescription("Bitte geben Sie Ihren vollständigen Namen an.");
+  });
+
+  it("keeps the entered name, signature and consent after a transient 500", async () => {
+    mount([{ data: view, error: null }, fail(500, { error: "boom" })]);
+    fireEvent.change(await screen.findByLabelText("Ihr vollständiger Name"), { target: { value: "Anna Muster" } });
+    fireEvent.click(screen.getByRole("button", { name: "signieren" }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Angebot verbindlich annehmen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Ihre Antwort konnte nicht gespeichert werden");
+    expect(screen.getByLabelText("Ihr vollständiger Name")).toHaveValue("Anna Muster");
+    expect(screen.getByLabelText("Ihr vollständiger Name")).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByRole("checkbox")).toBeChecked();
     expect(screen.getByRole("button", { name: "Angebot verbindlich annehmen" })).toBeEnabled();
   });
 
