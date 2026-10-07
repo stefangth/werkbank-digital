@@ -1,5 +1,6 @@
 {
   "nav": {
+    "catalog": "Services",
     "technicians": "Technicians"
   },
   "dashboard": {
@@ -91,6 +92,53 @@
     "LS": "lump sum"
   },
   "catalog": {
+    "title": "Services",
+    "sub": "Your services and materials with prices. You pick them later in quotes and invoices.",
+    "add": "Add service",
+    "loadFailed": "Could not load your services. Please try again.",
+    "searchLabel": "Search services",
+    "searchPlaceholder": "Number, name or description",
+    "categoryFilter": "Category",
+    "allCategories": "All categories",
+    "empty": {
+      "title": "No services yet",
+      "body": "Add your first service with a unit and a price.",
+      "action": "Add your first service",
+      "reason": "Ask an admin or producer to add services."
+    },
+    "noMatches": "No service matches your search.",
+    "noMatchesReason": "Change the search or the filter.",
+    "archivedPill": "Archived",
+    "columns": {
+      "number": "No.",
+      "name": "Name",
+      "category": "Category",
+      "unit": "Unit",
+      "labour": "Labour",
+      "material": "Material",
+      "net": "Net",
+      "vat": "VAT",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete service?",
+      "body": "\"{{name}}\" will be deleted for good. This cannot be undone.",
+      "confirm": "Delete"
+    },
+    "dialog": {
+      "createTitle": "Add service",
+      "editTitle": "Edit service",
+      "description": "Labour and material are net prices per unit.",
+      "itemNo": "Item number (optional)",
+      "name": "Name",
+      "descriptionField": "Description (optional)",
+      "category": "Category (optional)",
+      "unit": "Unit",
+      "vat": "VAT",
+      "labour": "Labour",
+      "material": "Material",
+      "net": "Net total"
+    },
     "errors": {
       "name": "Enter a name",
       "unit": "Choose a unit",

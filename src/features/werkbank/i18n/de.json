@@ -1,5 +1,6 @@
 {
   "nav": {
+    "catalog": "Leistungen",
     "technicians": "Monteure"
   },
   "dashboard": {
@@ -91,6 +92,53 @@
     "LS": "pauschal"
   },
   "catalog": {
+    "title": "Leistungen",
+    "sub": "Deine Leistungen und Materialien mit Preisen. Du wählst sie später in Angeboten und Rechnungen aus.",
+    "add": "Leistung anlegen",
+    "loadFailed": "Deine Leistungen konnten nicht geladen werden. Versuche es bitte noch einmal.",
+    "searchLabel": "Leistungen durchsuchen",
+    "searchPlaceholder": "Nummer, Name oder Beschreibung",
+    "categoryFilter": "Kategorie",
+    "allCategories": "Alle Kategorien",
+    "empty": {
+      "title": "Noch keine Leistungen",
+      "body": "Leg deine erste Leistung mit Einheit und Preis an.",
+      "action": "Erste Leistung anlegen",
+      "reason": "Bitte einen Admin oder Produzenten, Leistungen anzulegen."
+    },
+    "noMatches": "Keine Leistung passt zu deiner Suche.",
+    "noMatchesReason": "Ändere die Suche oder den Filter.",
+    "archivedPill": "Archiviert",
+    "columns": {
+      "number": "Nr.",
+      "name": "Name",
+      "category": "Kategorie",
+      "unit": "Einheit",
+      "labour": "Lohn",
+      "material": "Material",
+      "net": "Netto",
+      "vat": "MwSt.",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "title": "Leistung löschen?",
+      "body": "\"{{name}}\" wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Löschen"
+    },
+    "dialog": {
+      "createTitle": "Leistung anlegen",
+      "editTitle": "Leistung bearbeiten",
+      "description": "Lohn und Material sind Nettopreise pro Einheit.",
+      "itemNo": "Artikelnummer (optional)",
+      "name": "Bezeichnung",
+      "descriptionField": "Beschreibung (optional)",
+      "category": "Kategorie (optional)",
+      "unit": "Einheit",
+      "vat": "MwSt.",
+      "labour": "Lohn",
+      "material": "Material",
+      "net": "Netto gesamt"
+    },
     "errors": {
       "name": "Gib eine Bezeichnung ein",
       "unit": "Wähle eine Einheit",
