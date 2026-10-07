@@ -3972,6 +3972,22 @@ export type Database = {
         Returns: Json
       }
       next_number: { Args: { p_key: string; p_org: string }; Returns: string }
+      record_quote_decision: {
+        Args: {
+          p_accepted_pdf_path: string
+          p_comment: string
+          p_consent_text: string
+          p_decision: string
+          p_ip: string
+          p_method: string
+          p_quote: string
+          p_signature_image_path: string
+          p_signer_name: string
+          p_typed_name: string
+          p_user_agent: string
+        }
+        Returns: string
+      }
       revise_quote: { Args: { p_quote: string }; Returns: string }
     }
     Enums: {

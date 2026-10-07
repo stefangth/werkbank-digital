@@ -28,6 +28,7 @@
 
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { realDeps, emailWasSent, type Deps } from "../_shared/deps.ts";
+import type { Database } from "../_shared/database.types.ts";
 import { json, preflight } from "../_shared/http.ts";
 import { requireOrgRole } from "../_shared/auth.ts";
 import { resolveOrgKind } from "../_shared/orgKind.ts";
@@ -534,25 +535,25 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
   });
 }
 
-/** Arguments of werkbank.record_quote_decision (migration 20261007210000). Nullable ones are
- *  passed as null; the function is not in the generated types yet, so the call is typed here. */
-interface RecordQuoteDecisionArgs {
-  p_quote: string;
-  p_decision: Decision;
-  p_signer_name: string;
-  p_method: "typed" | "drawn" | null;
-  p_typed_name: string | null;
-  p_signature_image_path: string | null;
-  p_ip: string | null;
-  p_user_agent: string | null;
-  p_consent_text: string | null;
-  p_comment: string | null;
-  p_accepted_pdf_path: string | null;
-}
+/** Generated args of werkbank.record_quote_decision (migration 20261007210000). Type-gen marks
+ *  every RPC argument non-null (see scripts/generatedTypes.test.ts); the SQL function takes NULL
+ *  for everything a rejection or a typed signature leaves out. */
+type GeneratedDecisionArgs = Database["werkbank"]["Functions"]["record_quote_decision"]["Args"];
+type NullableDecisionArg =
+  | "p_method"
+  | "p_typed_name"
+  | "p_signature_image_path"
+  | "p_ip"
+  | "p_user_agent"
+  | "p_consent_text"
+  | "p_comment"
+  | "p_accepted_pdf_path";
+/** The same arguments with the nullable ones widened back; cast only at the `.rpc()` call. */
+type RecordQuoteDecisionArgs =
+  & Omit<GeneratedDecisionArgs, NullableDecisionArg | "p_decision">
+  & { p_decision: Decision; p_method: "typed" | "drawn" | null }
+  & { [K in Exclude<NullableDecisionArg, "p_method">]: string | null };
 type DecisionOutcome = "ok" | "not_found" | "superseded" | "revoked" | "decided" | "expired";
-type DecisionRpc = {
-  rpc: (fn: "record_quote_decision", args: RecordQuoteDecisionArgs) => PromiseLike<{ data: unknown; error: unknown }>;
-};
 
 /** Uploads bytes to a content-addressed path. True when this call stored them (false when the
  *  identical object was already there, which counts as success). Throws on any other error. */
@@ -640,20 +641,21 @@ async function decideQuote(
   }
 
   // One atomic step: lock, re-check the link, insert the acceptance, set the status.
-  const { data: outcome, error: rpcErr } = await (deps.admin.schema("werkbank") as unknown as DecisionRpc)
-    .rpc("record_quote_decision", {
-      p_quote: quote.id,
-      p_decision: decision,
-      p_signer_name: signerName,
-      p_method: signature?.method ?? null,
-      p_typed_name: signature?.method === "typed" ? signature.typedName : null,
-      p_signature_image_path: signaturePath,
-      p_ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
-      p_user_agent: req.headers.get("user-agent") || null,
-      p_consent_text: decision === "accepted" ? quoteConsentText(displayNo(quote)) : null,
-      p_comment: comment,
-      p_accepted_pdf_path: acceptedPath,
-    });
+  const decisionArgs: RecordQuoteDecisionArgs = {
+    p_quote: quote.id,
+    p_decision: decision,
+    p_signer_name: signerName,
+    p_method: signature?.method ?? null,
+    p_typed_name: signature?.method === "typed" ? signature.typedName : null,
+    p_signature_image_path: signaturePath,
+    p_ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+    p_user_agent: req.headers.get("user-agent") || null,
+    p_consent_text: decision === "accepted" ? quoteConsentText(displayNo(quote)) : null,
+    p_comment: comment,
+    p_accepted_pdf_path: acceptedPath,
+  };
+  const { data: outcome, error: rpcErr } = await deps.admin.schema("werkbank")
+    .rpc("record_quote_decision", decisionArgs as GeneratedDecisionArgs);
   if (rpcErr) {
     // The call may still have committed (a lost response looks the same), so the stored files
     // stay: unreferenced content-addressed objects are harmless, a deleted accepted PDF is not.
