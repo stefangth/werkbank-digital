@@ -37,7 +37,7 @@ import { LineItemsEditor } from "./LineItemsEditor";
 
 const row = (over: Partial<DocumentItem>): DocumentItem => ({
   id: "i", kind: "item", name: "Position", description: null, catalog_item_id: null, item_no: null, quantity: 2, unit_code: "HUR",
-  labour_price: 50, material_price: 10, vat_rate: 19, line_net: 120, sort_order: 0, org_id: "o", quote_id: "q1", order_id: null,
+  labour_price: 50, material_price: 10, vat_rate: 19, line_net: 120, sort_order: 0, org_id: "o", quote_id: "q1", order_id: null, invoice_id: null,
   source_item_id: null, created_at: "", updated_at: "", ...over,
 });
 

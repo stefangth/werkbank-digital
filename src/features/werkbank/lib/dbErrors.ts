@@ -8,6 +8,11 @@ export type DbErrorKey =
   | "errors.propertyMismatch"
   | "errors.invalidTransition"
   | "errors.orderExists"
+  | "errors.invoiceLocked"
+  | "errors.invoiceNotReady"
+  | "errors.orderNotDone"
+  | "errors.numberRangeLocked"
+  | "errors.activeInvoiceExists"
   | "errors.notAllowedHere"
   | "errors.generic";
 
@@ -31,11 +36,16 @@ export function mapDbError(error: unknown): DbErrorKey {
     if (text.includes("customers_customer_no_unique")) return "errors.customerNoTaken";
     if (text.includes("catalog_items_item_no_unique")) return "errors.itemNoTaken";
     if (text.includes("orders_quote_id_key")) return "errors.orderExists";
+    if (text.includes("invoices_one_active_per_order")) return "errors.activeInvoiceExists";
     return "errors.generic";
   }
   // The database raises these with a fixed message (and an errcode that is not unique to them).
   if (text.includes("quote_locked")) return "errors.quoteLocked";
   if (text.includes("order_locked")) return "errors.orderLocked";
+  if (text.includes("invoice_locked")) return "errors.invoiceLocked";
+  if (text.includes("invoice_not_ready")) return "errors.invoiceNotReady";
+  if (text.includes("order_not_done")) return "errors.orderNotDone";
+  if (text.includes("number_range_locked")) return "errors.numberRangeLocked";
   if (text.includes("property_customer_mismatch")) return "errors.propertyMismatch";
   if (text.includes("invalid_transition")) return "errors.invalidTransition";
   if (/quote_service_only|order_service_only|provenance_service_only|item_reparent/.test(text)) {

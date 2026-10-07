@@ -15,6 +15,7 @@ describe("refKey", () => {
   it("distinguishes quote and order", () => {
     expect(refKey({ quoteId: "q1" })).toBe("quote_id:q1");
     expect(refKey({ orderId: "o1" })).toBe("order_id:o1");
+    expect(refKey({ invoiceId: "i1" })).toBe("invoice_id:i1");
   });
 });
 
@@ -29,6 +30,11 @@ describe("fetchItems", () => {
     const fake = createFakeSupabase({ [T]: { data: [], error: null } });
     await fetchItems(asClient(fake), { orderId: "o1" });
     expect(fake.calls).toContainEqual(expect.objectContaining({ method: "eq", args: ["order_id", "o1"] }));
+  });
+  it("reads the items of an invoice", async () => {
+    const fake = createFakeSupabase({ [T]: { data: [], error: null } });
+    await fetchItems(asClient(fake), { invoiceId: "i1" });
+    expect(fake.calls).toContainEqual(expect.objectContaining({ method: "eq", args: ["invoice_id", "i1"] }));
   });
   it("rejects on error", async () => {
     const fake = createFakeSupabase({ [T]: { data: null, error: new Error("boom") } });

@@ -4,7 +4,7 @@ import { diffAgainstQuote } from "./quoteDiff";
 
 const item = (over: Partial<DocumentItem>): DocumentItem => ({
   id: "i", kind: "item", name: "Position", description: null, catalog_item_id: null, item_no: null, quantity: 1, unit_code: "H87",
-  labour_price: 10, material_price: 5, vat_rate: 19, line_net: 15, sort_order: 0, org_id: "o", quote_id: null, order_id: null,
+  labour_price: 10, material_price: 5, vat_rate: 19, line_net: 15, sort_order: 0, org_id: "o", quote_id: null, order_id: null, invoice_id: null,
   source_item_id: null, created_at: "", updated_at: "", ...over,
 });
 

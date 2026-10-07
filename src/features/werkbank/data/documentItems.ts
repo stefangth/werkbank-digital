@@ -7,14 +7,16 @@ export type ItemDraft = Pick<
   DocumentItem,
   "kind" | "name" | "description" | "catalog_item_id" | "item_no" | "quantity" | "unit_code" | "labour_price" | "material_price" | "vat_rate"
 >;
-export type DocumentRef = { quoteId: string } | { orderId: string };
+export type DocumentRef = { quoteId: string } | { orderId: string } | { invoiceId: string };
 
 type Client = SupabaseClient<Database>;
 type ItemInsert = Database["werkbank"]["Tables"]["document_items"]["Insert"];
 
 /** The parent column and id of a document reference. */
-function refColumn(ref: DocumentRef): { column: "quote_id" | "order_id"; id: string } {
-  return "quoteId" in ref ? { column: "quote_id", id: ref.quoteId } : { column: "order_id", id: ref.orderId };
+function refColumn(ref: DocumentRef): { column: "quote_id" | "order_id" | "invoice_id"; id: string } {
+  if ("quoteId" in ref) return { column: "quote_id", id: ref.quoteId };
+  if ("orderId" in ref) return { column: "order_id", id: ref.orderId };
+  return { column: "invoice_id", id: ref.invoiceId };
 }
 
 /** Stable query-key part for a reference. */
@@ -23,15 +25,17 @@ export function refKey(ref: DocumentRef): string {
   return `${column}:${id}`;
 }
 
-/** The items of one quote or order in display order. A document id belongs to one org, so the
- *  parent id scopes the read (a literal `.eq("quote_id"|"order_id", ...)`: src/test/orgScoping.test.ts
+/** The items of one quote, order or invoice in display order. A document id belongs to one org, so the
+ *  parent id scopes the read (a literal `.eq("quote_id"|"order_id"|"invoice_id", ...)`: src/test/orgScoping.test.ts
  *  scans for it). */
 export async function fetchItems(client: Client, ref: DocumentRef): Promise<DocumentItem[]> {
   type Page = PromiseLike<{ data: DocumentItem[] | null; error: unknown }>;
   return fetchAllPages<DocumentItem>((from, to) =>
     ("quoteId" in ref
       ? client.schema("werkbank").from("document_items").select("*").eq("quote_id", ref.quoteId).order("sort_order").order("id").range(from, to)
-      : client.schema("werkbank").from("document_items").select("*").eq("order_id", ref.orderId).order("sort_order").order("id").range(from, to)) as unknown as Page,
+      : "orderId" in ref
+        ? client.schema("werkbank").from("document_items").select("*").eq("order_id", ref.orderId).order("sort_order").order("id").range(from, to)
+        : client.schema("werkbank").from("document_items").select("*").eq("invoice_id", ref.invoiceId).order("sort_order").order("id").range(from, to)) as unknown as Page,
   );
 }
 
@@ -40,7 +44,7 @@ export async function addItem(client: Client, orgId: string, ref: DocumentRef, d
     ...draft,
     org_id: orgId,
     sort_order: sortOrder,
-    ...("quoteId" in ref ? { quote_id: ref.quoteId } : { order_id: ref.orderId }),
+    ...("quoteId" in ref ? { quote_id: ref.quoteId } : "orderId" in ref ? { order_id: ref.orderId } : { invoice_id: ref.invoiceId }),
   };
   const { data, error } = await client.schema("werkbank").from("document_items")
     .insert(row)
