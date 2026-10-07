@@ -99,40 +99,71 @@ insert into storage.buckets (id, name, public) values
   ('werkbank-documents', 'werkbank-documents', false)
   on conflict (id) do nothing;
 
+-- The first path segment is cast to uuid only inside a CASE that is reached for our bucket and a
+-- uuid-shaped segment, so no other bucket's rows and no malformed path can raise 22P02: they are
+-- denied (hire-orders guarded-cast model, 20260717133506).
 create policy "Werkbank staff read assets"
   on storage.objects for select to authenticated
   using (
-    bucket_id = 'werkbank-assets'
-    and (public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
-      or public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'producer'))
+    case
+      when bucket_id = 'werkbank-assets' then
+        case when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then (public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin') or public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'producer'))
+          else false end
+      else false
+    end
   );
 create policy "Werkbank admins insert assets"
   on storage.objects for insert to authenticated
   with check (
-    bucket_id = 'werkbank-assets'
-    and public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+    case
+      when bucket_id = 'werkbank-assets' then
+        case when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+          else false end
+      else false
+    end
   );
 create policy "Werkbank admins update assets"
   on storage.objects for update to authenticated
   using (
-    bucket_id = 'werkbank-assets'
-    and public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+    case
+      when bucket_id = 'werkbank-assets' then
+        case when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+          else false end
+      else false
+    end
   )
   with check (
-    bucket_id = 'werkbank-assets'
-    and public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+    case
+      when bucket_id = 'werkbank-assets' then
+        case when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+          else false end
+      else false
+    end
   );
 create policy "Werkbank admins delete assets"
   on storage.objects for delete to authenticated
   using (
-    bucket_id = 'werkbank-assets'
-    and public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+    case
+      when bucket_id = 'werkbank-assets' then
+        case when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
+          else false end
+      else false
+    end
   );
 create policy "Werkbank staff read documents"
   on storage.objects for select to authenticated
   using (
-    bucket_id = 'werkbank-documents'
-    and (public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin')
-      or public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'producer'))
+    case
+      when bucket_id = 'werkbank-documents' then
+        case when (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then (public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'admin') or public.has_org_role(auth.uid(), ((storage.foldername(name))[1])::uuid, 'producer'))
+          else false end
+      else false
+    end
   );
 -- No write policies on werkbank-documents: only the service role writes there.

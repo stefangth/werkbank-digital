@@ -1,7 +1,7 @@
 -- Werkbank Teil 3 (R3, R4): document totals and list views, storage buckets and policies.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(46);
+SELECT plan(49);
 
 SET session_replication_role = replica;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -153,11 +153,17 @@ SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkba
   '42501', null, 'admin of A cannot insert into werkbank-assets/B');
 SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-documents','bbbbbbbb-0000-4000-b000-0000000000f1/x.pdf')$$,
   '42501', null, 'admin cannot insert into werkbank-documents');
+SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-assets','logos/logo.png')$$,
+  '42501', null, 'a non-uuid first segment is denied, not a 22P02 error');
 RESET ROLE;
+INSERT INTO storage.buckets (id, name) VALUES ('other-bucket-ts','other-bucket-ts');
+INSERT INTO storage.objects (bucket_id, name) VALUES ('other-bucket-ts','logos/readme.txt'), ('werkbank-documents','logos/x.pdf');
 INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-documents','bbbbbbbb-0000-4000-b000-0000000000f1/x.pdf');
 
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000f2');
 SET LOCAL ROLE authenticated;
+SELECT lives_ok($$SELECT count(*) FROM storage.objects$$, 'a select over objects with a non-uuid path in another bucket does not error');
+SELECT is((SELECT count(*)::int FROM storage.objects WHERE bucket_id = 'werkbank-documents' AND name = 'logos/x.pdf'), 0, 'non-uuid path in our bucket is invisible');
 SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-assets','bbbbbbbb-0000-4000-b000-0000000000f1/logo2.png')$$,
   '42501', null, 'producer cannot insert into werkbank-assets');
 SELECT is((SELECT count(*)::int FROM storage.objects WHERE bucket_id = 'werkbank-documents' AND name = 'bbbbbbbb-0000-4000-b000-0000000000f1/x.pdf'), 1,
