@@ -160,6 +160,15 @@ export function compareMigrations(repoMigrations, appliedMigrations) {
   return { missing, orphaned, mismatched, duplicated };
 }
 
+/**
+ * True when the query failed only because the project has never had a migration applied:
+ * `supabase_migrations.schema_migrations` is created by the first `supabase db push`, so a
+ * fresh project answers 42P01. That means "nothing applied", not an API failure.
+ */
+export function isNeverMigrated(status, body) {
+  return status === 400 && body.includes("42P01") && body.includes("supabase_migrations.schema_migrations");
+}
+
 /** Categories that should fail the run, most severe first. */
 export function blockingFailures(result, { allowMissing }) {
   return ["mismatched", "duplicated", "orphaned", "missing"].filter((category) => {
@@ -179,7 +188,11 @@ async function fetchAppliedMigrations(ref, token) {
       body: JSON.stringify({ query: "select version, name from supabase_migrations.schema_migrations" }),
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`Management API query failed: ${res.status} ${await res.text()}`);
+    if (!res.ok) {
+      const body = await res.text();
+      if (isNeverMigrated(res.status, body)) return [];
+      throw new Error(`Management API query failed: ${res.status} ${body}`);
+    }
     return parseAppliedRows(await res.json());
   } catch (e) {
     if (e.name === "AbortError") {
@@ -237,7 +250,7 @@ function reportMissing(missing, { blocking }) {
 async function main() {
   const options = parseCliOptions(process.argv.slice(2));
   const token = process.env.SUPABASE_ACCESS_TOKEN;
-  const ref = process.env.SUPABASE_PROJECT_REF || process.env.PROJECT_REF || "epweartpzwvcasrzyueh";
+  const ref = process.env.SUPABASE_PROJECT_REF || process.env.PROJECT_REF || "wmtbjajmnjxefrhkchts";
   if (!token) {
     console.error("SUPABASE_ACCESS_TOKEN is required");
     process.exit(2);

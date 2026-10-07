@@ -1,6 +1,6 @@
 # ADR-0013: Werkbank Digital is built as a removable module inside Showflow
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0014](0014-werkbank-as-separate-fork.md) (2026-10-07)
 **Date:** 2026-10-06
 **Deciders:** Owner (brainstorming session, 2026-10-06)
 

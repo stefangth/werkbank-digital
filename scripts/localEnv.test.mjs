@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PROD_PROJECT_REF = "epweartpzwvcasrzyueh";
+const PROD_PROJECT_REF = "wmtbjajmnjxefrhkchts";
 
 /** True if git's ignore rules would ignore `relPath`. */
 function isGitIgnored(relPath) {

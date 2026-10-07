@@ -75,7 +75,7 @@ jobs:
       # Single source of truth for the target project: check-migrations.mjs reads
       # PROJECT_REF when SUPABASE_PROJECT_REF is unset, so there is nothing here
       # that can be repointed to a different project than the deploy targets.
-      PROJECT_REF: epweartpzwvcasrzyueh
+      PROJECT_REF: wmtbjajmnjxefrhkchts
     steps:
       # Check out the exact commit CI tested. For workflow_run this is the CI run's
       # head SHA; for workflow_dispatch that expression is empty so checkout falls

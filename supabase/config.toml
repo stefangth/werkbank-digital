@@ -1,4 +1,4 @@
-project_id = "epweartpzwvcasrzyueh"
+project_id = "wmtbjajmnjxefrhkchts"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Auth — LOCAL STACK ONLY (config.toml configures the local `supabase start`
@@ -35,7 +35,7 @@ schemas = ["public", "graphql_public", "werkbank"]
 # these on every deploy. A function NOT listed here defaults to verify_jwt = true,
 # which would BREAK the public webhooks and the cron callers — so EVERY function in
 # supabase/functions/ must have a block below. These values mirror the live project
-# (epweartpzwvcasrzyueh); when you add a function, add its block here too.
+# (wmtbjajmnjxefrhkchts); when you add a function, add its block here too.
 #
 #   verify_jwt = true  → the gateway requires a valid JWT (a user session OR the
 #                        service-role key, which is itself a signed JWT). The handler
