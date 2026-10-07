@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -70,6 +70,8 @@ function toFormValues(p: CompanyProfile | null): CompanyProfileForm {
 function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
   const { t } = useTranslation("werkbank");
   const save = useSaveCompanyProfile();
+  // Save waits for a running logo upload, or it would store the previous logo_path.
+  const [logoUploading, setLogoUploading] = useState(false);
   const schema = useMemo(() => companyProfileSchema(t), [t]);
   const form = useForm<CompanyProfileForm>({ resolver: zodResolver(schema), defaultValues: toFormValues(profile) });
 
@@ -78,7 +80,7 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
   }, [profile, form]);
 
   const submit = form.handleSubmit((values) => {
-    if (save.isPending) return;
+    if (save.isPending || logoUploading) return;
     save.mutate(toCompanyProfileRow(values));
   });
 
@@ -126,7 +128,7 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
           <FormField
             control={form.control}
             name="logo_path"
-            render={({ field }) => <LogoUpload value={field.value} onChange={field.onChange} />}
+            render={({ field }) => <LogoUpload value={field.value} onChange={field.onChange} onPendingChange={setLogoUploading} />}
           />
           {text("street", "company.fields.street")}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -182,7 +184,7 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
           <div className="sm:max-w-48">{text("quote_validity_days", "company.fields.validity", { inputMode: "numeric" })}</div>
         </section>
 
-        <Button type="submit" disabled={save.isPending}>{t("common.save")}</Button>
+        <Button type="submit" disabled={save.isPending || logoUploading}>{t("common.save")}</Button>
       </form>
     </Form>
   );

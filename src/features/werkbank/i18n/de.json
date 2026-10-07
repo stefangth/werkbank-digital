@@ -220,7 +220,8 @@
       "alt": "Dein Logo",
       "tooLarge": "Das Logo ist größer als 1 MB",
       "wrongType": "Nimm eine PNG- oder JPEG-Datei",
-      "uploadFailed": "Das Logo konnte nicht hochgeladen werden. Versuche es bitte noch einmal."
+      "uploadFailed": "Das Logo konnte nicht hochgeladen werden. Versuche es bitte noch einmal.",
+      "uploading": "Das Logo wird hochgeladen"
     },
     "saved": "Firmendaten gespeichert",
     "loadFailed": "Die Firmendaten konnten nicht geladen werden. Versuche es bitte noch einmal.",

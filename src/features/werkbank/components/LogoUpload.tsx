@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,13 +8,26 @@ const LOGO_MAX_BYTES = 1024 * 1024;
 const LOGO_TYPES = ["image/png", "image/jpeg"] as const;
 
 /** Logo picker: PNG or JPEG up to 1 MB. A valid file is uploaded at once and its storage path
- *  handed to `onChange`; the path is saved with the rest of the profile. */
-export function LogoUpload({ value, onChange }: { value: string; onChange: (path: string) => void }) {
+ *  handed to `onChange`; the path is saved with the rest of the profile. `onPendingChange` reports
+ *  a running upload, so the form can hold Save until the new path is in. */
+export function LogoUpload({
+  value,
+  onChange,
+  onPendingChange,
+}: {
+  value: string;
+  onChange: (path: string) => void;
+  onPendingChange?: (pending: boolean) => void;
+}) {
   const { t } = useTranslation("werkbank");
   const upload = useUploadLogo();
   const preview = useLogoUrl(value || null);
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onPendingChange?.(upload.isPending);
+  }, [upload.isPending, onPendingChange]);
 
   const onPick = (file: File | undefined) => {
     if (!file) return;
@@ -54,6 +67,8 @@ export function LogoUpload({ value, onChange }: { value: string; onChange: (path
       </div>
       {error ? (
         <p role="alert" className="text-sm text-destructive">{error}</p>
+      ) : upload.isPending ? (
+        <p role="status" className="text-sm text-muted-foreground">{t("company.logo.uploading")}</p>
       ) : (
         <p className="text-sm text-muted-foreground">{t("company.logo.hint")}</p>
       )}

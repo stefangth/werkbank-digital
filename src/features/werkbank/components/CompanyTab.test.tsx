@@ -79,6 +79,23 @@ describe("CompanyTab", () => {
     expect(upserts(fake)).toHaveLength(0);
   });
 
+  it("disables Save while a logo upload is pending", async () => {
+    const fake = createFakeSupabase({ "werkbank.company_profiles": { data: null, error: null } });
+    let finish: (v: { error: null }) => void = () => {};
+    const upload = vi.fn(() => new Promise<{ error: null }>((resolve) => { finish = resolve; }));
+    Object.assign(client, fake, { storage: { from: () => ({ upload, createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: "https://signed/logo" }, error: null }) }) } });
+    renderTab();
+    await screen.findByLabelText("Firmenname");
+    const save = screen.getByRole("button", { name: "Speichern" });
+    expect(save).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("Logo"), { target: { files: [new File(["x"], "logo.png", { type: "image/png" })] } });
+    await waitFor(() => expect(save).toBeDisabled());
+    expect(screen.getByText("Das Logo wird hochgeladen")).toBeInTheDocument();
+    await act(async () => { finish({ error: null }); });
+    await waitFor(() => expect(save).toBeEnabled());
+    expect(screen.queryByText("Das Logo wird hochgeladen")).not.toBeInTheDocument();
+  });
+
   it("shows an alert when loading fails", async () => {
     seed({ data: null, error: { code: "42501", message: "denied" } });
     renderTab();

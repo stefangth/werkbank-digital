@@ -220,7 +220,8 @@
       "alt": "Your logo",
       "tooLarge": "The logo is larger than 1 MB",
       "wrongType": "Use a PNG or JPEG file",
-      "uploadFailed": "The logo could not be uploaded. Please try again."
+      "uploadFailed": "The logo could not be uploaded. Please try again.",
+      "uploading": "Uploading the logo"
     },
     "saved": "Company data saved",
     "loadFailed": "The company data could not be loaded. Please try again.",
