@@ -92,7 +92,6 @@
   },
   "catalog": {
     "errors": {
-      "itemNo": "Enter an item number",
       "name": "Enter a name",
       "unit": "Choose a unit",
       "price": "Enter an amount of 0 or more with at most two decimals",

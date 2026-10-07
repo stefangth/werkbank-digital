@@ -13,7 +13,7 @@ const price = (t: TFunction) => z.string().trim().regex(PRICE, t("catalog.errors
 
 export const catalogItemSchema = (t: TFunction) =>
   z.object({
-    item_no: z.string().trim().min(1, t("catalog.errors.itemNo")),
+    item_no: z.string(),
     name: z.string().trim().min(1, t("catalog.errors.name")),
     description: z.string(),
     category: z.string(),

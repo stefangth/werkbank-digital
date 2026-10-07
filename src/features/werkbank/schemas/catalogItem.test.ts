@@ -36,6 +36,12 @@ describe("catalogItemSchema", () => {
     expect(catalogItemSchema(t).safeParse({ ...valid, unit_code: "XYZ" }).success).toBe(false);
   });
 
+  it("accepts an empty item number and stores it as null", () => {
+    const parsed = catalogItemSchema(t).safeParse({ ...valid, item_no: "  " });
+    expect(parsed.success).toBe(true);
+    expect(toCatalogItemRow(catalogItemSchema(t).parse({ ...valid, item_no: "" })).item_no).toBeNull();
+  });
+
   it("rejects an empty name", () => {
     expect(catalogItemSchema(t).safeParse({ ...valid, name: "  " }).success).toBe(false);
   });

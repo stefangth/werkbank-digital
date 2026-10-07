@@ -92,7 +92,6 @@
   },
   "catalog": {
     "errors": {
-      "itemNo": "Gib eine Artikelnummer ein",
       "name": "Gib eine Bezeichnung ein",
       "unit": "Wähle eine Einheit",
       "price": "Gib einen Betrag ab 0 mit höchstens zwei Nachkommastellen ein",
