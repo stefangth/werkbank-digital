@@ -97,4 +97,15 @@ describe('handwerk help items', () => {
     expect(hw.some((i) => i.a.de.includes('§35a') && /Lohn/.test(i.a.de))).toBe(true);
     expect(hw.some((i) => /Stk/.test(i.a.de) && /pauschal/.test(i.a.de))).toBe(true);
   });
+
+  it('cover quotes, online acceptance, orders, scheduling and company data, and the order numbers in W4.4', () => {
+    const all = hw.map(text).join(' ').toLowerCase();
+    for (const topic of ['angebot', 'unterschrift', 'auftrag', 'nicht eingeplant', 'firmendaten', 'link', 'ip-adresse']) {
+      expect(all, topic).toContain(topic);
+    }
+    const numbering = hw.find((i) => i.id === 'W4.4')!;
+    expect(numbering.a.de).toMatch(/A-/);
+    expect(numbering.a.de).toMatch(/AU-/);
+    expect(numbering.a.en).toMatch(/AU-/);
+  });
 });

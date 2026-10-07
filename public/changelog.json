@@ -1,5 +1,57 @@
 [
   {
+    "version": "1.20.0",
+    "date": "2026-10-07",
+    "dateLabel": "October 7, 2026",
+    "title": "Vom Angebot zum Auftrag",
+    "changes": {
+      "new": [
+        {
+          "title": "Angebote",
+          "description": "Schreibe Angebote mit Leistungen aus deinem Katalog, freien Positionen, Titeln und Textzeilen und sieh vorab die PDF-Vorschau."
+        },
+        {
+          "title": "Angebote versenden",
+          "description": "Schicke ein Angebot per E-Mail mit PDF und persönlichem Link an deinen Kunden. Du kannst den Link verlängern, sperren oder durch erneutes Senden ersetzen."
+        },
+        {
+          "title": "Online-Annahme",
+          "description": "Dein Kunde nimmt das Angebot im Browser an oder lehnt es ab, mit Namen und Unterschrift. Du bekommst eine Benachrichtigung, der Kunde eine Bestätigung."
+        },
+        {
+          "title": "Versionen und Kopieren",
+          "description": "Überarbeite ein versendetes Angebot als neue Version oder kopiere es als Vorlage für den nächsten Kunden."
+        },
+        {
+          "title": "Aufträge",
+          "description": "Lege aus einem angenommenen Angebot einen Auftrag an oder erfasse Arbeit ohne Angebot direkt. Der Vergleich zeigt, was sich gegenüber dem Angebot geändert hat."
+        },
+        {
+          "title": "Termin und Monteure",
+          "description": "Plane Aufträge mit Datum, Uhrzeit und Monteuren ein und filtere die Liste nach Status, Monteur und Zeitraum."
+        },
+        {
+          "title": "Firmendaten",
+          "description": "Hinterlege Absender, Steuerdaten, Bankverbindung, Logo und Standardtexte, die auf deinen Angeboten erscheinen."
+        },
+        {
+          "title": "Nummernkreise",
+          "description": "Lege Präfix und nächste Nummer für Angebote und Aufträge selbst fest."
+        },
+        {
+          "title": "Dashboard-Kacheln",
+          "description": "Sieh auf einen Blick, welche Angebote angenommen sind, aber noch keinen Auftrag haben, und welche Aufträge noch keinen Termin haben."
+        }
+      ],
+      "improved": [
+        {
+          "title": "Kunden und Liegenschaften",
+          "description": "Auf der Detailseite siehst du jetzt die zugehörigen Angebote und Aufträge."
+        }
+      ]
+    }
+  },
+  {
     "version": "1.19.0",
     "date": "2026-10-07",
     "dateLabel": "October 7, 2026",

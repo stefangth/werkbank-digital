@@ -69,19 +69,19 @@ export async function setOrderStatus(client: Client, id: string, status: Order["
 
 /** Makes the technician set equal `artistIds`: deletes the missing, inserts the new. */
 export async function setOrderTechnicians(client: Client, orgId: string, orderId: string, artistIds: string[]): Promise<void> {
-  const table = () => client.schema("werkbank").from("order_technicians");
-  const { data, error } = await table().select("artist_id").eq("order_id", orderId);
+  const werkbank = client.schema("werkbank");
+  const { data, error } = await werkbank.from("order_technicians").select("artist_id").eq("org_id", orgId).eq("order_id", orderId);
   if (error) throw error;
   const current = new Set((data ?? []).map((r) => r.artist_id));
   const wanted = new Set(artistIds);
   const toDelete = [...current].filter((id) => !wanted.has(id));
   const toInsert = [...wanted].filter((id) => !current.has(id));
   if (toDelete.length) {
-    const res = await table().delete().eq("order_id", orderId).in("artist_id", toDelete);
+    const res = await werkbank.from("order_technicians").delete().eq("order_id", orderId).in("artist_id", toDelete);
     if (res.error) throw res.error;
   }
   if (toInsert.length) {
-    const res = await table().insert(toInsert.map((artist_id) => ({ org_id: orgId, order_id: orderId, artist_id })));
+    const res = await werkbank.from("order_technicians").insert(toInsert.map((artist_id) => ({ org_id: orgId, order_id: orderId, artist_id })));
     if (res.error) throw res.error;
   }
 }

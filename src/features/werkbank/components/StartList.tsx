@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/features/auth/AuthContext";
 import { useStartList } from "../hooks/useStartList";
 import { CATALOG_PATH, COMPANY_SETTINGS_PATH, CUSTOMERS_PATH, TECHNICIANS_PATH } from "../paths";
 
@@ -10,16 +11,18 @@ import { CATALOG_PATH, COMPANY_SETTINGS_PATH, CUSTOMERS_PATH, TECHNICIANS_PATH }
 export function StartList({ orgId }: { orgId: string | undefined }) {
   const { t } = useTranslation("werkbank");
   const { data, isLoading, isError } = useStartList(orgId);
+  const isAdmin = useAuth().hasRole("admin");
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError || !data) return <p className="text-sm text-destructive">{t("dashboard.startList.loadFailed")}</p>;
 
+  // The company profile is admin-only to edit, so a producer is not sent to a page they cannot save.
   const steps = [
-    { key: "company", to: COMPANY_SETTINGS_PATH, count: data.companyComplete ? 1 : 0, showCount: false },
+    ...(isAdmin ? [{ key: "company", to: COMPANY_SETTINGS_PATH, count: data.companyComplete ? 1 : 0, showCount: false }] : []),
     { key: "technicians", to: TECHNICIANS_PATH, count: data.technicians, showCount: true },
     { key: "catalog", to: CATALOG_PATH, count: data.catalogItems, showCount: true },
     { key: "customers", to: CUSTOMERS_PATH, count: data.customers, showCount: true },
-  ] as const;
+  ];
 
   return (
     <section aria-labelledby="start-list-title" className="space-y-3">

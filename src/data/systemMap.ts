@@ -211,7 +211,7 @@ export const SYSTEM_MAP_NODES: SystemMapNode[] = [
       Cite: "src/pages/UnsubscribePage.tsx · src/pages/AcceptInvitePage.tsx · handle-email-suppression · documenso-webhook",
     },
   },
-  // ---- edge functions (27)
+  // ---- edge functions (28)
   {
     id: "f_poll",
     column: "fn",
@@ -350,6 +350,24 @@ export const SYSTEM_MAP_NODES: SystemMapNode[] = [
       Effects: "none -- in-app notification only",
       Failure: "unrecognised event or unknown envelope id -> 200 {ignored:true} (never retry-storm) · already-countersigned order -> idempotent 200, no re-stamp, no second notification",
       Cite: "documenso-webhook/index.ts",
+    },
+  },
+  {
+    id: "f_wbquotes",
+    column: "fn",
+    group: "Quotes",
+    kind: "fn",
+    label: "werkbank-quotes",
+    sub: "admin/producer ∨ link token",
+    subsystems: ["email"],
+    detail: {
+      Trigger: "Actions: preview, send, resend, download-url (quote page, admin/producer); view and decide (public quote page /quote/:token, no login)",
+      Auth: "internal actions: requireOrgRole(org_id,[admin,producer]) on a handwerk org · view/decide: the link token only, looked up by its SHA-256 · verify_jwt=false",
+      Reads: "quotes, line items, totals, customer, property, company profile, logo",
+      Writes: "quotes status, sent_at, sent_to, pdf_path, pdf_sha256, access_token_hash (send/resend, service role only behind the lock_quote trigger; resend mints a new token) · quote_acceptances via the record_quote_decision RPC (decide: acceptance row with name, signature, IP, user agent, consent text, document hash + status in one call) · Storage werkbank-documents (sent PDF, accepted PDF, drawn signature, content-addressed) · notifications quote_accepted / quote_rejected to every admin and producer of the org",
+      Effects: "quote-sent email with the PDF to each recipient (German, Reply-To the company email) · after a decision: quote-decided email to the office and quote-decision-confirmation email to the customer (accepted PDF attached) · all best-effort, a failed email never rolls a send or a decision back",
+      Failure: "view/decide answer 404 not_found or 410 superseded | revoked | decided | expired, checked in that order · a failed email leaves the quote sent (email_sent:false, UI offers Send again) · a crash before record_quote_decision leaves only unreferenced files · preview persists nothing",
+      Cite: "werkbank-quotes/index.ts · _shared/werkbank/ · *_werkbank_* migrations (record_quote_decision, lock_quote)",
     },
   },
   {
@@ -1029,12 +1047,14 @@ export const SYSTEM_MAP_EDGES: SystemMapEdge[] = [
   { from: "u_prod", to: "f_schema" },
   { from: "u_prod", to: "f_preview" },
   { from: "u_prod", to: "f_sheet" },
+  { from: "u_prod", to: "f_wbquotes" },
   { from: "u_super", to: "f_provision" },
   { from: "u_super", to: "f_exportorg" },
   { from: "u_super", to: "f_metrics" },
   { from: "u_public", to: "f_unsub" },
   { from: "u_public", to: "f_suppress" },
   { from: "u_public", to: "f_documenso" },
+  { from: "u_public", to: "f_wbquotes" },
   { from: "u_public", to: "f_exchange_inv" },
   // user → db (direct guarded mutations)
   { from: "u_artist", to: "d_bookings", label: "accept / decline" },
@@ -1053,6 +1073,7 @@ export const SYSTEM_MAP_EDGES: SystemMapEdge[] = [
   { from: "f_confdig", to: "f_send" },
   { from: "f_health", to: "f_send" },
   { from: "f_risk", to: "f_send" },
+  { from: "f_wbquotes", to: "f_send" },
   // fn → db writes
   { from: "f_poll", to: "d_showdates" },
   { from: "f_poll", to: "d_shows" },
@@ -1068,6 +1089,7 @@ export const SYSTEM_MAP_EDGES: SystemMapEdge[] = [
   { from: "f_risk", to: "d_notif" },
   { from: "f_hireorders", to: "d_notif" },
   { from: "f_documenso", to: "d_notif" },
+  { from: "f_wbquotes", to: "d_notif" },
   { from: "f_offerdig", to: "d_bookings" },
   { from: "f_confdig", to: "d_bookings" },
   { from: "f_confdig", to: "d_notif" },

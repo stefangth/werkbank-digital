@@ -792,10 +792,66 @@ export const HELP_ITEMS: readonly HelpItem[] = [
   },
   {
     id: 'W4.4', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Einstellungen · Nummernkreise', updated: '2026-10-07',
-    q: { en: 'How do I change the format of customer numbers?', de: 'Wie ändere ich das Format der Kundennummern?' },
+    q: { en: 'How do I change the format of customer, quote and order numbers?', de: 'Wie ändere ich das Format der Kunden-, Angebots- und Auftragsnummern?' },
     a: {
-      en: 'Open Settings, then the Numbering tab. Set the prefix (up to 10 characters, K- by default) and the next number, and the preview shows what the next customer will get. Only admins can change it. Numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import. A number that is already taken is skipped, and the next customer gets the next free one.',
-      de: 'Öffne Einstellungen und dort den Tab Nummernkreise. Lege das Präfix fest (bis zu 10 Zeichen, standardmäßig K-) und die nächste Nummer, die Vorschau zeigt, was der nächste Kunde bekommt. Ändern dürfen das nur Admins. Nummern, die du von Hand eingibst oder in einem anderen Format importierst, bleiben erhalten, verschieben den Zähler aber nicht. Prüf die nächste Nummer deshalb nach einem großen Import. Ist eine Nummer schon vergeben, wird sie übersprungen und der nächste Kunde bekommt die nächste freie.',
+      en: 'Open Settings, then the Numbering tab. Customers (K- by default), quotes (A-) and orders (AU-) each have their own range. Set the prefix (up to 10 characters) and the next number, and the preview shows what the next one will get. A new version of a quote keeps its number and adds a suffix from version 2, for example A-0001-2. Only admins can change it. Customer numbers you typed by hand or imported in another format are kept, but they do not move the counter, so check the next number after a large import. A number that is already taken is skipped, and the next customer gets the next free one.',
+      de: 'Öffne Einstellungen und dort den Tab Nummernkreise. Kunden (standardmäßig K-), Angebote (A-) und Aufträge (AU-) haben je einen eigenen Nummernkreis. Lege das Präfix fest (bis zu 10 Zeichen) und die nächste Nummer, die Vorschau zeigt, was die nächste bekommt. Eine neue Version eines Angebots behält ihre Nummer und bekommt ab Version 2 ein Suffix, zum Beispiel A-0001-2. Ändern dürfen das nur Admins. Kundennummern, die du von Hand eingibst oder in einem anderen Format importierst, bleiben erhalten, verschieben den Zähler aber nicht. Prüf die nächste Nummer deshalb nach einem großen Import. Ist eine Nummer schon vergeben, wird sie übersprungen und der nächste Kunde bekommt die nächste freie.',
+    },
+  },
+  {
+    id: 'W5.1', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Angebote', updated: '2026-10-07',
+    q: { en: 'How do I create a quote, and what is the labour share for?', de: 'Wie lege ich ein Angebot an, und wofür ist der Lohnanteil?' },
+    a: {
+      en: 'Open Quotes, choose Add quote and pick the customer. The draft gets the next number, for example A-0001. Fill in the property, a subject, the validity date and then the line items: add services from the catalog, free lines, titles to group them and text lines. Prices are net, the totals show net, VAT and gross. The totals also show the labour share, which private customers can claim under §35a of the German income tax act, so enter labour and material separately. A draft saves as you type and the PDF preview shows exactly what the customer gets.',
+      de: 'Öffne Angebote, wähle Angebot anlegen und such den Kunden aus. Der Entwurf bekommt die nächste Nummer, zum Beispiel A-0001. Trag Liegenschaft, Betreff und Gültigkeitsdatum ein und danach die Positionen: Leistungen aus dem Katalog, freie Positionen, Titel zum Gliedern und Textzeilen. Die Preise sind netto, die Summen zeigen netto, Umsatzsteuer und brutto. Dazu steht dort der Lohnanteil, den Privatkunden nach §35a EStG geltend machen können. Gib deshalb Lohn und Material getrennt ein. Ein Entwurf speichert beim Tippen, und die PDF-Vorschau zeigt genau das, was der Kunde bekommt.',
+    },
+  },
+  {
+    id: 'W5.2', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Angebote · Versionen', updated: '2026-10-07',
+    q: { en: 'What happens when I change a quote that was already sent, and how do I copy one?', de: 'Was passiert, wenn ich ein bereits versendetes Angebot ändere, und wie kopiere ich eines?' },
+    a: {
+      en: 'A sent quote is locked. Choose Revise to start a new version: it keeps the quote number and adds a suffix from version 2, for example A-0001-2, and the earlier version is marked as replaced. The links of replaced versions stop working. Under Versions you can open every version. Copy creates a new draft with its own number from any quote, which is the way to reuse a quote for another customer. Only drafts can be deleted.',
+      de: 'Ein versendetes Angebot ist gesperrt. Mit Überarbeiten startest du eine neue Version: Sie behält die Angebotsnummer und bekommt ab Version 2 ein Suffix, zum Beispiel A-0001-2, die frühere Version gilt dann als ersetzt. Die Links ersetzter Versionen funktionieren nicht mehr. Unter Versionen öffnest du jede Version. Kopieren legt von jedem Angebot einen neuen Entwurf mit eigener Nummer an, so verwendest du ein Angebot für einen anderen Kunden weiter. Löschen kannst du nur Entwürfe.',
+    },
+  },
+  {
+    id: 'W5.3', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Angebote · Senden', updated: '2026-10-07',
+    q: { en: 'How do I send a quote, and how long does the customer link work?', de: 'Wie sende ich ein Angebot, und wie lange gilt der Link für den Kunden?' },
+    a: {
+      en: 'Choose Send, check the recipients and the message and send. The customer gets the PDF and a personal link to accept or decline online. Customer emails are in German when your organization has language packages on, which is the default for trade businesses. The link works until the validity date of the quote. Extend moves the date, Revoke link switches the link off, and Send again replaces the link: the customer gets the same PDF with a new link and the old one stops working. A quote can only be sent when your company data is complete. If the email does not go out, the quote still counts as sent and you can send it again.',
+      de: 'Wähle Senden, prüf Empfänger und Nachricht und sende. Der Kunde bekommt das PDF und einen persönlichen Link, um online anzunehmen oder abzulehnen. Die E-Mails an Kunden sind auf Deutsch, wenn deine Organisation Sprachpakete aktiviert hat, bei Handwerksbetrieben ist das die Voreinstellung. Der Link gilt bis zum Gültigkeitsdatum des Angebots. Verlängern schiebt das Datum, Link sperren schaltet den Link ab, und Erneut senden ersetzt den Link: Der Kunde bekommt dasselbe PDF mit einem neuen Link, der alte funktioniert danach nicht mehr. Senden geht nur, wenn deine Firmendaten vollständig sind. Geht die E-Mail nicht raus, gilt das Angebot trotzdem als versendet, und du kannst es erneut senden.',
+    },
+  },
+  {
+    id: 'W5.4', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Angebote · Online-Annahme', updated: '2026-10-07',
+    q: { en: 'What does the customer see when they accept a quote online, and what is recorded?', de: 'Was sieht der Kunde bei der Online-Annahme, und was wird festgehalten?' },
+    a: {
+      en: 'The link opens a page without a login with the positions, totals and the PDF. To accept, the customer enters their full name, signs by typing or drawing and ticks the declaration. They can also decline and leave a comment. You get an in-app notification and the customer gets a confirmation email. The app records the name, the signature, the time, the IP address (best effort, it can be missing), the browser and a hash of the exact document that was accepted. This is a simple electronic signature with an audit trail. It is enough for a work order, but it is not a qualified signature. The decision is final: a decided quote cannot be answered again.',
+      de: 'Der Link öffnet eine Seite ohne Anmeldung mit Positionen, Summen und dem PDF. Zum Annehmen gibt der Kunde seinen vollständigen Namen ein, unterschreibt getippt oder gezeichnet und bestätigt die Erklärung. Er kann auch ablehnen und einen Kommentar hinterlassen. Du bekommst eine Benachrichtigung in der App, und der Kunde bekommt eine Bestätigung per E-Mail. Festgehalten werden Name, Unterschrift, Zeitpunkt, IP-Adresse (nach Möglichkeit, sie kann fehlen), Browser und ein Hash des genau angenommenen Dokuments. Das ist eine einfache elektronische Signatur mit Nachweis. Für einen Arbeitsauftrag reicht sie, eine qualifizierte Signatur ist sie nicht. Die Entscheidung ist endgültig: Ein entschiedenes Angebot lässt sich nicht noch einmal beantworten.',
+    },
+  },
+  {
+    id: 'W5.5', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Aufträge', updated: '2026-10-07',
+    q: { en: 'How do I create an order, and how do I compare it with the quote?', de: 'Wie lege ich einen Auftrag an, und wie vergleiche ich ihn mit dem Angebot?' },
+    a: {
+      en: 'For an accepted quote, choose Create order on the quote. The order gets the next number, for example AU-0001, and copies the positions, and each quote can have only one order. For work without a quote, choose Add order on the Orders page and pick the customer. On an order that came from a quote you can edit the positions, and the comparison shows what changed, what was added and what is missing compared to the quote. Mark an order as in progress and done as the work goes on. Cancelling is final: you confirm it first, and a cancelled order is locked for good.',
+      de: 'Bei einem angenommenen Angebot wählst du am Angebot Auftrag anlegen. Der Auftrag bekommt die nächste Nummer, zum Beispiel AU-0001, übernimmt die Positionen, und zu jedem Angebot gibt es nur einen Auftrag. Für Arbeit ohne Angebot wählst du auf der Seite Aufträge Auftrag anlegen und suchst den Kunden aus. Bei einem Auftrag aus einem Angebot kannst du die Positionen ändern, und der Vergleich zeigt, was sich geändert hat, was neu ist und was gegenüber dem Angebot fehlt. Setz den Auftrag auf In Arbeit und Erledigt, wie die Arbeit vorangeht. Stornieren ist endgültig: Du bestätigst es vorher, und ein stornierter Auftrag bleibt gesperrt.',
+    },
+  },
+  {
+    id: 'W5.6', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Aufträge · Einsatz', updated: '2026-10-07',
+    q: { en: 'How do I schedule an order and assign technicians?', de: 'Wie plane ich einen Auftrag ein und weise Monteure zu?' },
+    a: {
+      en: 'Open the order and use the Einsatz card: pick the date, then the time, and choose one or more technicians. The time needs a date, and removing the date removes the time. Technicians are optional. An order without a date shows as Not scheduled in the list and counts in the tile Orders without a date on the dashboard. In the list you can filter by status, technician and a date range.',
+      de: 'Öffne den Auftrag und nutze die Karte Einsatz: Wähl das Datum, dann die Uhrzeit, und such einen oder mehrere Monteure aus. Die Uhrzeit braucht ein Datum, und wenn du das Datum entfernst, entfällt auch die Uhrzeit. Monteure sind optional. Ein Auftrag ohne Datum steht in der Liste als Nicht eingeplant und zählt in der Kachel Aufträge ohne Termin auf dem Dashboard. In der Liste filterst du nach Status, Monteur und Zeitraum.',
+    },
+  },
+  {
+    id: 'W5.7', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Einstellungen · Firmendaten', updated: '2026-10-07',
+    q: { en: 'What are the company data for, and what do I need before the first quote?', de: 'Wofür sind die Firmendaten, und was brauche ich vor dem ersten Angebot?' },
+    a: {
+      en: 'The company data are the sender on your quotes: company name, address, email and either a tax number or a VAT ID are required before a quote can be sent. Phone, website, register entries and bank details are optional. You can also set the intro and closing text, the payment terms and how many days a quote stays valid. Upload your logo as a PNG or JPEG of at most 1 MB, it appears on the PDF. Only admins can edit the company data, and the dashboard step Fill in company details is shown to admins only.',
+      de: 'Die Firmendaten sind der Absender auf deinen Angeboten: Firmenname, Adresse, E-Mail und entweder eine Steuernummer oder eine USt-IdNr. brauchst du, bevor ein Angebot gesendet werden kann. Telefon, Webseite, Registerangaben und Bankverbindung sind optional. Außerdem legst du Einleitung, Schlusstext, Zahlungsbedingungen und die Gültigkeit in Tagen fest. Lade dein Logo als PNG oder JPEG mit höchstens 1 MB hoch, es erscheint auf dem PDF. Bearbeiten dürfen die Firmendaten nur Admins, und der Schritt Firmendaten ausfüllen auf dem Dashboard wird nur Admins angezeigt.',
     },
   },
 ] as const;

@@ -14,7 +14,7 @@ const COMPLETE = {
   email: "info@muster.example", tax_number: "201/123/45678", vat_id: null,
 };
 
-function renderList(counts: { artists: number; items: number; customers: number }, company: unknown = null) {
+function renderList(counts: { artists: number; items: number; customers: number }, company: unknown = null, isAdmin = true) {
   Object.assign(
     client,
     createFakeSupabase({
@@ -28,6 +28,7 @@ function renderList(counts: { artists: number; items: number; customers: number 
     <MemoryRouter>
       <StartList orgId="org-1" />
     </MemoryRouter>,
+    { authOverrides: { hasRole: ((r: string) => (r === "admin" ? isAdmin : r === "producer")) as never } },
   );
 }
 
@@ -67,5 +68,15 @@ describe("StartList", () => {
     const company = (await screen.findByRole("link", { name: /Fill in company details/ })).closest("li")!;
     await waitFor(() => expect(screen.getByTestId("step-done")).toBeInTheDocument());
     expect(within(company).queryByTestId("step-done")).not.toBeInTheDocument();
+  });
+
+  it("hides the company step from a producer", async () => {
+    renderList({ artists: 0, items: 0, customers: 0 }, null, false);
+    const links = await screen.findAllByRole("link");
+    expect(links.map((l) => l.textContent)).toEqual([
+      "Add technicians",
+      "Add or import services",
+      "Add or import customers",
+    ]);
   });
 });
