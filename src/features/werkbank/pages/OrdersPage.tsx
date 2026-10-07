@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarDays, ClipboardList } from "lucide-react";
@@ -100,7 +100,17 @@ export function OrdersPage() {
   const [to, setTo] = useState<string | null>(null);
   // The dashboard links here with ?unscheduled=1.
   const [params] = useSearchParams();
-  const [unscheduled, setUnscheduled] = useState(params.get("unscheduled") === "1");
+  const urlUnscheduled = params.get("unscheduled") === "1";
+  const [unscheduled, setUnscheduled] = useState(urlUnscheduled);
+  // The page stays mounted when another dashboard link changes the params: apply them again.
+  useEffect(() => {
+    setUnscheduled(urlUnscheduled);
+    if (urlUnscheduled) {
+      setFrom(null);
+      setTo(null);
+    }
+  }, [urlUnscheduled]);
+  const emptyRange = !!from && !!to && from > to;
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(
@@ -185,7 +195,11 @@ export function OrdersPage() {
           </div>
 
           {visible.length === 0 ? (
-            <EmptyState size="inline" title={t("orders.noMatches")} reason={t("orders.noMatchesReason")} />
+            <EmptyState
+              size="inline"
+              title={emptyRange && !unscheduled ? t("orders.range.invalid") : t("orders.noMatches")}
+              reason={t("orders.noMatchesReason")}
+            />
           ) : (
             <Table>
               <TableHeader>

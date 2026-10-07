@@ -112,6 +112,21 @@ describe("QuotesPage", () => {
     expect(await screen.findByRole("button", { name: "Ohne Auftrag" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("applies the dashboard filters again when the search params change while mounted", async () => {
+    state.rows = [q({ id: "q1", quote_no: "A-0001", status: "draft" }), q({ id: "q2", quote_no: "A-0002", status: "accepted", has_order: false })];
+    const { rerender } = render();
+    await screen.findByText("A-0001");
+    expect(screen.getByRole("button", { name: "Ohne Auftrag" })).toHaveAttribute("aria-pressed", "false");
+    state.search = "?status=accepted&noOrder=1";
+    rerender(<QuotesPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ohne Auftrag" })).toHaveAttribute("aria-pressed", "true"));
+    expect(screen.queryByText("A-0001")).not.toBeInTheDocument();
+    state.search = "";
+    rerender(<QuotesPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ohne Auftrag" })).toHaveAttribute("aria-pressed", "false"));
+    expect(screen.getByText("A-0001")).toBeInTheDocument();
+  });
+
   it("shows no notice when every accepted quote has an order", async () => {
     state.rows = [q({ id: "q5", status: "accepted", has_order: true })];
     render();

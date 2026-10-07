@@ -715,7 +715,8 @@
     "range": {
       "from": "Von",
       "to": "Bis",
-      "reset": "Zeitraum zurücksetzen"
+      "reset": "Zeitraum zurücksetzen",
+      "invalid": "Das Startdatum liegt nach dem Enddatum."
     },
     "unscheduled": "Nicht eingeplant",
     "status": {

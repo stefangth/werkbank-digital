@@ -715,7 +715,8 @@
     "range": {
       "from": "From",
       "to": "To",
-      "reset": "Reset date range"
+      "reset": "Reset date range",
+      "invalid": "The start date is after the end date."
     },
     "unscheduled": "Not scheduled",
     "status": {

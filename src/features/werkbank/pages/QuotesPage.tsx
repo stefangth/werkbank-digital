@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FileText } from "lucide-react";
@@ -88,10 +88,15 @@ export function QuotesPage() {
   // The dashboard links here with ?status=accepted&noOrder=1; an unknown status is ignored.
   const [params] = useSearchParams();
   const urlStatus = params.get("status");
-  const [status, setStatus] = useState(
-    urlStatus && (QUOTE_DISPLAY_STATUSES as readonly string[]).includes(urlStatus) ? urlStatus : ALL,
-  );
-  const [noOrderOnly, setNoOrderOnly] = useState(params.get("noOrder") === "1");
+  const urlNoOrder = params.get("noOrder") === "1";
+  const statusFromUrl = urlStatus && (QUOTE_DISPLAY_STATUSES as readonly string[]).includes(urlStatus) ? urlStatus : ALL;
+  const [status, setStatus] = useState(statusFromUrl);
+  const [noOrderOnly, setNoOrderOnly] = useState(urlNoOrder);
+  // The page stays mounted when another dashboard link changes the params: apply them again.
+  useEffect(() => {
+    setStatus(statusFromUrl);
+    setNoOrderOnly(urlNoOrder);
+  }, [statusFromUrl, urlNoOrder]);
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(() => {
