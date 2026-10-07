@@ -59,7 +59,7 @@ export function parseSignature(input: unknown): ParsedSignature | null {
  * version suffix, so the text names the exact version that was shown.
  */
 export const QUOTE_CONSENT_TEXT =
-  "Ich nehme das Angebot {quote_no} in der hier angezeigten Fassung verbindlich an und bestätige, dass ich berechtigt bin, diesen Auftrag zu erteilen. Meine elektronische Unterschrift gilt als meine eigenhändige Unterschrift.";
+  "Ich nehme das Angebot {quote_no} in der hier angezeigten Fassung einschließlich der darin genannten Bedingungen verbindlich an und bestätige, dass ich berechtigt bin, diesen Auftrag zu erteilen. Mir ist bewusst, dass ich diese Erklärung elektronisch abgebe und sie rechtsverbindlich ist.";
 
 export function quoteConsentText(quoteNo: string): string {
   return QUOTE_CONSENT_TEXT.replace("{quote_no}", quoteNo);

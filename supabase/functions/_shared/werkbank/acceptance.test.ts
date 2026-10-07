@@ -48,3 +48,11 @@ Deno.test("the consent text names the quote, is German and has no dashes", () =>
   assert(!/[–—]/.test(text));
   assert(!/\b(du|dich|dein)\b/i.test(text));
 });
+
+Deno.test("the consent text does not claim the written form of a handwritten signature", () => {
+  // An e-signature on a web page is not §126/§126a BGB written form; the text must not say so.
+  const text = quoteConsentText("A-0042");
+  assert(!/eigenhändig|handschriftlich/i.test(text));
+  assert(text.includes("einschließlich der darin genannten Bedingungen"));
+  assert(text.includes("elektronisch"));
+});

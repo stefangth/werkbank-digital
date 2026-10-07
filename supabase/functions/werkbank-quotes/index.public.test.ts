@@ -57,8 +57,8 @@ interface Setup {
   stamp?: Record<string, unknown> | null;
   /** The quote as re-read by id after a lost status update (defaults to `quote`). */
   reloaded?: Record<string, unknown> | null;
-  /** Error of the acceptance insert, e.g. a unique violation. */
-  insertError?: unknown;
+  /** What werkbank.record_quote_decision returns (default "ok"). */
+  rpc?: { data?: unknown; error?: unknown };
   profile?: Record<string, unknown>;
   opts?: FakeDepsOptions;
 }
@@ -71,7 +71,6 @@ function setup(s: Setup = {}) {
       { when: { id: QUOTE, org_id: ORG }, data: s.reloaded ?? (s.quote === undefined ? quoteRow() : s.quote) },
     ],
     "werkbank.quote_acceptances": [
-      { when: { __write: true }, data: s.insertError ? null : { id: "acc-1" }, error: s.insertError ?? null },
       { data: { decision: "accepted" } },
     ],
     "werkbank.document_items": { data: items, error: null },
@@ -91,6 +90,7 @@ function setup(s: Setup = {}) {
     now: NOW,
     tables,
     usersById: { "u-admin": { email: "chef@muster.de" }, "u-prod": { email: "planung@muster.de" } },
+    rpcs: { "werkbank.record_quote_decision": s.rpc ?? { data: "ok", error: null } },
     ...s.opts,
   });
   const emails: EmailMessage[] = [];
@@ -126,7 +126,7 @@ const rejectBody = (over: Record<string, unknown> = {}) => ({
 
 function writes(calls: { table: string; method: string }[]) {
   return calls.filter((c) =>
-    ["update", "insert", "upsert", "delete", "upload", "remove"].includes(c.method)
+    ["update", "insert", "upsert", "delete", "upload", "remove", "rpc"].includes(c.method)
   );
 }
 const notificationInserts = (calls: { table: string; method: string; args: unknown[] }[]) =>
@@ -281,53 +281,63 @@ Deno.test("an unknown decision is 400 bad_request", async () => {
 
 // ── decide: accept ───────────────────────────────────────────────────────────
 
-Deno.test("a valid accept records, signs, renders, stamps, notifies and confirms", async () => {
+const RPC = "rpc:werkbank.record_quote_decision";
+const rpcArgs = (calls: { table: string; args: unknown[] }[]) =>
+  calls.filter((c) => c.table === RPC).map((c) => c.args[0] as Record<string, unknown>);
+const removedPaths = (calls: { method: string; args: unknown[] }[]) =>
+  calls.filter((c) => c.method === "remove").flatMap((c) => c.args[0] as string[]);
+
+/** Replaces werkbank.record_quote_decision with a call that never returns (the isolate dies). */
+function crashAtDecision(t: ReturnType<typeof setup>) {
+  const original = t.deps.admin.schema.bind(t.deps.admin);
+  t.deps.admin.schema = ((name: "werkbank") => ({
+    ...original(name),
+    rpc: () => Promise.reject(new Error("isolate killed")),
+  })) as unknown as typeof t.deps.admin.schema;
+}
+
+const sigPath = async () => `${ORG}/signatures/${QUOTE}-${(await sha256Hex(PNG)).slice(0, 16)}.png`;
+const acceptedPath = async () => `${ORG}/quotes/${QUOTE}-accepted-${(await sha256Hex(ACCEPTED_PDF)).slice(0, 16)}.pdf`;
+
+Deno.test("a valid accept stores the files, records the decision in one call, notifies and confirms", async () => {
   const t = setup();
   const res = await handle(request(acceptBody()), t.deps, t.render);
   assertEquals(res.status, 200);
   const body = await res.json();
   assertEquals(body.ok, true);
+  assertEquals(body.pdf_url, `https://signed.test/werkbank-documents/${await acceptedPath()}`);
 
-  const acceptedSha = await sha256Hex(ACCEPTED_PDF);
-  const acceptedPath = `${ORG}/quotes/${QUOTE}-accepted-${acceptedSha.slice(0, 16)}.pdf`;
-  const sigPath = `${ORG}/signatures/${QUOTE}.png`;
-  assertEquals(body.pdf_url, `https://signed.test/werkbank-documents/${acceptedPath}`);
-
-  // Order: the acceptance row is the gate and comes first.
-  const sequence = writes(t.calls).map((c) => `${c.table}:${c.method}`);
-  assertEquals(sequence, [
-    "werkbank.quote_acceptances:insert",
+  // Files first, then the single atomic decision, then the side effects. The edge function never
+  // writes quote_acceptances or quotes itself.
+  assertEquals(writes(t.calls).map((c) => `${c.table}:${c.method}`), [
     "storage:werkbank-documents:upload",
     "storage:werkbank-documents:upload",
-    "werkbank.quotes:update",
+    `${RPC}:rpc`,
     "notifications:insert",
   ]);
 
-  const insert = t.calls.find((c) => c.table === "werkbank.quote_acceptances" && c.method === "insert");
-  assertExists(insert);
-  assertEquals(insert.args[0], {
-    org_id: ORG,
-    quote_id: QUOTE,
-    decision: "accepted",
-    comment: null,
-    signer_name: "Anna Muster",
-    method: "drawn",
-    typed_name: null,
-    signature_image_path: sigPath,
-    decided_at: NOW.toISOString(),
-    ip: "203.0.113.7",
-    user_agent: "TestBrowser/1.0",
-    consent_text: quoteConsentText("A-0042"),
-    document_sha256: SENT_SHA,
-  });
+  assertEquals(rpcArgs(t.calls), [{
+    p_quote: QUOTE,
+    p_decision: "accepted",
+    p_signer_name: "Anna Muster",
+    p_method: "drawn",
+    p_typed_name: null,
+    p_signature_image_path: await sigPath(),
+    p_ip: "203.0.113.7",
+    p_user_agent: "TestBrowser/1.0",
+    p_consent_text: quoteConsentText("A-0042"),
+    p_comment: null,
+    p_accepted_pdf_path: await acceptedPath(),
+  }]);
 
   const uploads = t.calls.filter((c) => c.method === "upload");
-  assertEquals(uploads[0].args[0], sigPath);
+  assertEquals(uploads[0].args[0], await sigPath(), "content-addressed signature");
   assertEquals(uploads[0].args[1], PNG);
   assertEquals((uploads[0].args[2] as { upsert?: boolean }).upsert, false);
-  assertEquals(uploads[1].args[0], acceptedPath);
+  assertEquals(uploads[1].args[0], await acceptedPath(), "content-addressed accepted PDF");
   assertEquals(uploads[1].args[1], ACCEPTED_PDF);
   assertEquals((uploads[1].args[2] as { upsert?: boolean }).upsert, false);
+  assertEquals(removedPaths(t.calls), []);
 
   // The accepted PDF is the sent document (its date) plus the signature block.
   assertEquals(t.rendered.length, 1);
@@ -339,11 +349,6 @@ Deno.test("a valid accept records, signs, renders, stamps, notifies and confirms
     signaturePngDataUrl: PNG_URL,
     typedName: undefined,
   });
-
-  const update = t.calls.find((c) => c.table === "werkbank.quotes" && c.method === "update");
-  assertExists(update);
-  assertEquals(update.args[0], { status: "accepted", accepted_pdf_path: acceptedPath });
-  assert(t.calls.some((c) => c.table === "werkbank.quotes" && c.method === "eq" && c.args[0] === "status" && c.args[1] === "sent"));
 
   const notes = notificationInserts(t.calls);
   assertEquals(notes.length, 1);
@@ -389,51 +394,99 @@ Deno.test("a valid accept records, signs, renders, stamps, notifies and confirms
   assertEquals(t.emails.length, 3);
 });
 
-Deno.test("a typed accept stores the typed name and uploads no image", async () => {
+Deno.test("a typed accept passes the typed name and uploads no image", async () => {
   const t = setup();
   const res = await handle(request(acceptBody({ signature: { method: "typed", typedName: "Anna Muster" } })), t.deps, t.render);
   assertEquals(res.status, 200);
-  const insert = t.calls.find((c) => c.table === "werkbank.quote_acceptances" && c.method === "insert");
-  assertExists(insert);
-  const row = insert.args[0] as Record<string, unknown>;
-  assertEquals(row.method, "typed");
-  assertEquals(row.typed_name, "Anna Muster");
-  assertEquals(row.signature_image_path, null);
+  const [args] = rpcArgs(t.calls);
+  assertEquals(args.p_method, "typed");
+  assertEquals(args.p_typed_name, "Anna Muster");
+  assertEquals(args.p_signature_image_path, null);
   assertEquals(t.calls.filter((c) => c.method === "upload").length, 1, "only the accepted PDF");
   assertEquals(t.rendered[0].acceptance?.typedName, "Anna Muster");
   assertEquals(t.rendered[0].acceptance?.signaturePngDataUrl, undefined);
 });
 
-Deno.test("a second decide hits the unique gate: 410 decided and nothing more is sent (Review Focus 4)", async () => {
-  // First decide succeeds.
+Deno.test("a crash after the uploads leaves no decision, and the next accept still works", async () => {
+  const crashed = setup();
+  crashAtDecision(crashed);
+  let threw = false;
+  try {
+    await handle(request(acceptBody()), crashed.deps, crashed.render);
+  } catch {
+    threw = true;
+  }
+  assert(threw, "the request dies at the decision call");
+  // The edge function wrote no decision itself; the files are only unreferenced objects.
+  assertEquals(crashed.calls.filter((c) => c.table.startsWith("werkbank.") && ["insert", "update", "delete"].includes(c.method)), []);
+  assertEquals(notificationInserts(crashed.calls).length, 0);
+  assertEquals(crashed.emails, []);
+
+  // The retry finds identical bytes at the same content-addressed paths: that is success.
+  const retry = setup({
+    opts: { storageUploadResult: { data: null, error: { statusCode: "409", message: "The resource already exists" } } },
+  });
+  const res = await handle(request(acceptBody()), retry.deps, retry.render);
+  assertEquals(res.status, 200);
+  const crashedUploads = crashed.calls.filter((c) => c.method === "upload").map((c) => c.args[0]);
+  const [args] = rpcArgs(retry.calls);
+  assertEquals([args.p_signature_image_path, args.p_accepted_pdf_path], crashedUploads);
+  assertEquals(removedPaths(retry.calls), [], "files that were already there are never removed");
+  assertEquals(retry.emails.filter((e) => e.template_name === "quote-decision-confirmation").length, 1);
+});
+
+Deno.test("a second decide that the function reports as decided: 410 and nothing more is sent (Review Focus 4)", async () => {
   const first = setup();
   assertEquals((await handle(request(acceptBody()), first.deps, first.render)).status, 200);
   assertEquals(notificationInserts(first.calls).length, 1);
   assertEquals(first.emails.filter((e) => e.template_name === "quote-decision-confirmation").length, 1);
 
-  // A second one races past the state check and the insert reports 23505.
-  const second = setup({ insertError: { code: "23505", message: "duplicate key value violates unique constraint" } });
+  // A second one passes the pre-check (stale read) and the function finds the decision made.
+  const accepted = await acceptedPath();
+  const second = setup({
+    rpc: { data: "decided", error: null },
+    reloaded: quoteRow({ status: "accepted", accepted_pdf_path: accepted }),
+  });
   const res = await handle(request(acceptBody()), second.deps, second.render);
   assertEquals(res.status, 410);
-  assertEquals(await res.json(), { error: "decided", decision: "accepted" });
-  assertEquals(writes(second.calls).map((c) => `${c.table}:${c.method}`), ["werkbank.quote_acceptances:insert"]);
+  assertEquals(await res.json(), {
+    error: "decided",
+    decision: "accepted",
+    pdf_url: `https://signed.test/werkbank-documents/${accepted}`,
+  });
+  assertEquals(rpcArgs(second.calls).length, 1);
   assertEquals(second.emails, []);
   assertEquals(notificationInserts(second.calls).length, 0);
-  assertEquals(second.rendered.length, 0);
+  assertEquals(removedPaths(second.calls).length, 2, "this request's own uploads are removed");
 });
 
-Deno.test("an accept that loses the status race is rolled back and reports the new state", async () => {
-  // The guarded update matches nothing; the reload by id sees the quote superseded meanwhile.
-  const t = setup({ stamp: null, reloaded: quoteRow({ status: "superseded", superseded_by: "q-2" }) });
+for (const outcome of ["superseded", "revoked", "expired"] as const) {
+  Deno.test(`the function reports ${outcome}: 410 ${outcome}, uploads removed, nothing sent`, async () => {
+    const t = setup({ rpc: { data: outcome, error: null } });
+    const res = await handle(request(acceptBody()), t.deps, t.render);
+    assertEquals(res.status, 410);
+    assertEquals(await res.json(), { error: outcome });
+    assertEquals(removedPaths(t.calls).sort(), [await acceptedPath(), await sigPath()].sort());
+    assertEquals(t.emails, []);
+    assertEquals(notificationInserts(t.calls).length, 0);
+  });
+}
+
+Deno.test("an error from the decision call is 500 and keeps the files (it may have committed)", async () => {
+  const t = setup({ rpc: { data: null, error: { message: "fetch failed" } } });
   const res = await handle(request(acceptBody()), t.deps, t.render);
-  assertEquals(res.status, 410);
-  assertEquals(await res.json(), { error: "superseded" });
-  const del = t.calls.find((c) => c.table === "werkbank.quote_acceptances" && c.method === "delete");
-  assertExists(del, "the acceptance row is removed again");
-  const removed = t.calls.filter((c) => c.method === "remove").flatMap((c) => c.args[0] as string[]);
-  assertEquals(removed.length, 2, "the signature and the accepted PDF are removed");
+  assertEquals(res.status, 500);
+  assertEquals(await res.json(), { error: "update_failed" });
+  assertEquals(removedPaths(t.calls), []);
   assertEquals(t.emails, []);
-  assertEquals(notificationInserts(t.calls).length, 0);
+});
+
+Deno.test("a failing render records nothing", async () => {
+  const t = setup();
+  const res = await handle(request(acceptBody()), t.deps, () => Promise.reject(new Error("boom")));
+  assertEquals(res.status, 500);
+  assertEquals(await res.json(), { error: "render_failed" });
+  assertEquals(writes(t.calls), []);
 });
 
 Deno.test("a failing email or notification never turns a recorded decision into an error", async () => {
@@ -446,30 +499,21 @@ Deno.test("a failing email or notification never turns a recorded decision into 
 
 // ── decide: reject ───────────────────────────────────────────────────────────
 
-Deno.test("reject stores the comment, sets rejected and confirms without attachment", async () => {
+Deno.test("reject records the comment, renders nothing and confirms without attachment", async () => {
   const t = setup();
   const res = await handle(request(rejectBody()), t.deps, t.render);
   assertEquals(res.status, 200);
   assertEquals(await res.json(), { ok: true });
 
-  assertEquals(writes(t.calls).map((c) => `${c.table}:${c.method}`), [
-    "werkbank.quote_acceptances:insert",
-    "werkbank.quotes:update",
-    "notifications:insert",
-  ]);
-  const insert = t.calls.find((c) => c.table === "werkbank.quote_acceptances" && c.method === "insert");
-  assertExists(insert);
-  const row = insert.args[0] as Record<string, unknown>;
-  assertEquals(row.decision, "rejected");
-  assertEquals(row.comment, "Zu teuer.");
-  assertEquals(row.method, null);
-  assertEquals(row.signature_image_path, null);
-  assertEquals(row.consent_text, null);
-  assertEquals(row.document_sha256, SENT_SHA);
+  assertEquals(writes(t.calls).map((c) => `${c.table}:${c.method}`), [`${RPC}:rpc`, "notifications:insert"]);
+  const [args] = rpcArgs(t.calls);
+  assertEquals(args.p_decision, "rejected");
+  assertEquals(args.p_comment, "Zu teuer.");
+  assertEquals(args.p_method, null);
+  assertEquals(args.p_signature_image_path, null);
+  assertEquals(args.p_consent_text, null);
+  assertEquals(args.p_accepted_pdf_path, null);
   assertEquals(t.rendered.length, 0);
-
-  const update = t.calls.find((c) => c.table === "werkbank.quotes" && c.method === "update");
-  assertEquals(update?.args[0], { status: "rejected" });
 
   const rows = notificationInserts(t.calls)[0].args[0] as Array<Record<string, unknown>>;
   assertEquals(rows.map((r) => r.type), ["quote_rejected", "quote_rejected"]);

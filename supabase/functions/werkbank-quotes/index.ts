@@ -10,6 +10,9 @@
 //   view   { token } -> { quote, seller, items, totals, pdf_url, consent_text }
 //   decide { token, decision, signer_name, signature?, comment?, consent } -> { ok, pdf_url? }
 //   Both answer 404 not_found or 410 superseded | revoked | decided | expired, checked in that order.
+//   decide stores the accepted PDF and the signature under content-addressed paths first, then
+//   records the decision in ONE call to werkbank.record_quote_decision (lock, re-check, insert the
+//   acceptance, set the status). A crash before that call leaves only unreferenced files.
 //
 // verify_jwt = false in config.toml because the public token actions live here too; the
 // internal actions authorize the caller themselves through requireOrgRole.
@@ -472,7 +475,7 @@ async function publicAction(req: Request, deps: Deps, render: RenderQuotePdf, ac
 }
 
 /** The sent document's date: the Berlin day of sent_at, as printed when it was sent. */
-const sentDateKey = (quote: QuoteRow) => berlinDateKey(quote.sent_at ? new Date(quote.sent_at) : new Date());
+const sentDateKey = (deps: Deps, quote: QuoteRow) => berlinDateKey(quote.sent_at ? new Date(quote.sent_at) : deps.now());
 
 /** Display data only: what the PDF prints, never the customer's email or phone or any id. */
 async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
@@ -498,7 +501,7 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
       quote_no: quote.quote_no,
       version: quote.version,
       status: quote.status,
-      date: sentDateKey(quote),
+      date: sentDateKey(deps, quote),
       valid_until: quote.valid_until,
       subject: printed.subject,
       intro: printed.intro,
@@ -523,6 +526,35 @@ async function viewQuote(deps: Deps, quote: QuoteRow): Promise<Response> {
     pdf_url: pdfUrl,
     consent_text: quoteConsentText(quote.quote_no),
   });
+}
+
+/** Arguments of werkbank.record_quote_decision (migration 20261007210000). Nullable ones are
+ *  passed as null; the function is not in the generated types yet, so the call is typed here. */
+interface RecordQuoteDecisionArgs {
+  p_quote: string;
+  p_decision: Decision;
+  p_signer_name: string;
+  p_method: "typed" | "drawn" | null;
+  p_typed_name: string | null;
+  p_signature_image_path: string | null;
+  p_ip: string | null;
+  p_user_agent: string | null;
+  p_consent_text: string | null;
+  p_comment: string | null;
+  p_accepted_pdf_path: string | null;
+}
+type DecisionOutcome = "ok" | "not_found" | "superseded" | "revoked" | "decided" | "expired";
+type DecisionRpc = {
+  rpc: (fn: "record_quote_decision", args: RecordQuoteDecisionArgs) => PromiseLike<{ data: unknown; error: unknown }>;
+};
+
+/** Uploads bytes to a content-addressed path. True when this call stored them (false when the
+ *  identical object was already there, which counts as success). Throws on any other error. */
+async function uploadOnce(deps: Deps, path: string, bytes: Uint8Array, contentType: string): Promise<boolean> {
+  const { error } = await deps.admin.storage.from(DOCUMENTS_BUCKET).upload(path, bytes, { contentType, upsert: false });
+  if (!error) return true;
+  if (isAlreadyExists(error)) return false;
+  throw new Error(`upload ${path}: ${JSON.stringify(error)}`);
 }
 
 async function decideQuote(
@@ -551,60 +583,17 @@ async function decideQuote(
   const doc = await loadDocument(deps, quote);
   if (!doc || !doc.profile) return json({ error: "load_failed" }, 500);
   const profile = doc.profile;
-
   const now = deps.now();
-  const signaturePath = signature?.method === "drawn" ? `${quote.org_id}/signatures/${quote.id}.png` : null;
-  const w = deps.admin.schema("werkbank");
 
-  // The acceptance row comes first: its unique quote_id is the gate against a second decision.
-  const { error: insErr } = await w.from("quote_acceptances").insert({
-    org_id: quote.org_id,
-    quote_id: quote.id,
-    decision,
-    comment,
-    signer_name: signerName,
-    method: signature?.method ?? null,
-    typed_name: signature?.method === "typed" ? signature.typedName : null,
-    signature_image_path: signaturePath,
-    decided_at: now.toISOString(),
-    ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
-    user_agent: req.headers.get("user-agent") || null,
-    consent_text: decision === "accepted" ? quoteConsentText(quote.quote_no) : null,
-    document_sha256: quote.pdf_sha256,
-  });
-  if (insErr) {
-    if ((insErr as { code?: string }).code === "23505") {
-      const { data: prior } = await w.from("quote_acceptances").select("decision")
-        .eq("org_id", quote.org_id).eq("quote_id", quote.id).maybeSingle();
-      const priorDecision = (prior as { decision?: string } | null)?.decision;
-      return json({ error: "decided", ...(priorDecision ? { decision: priorDecision } : {}) }, 410);
-    }
-    console.error("werkbank-quotes: recording the decision failed", { quoteId: quote.id, error: insErr });
-    return json({ error: "insert_failed" }, 500);
-  }
-
-  // Until the status update lands, a failure undoes the decision so the customer can try again.
-  const uploaded: string[] = [];
-  const rollback = async () => {
-    const { error: delErr } = await w.from("quote_acceptances").delete()
-      .eq("org_id", quote.org_id).eq("quote_id", quote.id);
-    if (delErr) console.error("werkbank-quotes: could not undo a decision", { quoteId: quote.id, error: delErr });
-    if (uploaded.length > 0) {
-      const { error: rmErr } = await deps.admin.storage.from(DOCUMENTS_BUCKET).remove(uploaded);
-      if (rmErr) console.warn("werkbank-quotes: could not remove unused uploads", { quoteId: quote.id, error: rmErr });
-    }
-  };
-
+  // Everything the decision points at is stored BEFORE it is recorded, under content-addressed
+  // paths: a crash in between leaves only unreferenced files, never a half-made decision, and a
+  // retry with the same bytes finds them in place.
   let acceptedBytes: Uint8Array | null = null;
   let acceptedPath: string | null = null;
+  let signaturePath: string | null = null;
+  const stored: string[] = [];
   if (decision === "accepted" && signature) {
     try {
-      const documents = deps.admin.storage.from(DOCUMENTS_BUCKET);
-      if (signature.method === "drawn" && signaturePath) {
-        const { error } = await documents.upload(signaturePath, signature.png, { contentType: "image/png", upsert: false });
-        if (error) throw new Error(`signature upload: ${JSON.stringify(error)}`);
-        uploaded.push(signaturePath);
-      }
       acceptedBytes = await render(buildQuotePdfData({
         quote,
         items: doc.items,
@@ -614,7 +603,7 @@ async function decideQuote(
         profile,
         logoDataUrl: await logoDataUrl(deps, profile.logo_path),
         // The sent document as it was printed, plus the signature block.
-        date: formatDateDe(sentDateKey(quote)),
+        date: formatDateDe(sentDateKey(deps, quote)),
         acceptance: {
           name: signerName,
           decidedAt: berlinDateKey(now),
@@ -624,33 +613,51 @@ async function decideQuote(
           typedName: signature.method === "typed" ? signature.typedName : undefined,
         },
       }));
-      const sha = await sha256Hex(acceptedBytes);
-      const path = `${quote.org_id}/quotes/${quote.id}-accepted-${sha.slice(0, 16)}.pdf`;
-      const { error } = await documents.upload(path, acceptedBytes, { contentType: "application/pdf", upsert: false });
-      if (error) throw new Error(`accepted pdf upload: ${JSON.stringify(error)}`);
-      uploaded.push(path);
-      acceptedPath = path;
     } catch (e) {
-      console.error("werkbank-quotes: preparing the accepted PDF failed", { quoteId: quote.id, error: String(e) });
-      await rollback();
+      console.error("werkbank-quotes: rendering the accepted PDF failed", { quoteId: quote.id, error: String(e) });
       return json({ error: "render_failed" }, 500);
+    }
+    try {
+      if (signature.method === "drawn") {
+        const sigSha = await sha256Hex(signature.png);
+        signaturePath = `${quote.org_id}/signatures/${quote.id}-${sigSha.slice(0, 16)}.png`;
+        if (await uploadOnce(deps, signaturePath, signature.png, "image/png")) stored.push(signaturePath);
+      }
+      const pdfSha = await sha256Hex(acceptedBytes);
+      acceptedPath = `${quote.org_id}/quotes/${quote.id}-accepted-${pdfSha.slice(0, 16)}.pdf`;
+      if (await uploadOnce(deps, acceptedPath, acceptedBytes, "application/pdf")) stored.push(acceptedPath);
+    } catch (e) {
+      console.error("werkbank-quotes: storing the accepted PDF failed", { quoteId: quote.id, error: String(e) });
+      await removeStored(deps, quote, stored);
+      return json({ error: "upload_failed" }, 500);
     }
   }
 
-  const patch = decision === "accepted" ? { status: "accepted", accepted_pdf_path: acceptedPath } : { status: "rejected" };
-  const { data: stamped, error: updErr } = await w.from("quotes").update(patch)
-    .eq("id", quote.id).eq("org_id", quote.org_id).eq("status", "sent")
-    .select("id").maybeSingle();
-  if (updErr || !stamped) {
-    if (updErr) console.error("werkbank-quotes: setting the decision failed", { quoteId: quote.id, error: updErr });
-    await rollback();
-    if (updErr) return json({ error: "update_failed" }, 500);
-    // Superseded, revoked or decided in the meantime: answer with the state the quote is in now.
-    const { data: reread } = await w.from("quotes").select("*").eq("id", quote.id).eq("org_id", quote.org_id).maybeSingle();
-    const current = (reread ?? null) as unknown as QuoteRow | null;
-    const state = linkState(current, berlinDateKey(now));
-    if (state.open) return json({ error: "update_failed" }, 500);
-    return closedResponse(deps, current, state);
+  // One atomic step: lock, re-check the link, insert the acceptance, set the status.
+  const { data: outcome, error: rpcErr } = await (deps.admin.schema("werkbank") as unknown as DecisionRpc)
+    .rpc("record_quote_decision", {
+      p_quote: quote.id,
+      p_decision: decision,
+      p_signer_name: signerName,
+      p_method: signature?.method ?? null,
+      p_typed_name: signature?.method === "typed" ? signature.typedName : null,
+      p_signature_image_path: signaturePath,
+      p_ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+      p_user_agent: req.headers.get("user-agent") || null,
+      p_consent_text: decision === "accepted" ? quoteConsentText(quote.quote_no) : null,
+      p_comment: comment,
+      p_accepted_pdf_path: acceptedPath,
+    });
+  if (rpcErr) {
+    // The call may still have committed (a lost response looks the same), so the stored files
+    // stay: unreferenced content-addressed objects are harmless, a deleted accepted PDF is not.
+    console.error("werkbank-quotes: recording the decision failed", { quoteId: quote.id, error: rpcErr });
+    return json({ error: "update_failed" }, 500);
+  }
+  if (outcome !== "ok") {
+    // The function answered definitively and recorded nothing: the new files are unused.
+    await removeStored(deps, quote, stored);
+    return blockedResponse(deps, quote, outcome as DecisionOutcome);
   }
 
   // The decision is final from here: side effects are logged, never an error response.
@@ -671,6 +678,30 @@ async function decideQuote(
 
   const pdfUrl = acceptedPath ? await signedUrl(deps, DOCUMENTS_BUCKET, acceptedPath).catch(() => null) : null;
   return json({ ok: true, ...(pdfUrl ? { pdf_url: pdfUrl } : {}) });
+}
+
+/** Best effort: removes files this request stored and nothing references. */
+async function removeStored(deps: Deps, quote: QuoteRow, paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+  const { error } = await deps.admin.storage.from(DOCUMENTS_BUCKET).remove(paths);
+  if (error) console.warn("werkbank-quotes: could not remove unused uploads", { quoteId: quote.id, error });
+}
+
+/** The 404/410 answer for a state the decision function reported. */
+async function blockedResponse(deps: Deps, quote: QuoteRow, outcome: DecisionOutcome): Promise<Response> {
+  if (outcome === "not_found") return json({ error: "not_found" }, 404);
+  if (outcome !== "decided") return json({ error: outcome }, 410);
+  // Decided meanwhile: answer with the decision that stands (and its PDF when accepted).
+  const w = deps.admin.schema("werkbank");
+  const { data } = await w.from("quotes").select("*").eq("id", quote.id).eq("org_id", quote.org_id).maybeSingle();
+  const current = (data ?? null) as unknown as QuoteRow | null;
+  if (current && (current.status === "accepted" || current.status === "rejected")) {
+    return closedResponse(deps, current, { open: false, status: 410, error: "decided" });
+  }
+  const { data: prior } = await w.from("quote_acceptances").select("decision")
+    .eq("org_id", quote.org_id).eq("quote_id", quote.id).maybeSingle();
+  const priorDecision = (prior as { decision?: string } | null)?.decision;
+  return json({ error: "decided", ...(priorDecision ? { decision: priorDecision } : {}) }, 410);
 }
 
 interface DecisionFacts {
