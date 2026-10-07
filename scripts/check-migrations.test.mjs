@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   blockingFailures,
   compareMigrations,
+  isNeverMigrated,
   parseAppliedRows,
   parseCliOptions,
   parseMigrationFilename,
@@ -162,6 +163,22 @@ describe("parseAppliedRows", () => {
     expect(() => parseAppliedRows([{ version: 20260101000000, name: "a" }])).toThrow(/unusable/i);
     expect(() => parseAppliedRows([{ version: "20260101000000", name: null }])).toThrow(/unusable/i);
     expect(() => parseAppliedRows([{ version: "20260101000000", name: "" }])).toThrow(/unusable/i);
+  });
+});
+
+describe("isNeverMigrated", () => {
+  const missingTable =
+    '{"message":"Failed to run sql query: ERROR:  42P01: relation \\"supabase_migrations.schema_migrations\\" does not exist"}';
+
+  it("treats a missing schema_migrations table as a project with nothing applied", () => {
+    expect(isNeverMigrated(400, missingTable)).toBe(true);
+  });
+
+  // Any other failure must still fail the run instead of comparing against an empty set.
+  it("does not swallow other errors", () => {
+    expect(isNeverMigrated(401, missingTable)).toBe(false);
+    expect(isNeverMigrated(400, '{"message":"ERROR:  42P01: relation \\"public.x\\" does not exist"}')).toBe(false);
+    expect(isNeverMigrated(400, '{"message":"ERROR:  42501: permission denied"}')).toBe(false);
   });
 });
 
