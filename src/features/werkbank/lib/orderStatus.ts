@@ -28,3 +28,8 @@ export const ORDER_ACTION_TARGET: Record<OrderAction, OrderStatus> = {
   reopen: "in_progress",
   cancel: "cancelled",
 };
+
+/** An order that is still to be done but has no date yet: what "Aufträge ohne Termin" counts. */
+export function needsSchedule(o: { status: string | null; scheduled_date: string | null }): boolean {
+  return !o.scheduled_date && (o.status === "open" || o.status === "in_progress");
+}

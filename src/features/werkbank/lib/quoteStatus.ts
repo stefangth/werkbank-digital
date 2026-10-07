@@ -20,3 +20,8 @@ export const QUOTE_STATUS_TONE: Record<QuoteDisplayStatus, Tone> = {
   expired: "risk",
   superseded: "neutral",
 };
+
+/** An accepted quote nobody has turned into an order yet. */
+export function isAcceptedWithoutOrder(q: { status: string | null; has_order: boolean | null }): boolean {
+  return q.status === "accepted" && !q.has_order;
+}

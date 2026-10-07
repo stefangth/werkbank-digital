@@ -6,12 +6,12 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { state, navigate, create, pick } = vi.hoisted(() => ({
-  state: { rows: [] as unknown[], loading: false, error: false },
+  state: { rows: [] as unknown[], loading: false, error: false, search: "" },
   navigate: vi.fn(),
   create: vi.fn(),
   pick: { from: "2026-11-02", to: "2026-11-05" },
 }));
-vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
+vi.mock("react-router-dom", () => ({ useNavigate: () => navigate, useSearchParams: () => [new URLSearchParams(state.search)] }));
 vi.mock("../hooks/useOrders", () => ({
   useOrderList: () => ({ data: state.rows, isLoading: state.loading, isError: state.error }),
   useOrderMutations: () => ({ create: { mutate: create, isPending: false } }),
@@ -42,11 +42,12 @@ const o = (over: Record<string, unknown>) => ({
 describe("OrdersPage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    state.loading = false; state.error = false;
+    state.loading = false; state.error = false; state.search = "";
     state.rows = [
       o({ id: "o1", order_no: "AU-0001", status: "open", subject: "Heizung warten" }),
       o({ id: "o2", order_no: "AU-0002", status: "in_progress", scheduled_date: "2026-11-03", scheduled_time: "08:30:00", technician_ids: ["a1"], technician_names: ["Anna Berg"], customer_name: "Meier, Anna", property_name: "Hauptstr. 1" }),
       o({ id: "o3", order_no: "AU-0003", status: "done", scheduled_date: "2026-11-10", technician_ids: ["a2"], technician_names: ["Ben Roth"] }),
+      o({ id: "o5", order_no: "AU-0005", status: "done" }),
       o({ id: "o4", order_no: "AU-0004", status: "cancelled", scheduled_date: "2026-11-05", technician_ids: ["a1", "a2"], technician_names: ["Anna Berg", "Ben Roth"] }),
     ];
     localStorage.setItem(STORAGE_KEY, "de");
@@ -61,7 +62,7 @@ describe("OrdersPage", () => {
   it("lists orders with their numbers and shows the page mini", async () => {
     render();
     expect(await screen.findByRole("region", { name: "So funktionieren Aufträge" })).toBeInTheDocument();
-    expect(numbersShown()).toEqual(["AU-0001", "AU-0002", "AU-0003", "AU-0004"]);
+    expect(numbersShown()).toEqual(["AU-0001", "AU-0002", "AU-0003", "AU-0005", "AU-0004"]);
     const row = screen.getByText("AU-0002").closest("tr")!;
     expect(row).toHaveTextContent("Meier, Anna");
     expect(row).toHaveTextContent("Hauptstr. 1");
@@ -75,7 +76,7 @@ describe("OrdersPage", () => {
     render();
     fireEvent.click(await screen.findByRole("combobox", { name: "Status" }));
     fireEvent.click(await screen.findByRole("option", { name: "Erledigt" }));
-    expect(numbersShown()).toEqual(["AU-0003"]);
+    expect(numbersShown()).toEqual(["AU-0003", "AU-0005"]);
   });
 
   it("filters by technician", async () => {
@@ -93,7 +94,7 @@ describe("OrdersPage", () => {
     fireEvent.click(within(screen.getByRole("group", { name: "Bis" })).getByText("test-pick"));
     expect(numbersShown()).toEqual(["AU-0002", "AU-0004"]);
     fireEvent.click(screen.getByRole("button", { name: "Zeitraum zurücksetzen" }));
-    expect(numbersShown()).toHaveLength(4);
+    expect(numbersShown()).toHaveLength(5);
   });
 
   it("shows only unscheduled orders under Nicht eingeplant", async () => {
@@ -128,5 +129,19 @@ describe("OrdersPage", () => {
     state.error = true;
     render();
     expect(await screen.findByText("Die Aufträge konnten nicht geladen werden.")).toBeInTheDocument();
+  });
+
+  it("opens pre-filtered from the dashboard link: orders without a date", async () => {
+    state.search = "?unscheduled=1";
+    render();
+    await screen.findByText("AU-0001");
+    expect(numbersShown()).toEqual(["AU-0001"]);
+    expect(screen.getByRole("button", { name: "Nicht eingeplant" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("leaves finished and cancelled orders out of Nicht eingeplant", async () => {
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Nicht eingeplant" }));
+    expect(numbersShown()).not.toContain("AU-0005");
   });
 });

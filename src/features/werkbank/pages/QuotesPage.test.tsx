@@ -6,11 +6,11 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { state, navigate, create } = vi.hoisted(() => ({
-  state: { rows: [] as unknown[], loading: false, error: false },
+  state: { rows: [] as unknown[], loading: false, error: false, search: "" },
   navigate: vi.fn(),
   create: vi.fn(),
 }));
-vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
+vi.mock("react-router-dom", () => ({ useNavigate: () => navigate, useSearchParams: () => [new URLSearchParams(state.search)] }));
 vi.mock("../hooks/useQuotes", () => ({
   useQuoteList: () => ({ data: state.rows, isLoading: state.loading, isError: state.error }),
   useQuoteMutations: () => ({ create: { mutate: create, isPending: false } }),
@@ -34,7 +34,7 @@ const q = (over: Record<string, unknown>) => ({
 describe("QuotesPage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    state.loading = false; state.error = false;
+    state.loading = false; state.error = false; state.search = "";
     state.rows = [
       q({ id: "q1", quote_no: "A-0001", status: "draft", subject: "Heizung warten" }),
       q({ id: "q2", quote_no: "A-0002", status: "sent", customer_name: "Meier, Anna", subject: "Bad" }),
@@ -124,5 +124,27 @@ describe("QuotesPage", () => {
     state.error = true;
     render();
     expect(await screen.findByText("Die Angebote konnten nicht geladen werden.")).toBeInTheDocument();
+  });
+
+  it("opens pre-filtered from the dashboard link: accepted quotes without an order", async () => {
+    state.search = "?status=accepted&noOrder=1";
+    render();
+    await screen.findByText("A-0004");
+    expect(rowsShown()).toHaveLength(1);
+    expect(screen.getByText("A-0004")).toBeInTheDocument();
+  });
+
+  it("applies a status from the URL without the no-order restriction", async () => {
+    state.search = "?status=accepted";
+    render();
+    await screen.findByText("A-0004");
+    expect(rowsShown()).toHaveLength(2);
+  });
+
+  it("ignores an unknown status in the URL", async () => {
+    state.search = "?status=bogus";
+    render();
+    await screen.findByText("A-0004");
+    expect(rowsShown()).toHaveLength(6);
   });
 });

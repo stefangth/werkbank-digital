@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarDays, ClipboardList } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import type { OrderListRow } from "../data/orders";
 import { useOrderList, useOrderMutations } from "../hooks/useOrders";
 import { useTechnicians } from "../hooks/useTechnicians";
 import { formatEuro } from "../lib/money";
-import { ORDER_STATUS_TONES, type OrderStatus } from "../lib/orderStatus";
+import { ORDER_STATUS_TONES, needsSchedule, type OrderStatus } from "../lib/orderStatus";
 import { orderPath } from "../paths";
 
 const ALL = "__all__";
@@ -98,7 +98,9 @@ export function OrdersPage() {
   const [technician, setTechnician] = useState(ALL);
   const [from, setFrom] = useState<string | null>(null);
   const [to, setTo] = useState<string | null>(null);
-  const [unscheduled, setUnscheduled] = useState(false);
+  // The dashboard links here with ?unscheduled=1.
+  const [params] = useSearchParams();
+  const [unscheduled, setUnscheduled] = useState(params.get("unscheduled") === "1");
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(
@@ -106,7 +108,7 @@ export function OrdersPage() {
       (orders ?? []).filter((o) => {
         if (status !== ALL && o.status !== status) return false;
         if (technician !== ALL && !o.technician_ids?.includes(technician)) return false;
-        if (unscheduled) return !o.scheduled_date;
+        if (unscheduled) return needsSchedule(o);
         if (from || to) return !!o.scheduled_date && (!from || o.scheduled_date >= from) && (!to || o.scheduled_date <= to);
         return true;
       }),

@@ -12,10 +12,16 @@
     "body": "Quotes and invoices will follow soon.",
     "startList": {
       "title": "How to start",
+      "company": "Fill in company details",
       "technicians": "Add technicians",
       "catalog": "Add or import services",
       "customers": "Add or import customers",
       "loadFailed": "Could not load your progress."
+    },
+    "tiles": {
+      "acceptedNoOrder": "Accepted, no order yet",
+      "unscheduled": "Orders without a date",
+      "label": "Open items"
     }
   },
   "technicians": {
@@ -857,5 +863,24 @@
       "legalName": "Your full name",
       "clear": "Clear"
     }
+  },
+  "documents": {
+    "quotes": {
+      "title": "Quotes",
+      "empty": "No quotes yet.",
+      "add": "Create quote"
+    },
+    "orders": {
+      "title": "Orders",
+      "empty": "No orders yet.",
+      "add": "Create order"
+    },
+    "columns": {
+      "number": "No.",
+      "subject": "Subject",
+      "status": "Status",
+      "gross": "Gross"
+    },
+    "loadFailed": "The quotes and orders could not be loaded."
   }
 }

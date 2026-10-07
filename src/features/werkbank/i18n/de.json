@@ -12,10 +12,16 @@
     "body": "Angebote und Rechnungen folgen bald.",
     "startList": {
       "title": "So startest du",
+      "company": "Firmendaten ausfüllen",
       "technicians": "Monteure anlegen",
       "catalog": "Leistungen anlegen oder importieren",
       "customers": "Kunden anlegen oder importieren",
       "loadFailed": "Der Stand konnte nicht geladen werden."
+    },
+    "tiles": {
+      "acceptedNoOrder": "Angenommen, ohne Auftrag",
+      "unscheduled": "Aufträge ohne Termin",
+      "label": "Offene Punkte"
     }
   },
   "technicians": {
@@ -857,5 +863,24 @@
       "legalName": "Ihr vollständiger Name",
       "clear": "Löschen"
     }
+  },
+  "documents": {
+    "quotes": {
+      "title": "Angebote",
+      "empty": "Noch keine Angebote.",
+      "add": "Angebot anlegen"
+    },
+    "orders": {
+      "title": "Aufträge",
+      "empty": "Noch keine Aufträge.",
+      "add": "Auftrag anlegen"
+    },
+    "columns": {
+      "number": "Nr.",
+      "subject": "Betreff",
+      "status": "Status",
+      "gross": "Brutto"
+    },
+    "loadFailed": "Die Angebote und Aufträge konnten nicht geladen werden."
   }
 }

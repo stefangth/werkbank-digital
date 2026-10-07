@@ -9,7 +9,8 @@ import { STORAGE_KEY } from "@/i18n/config";
 // Opt in to the v7 behaviour so the tests do not log the upgrade warnings.
 const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true } as const;
 
-const { property, customer, remove, archive, sections } = vi.hoisted(() => ({
+const { property, customer, remove, archive, sections, documents } = vi.hoisted(() => ({
+  documents: { props: [] as unknown[] },
   property: { data: undefined as unknown, isLoading: false, isError: false },
   customer: { data: undefined as unknown },
   remove: { mutate: vi.fn(), isPending: false },
@@ -24,6 +25,12 @@ vi.mock("../hooks/useProperties", () => ({
   useUpdateProperty: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("../hooks/useCustomers", () => ({ useCustomer: () => customer, useCustomers: () => ({ data: [] }) }));
+vi.mock("../components/DocumentsSection", () => ({
+  DocumentsSection: (props: unknown) => {
+    documents.props.push(props);
+    return <div>documents-section</div>;
+  },
+}));
 vi.mock("../components/ContactsSection", () => ({
   ContactsSection: ({ parent }: { parent: unknown }) => {
     sections.parents.push(parent);
@@ -62,6 +69,7 @@ describe("PropertyDetailPage", () => {
     Object.assign(property, { data: base, isLoading: false, isError: false });
     customer.data = { street: "Hauptstr. 1", postal_code: "01067", city: "Dresden" };
     sections.parents = [];
+    documents.props = [];
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
   });
@@ -96,6 +104,12 @@ describe("PropertyDetailPage", () => {
     expect(screen.getByRole("link", { name: "Hausverwaltung Müller" })).toHaveAttribute("href", "/customers/k1");
     expect(screen.getByText("contacts-section")).toBeInTheDocument();
     expect(sections.parents[0]).toEqual({ propertyId: "p1" });
+  });
+
+  it("shows the property's quotes and orders, with customer and property preselected", () => {
+    renderPage();
+    expect(screen.getByText("documents-section")).toBeInTheDocument();
+    expect(documents.props[0]).toEqual({ customerId: "k1", propertyId: "p1" });
   });
 
   it("shows a not-found state linking back to the list", () => {
