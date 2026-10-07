@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Metric } from "@/components/ui/metric";
 import { PageHeader } from "@/components/ui/page-header";
-import { PageMini } from "@/components/minis/PageMini";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Token } from "@/components/ui/token";
-import { formatDateDMY } from "@/lib/dates";
+import { berlinDateKey, formatDateDMY } from "@/lib/dates";
 import { DatePopover } from "../components/DatePopover";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { DocumentTotalsCard } from "../components/DocumentTotalsCard";
@@ -56,7 +55,7 @@ export function QuotePage() {
 
   const number = formatQuoteNumber(quote.quote_no, quote.version);
   const listRow = list?.find((q) => q.id === quote.id);
-  const display = quoteDisplayStatus({ status: quote.status, is_expired: listRow?.is_expired ?? false });
+  const display = quoteDisplayStatus({ status: quote.status, is_expired: listRow?.is_expired ?? quote.valid_until < berlinDateKey(new Date()) });
   const isDraft = quote.status === "draft";
   const isSent = quote.status === "sent";
   const versions = (list ?? []).filter((q) => q.quote_no === quote.quote_no).sort((a, b) => (a.version ?? 0) - (b.version ?? 0));
@@ -105,10 +104,12 @@ export function QuotePage() {
                     {t("quotes.page.revokeLink")}
                   </Button>
                 )}
-                <Button disabled={revise.isPending} onClick={() => revise.mutate(quote.id, { onSuccess: (newId) => navigate(quotePath(newId)) })}>
-                  {t("quotes.page.revise")}
-                </Button>
               </>
+            )}
+            {(isSent || quote.status === "rejected") && (
+              <Button disabled={revise.isPending} onClick={() => revise.mutate(quote.id, { onSuccess: (newId) => navigate(quotePath(newId)) })}>
+                {t("quotes.page.revise")}
+              </Button>
             )}
           </>
         }
@@ -119,8 +120,6 @@ export function QuotePage() {
         {quote.link_revoked_at && <StatusPill tone="risk">{t("quotes.page.linkRevoked")}</StatusPill>}
         {!isDraft && <Metric size="body">{t("quotes.header.validUntil")} {formatDateDMY(quote.valid_until)}</Metric>}
       </div>
-
-      <PageMini page="quotes" />
 
       {versions.length > 1 && (
         <nav aria-label={t("quotes.page.versions")} className="flex flex-wrap items-center gap-3 text-sm">

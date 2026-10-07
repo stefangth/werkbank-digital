@@ -66,11 +66,10 @@ describe("QuotePage", () => {
       authOverrides: { currentOrg: anOrganization({ id: "org-1" }) as never, hasRole: (() => true) as never },
     });
 
-  it("shows an editable header and editor for a draft, and the page mini", async () => {
+  it("shows an editable header and editor for a draft", async () => {
     render();
     expect(await screen.findByRole("textbox", { name: "Betreff" })).toBeEnabled();
     expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "false");
-    expect(screen.getByRole("region", { name: "So funktionieren Angebote" })).toBeInTheDocument();
     for (const name of ["Überarbeiten", "Kopieren", "Verlängern", "Link sperren"]) {
       expect(screen.queryByRole("button", { name: name })).not.toBeInTheDocument();
     }
@@ -104,6 +103,30 @@ describe("QuotePage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Überarbeiten" }));
     expect(mut.revise.mutate.mock.calls[0][0]).toBe("q1");
     expect(navigate).toHaveBeenCalledWith(quotePath("q2"));
+  });
+
+  it("revises a rejected quote too, but offers neither Verlängern nor Link sperren", async () => {
+    state.quote = quote({ status: "rejected" });
+    mut.revise.mutate.mockImplementation((_id, opts) => opts.onSuccess("q9"));
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Überarbeiten" }));
+    expect(mut.revise.mutate.mock.calls[0][0]).toBe("q1");
+    expect(navigate).toHaveBeenCalledWith(quotePath("q9"));
+    expect(screen.queryByRole("button", { name: "Verlängern" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Link sperren" })).not.toBeInTheDocument();
+  });
+
+  it("does not show the page mini on the detail page", async () => {
+    render();
+    await screen.findByRole("textbox", { name: "Betreff" });
+    expect(screen.queryByRole("region", { name: "So funktionieren Angebote" })).not.toBeInTheDocument();
+  });
+
+  it("shows Abgelaufen from its own date while the list row is missing", async () => {
+    state.quote = quote({ status: "sent", valid_until: "2020-01-01" });
+    state.list = [];
+    render();
+    expect(await screen.findByText("Abgelaufen")).toBeInTheDocument();
   });
 
   it("copies into a new draft and navigates to it", async () => {
