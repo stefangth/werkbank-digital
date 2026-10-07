@@ -55,4 +55,13 @@ describe("TechnicianMultiSelect", () => {
     fireEvent.click(screen.getByRole("button", { name: /Anna Alt/ }));
     expect(onChange).toHaveBeenCalledWith(["b"]);
   });
+
+  it("blocks toggles while disabled", async () => {
+    const onChange = vi.fn();
+    renderWithProviders(<TechnicianMultiSelect value={["a"]} onChange={onChange} disabled />);
+    fireEvent.click(screen.getByRole("button", { name: /Anna Alt/ }));
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(await screen.findByText("Cem Cetin"));
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import {
@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Token } from "@/components/ui/token";
+import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { DocumentTotalsCard } from "../components/DocumentTotalsCard";
 import { LineItemsEditor } from "../components/LineItemsEditor";
 import { OrderHeaderForm } from "../components/OrderHeaderForm";
@@ -32,21 +33,23 @@ const ACTION_VARIANT = { start: "default", complete: "default", reopen: "seconda
 
 /** One order: header, schedule and technicians, line items, totals, and for an order made
  *  from a quote the comparison with it. Open and in-progress orders are edited in place; done
- *  and cancelled ones are read only. */
+ *  and cancelled ones are read only. An open order can still be deleted. */
 export function OrderPage() {
   const { t } = useTranslation("werkbank");
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: order, isLoading, isError, refetch } = useOrder(id);
   const { data: list } = useOrderList();
   const { data: customer } = useCustomer(order?.customer_id);
   const { data: quote } = useQuote(order?.quote_id ?? undefined);
   const { data: quoteItems } = useDocumentItems(order?.quote_id ? { quoteId: order.quote_id } : undefined);
   const { data: orderItems } = useDocumentItems(order ? { orderId: order.id } : undefined);
-  const { update, setStatus, setTechnicians } = useOrderMutations();
+  const { update, setStatus, setTechnicians, remove } = useOrderMutations();
   // Keyed by the order id: the route reuses this component, so a lock must not carry over to
   // the next order the user navigates to.
   const [lockedId, setLockedId] = useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const diff = useMemo(
     () => (quoteItems && orderItems ? diffAgainstQuote(orderItems, quoteItems) : null),
@@ -78,11 +81,9 @@ export function OrderPage() {
     setLockedId(order.id);
     void refetch();
   };
-  const save = (patch: OrderPatch | SchedulePatch) =>
-    update.mutate(
-      { id: order.id, patch },
-      { onError: (e) => mapDbError(e) === "errors.orderLocked" && lock() },
-    );
+  const lockOnClosed = { onError: (e: unknown) => mapDbError(e) === "errors.orderLocked" && lock() };
+  const save = (patch: OrderPatch | SchedulePatch) => update.mutate({ id: order.id, patch }, lockOnClosed);
+  const saveTechnicians = (artistIds: string[]) => setTechnicians.mutate({ orderId: order.id, artistIds }, lockOnClosed);
   const runAction = (action: OrderAction) => setStatus.mutate({ id: order.id, status: ORDER_ACTION_TARGET[action] });
 
   return (
@@ -93,11 +94,20 @@ export function OrderPage() {
       <PageHeader
         eyebrow={t("orders.title")}
         title={order.subject ?? order.order_no}
-        actions={nextOrderActions(status).map((action) => (
-          <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => (action === "cancel" ? setConfirmingCancel(true) : runAction(action))}>
-            {t(`orders.action.${action}`)}
-          </Button>
-        ))}
+        actions={
+          <>
+            {nextOrderActions(status).map((action) => (
+              <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => (action === "cancel" ? setConfirmingCancel(true) : runAction(action))}>
+                {t(`orders.action.${action}`)}
+              </Button>
+            ))}
+            {status === "open" && !locked && (
+              <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>
+                {t("orders.page.delete")}
+              </Button>
+            )}
+          </>
+        }
       />
       <div className="flex flex-wrap items-center gap-3">
         <Token className="text-lg">{order.order_no}</Token>
@@ -129,7 +139,8 @@ export function OrderPage() {
         technicianNames={listRow?.technician_names ?? []}
         readOnly={readOnly}
         onSchedule={save}
-        onTechnicians={(artistIds) => setTechnicians.mutate({ orderId: order.id, artistIds })}
+        techniciansPending={setTechnicians.isPending}
+        onTechnicians={saveTechnicians}
       />
 
       {quote && diff && orderItems && (
@@ -144,6 +155,20 @@ export function OrderPage() {
 
       <LineItemsEditor docRef={{ orderId: order.id }} readOnly={readOnly} marks={diff ?? undefined} onLocked={lock} />
       <DocumentTotalsCard totals={order.totals} isPrivateCustomer={customer?.kind === "private"} />
+
+      <DeleteConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title={t("orders.page.deleteTitle")}
+        body={t("orders.page.deleteBody", { number: order.order_no })}
+        onConfirm={() =>
+          remove.mutate(order.id, {
+            onSuccess: () => { setConfirmingDelete(false); navigate(ORDERS_PATH); },
+            // Started meanwhile: show the real status (the hook toasts why nothing was deleted).
+            onError: () => { setConfirmingDelete(false); void refetch(); },
+          })}
+        pending={remove.isPending}
+      />
 
       <AlertDialog open={confirmingCancel} onOpenChange={setConfirmingCancel}>
         <AlertDialogContent>

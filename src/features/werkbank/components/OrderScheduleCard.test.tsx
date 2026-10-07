@@ -10,8 +10,11 @@ vi.mock("./DatePopover", () => ({
   ),
 }));
 vi.mock("./TechnicianMultiSelect", () => ({
-  TechnicianMultiSelect: ({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) => (
-    <button onClick={() => onChange([...value, "a2"])}>test-add-technician</button>
+  TechnicianMultiSelect: ({ value, onChange, disabled }: { value: string[]; onChange: (ids: string[]) => void; disabled?: boolean }) => (
+    <div data-testid="techs" data-value={value.join()}>
+      <button disabled={disabled} onClick={() => onChange([...value, "a2"])}>test-add-technician</button>
+      <button disabled={disabled} onClick={() => onChange([...value, "a3"])}>test-add-other</button>
+    </div>
   ),
 }));
 
@@ -74,6 +77,31 @@ describe("OrderScheduleCard", () => {
     render();
     fireEvent.click(screen.getByText("test-add-technician"));
     expect(onTechnicians).toHaveBeenCalledWith(["a1", "a2"]);
+  });
+
+  it("two quick toggles keep both technicians (the second builds on the first, not on stale props)", () => {
+    render();
+    fireEvent.click(screen.getByText("test-add-technician"));
+    fireEvent.click(screen.getByText("test-add-other"));
+    expect(onTechnicians).toHaveBeenNthCalledWith(1, ["a1", "a2"]);
+    expect(onTechnicians).toHaveBeenNthCalledWith(2, ["a1", "a2", "a3"]);
+  });
+
+  it("disables the technicians while a save is pending and follows the server value after it", () => {
+    const { rerender } = render();
+    fireEvent.click(screen.getByText("test-add-technician"));
+    expect(screen.getByTestId("techs")).toHaveAttribute("data-value", "a1,a2");
+    const props = { date: null, time: null, technicianNames: [], readOnly: false, onSchedule, onTechnicians };
+    rerender(<OrderScheduleCard {...props} technicianIds={["a1"]} techniciansPending />);
+    expect(screen.getByText("test-add-other")).toBeDisabled();
+    expect(screen.getByTestId("techs")).toHaveAttribute("data-value", "a1,a2");
+    // Settled (a failed save): the server value wins again.
+    rerender(<OrderScheduleCard {...props} technicianIds={["a1"]} techniciansPending={false} />);
+    expect(screen.getByText("test-add-other")).toBeEnabled();
+    expect(screen.getByTestId("techs")).toHaveAttribute("data-value", "a1");
+    // A new server value replaces the local one.
+    rerender(<OrderScheduleCard {...props} technicianIds={["a4"]} techniciansPending={false} />);
+    expect(screen.getByTestId("techs")).toHaveAttribute("data-value", "a4");
   });
 
   it("is plain text when read only", () => {

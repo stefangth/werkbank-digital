@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import {
-  createOrder, createOrderFromQuote, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
+  createOrder, createOrderFromQuote, deleteOrder, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
 } from "./orders";
 
 const asClient = (fake: ReturnType<typeof createFakeSupabase>) => fake as unknown as SupabaseClient<Database>;
@@ -82,12 +82,48 @@ describe("setOrderTechnicians", () => {
     const afterDelete = fake.calls.slice(fake.calls.indexOf(del!));
     expect(afterDelete).toContainEqual(expect.objectContaining({ table: T, method: "eq", args: ["org_id", "org-1"] }));
     expect(fake.calls).toContainEqual(expect.objectContaining({ table: T, method: "in", args: ["artist_id", ["a"]] }));
-    expect(fake.calls).toContainEqual(expect.objectContaining({ table: T, method: "insert", args: [[{ org_id: "org-1", order_id: "o1", artist_id: "c" }]] }));
+    expect(fake.calls).toContainEqual(expect.objectContaining({
+      table: T, method: "upsert",
+      args: [[{ org_id: "org-1", order_id: "o1", artist_id: "c" }], { onConflict: "order_id,artist_id", ignoreDuplicates: true }],
+    }));
+  });
+  it("inserts before it deletes, so a failed delete leaves a superset", async () => {
+    const fake = createFakeSupabase({ [T]: { data: [{ artist_id: "a" }], error: null } });
+    await setOrderTechnicians(asClient(fake), "org-1", "o1", ["b"]);
+    const upsertAt = fake.calls.findIndex((c) => c.table === T && c.method === "upsert");
+    const deleteAt = fake.calls.findIndex((c) => c.table === T && c.method === "delete");
+    expect(upsertAt).toBeGreaterThan(-1);
+    expect(deleteAt).toBeGreaterThan(upsertAt);
+  });
+  it("ignores a technician another save inserted meanwhile (no unique violation)", async () => {
+    // The read sees none, a concurrent save adds "a"; the upsert must not fail on the duplicate.
+    const fake = createFakeSupabase({ [T]: { data: [], error: null } });
+    await setOrderTechnicians(asClient(fake), "org-1", "o1", ["a"]);
+    const upsert = fake.calls.find((c) => c.table === T && c.method === "upsert")!;
+    expect(upsert.args[1]).toEqual({ onConflict: "order_id,artist_id", ignoreDuplicates: true });
+    expect(fake.calls.some((c) => c.table === T && c.method === "insert")).toBe(false);
   });
   it("does nothing when the set is unchanged", async () => {
     const fake = createFakeSupabase({ [T]: { data: [{ artist_id: "a" }], error: null } });
     await setOrderTechnicians(asClient(fake), "org-1", "o1", ["a"]);
-    expect(fake.calls.some((c) => c.method === "delete" || c.method === "insert")).toBe(false);
+    expect(fake.calls.some((c) => c.method === "delete" || c.method === "insert" || c.method === "upsert")).toBe(false);
+  });
+});
+
+describe("deleteOrder", () => {
+  it("deletes by id", async () => {
+    const fake = createFakeSupabase({ [O]: { data: [{ id: "o1" }], error: null } });
+    await deleteOrder(asClient(fake), "o1");
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: O, method: "delete" }));
+    expect(fake.calls).toContainEqual(expect.objectContaining({ table: O, method: "eq", args: ["id", "o1"] }));
+  });
+  it("rejects when RLS filtered the row (the order is no longer open)", async () => {
+    const fake = createFakeSupabase({ [O]: { data: [], error: null } });
+    await expect(deleteOrder(asClient(fake), "o1")).rejects.toEqual({ code: "P0001", message: "invalid_transition" });
+  });
+  it("rejects on a database error", async () => {
+    const fake = createFakeSupabase({ [O]: { data: null, error: new Error("boom") } });
+    await expect(deleteOrder(asClient(fake), "o1")).rejects.toThrow("boom");
   });
 });
 

@@ -6,18 +6,20 @@ import { anOrganization } from "@/test/fixtures";
 import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
-const { state, mut, refetch, route } = vi.hoisted(() => {
+const { state, mut, refetch, route, navigate } = vi.hoisted(() => {
   const m = () => ({ mutate: vi.fn(), isPending: false });
   return {
     state: { order: null as unknown, list: [] as unknown[], quote: null as unknown, orderItems: [] as unknown[], quoteItems: [] as unknown[] },
-    mut: { update: m(), setStatus: m(), setTechnicians: m(), create: m(), createFromQuote: m() },
+    mut: { update: m(), setStatus: m(), setTechnicians: m(), remove: m(), create: m(), createFromQuote: m() },
     refetch: vi.fn(),
     route: { id: "o1" },
+    navigate: vi.fn(),
   };
 });
 vi.mock("react-router-dom", async (orig) => ({
   ...(await orig<typeof import("react-router-dom")>()),
   useParams: () => ({ id: route.id }),
+  useNavigate: () => navigate,
 }));
 vi.mock("../hooks/useOrders", () => ({
   useOrder: () => ({ data: state.order, isLoading: false, isError: false, refetch }),
@@ -41,7 +43,9 @@ vi.mock("../components/CustomerPicker", () => ({ CustomerPicker: () => <div /> }
 vi.mock("../components/PropertyPicker", () => ({ PropertyPicker: () => <div /> }));
 vi.mock("../components/ContactSelect", () => ({ ContactSelect: () => <div /> }));
 vi.mock("../components/TechnicianMultiSelect", () => ({
-  TechnicianMultiSelect: ({ onChange }: { onChange: (ids: string[]) => void }) => <button onClick={() => onChange(["a2"])}>test-set-technician</button>,
+  TechnicianMultiSelect: ({ onChange, disabled }: { onChange: (ids: string[]) => void; disabled?: boolean }) => (
+    <button disabled={disabled} onClick={() => onChange(["a2"])}>test-set-technician</button>
+  ),
 }));
 vi.mock("../components/DatePopover", () => ({
   DatePopover: ({ onSelect, children }: { onSelect: (d: string) => void; children: React.ReactNode }) => (
@@ -103,7 +107,7 @@ describe("OrderPage", () => {
     fireEvent.click(screen.getByText("test-pick-date"));
     expect(mut.update.mutate).toHaveBeenCalledWith({ id: "o1", patch: { scheduled_date: "2026-11-02" } }, expect.anything());
     fireEvent.click(screen.getByText("test-set-technician"));
-    expect(mut.setTechnicians.mutate).toHaveBeenCalledWith({ orderId: "o1", artistIds: ["a2"] });
+    expect(mut.setTechnicians.mutate).toHaveBeenCalledWith({ orderId: "o1", artistIds: ["a2"] }, expect.anything());
   });
 
   it("is read only when done or cancelled and offers Wieder öffnen only for done", async () => {
@@ -188,5 +192,43 @@ describe("OrderPage", () => {
     act(() => opts.onError({ code: "P0001", message: "order_locked" }));
     expect(refetch).toHaveBeenCalled();
     expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "true");
+  });
+
+  it("locks on a technician save that finds the order closed", async () => {
+    render();
+    fireEvent.click(await screen.findByText("test-set-technician"));
+    const opts = mut.setTechnicians.mutate.mock.calls[0][1] as { onError: (e: unknown) => void };
+    act(() => opts.onError({ code: "P0001", message: "order_locked" }));
+    expect(refetch).toHaveBeenCalled();
+    expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "true");
+  });
+
+  it("disables the technicians while a technician save is pending", async () => {
+    mut.setTechnicians.isPending = true;
+    try {
+      render();
+      expect(await screen.findByText("test-set-technician")).toBeDisabled();
+    } finally {
+      mut.setTechnicians.isPending = false;
+    }
+  });
+
+  it("deletes an open order only after confirming, then goes to the order list", async () => {
+    mut.remove.mutate.mockImplementation((_id: string, opts: { onSuccess: () => void }) => opts.onSuccess());
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Auftrag löschen" }));
+    expect(mut.remove.mutate).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveTextContent("AU-0007");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Löschen" }));
+    expect(mut.remove.mutate).toHaveBeenCalledWith("o1", expect.anything());
+    expect(navigate).toHaveBeenCalledWith("/orders");
+  });
+
+  it.each(["in_progress", "done", "cancelled"])("offers no delete for a %s order", async (status) => {
+    state.order = order({ status });
+    render();
+    await screen.findByTestId("items");
+    expect(screen.queryByRole("button", { name: "Auftrag löschen" })).not.toBeInTheDocument();
   });
 });

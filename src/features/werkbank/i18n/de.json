@@ -748,6 +748,9 @@
       "loadFailed": "Der Auftrag konnte nicht geladen werden.",
       "back": "Alle Aufträge",
       "fromQuote": "Aus Angebot",
+      "delete": "Auftrag löschen",
+      "deleteTitle": "Diesen Auftrag löschen?",
+      "deleteBody": "Der Auftrag {{number}} wird mit seinen Positionen und Monteuren endgültig gelöscht.",
       "notFound": {
         "title": "Auftrag nicht gefunden",
         "reason": "Vielleicht wurde er gelöscht.",

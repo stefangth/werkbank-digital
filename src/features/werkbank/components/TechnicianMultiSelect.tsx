@@ -7,8 +7,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTechnicians } from "../hooks/useTechnicians";
 
-/** Searchable multi-select over the org's technicians. Selected ones show as removable chips. */
-export function TechnicianMultiSelect({ id, value, onChange }: { id?: string; value: string[]; onChange: (artistIds: string[]) => void }) {
+/** Searchable multi-select over the org's technicians. Selected ones show as removable chips.
+ *  `disabled` blocks toggles (the list stays open), so the caller can serialize its saves. */
+export function TechnicianMultiSelect({
+  id, value, onChange, disabled = false,
+}: { id?: string; value: string[]; onChange: (artistIds: string[]) => void; disabled?: boolean }) {
   const { t } = useTranslation("werkbank");
   const orgId = useAuth().currentOrg?.id;
   const { data: technicians } = useTechnicians(orgId);
@@ -20,7 +23,7 @@ export function TechnicianMultiSelect({ id, value, onChange }: { id?: string; va
   const needle = search.trim().toLowerCase();
   const matches = needle ? options.filter((o) => o.name.toLowerCase().includes(needle)) : options;
   const toggle = (artistId: string) =>
-    onChange(value.includes(artistId) ? value.filter((v) => v !== artistId) : [...value, artistId]);
+    !disabled && onChange(value.includes(artistId) ? value.filter((v) => v !== artistId) : [...value, artistId]);
 
   return (
     <div className="space-y-2">
@@ -37,7 +40,7 @@ export function TechnicianMultiSelect({ id, value, onChange }: { id?: string; va
             <CommandList>
               <CommandGroup>
                 {matches.map((o) => (
-                  <CommandItem key={o.id} value={o.id} onSelect={() => toggle(o.id)}>
+                  <CommandItem key={o.id} value={o.id} disabled={disabled} onSelect={() => toggle(o.id)}>
                     <Check className={`mr-2 h-4 w-4 ${value.includes(o.id) ? "opacity-100" : "opacity-0"}`} />
                     <span className="truncate">{o.name}</span>
                   </CommandItem>
@@ -56,6 +59,7 @@ export function TechnicianMultiSelect({ id, value, onChange }: { id?: string; va
                 type="button"
                 variant="secondary"
                 size="sm"
+                disabled={disabled}
                 aria-label={t("pickers.technician.remove", { name: o.name })}
                 onClick={() => toggle(o.id)}
               >

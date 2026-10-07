@@ -748,6 +748,9 @@
       "loadFailed": "The order could not be loaded.",
       "back": "All orders",
       "fromQuote": "From quote",
+      "delete": "Delete order",
+      "deleteTitle": "Delete this order?",
+      "deleteBody": "Order {{number}} with its items and technicians is removed for good.",
       "notFound": {
         "title": "Order not found",
         "reason": "It may have been deleted.",

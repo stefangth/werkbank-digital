@@ -52,4 +52,13 @@ describe("order hooks", () => {
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "quotes"] });
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "number-ranges"] });
   });
+
+  it("remove deletes the order and refreshes orders and quotes (has_order changes)", async () => {
+    Object.assign(client, createFakeSupabase({ "werkbank.orders": { data: [{ id: "o1" }], error: null } }));
+    const { result, queryClient } = renderHookWithProviders(() => useOrderMutations(), { authOverrides });
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    await act(async () => { await result.current.remove.mutateAsync("o1"); });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "orders"] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "quotes"] });
+  });
 });

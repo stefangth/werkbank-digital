@@ -35,11 +35,32 @@ function TimeField({ time, disabled, onSave }: { time: string | null; disabled: 
   );
 }
 
+/** The technicians keep a local selection, so a second toggle builds on the first instead of on
+ *  the server value that has not caught up yet. While a save is pending the toggles are disabled
+ *  (saves are serialized); when it settles, or the server value changes, the server value wins. */
+function TechniciansField({ ids, pending, onChange }: { ids: string[]; pending: boolean; onChange: (artistIds: string[]) => void }) {
+  const serverKey = ids.join(",");
+  const [selected, setSelected] = useState(ids);
+  const [seen, setSeen] = useState({ key: serverKey, pending });
+  if (seen.key !== serverKey || seen.pending !== pending) {
+    setSeen({ key: serverKey, pending });
+    if (seen.key !== serverKey || (seen.pending && !pending)) setSelected(ids);
+  }
+  return (
+    <TechnicianMultiSelect
+      id="order-technicians"
+      value={selected}
+      disabled={pending}
+      onChange={(next) => { setSelected(next); onChange(next); }}
+    />
+  );
+}
+
 /** "Einsatz": when and who. The time can only be set with a date (a database check), so it is
  *  disabled until one is picked, and removing the date removes the time with it. Technicians
  *  are optional. Read only, it is plain text. */
 export function OrderScheduleCard({
-  date, time, technicianIds, technicianNames, readOnly, onSchedule, onTechnicians,
+  date, time, technicianIds, technicianNames, readOnly, onSchedule, onTechnicians, techniciansPending = false,
 }: {
   date: string | null;
   time: string | null;
@@ -49,6 +70,8 @@ export function OrderScheduleCard({
   readOnly: boolean;
   onSchedule: (patch: SchedulePatch) => void;
   onTechnicians: (artistIds: string[]) => void;
+  /** A technician save is in flight: toggles wait for it. */
+  techniciansPending?: boolean;
 }) {
   const { t } = useTranslation("werkbank");
   const none = t("quotes.header.none");
@@ -84,7 +107,7 @@ export function OrderScheduleCard({
             <TimeField key={`${date}-${time}`} time={time} disabled={!date} onSave={(next) => onSchedule({ scheduled_time: next })} />
             <div className="space-y-1.5">
               <Label htmlFor="order-technicians">{t("orders.schedule.technicians")}</Label>
-              <TechnicianMultiSelect id="order-technicians" value={technicianIds} onChange={onTechnicians} />
+              <TechniciansField ids={technicianIds} pending={techniciansPending} onChange={onTechnicians} />
             </div>
           </div>
         )}

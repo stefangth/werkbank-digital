@@ -67,7 +67,9 @@ export async function setOrderStatus(client: Client, id: string, status: Order["
   await updateOrder(client, id, { status } as OrderPatch);
 }
 
-/** Makes the technician set equal `artistIds`: deletes the missing, inserts the new. */
+/** Makes the technician set equal `artistIds`: inserts the new, then deletes the missing.
+ *  Inserting first means a failure part way leaves a superset, never a lost technician, and the
+ *  insert ignores a row a concurrent save already added (no 23505 on the primary key). */
 export async function setOrderTechnicians(client: Client, orgId: string, orderId: string, artistIds: string[]): Promise<void> {
   const werkbank = client.schema("werkbank");
   const { data, error } = await werkbank.from("order_technicians").select("artist_id").eq("org_id", orgId).eq("order_id", orderId);
@@ -76,14 +78,26 @@ export async function setOrderTechnicians(client: Client, orgId: string, orderId
   const wanted = new Set(artistIds);
   const toDelete = [...current].filter((id) => !wanted.has(id));
   const toInsert = [...wanted].filter((id) => !current.has(id));
+  if (toInsert.length) {
+    const res = await werkbank.from("order_technicians").upsert(
+      toInsert.map((artist_id) => ({ org_id: orgId, order_id: orderId, artist_id })),
+      { onConflict: "order_id,artist_id", ignoreDuplicates: true },
+    );
+    if (res.error) throw res.error;
+  }
   if (toDelete.length) {
     const res = await werkbank.from("order_technicians").delete().eq("org_id", orgId).eq("order_id", orderId).in("artist_id", toDelete);
     if (res.error) throw res.error;
   }
-  if (toInsert.length) {
-    const res = await werkbank.from("order_technicians").insert(toInsert.map((artist_id) => ({ org_id: orgId, order_id: orderId, artist_id })));
-    if (res.error) throw res.error;
-  }
+}
+
+/** Deletes an open order with its items and technicians. RLS allows deleting `open` only and
+ *  filters any other row silently, so an empty result (the order was started meanwhile) is
+ *  raised as an invalid transition instead of passing as a success. */
+export async function deleteOrder(client: Client, id: string): Promise<void> {
+  const { data, error } = await client.schema("werkbank").from("orders").delete().eq("id", id).select("id");
+  if (error) throw error;
+  if (!data || data.length === 0) throw { code: "P0001", message: "invalid_transition" };
 }
 
 /** Creates the order of an accepted quote and returns its id. */

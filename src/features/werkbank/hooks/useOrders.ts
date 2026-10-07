@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  createOrder, createOrderFromQuote, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
+  createOrder, createOrderFromQuote, deleteOrder, fetchOrder, fetchOrderIdForQuote, fetchOrderList, setOrderStatus, setOrderTechnicians, updateOrder,
   type Order, type OrderDraft, type OrderPatch,
 } from "../data/orders";
 import { mapDbError } from "../lib/dbErrors";
@@ -60,6 +60,8 @@ export function useOrderMutations() {
     createFromQuote: useWiring((quoteId: string) => createOrderFromQuote(supabase, quoteId), [QUOTES_KEY, RANGES_KEY]),
     update: useWiring((vars: { id: string; patch: OrderPatch }) => updateOrder(supabase, vars.id, vars.patch)),
     setStatus: useWiring((vars: { id: string; status: Order["status"] }) => setOrderStatus(supabase, vars.id, vars.status)),
+    // An order made from a quote frees the quote again (`has_order`), so quotes refresh too.
+    remove: useWiring((id: string) => deleteOrder(supabase, id), [QUOTES_KEY]),
     setTechnicians: useWiring((vars: { orderId: string; artistIds: string[] }) =>
       setOrderTechnicians(supabase, orgId!, vars.orderId, vars.artistIds)),
   };
