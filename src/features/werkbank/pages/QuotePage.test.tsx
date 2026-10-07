@@ -252,6 +252,16 @@ describe("QuotePage", () => {
       expect(screen.queryByRole("button", { name: "Auftrag anlegen" })).not.toBeInTheDocument();
     });
 
+    it("offers neither action while the order lookup is still loading", async () => {
+      state.quote = quote({ status: "accepted" });
+      state.list = [];
+      state.orderId = undefined;
+      render();
+      await screen.findByTestId("items");
+      expect(screen.queryByRole("button", { name: "Auftrag anlegen" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Zum Auftrag" })).not.toBeInTheDocument();
+    });
+
     it("offers nothing for a quote that is not accepted", async () => {
       state.quote = quote({ status: "sent" });
       render();

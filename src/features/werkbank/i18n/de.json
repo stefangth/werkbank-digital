@@ -767,6 +767,12 @@
       "added": "Neu",
       "removed_one": "{{count}} Position des Angebots fehlt im Auftrag.",
       "removed_other": "{{count}} Positionen des Angebots fehlen im Auftrag."
+    },
+    "cancel": {
+      "title": "Diesen Auftrag stornieren?",
+      "body": "Der Auftrag {{number}} wird storniert und gesperrt. Das lässt sich nicht rückgängig machen.",
+      "keep": "Auftrag behalten",
+      "confirm": "Stornieren"
     }
   },
   "publicQuote": {

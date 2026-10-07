@@ -26,7 +26,7 @@ const steps: MiniSteps = [
     label: { en: 'Finish', de: 'Abschließen' },
     text: {
       en: 'Start, complete or cancel an order. A finished order is locked, but you can reopen it.',
-      de: 'Beginne, erledige oder storniere einen Auftrag. Ein erledigter Auftrag ist gesperrt, Du kannst ihn aber wieder öffnen.',
+      de: 'Beginne, erledige oder storniere einen Auftrag. Ein erledigter Auftrag ist gesperrt, du kannst ihn aber wieder öffnen.',
     },
   },
 ];

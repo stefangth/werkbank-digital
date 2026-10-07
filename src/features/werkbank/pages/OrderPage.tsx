@@ -3,6 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
+import {
+  AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -43,6 +46,7 @@ export function OrderPage() {
   // Keyed by the order id: the route reuses this component, so a lock must not carry over to
   // the next order the user navigates to.
   const [lockedId, setLockedId] = useState<string | null>(null);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const diff = useMemo(
     () => (quoteItems && orderItems ? diffAgainstQuote(orderItems, quoteItems) : null),
@@ -90,7 +94,7 @@ export function OrderPage() {
         eyebrow={t("orders.title")}
         title={order.subject ?? order.order_no}
         actions={nextOrderActions(status).map((action) => (
-          <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => runAction(action)}>
+          <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => (action === "cancel" ? setConfirmingCancel(true) : runAction(action))}>
             {t(`orders.action.${action}`)}
           </Button>
         ))}
@@ -140,6 +144,25 @@ export function OrderPage() {
 
       <LineItemsEditor docRef={{ orderId: order.id }} readOnly={readOnly} marks={diff ?? undefined} onLocked={lock} />
       <DocumentTotalsCard totals={order.totals} isPrivateCustomer={customer?.kind === "private"} />
+
+      <AlertDialog open={confirmingCancel} onOpenChange={setConfirmingCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("orders.cancel.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("orders.cancel.body", { number: order.order_no })}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("orders.cancel.keep")}</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={setStatus.isPending}
+              onClick={() => { setConfirmingCancel(false); runAction("cancel"); }}
+            >
+              {t("orders.cancel.confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

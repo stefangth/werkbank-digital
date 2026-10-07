@@ -38,8 +38,8 @@ export function QuotePage() {
   const { data: customer } = useCustomer(quote?.customer_id);
   const { update, remove, extend, revokeLink, revise, copy } = useQuoteMutations();
   const { createFromQuote } = useOrderMutations();
-  const hasOrder = !!list?.find((q) => q.id === quote?.id)?.has_order;
-  const { data: orderId } = useOrderIdForQuote(quote?.id, quote?.status === "accepted" && hasOrder);
+  // The order lookup is the source of truth: undefined while it loads, null when there is none.
+  const { data: orderId } = useOrderIdForQuote(quote?.id, quote?.status === "accepted");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Keyed by the quote id: the route reuses this component, so a lock must not carry over to
   // the next quote the user navigates to.
@@ -118,7 +118,7 @@ export function QuotePage() {
                 )}
               </>
             )}
-            {quote.status === "accepted" && !hasOrder && (
+            {quote.status === "accepted" && orderId === null && (
               <Button
                 disabled={createFromQuote.isPending}
                 onClick={() => createFromQuote.mutate(quote.id, { onSuccess: (newId) => navigate(orderPath(newId)) })}
@@ -126,7 +126,7 @@ export function QuotePage() {
                 {t("quotes.page.createOrder")}
               </Button>
             )}
-            {quote.status === "accepted" && hasOrder && orderId && (
+            {quote.status === "accepted" && orderId && (
               <Button asChild variant="secondary">
                 <Link to={orderPath(orderId)}>{t("quotes.page.toOrder")}</Link>
               </Button>

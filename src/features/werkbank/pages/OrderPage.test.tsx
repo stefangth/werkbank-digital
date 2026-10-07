@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
 import { anOrganization } from "@/test/fixtures";
 import i18n from "@/i18n";
@@ -123,7 +123,6 @@ describe("OrderPage", () => {
   it.each([
     ["open", ["Beginnen", "Stornieren"], "Beginnen", "in_progress"],
     ["in_progress", ["Erledigt", "Stornieren"], "Erledigt", "done"],
-    ["in_progress", ["Erledigt", "Stornieren"], "Stornieren", "cancelled"],
     ["done", ["Wieder öffnen"], "Wieder öffnen", "in_progress"],
   ])("status %s offers %j and %s sets %s", async (status, labels, click, target) => {
     state.order = order({ status });
@@ -131,6 +130,19 @@ describe("OrderPage", () => {
     for (const l of labels) expect(await screen.findByRole("button", { name: l })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: click }));
     expect(mut.setStatus.mutate).toHaveBeenCalledWith({ id: "o1", status: target });
+  });
+
+  it("cancels only after confirming", async () => {
+    state.order = order({ status: "in_progress" });
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Stornieren" }));
+    expect(mut.setStatus.mutate).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Auftrag behalten" }));
+    expect(mut.setStatus.mutate).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Stornieren" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Stornieren" }));
+    expect(mut.setStatus.mutate).toHaveBeenCalledWith({ id: "o1", status: "cancelled" });
   });
 
   it("shows no comparison for a direct order", async () => {

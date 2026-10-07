@@ -767,6 +767,12 @@
       "added": "New",
       "removed_one": "{{count}} quote line is missing from the order.",
       "removed_other": "{{count}} quote lines are missing from the order."
+    },
+    "cancel": {
+      "title": "Cancel this order?",
+      "body": "Order {{number}} is cancelled and locked. This cannot be undone.",
+      "keep": "Keep order",
+      "confirm": "Cancel order"
     }
   },
   "publicQuote": {
