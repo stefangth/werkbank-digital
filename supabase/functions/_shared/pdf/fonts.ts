@@ -1,10 +1,10 @@
 // GENERATED FILE. Do not edit.
-// Source: src/lib/hireOrders/pdf/fonts.ts
+// Source: src/lib/pdf/fonts.ts
 // Regenerate: npm run sync:mirrors
 // Geist + Geist Mono TTFs, gzip-compressed then base64-encoded.
 //
-// DUAL-HOME PAIR: src/lib/hireOrders/pdf/fonts.ts (edit here) generates
-// supabase/functions/_shared/hire-order-pdf/fonts.ts (the edge renderer can't
+// DUAL-HOME PAIR: src/lib/pdf/fonts.ts (edit here) generates
+// supabase/functions/_shared/pdf/fonts.ts (the edge renderer can't
 // import from src/). Edit this file, then run `npm run sync:mirrors`; never
 // hand-edit the generated target. BOTH runtimes embed these bytes so the
 // DEFAULT theme renders with zero network I/O and can never degrade to a

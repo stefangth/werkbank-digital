@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Regenerates src/lib/hireOrders/pdf/fonts.ts (the source half of the
+// Regenerates src/lib/pdf/fonts.ts (the source half of the
 // fonts.ts mirror pair — see scripts/mirrors.manifest.json) from four raw
 // Geist TTF files, gzip-compressed at level 9 then base64-encoded.
 //
@@ -20,9 +20,9 @@
 //     --semibold <path/to/Geist-SemiBold.ttf> \
 //     --mono-regular <path/to/GeistMono-Regular.ttf>
 //
-// Writes src/lib/hireOrders/pdf/fonts.ts directly. Run `npm run sync:mirrors`
+// Writes src/lib/pdf/fonts.ts directly. Run `npm run sync:mirrors`
 // afterwards to regenerate the edge twin
-// (supabase/functions/_shared/hire-order-pdf/fonts.ts) — never hand-edit that
+// (supabase/functions/_shared/pdf/fonts.ts) — never hand-edit that
 // file. See docs/runbooks/hire-order-fonts.md for the full replace-a-font
 // walkthrough, including where to source licitly-licensed TTFs.
 //
@@ -37,7 +37,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const OUTPUT_PATH = join(REPO_ROOT, "src/lib/hireOrders/pdf/fonts.ts");
+const OUTPUT_PATH = join(REPO_ROOT, "src/lib/pdf/fonts.ts");
 
 const GZIP_LEVEL = 9;
 
@@ -72,8 +72,8 @@ function compress(ttfPath, label) {
 
 const HEADER = `// Geist + Geist Mono TTFs, gzip-compressed then base64-encoded.
 //
-// DUAL-HOME PAIR: src/lib/hireOrders/pdf/fonts.ts (edit here) generates
-// supabase/functions/_shared/hire-order-pdf/fonts.ts (the edge renderer can't
+// DUAL-HOME PAIR: src/lib/pdf/fonts.ts (edit here) generates
+// supabase/functions/_shared/pdf/fonts.ts (the edge renderer can't
 // import from src/). Edit this file, then run \`npm run sync:mirrors\`; never
 // hand-edit the generated target. BOTH runtimes embed these bytes so the
 // DEFAULT theme renders with zero network I/O and can never degrade to a
