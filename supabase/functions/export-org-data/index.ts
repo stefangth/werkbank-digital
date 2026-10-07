@@ -19,10 +19,19 @@ const ORG_TABLES = [
   "airtable_sync_log", "airtable_sync_record_log",
 ] as const satisfies readonly OrgTable[];
 
-// Trade-business master data lives in its own schema; every table carries org_id.
-const WERKBANK_TABLES = [
-  "customers", "properties", "contacts", "catalog_items", "number_ranges",
-] as const satisfies readonly (keyof Database["werkbank"]["Tables"])[];
+type WerkbankTables = Database["werkbank"]["Tables"];
+
+// Trade-business master data lives in its own schema; every table carries org_id. Paging needs a
+// stable order on a column the table really has (number_ranges has no id; its key is (org_id, key)),
+// so each table names its sort column, checked against the generated Row type.
+export const WERKBANK_ORDER = {
+  customers: "id",
+  properties: "id",
+  contacts: "id",
+  catalog_items: "id",
+  number_ranges: "key",
+} as const satisfies { [T in keyof WerkbankTables]: keyof WerkbankTables[T]["Row"] & string };
+const WERKBANK_TABLES = Object.keys(WERKBANK_ORDER) as (keyof typeof WERKBANK_ORDER)[];
 
 // An org can hold far more rows than PostgREST returns in one response (default cap 1000),
 // so werkbank tables are read page by page.
@@ -66,7 +75,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     const rows: unknown[] = [];
     for (let from = 0; ; from += PAGE_SIZE) {
       const { data, error } = await admin.schema("werkbank").from(table).select("*")
-        .eq("org_id", orgId).order("id").range(from, from + PAGE_SIZE - 1);
+        .eq("org_id", orgId).order(WERKBANK_ORDER[table]).range(from, from + PAGE_SIZE - 1);
       if (error) return json({ error: `Failed to read werkbank.${table}` }, 500);
       rows.push(...(data ?? []));
       if ((data ?? []).length < PAGE_SIZE) break;

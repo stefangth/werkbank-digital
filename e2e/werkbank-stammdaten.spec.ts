@@ -9,6 +9,7 @@
  */
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import { adminClient, tagEmail } from "./helpers/supabase";
 import { createConfirmedUser, deleteUserByEmail, ensurePlatformAdmin } from "./helpers/users";
 import { navViaSidebar, signOut } from "./helpers/auth";
@@ -220,5 +221,25 @@ test.describe("Werkbank master data", () => {
 
     const { count } = await werkbank().from("customers").select("id", { count: "exact", head: true }).eq("org_id", orgId);
     expect(count).toBe(3);
+  });
+
+  // Runs against the real PostgREST: every werkbank table is paged with an order on a column it has
+  // (number_ranges has no id), which the Deno fake cannot check.
+  test("the org export includes the werkbank master data", async () => {
+    const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+    const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (!url || !anonKey) throw new Error("E2E: SUPABASE_URL and SUPABASE_ANON_KEY are required");
+    const superAdmin = createClient(url, anonKey, { auth: { autoRefreshToken: false, persistSession: false } });
+    const { error: signInError } = await superAdmin.auth.signInWithPassword({ email: SUPER_EMAIL, password: SUPER_PASSWORD });
+    expect(signInError).toBeNull();
+
+    const { data, error } = await superAdmin.functions.invoke("export-org-data", { body: { org_id: orgId } });
+    expect(error).toBeNull();
+    const werkbankBundle = (data as { bundle: { werkbank: Record<string, unknown[]> } }).bundle.werkbank;
+    expect(werkbankBundle.customers).toHaveLength(3);
+    expect(werkbankBundle.properties).toHaveLength(1);
+    expect(werkbankBundle.contacts).toHaveLength(1);
+    expect(werkbankBundle.catalog_items).toHaveLength(1);
+    expect(werkbankBundle.number_ranges).toEqual([expect.objectContaining({ key: "customer", prefix: "K-" })]);
   });
 });

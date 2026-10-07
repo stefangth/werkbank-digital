@@ -1,5 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { handle } from "./index.ts";
+import { handle, WERKBANK_ORDER } from "./index.ts";
+import type { Database } from "../_shared/database.types.ts";
 import { makeFakeDeps, makeRequest } from "../_shared/testing.ts";
 
 const AUTH = { Authorization: "Bearer jwt", "content-type": "application/json" };
@@ -84,4 +85,30 @@ Deno.test("a werkbank read error returns 500", async () => {
   const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
   assertEquals(res.status, 500);
   assertEquals((await res.json()).error, "Failed to read werkbank.customers");
+});
+
+// number_ranges has no id column (PK org_id, key): real PostgREST rejects order=id with 42703, which
+// the fake would accept, so the sort column per table is pinned here and type-checked in index.ts.
+type WerkbankRow<T extends keyof Database["werkbank"]["Tables"]> = keyof Database["werkbank"]["Tables"][T]["Row"];
+const _numberRangesHasNoId: "id" extends WerkbankRow<"number_ranges"> ? never : true = true;
+const _numberRangesHasKey: "key" extends WerkbankRow<"number_ranges"> ? true : never = true;
+void _numberRangesHasNoId;
+void _numberRangesHasKey;
+
+Deno.test("each werkbank table is paged in the order of a column it has", async () => {
+  const { deps, calls } = makeFakeDeps({ authUser: { id: "sa" }, tables: { ...SUPER_ADMIN } });
+  const res = await handle(makeRequest({ headers: AUTH, body: { org_id: "o1" } }), deps);
+  assertEquals(res.status, 200);
+  const orders = Object.fromEntries(
+    calls.filter((c) => c.table.startsWith("werkbank.") && c.method === "order")
+      .map((c) => [c.table.slice("werkbank.".length), c.args[0]]),
+  );
+  assertEquals(orders, {
+    customers: "id",
+    properties: "id",
+    contacts: "id",
+    catalog_items: "id",
+    number_ranges: "key",
+  });
+  assertEquals(orders, { ...WERKBANK_ORDER });
 });
