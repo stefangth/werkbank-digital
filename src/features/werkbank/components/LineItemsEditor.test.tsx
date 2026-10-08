@@ -88,12 +88,14 @@ describe("LineItemsEditor", () => {
 
   it("adds a free item, a title and a text block", () => {
     renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    // The DB requires a non-blank name (item, title) or description (text), so new lines start
+    // with a placeholder the user overwrites.
     fireEvent.click(screen.getByRole("button", { name: "Freie Position" }));
-    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "item", catalog_item_id: null }) }));
+    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "item", catalog_item_id: null, name: "Neue Position" }) }));
     fireEvent.click(screen.getByRole("button", { name: "Titel hinzufügen" }));
-    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "title" }) }));
+    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "title", name: "Neuer Titel" }) }));
     fireEvent.click(screen.getByRole("button", { name: "Text hinzufügen" }));
-    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "text" }) }));
+    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "text", name: null, description: "Neuer Text" }) }));
   });
 
   it("saves a typed quantity once, 500 ms after the last keystroke", () => {
