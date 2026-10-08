@@ -186,3 +186,8 @@ verify_jwt = false
 # verifies the JWT; the function still checks the org role through requireOrgRole.
 [functions.werkbank-invoices]
 verify_jwt = true
+
+# werkbank-dunning: dunning notice preview, issue (create_dunning_notice through the caller's JWT,
+# then the PDF) and download. No public actions, so the gateway verifies the JWT.
+[functions.werkbank-dunning]
+verify_jwt = true

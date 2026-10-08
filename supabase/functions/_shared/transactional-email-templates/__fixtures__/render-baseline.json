@@ -239,6 +239,46 @@
     "html": "8bd24d4725a60165c849f7e7c8d33eb818031cc62b4fe4fdf332e64681e25f3f",
     "text": "d81a7823ccaba071d0cceced0c3122d98940db69d6a521122f4ac2de1dcf7229"
   },
+  "dunning-sent/preview/production/en": {
+    "subject": "1. Mahnung for invoice RE-0012",
+    "html": "2bb3ae4ab327c476294c8f63ebbcd7f886aabf8fabad398c30ef32fa349caed5",
+    "text": "e228382210f0ba44e06e2736b1a9d5269c2ed902ce1b1d5990c5db26c0df7934"
+  },
+  "dunning-sent/preview/production/de": {
+    "subject": "1. Mahnung zu Rechnung RE-0012",
+    "html": "43976c0ba4ff7b58073d1a52229e62f57f5313fd99cdc8067d6b8a22a1979ba9",
+    "text": "27d1876d081997a9e299276378c9868811ecc68135be7fe7b11fa8154137d13d"
+  },
+  "dunning-sent/preview/staffing/en": {
+    "subject": "1. Mahnung for invoice RE-0012",
+    "html": "2bb3ae4ab327c476294c8f63ebbcd7f886aabf8fabad398c30ef32fa349caed5",
+    "text": "e228382210f0ba44e06e2736b1a9d5269c2ed902ce1b1d5990c5db26c0df7934"
+  },
+  "dunning-sent/preview/staffing/de": {
+    "subject": "1. Mahnung zu Rechnung RE-0012",
+    "html": "43976c0ba4ff7b58073d1a52229e62f57f5313fd99cdc8067d6b8a22a1979ba9",
+    "text": "27d1876d081997a9e299276378c9868811ecc68135be7fe7b11fa8154137d13d"
+  },
+  "dunning-sent/empty/production/en": {
+    "subject": " for invoice ",
+    "html": "18855a540c6664b2c8443e28a2224ca14d9c04810c966b5075a1e5737507119a",
+    "text": "dde599e0a83276c512f072a67d65e97750bf5f52f633e50ee1d1e3cbd516583e"
+  },
+  "dunning-sent/empty/production/de": {
+    "subject": " zu Rechnung ",
+    "html": "d9dda1df0732e408db3b82bfd5671d28730e1d08e246c161c8e3456a00366625",
+    "text": "0d884ceddb184c5d304b5408cbf8818070bd55fbd308b7a023df04c170e30a13"
+  },
+  "dunning-sent/empty/staffing/en": {
+    "subject": " for invoice ",
+    "html": "18855a540c6664b2c8443e28a2224ca14d9c04810c966b5075a1e5737507119a",
+    "text": "dde599e0a83276c512f072a67d65e97750bf5f52f633e50ee1d1e3cbd516583e"
+  },
+  "dunning-sent/empty/staffing/de": {
+    "subject": " zu Rechnung ",
+    "html": "d9dda1df0732e408db3b82bfd5671d28730e1d08e246c161c8e3456a00366625",
+    "text": "0d884ceddb184c5d304b5408cbf8818070bd55fbd308b7a023df04c170e30a13"
+  },
   "hire-order-countersigned/preview/production/en": {
     "subject": "Your contract for Sat, Aug 15 2026 is signed",
     "html": "583041e2206549f5629eabefbc8370dd7ac1df9926f6346fee7647a1610534f5",

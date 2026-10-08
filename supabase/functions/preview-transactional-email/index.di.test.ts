@@ -54,7 +54,7 @@ function authedPostRequest(body: unknown = {}) {
   return makeRequest({ headers: { Authorization: "Bearer jwt" }, body });
 }
 
-const EXPECTED_TEMPLATE_COUNT = 17;
+const EXPECTED_TEMPLATE_COUNT = 18;
 
 // ── Auth contract ─────────────────────────────────────────────────────────────
 
@@ -566,7 +566,7 @@ Deno.test("preview-transactional-email DI: artist-offer-digest html contains pre
 
 // ── Registry count assertion ──────────────────────────────────────────────────
 
-Deno.test("preview-transactional-email DI: TEMPLATES registry has exactly 17 entries", async () => {
+Deno.test("preview-transactional-email DI: TEMPLATES registry has exactly 18 entries", async () => {
   // Regression guard: if a template is added/removed, this test will catch the mismatch.
   // Task 10 added 'hire-order-issued' (9 -> 10). Task 5 added 'account-email-changed' (10 -> 11).
   // Hire-orders countersign added 'hire-order-countersigned'; two retired signup templates are absent.
@@ -575,7 +575,8 @@ Deno.test("preview-transactional-email DI: TEMPLATES registry has exactly 17 ent
   // Producer journey WP-P4 added 'tier-at-risk' (12 -> 13).
   // Quotes added 'quote-sent', 'quote-decided' and 'quote-decision-confirmation' (13 -> 16).
   // Invoices added 'invoice-sent' (16 -> 17).
-  assertEquals(EXPECTED_TEMPLATE_COUNT, 17);
+  // Open items added 'dunning-sent' (17 -> 18).
+  assertEquals(EXPECTED_TEMPLATE_COUNT, 18);
 });
 
 // ── GET method (non-POST) ─────────────────────────────────────────────────────
