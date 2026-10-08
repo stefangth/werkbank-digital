@@ -155,7 +155,7 @@ export function IssueInvoiceDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="issue-invoice-message">{t("invoices.send.message")}</Label>
-            <Textarea id="issue-invoice-message" rows={5} value={message} onChange={(e) => setMessage(e.target.value)} />
+            <Textarea id="issue-invoice-message" rows={5} maxLength={5000} value={message} onChange={(e) => setMessage(e.target.value)} />
           </div>
 
           {shownBlockers.length > 0 && (
