@@ -1,6 +1,6 @@
 let started = false;
 
-/** Registers the service worker of the technician app (scope `/einsaetze/`, see vite.config.ts).
+/** Registers the service worker of the technician app (scope `/einsaetze`, see vite.config.ts).
  *  Called from the technician routes only, so office pages never register one. Updates install
  *  in the background (`registerType: "autoUpdate"`). */
 export function registerServiceWorker(): void {

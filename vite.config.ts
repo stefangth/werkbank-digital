@@ -4,40 +4,10 @@ import posthog from '@posthog/rollup-plugin';
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { readPostHogSourceMapOptions } from './scripts/posthogSourceMaps';
+import { phoneAppPwaOptions } from './scripts/phoneAppPwa';
 
-/**
- * The installable app of the phone routes under `scope`. Precaches only the app shell (no API
- * runtime caching; offline data comes from the query cache). `injectRegister: false`: nothing is
- * registered globally, the scoped pages register it themselves via `virtual:pwa-register`, so
- * every other page stays outside the service worker.
- */
-function phoneAppPwa(scope: string, app: { name: string; shortName: string; iconDir: string; themeColor: string; lang: string }) {
-  const startUrl = scope.replace(/\/$/, "");
-  return VitePWA({
-    injectRegister: false,
-    registerType: "autoUpdate",
-    strategies: "generateSW",
-    scope,
-    manifest: {
-      name: app.name,
-      short_name: app.shortName,
-      start_url: startUrl,
-      scope,
-      display: "standalone",
-      theme_color: app.themeColor,
-      background_color: "#ffffff",
-      lang: app.lang,
-      icons: [192, 512].map((size) => ({ src: `${app.iconDir}/icon-${size}.png`, sizes: `${size}x${size}`, type: "image/png" })),
-    },
-    workbox: {
-      navigateFallback: "/index.html",
-      navigateFallbackAllowlist: [new RegExp(`^${startUrl}`)],
-      runtimeCaching: [],
-      // The shell must open offline, and the main app chunk is above workbox's 2 MiB default.
-      maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
-    },
-  });
-}
+/** Scope and start page of the technician app (the fork's phone routes). */
+export const PHONE_APP_SCOPE = "/einsaetze";
 
 /**
  * Print which Supabase project the dev server is pointed at, so `npm run dev`
@@ -79,7 +49,9 @@ export default defineConfig(({ mode }) => {
       react(),
       supabaseTargetBanner(buildEnv.VITE_SUPABASE_URL),
       // PWA manifest name of the fork.
-      phoneAppPwa("/einsaetze/", { name: "Werkbank Digital", shortName: "Werkbank", iconDir: "/werkbank", themeColor: "#C2410C", lang: "de" }),
+      VitePWA(phoneAppPwaOptions(PHONE_APP_SCOPE, {
+        name: "Werkbank Digital", shortName: "Werkbank", iconDir: "/werkbank", themeColor: "#C2410C", lang: "de",
+      })),
       ...(sourceMapOptions ? [posthog(sourceMapOptions)] : []),
     ],
     resolve: {
