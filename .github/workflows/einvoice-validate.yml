@@ -8,7 +8,12 @@ on:
   pull_request:
     branches: ["**"]
     paths:
-      - "supabase/functions/_shared/werkbank/einvoice/**"
+      # Everything the fixture script imports (deno info), plus what the Deno run reads.
+      - "supabase/functions/_shared/werkbank/**"
+      - "supabase/functions/_shared/pdf/**"
+      - "supabase/functions/_shared/database.types.ts"
+      - "deno.lock"
+      - "package.json"
       - "supabase/functions/werkbank-invoices/**"
       - "scripts/werkbank/**"
       - ".github/workflows/einvoice-validate.yml"
@@ -48,6 +53,9 @@ jobs:
           curl -fsSL -o mustang.jar "https://repo1.maven.org/maven2/org/mustangproject/Mustang-CLI/${MUSTANG_VERSION}/Mustang-CLI-${MUSTANG_VERSION}.jar"
           echo "${MUSTANG_SHA256}  mustang.jar" | sha256sum --check -
 
+      - name: Test the gate
+        run: deno test --allow-all --node-modules-dir=none scripts/werkbank/mustang-gate.deno-test.ts
+
       - name: Typecheck scripts
         run: deno check --node-modules-dir=none scripts/werkbank/*.ts
 
@@ -64,4 +72,4 @@ jobs:
       # Fails on any summary other than status="valid" and on any error or warning;
       # notices (XRechnung-only rules) are ignored. Prints the full report on failure.
       - name: Gate the reports
-        run: deno run --allow-read scripts/werkbank/mustang-gate.ts "$RUNNER_TEMP"/einv/*.report
+        run: deno run --allow-read scripts/werkbank/mustang-gate.ts --expect 4 "$RUNNER_TEMP"/einv/*.report
