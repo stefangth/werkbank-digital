@@ -23,7 +23,8 @@
     "quotes": "Angebote",
     "orders": "Aufträge",
     "invoices": "Rechnungen",
-    "openItems": "Offene Posten"
+    "openItems": "Offene Posten",
+    "myAssignments": "Meine Einsätze"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -46,7 +47,8 @@
       "overdue": "Überfällig",
       "overdueNote_one": "davon {{count}} mahnfällig",
       "overdueNote_other": "davon {{count}} mahnfällig"
-    }
+    },
+    "myAssignments": "Meine Einsätze"
   },
   "technicians": {
     "title": "Monteure",
@@ -1385,5 +1387,14 @@
       "sentTo": "an {{recipients}}",
       "cancelledBy": "Storniert durch"
     }
+  },
+  "app": {
+    "notTechnician": "Du bist in diesem Betrieb nicht als Monteur hinterlegt.",
+    "signOut": "Abmelden",
+    "assignmentsTitle": "Meine Einsätze",
+    "assignmentTitle": "Einsatz",
+    "back": "Zurück",
+    "unnamedUser": "Monteur",
+    "notTechnicianReason": "Frag im Büro, ob Du unter Monteure angelegt wirst."
   }
 }

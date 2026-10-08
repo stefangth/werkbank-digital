@@ -5,12 +5,18 @@
 import { lazy } from "react";
 import { Building2, ClipboardList, FileText, Receipt, Wallet, HardHat, Home, Wrench } from "lucide-react";
 import type { ModuleUi } from "@/modules/ui";
-import { CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, ORDERS_PATH, PROPERTIES_PATH, PUBLIC_QUOTE_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
+import { ASSIGNMENT_PATH, ASSIGNMENTS_PATH, CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, ORDERS_PATH, PROPERTIES_PATH, PUBLIC_QUOTE_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 export const loadTechniciansPage = () =>
   import("./pages/TechniciansPage").then((m) => ({ default: m.TechniciansPage }));
 export const loadWerkbankDashboard = () =>
   import("./components/WerkbankDashboard").then((m) => ({ default: m.WerkbankDashboard }));
+
+export const loadAssignmentsPage = () =>
+  import("./app/AssignmentsPage").then((m) => ({ default: m.AssignmentsPage }));
+
+export const loadAssignmentPage = () =>
+  import("./app/AssignmentPage").then((m) => ({ default: m.AssignmentPage }));
 
 export const loadCatalogPage = () =>
   import("./pages/CatalogPage").then((m) => ({ default: m.CatalogPage }));
@@ -64,6 +70,8 @@ const PropertyDetailPage = lazy(loadPropertyDetailPage);
 const CustomersPage = lazy(loadCustomersPage);
 const CustomerDetailPage = lazy(loadCustomerDetailPage);
 const CatalogPage = lazy(loadCatalogPage);
+const AssignmentsPage = lazy(loadAssignmentsPage);
+const AssignmentPage = lazy(loadAssignmentPage);
 const TechniciansPage = lazy(loadTechniciansPage);
 const WerkbankDashboard = lazy(loadWerkbankDashboard);
 
@@ -139,6 +147,15 @@ export const werkbankUi: ModuleUi = {
       labelKey: "werkbank:nav.technicians",
       section: "workspace",
       roles: ["admin", "producer"],
+      kinds: ["handwerk"],
+    },
+    {
+      to: ASSIGNMENTS_PATH,
+      icon: HardHat,
+      label: "My assignments",
+      labelKey: "werkbank:nav.myAssignments",
+      section: "workspace",
+      roles: ["artist"],
       kinds: ["handwerk"],
     },
   ],
@@ -220,6 +237,20 @@ export const werkbankUi: ModuleUi = {
       kinds: ["handwerk"],
       requiredRoles: ["admin", "producer"],
       Page: TechniciansPage,
+    },
+    {
+      path: ASSIGNMENTS_PATH,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer", "artist"],
+      shell: "bare",
+      Page: AssignmentsPage,
+    },
+    {
+      path: ASSIGNMENT_PATH,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer", "artist"],
+      shell: "bare",
+      Page: AssignmentPage,
     },
   ],
   publicRoutes: [{ path: PUBLIC_QUOTE_PATH, Page: QuotePublicPage }],

@@ -110,7 +110,7 @@ is immutable across modes; only the role token flips.
 
 | Component | Rule |
 |---|---|
-| `Button` | `ghost` is icon only **[type]**. There is no `link` variant **[type]**: a standalone action is `secondary`, an inline reference is an `<a>` (D1, D2). |
+| `Button` | `ghost` is icon only **[type]**. There is no `link` variant **[type]**: a standalone action is `secondary`, an inline reference is an `<a>` (D1, D2). `size="touch"` (44px) is for phone-first surfaces with finger targets. |
 | `Badge` | Radius 4, never a pill. Tones come from `TONES`, never from a local map. |
 | `Card` | No elevation by default. Pass `elevation="2"` only on a non-white ground. |
 | `SegmentedControl` | The only segmented control (D4). `size="sm"` covers what Tabs used to do. |

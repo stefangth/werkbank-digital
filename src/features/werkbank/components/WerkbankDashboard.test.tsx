@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { renderWithProviders } from "@/test/renderWithProviders";
 import { createFakeSupabase } from "@/test/supabaseFake";
 
@@ -12,7 +12,7 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { WerkbankDashboard } from "./WerkbankDashboard";
 
 function authAs(role: "admin" | "producer" | "artist") {
-  vi.mocked(useAuth).mockReturnValue({ hasRole: (r: string) => r === role, currentOrg: { id: "org-1" } } as never);
+  vi.mocked(useAuth).mockReturnValue({ hasRole: (r: string) => r === role, currentOrg: { id: "org-1" }, user: { id: "u1" } } as never);
 }
 
 function renderDashboard() {
@@ -65,12 +65,34 @@ describe("WerkbankDashboard", () => {
     expect(screen.getByRole("link", { name: "Add or import customers" })).toHaveAttribute("href", "/customers");
   });
 
-  it("shows only the welcome for a technician and reads no counts", () => {
+  it("redirects a user whose only role is technician to the assignments", () => {
     authAs("artist");
+    renderWithProviders(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<WerkbankDashboard />} />
+          <Route path="/einsaetze" element={<p>assignments page</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("assignments page")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Welcome to Werkbank Digital" })).not.toBeInTheDocument();
+  });
+
+  it("shows the assignments link for an admin who is a technician", async () => {
+    authAs("admin");
+    Object.assign(client, createFakeSupabase({
+      "rpc:werkbank.my_technician_orgs": { data: ["org-1"], error: null },
+    }));
     renderDashboard();
-    expect(screen.getByRole("heading", { name: "Welcome to Werkbank Digital" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Add technicians" })).not.toBeInTheDocument();
-    expect((client as unknown as ReturnType<typeof createFakeSupabase>).calls).toEqual([]);
+    expect(await screen.findByRole("link", { name: "My assignments" })).toHaveAttribute("href", "/einsaetze");
+  });
+
+  it("shows no assignments link for an admin who is not a technician", async () => {
+    authAs("admin");
+    renderDashboard();
+    await screen.findByRole("link", { name: "Add technicians" });
+    expect(screen.queryByRole("link", { name: "My assignments" })).not.toBeInTheDocument();
   });
 
   it.each(["admin", "producer"] as const)("shows the two KPI tiles with counts and filtered links for %s", async (role) => {

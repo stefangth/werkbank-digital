@@ -9,9 +9,13 @@ import type { AppRole } from "@/config/app.config";
 import type { OrgKind } from "@/lib/orgKind";
 import { werkbankUi } from "@/features/werkbank/ui";
 
-/** A page a module adds. App.tsx wraps it in ProtectedRoute and AppLayout. The route is
- *  reachable only by the listed kinds (ProtectedRoute redirects everyone else). */
+/** A page a module adds. App.tsx wraps it in ProtectedRoute and, unless `shell` is "bare",
+ *  AppLayout. The route is reachable only by the listed kinds (ProtectedRoute redirects
+ *  everyone else). */
 export interface ModuleRoute {
+  /** "bare" renders the page without the app sidebar and top bar; the page brings its own
+   *  chrome (e.g. a phone-first shell). Default "app". */
+  shell?: "app" | "bare";
   path: string;
   kinds: readonly OrgKind[];
   requiredRoles: AppRole[];

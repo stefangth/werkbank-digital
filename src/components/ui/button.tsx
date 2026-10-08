@@ -32,6 +32,7 @@ const buttonVariants = cva(
         default: "h-9 px-3 py-2 [&_svg]:size-4",
         lg: "h-10 rounded-control px-5 [&_svg]:size-4",
         icon: "h-7 w-7 rounded-field [&_svg]:size-4",
+        touch: "h-11 rounded-control px-4 text-body [&_svg]:size-5",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

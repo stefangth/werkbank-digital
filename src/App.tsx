@@ -47,6 +47,7 @@ import GetRunningPage from "./pages/GetRunningPage";
 import NotFound from "./pages/NotFound";
 import { MODULE_UIS } from "@/modules/ui";
 import { SuspendedPage } from "@/components/layout/SuspendedPage";
+import { ModuleRouteElement } from "@/modules/ModuleRouteElement";
 
 // DEV-ONLY visual harness for the Show Date Cockpit (see DevCockpitHarness.tsx).
 // `import.meta.env.DEV` is statically false in production builds, so both the
@@ -132,7 +133,7 @@ const App = () => (
               }
             />
             {MODULE_UIS.flatMap((m) => m.routes).map((r) => (
-              <Route key={r.path} path={r.path} element={<ProtectedRoute requiredRoles={r.requiredRoles}><AppLayout><SuspendedPage Page={r.Page} /></AppLayout></ProtectedRoute>} />
+              <Route key={r.path} path={r.path} element={<ModuleRouteElement route={r} />} />
             ))}
             <Route path={ROUTES.CHATS} element={<ProtectedRoute><AppLayout><ChatsListPage /></AppLayout></ProtectedRoute>} />
             <Route path={ROUTES.HELP} element={<ProtectedRoute><AppLayout><HelpPage /></AppLayout></ProtectedRoute>} />

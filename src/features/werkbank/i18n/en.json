@@ -23,7 +23,8 @@
     "quotes": "Quotes",
     "orders": "Orders",
     "invoices": "Invoices",
-    "openItems": "Open items"
+    "openItems": "Open items",
+    "myAssignments": "My assignments"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -46,7 +47,8 @@
       "overdue": "Overdue",
       "overdueNote_one": "of which {{count}} due a notice",
       "overdueNote_other": "of which {{count}} due a notice"
-    }
+    },
+    "myAssignments": "My assignments"
   },
   "technicians": {
     "title": "Technicians",
@@ -1385,5 +1387,14 @@
       "sentTo": "to {{recipients}}",
       "cancelledBy": "Cancelled by"
     }
+  },
+  "app": {
+    "notTechnician": "You are not set up as a technician at this company.",
+    "signOut": "Sign out",
+    "assignmentsTitle": "My assignments",
+    "assignmentTitle": "Assignment",
+    "back": "Back",
+    "unnamedUser": "Technician",
+    "notTechnicianReason": "Ask the office to add you under Technicians."
   }
 }

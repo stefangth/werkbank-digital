@@ -5,7 +5,7 @@ import { Button } from './button';
 describe('Button', () => {
   // 'link' is gone (ADR 0012, D1) and 'ghost' is icon-only (D2) — exercised separately below.
   const variants = ['default', 'secondary', 'destructive', 'outline'] as const;
-  const sizes = ['sm', 'default', 'lg', 'icon'] as const;
+  const sizes = ['sm', 'default', 'lg', 'icon', 'touch'] as const;
 
   it.each(variants)('renders variant=%s without crashing', (variant) => {
     render(<Button variant={variant}>Test</Button>);
@@ -15,6 +15,11 @@ describe('Button', () => {
   it.each(sizes)('renders size=%s without crashing', (size) => {
     render(<Button size={size}>T</Button>);
     expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('size touch is 44px high', () => {
+    render(<Button size="touch">T</Button>);
+    expect(screen.getByRole('button').className).toContain('h-11');
   });
 
   it('renders ghost variant with icon size without crashing', () => {

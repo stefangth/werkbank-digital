@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,7 +11,8 @@ import { useOrderList } from "../hooks/useOrders";
 import { useQuoteList } from "../hooks/useQuotes";
 import { needsSchedule } from "../lib/orderStatus";
 import { isAcceptedWithoutOrder } from "../lib/quoteStatus";
-import { ORDERS_PATH, OPEN_ITEMS_PATH, QUOTES_PATH } from "../paths";
+import { useIsTechnicianHere } from "../hooks/useAssignments";
+import { ASSIGNMENTS_PATH, ORDERS_PATH, OPEN_ITEMS_PATH, QUOTES_PATH } from "../paths";
 import { StartList } from "./StartList";
 
 /** One count tile: a skeleton while loading, a short error text on failure, else a link to the
@@ -85,10 +87,23 @@ export function WerkbankDashboard() {
   const { t } = useTranslation("werkbank");
   const { hasRole, currentOrg } = useAuth();
   const canManage = hasRole("admin") || hasRole("producer");
+  // Office users who are also technicians get a link; the lookup runs for them only.
+  const isTechnician = useIsTechnicianHere();
+
+  // A technician without office rights works in the phone app, not on this page.
+  if (!canManage && hasRole("artist")) return <Navigate to={ASSIGNMENTS_PATH} replace />;
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("dashboard.title")} sub={t("dashboard.body")} />
+      <PageHeader
+        title={t("dashboard.title")}
+        sub={t("dashboard.body")}
+        actions={canManage && isTechnician ? (
+          <Button asChild variant="secondary">
+            <Link to={ASSIGNMENTS_PATH}>{t("dashboard.myAssignments")}</Link>
+          </Button>
+        ) : undefined}
+      />
       {canManage && <DashboardTiles />}
       {canManage && <StartList orgId={currentOrg?.id} />}
     </div>
