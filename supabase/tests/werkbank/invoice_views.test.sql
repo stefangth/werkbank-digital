@@ -1,7 +1,7 @@
 -- Werkbank Teil 4 (R3, R4): invoice branch of document_totals, invoice_list, immutable invoice files.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(34);
+SELECT plan(35);
 
 SET LOCAL timezone = 'UTC';
 
@@ -148,6 +148,11 @@ SELECT is((SELECT count(*)::int FROM werkbank.invoice_list), 0, 'the admin of an
 SELECT is((SELECT count(*)::int FROM werkbank.document_totals WHERE invoice_id IS NOT NULL), 0,
   'the admin of another org sees no invoice totals');
 RESET ROLE;
+
+-- The org lookup must not depend on the caller: supabase_storage_admin cannot read
+-- public.organizations, and an RLS-bound caller would see "no org" and be let through.
+SELECT is((SELECT prosecdef FROM pg_proc WHERE oid = 'werkbank.protect_invoice_files()'::regprocedure), true,
+  'protect_invoice_files runs as its owner');
 
 -- Storage: invoice files are immutable -------------------------------------------------------------------
 SET LOCAL storage.allow_delete_query = 'true';
