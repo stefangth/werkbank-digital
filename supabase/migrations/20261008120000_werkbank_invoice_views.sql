@@ -3,8 +3,8 @@
 
 -- 1. document_totals gains invoice_id (third column, so the view is dropped and recreated with
 -- its dependents quote_list and order_list, definitions unchanged). The arithmetic is that of
--- 20261007220000; a cancellation's items are negated copies, so its totals are negative without
--- a special case.
+-- 20261007220000; a cancellation's items are positive copies of the original's, so its totals are
+-- positive like those of every document (the sign is applied for display, not stored).
 drop view werkbank.quote_list;
 drop view werkbank.order_list;
 drop view werkbank.document_totals;
@@ -179,14 +179,18 @@ grant select on werkbank.invoice_list to authenticated;
 
 -- 3. Invoice files are immutable (R4): once written, an object at <org>/invoices/... in the
 -- bucket werkbank-documents can be neither replaced nor deleted, whoever asks (the service role
--- included). The trigger sits on storage.objects, so nothing in public depends on schema werkbank.
+-- included), as long as the org exists. Once the org row is deleted (erasure, ADR-0013 removal),
+-- its invoice files can be deleted through the Storage API. The trigger sits on storage.objects,
+-- so nothing in public depends on schema werkbank.
 create function werkbank.protect_invoice_files()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  if old.bucket_id = 'werkbank-documents' and (storage.foldername(old.name))[2] = 'invoices' then
+  if old.bucket_id = 'werkbank-documents' and (storage.foldername(old.name))[2] = 'invoices'
+     and exists (select 1 from public.organizations o
+                 where o.id::text = (storage.foldername(old.name))[1]) then
     raise exception 'invoice_locked' using errcode = '55000';
   end if;
   if tg_op = 'DELETE' then

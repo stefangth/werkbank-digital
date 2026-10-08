@@ -286,7 +286,18 @@ SELECT lives_ok(format($$DELETE FROM werkbank.invoices WHERE id = '%s'$$, pg_tem
 SELECT set_config('il.can1', werkbank.cancel_invoice(pg_temp.id('inv1'))::text, true);
 SELECT throws_ok(format($$SELECT werkbank.cancel_invoice('%s')$$, pg_temp.id('inv1')),
   '23505', NULL, 'a second cancellation of the same invoice fails');
-SELECT is((werkbank.finalize_invoice(pg_temp.id('can1'))).invoice_no, 'RE-0002', 'the cancellation draws RE-0002');
+-- R8: the customer address is incomplete after the original was issued (the street check is
+-- lifted inside this test transaction to get there); the cancellation still finalizes, because
+-- it takes the original's buyer_snapshot.
+RESET ROLE;
+ALTER TABLE werkbank.customers DROP CONSTRAINT customers_street_check;
+UPDATE werkbank.customers SET street = ' ' WHERE id = 'cccccccc-0000-4000-c000-0000000000c1';
+SET LOCAL ROLE authenticated;
+SELECT is((werkbank.finalize_invoice(pg_temp.id('can1'))).invoice_no, 'RE-0002',
+  'the cancellation draws RE-0002, although the customer address is incomplete (no no_buyer_address)');
+RESET ROLE;
+UPDATE werkbank.customers SET street = 'Neue Str. 9' WHERE id = 'cccccccc-0000-4000-c000-0000000000c1';
+SET LOCAL ROLE authenticated;
 SELECT is((SELECT buyer_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('can1')),
   (SELECT buyer_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('inv1')),
   'the cancellation keeps the original buyer although the customer street changed since');
