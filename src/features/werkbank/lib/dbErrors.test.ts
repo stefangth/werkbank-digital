@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapDbError, WerkbankDataError } from "./dbErrors";
+import { dunningBlockers, mapDbError, WerkbankDataError } from "./dbErrors";
 
 describe("mapDbError", () => {
   it("maps the customer number unique violation (message)", () => {
@@ -90,5 +90,35 @@ describe("WerkbankDataError", () => {
   });
   it("maps like the database error it stands in for", () => {
     expect(mapDbError(new WerkbankDataError("P0001", "invalid_transition"))).toBe("errors.invalidTransition");
+  });
+});
+
+describe("open items errors", () => {
+  it.each([
+    ["entries_locked", "errors.entriesLocked"], ["dunning_locked", "errors.dunningLocked"],
+    ["not_payable", "errors.notPayable"], ["future_booking_date", "errors.futureBookingDate"],
+    ["refund_exceeds_credit", "errors.refundExceedsCredit"], ["nothing_open", "errors.nothingOpen"],
+    ["open_amount_changed", "errors.openAmountChanged"], ["already_reversed", "errors.alreadyReversed"],
+    ["transfer_target_invalid", "errors.transferTargetInvalid"], ["dunning_not_allowed", "errors.dunningNotAllowed"],
+    ["invalid_entry_kind", "errors.invalidEntryKind"], ["invalid_amount", "errors.invalidAmount"],
+  ])("maps %s", (message, key) => {
+    expect(mapDbError({ code: "22023", message })).toBe(key);
+  });
+  it("maps the not_a_payment detail like transfer_target_invalid", () => {
+    expect(mapDbError({ code: "22023", message: "x", details: "not_a_payment" })).toBe("errors.transferTargetInvalid");
+  });
+  it("keeps not allowed as forbidden", () => {
+    expect(mapDbError({ code: "42501", message: "not allowed" })).toBe("errors.forbidden");
+  });
+});
+
+describe("dunningBlockers", () => {
+  it("parses the detail", () => {
+    expect(dunningBlockers({ message: "dunning_not_allowed", details: "not_overdue,on_hold" })).toEqual(["not_overdue", "on_hold"]);
+  });
+  it("drops unknown names and handles a missing detail", () => {
+    expect(dunningBlockers({ message: "dunning_not_allowed", details: "on_hold,bogus" })).toEqual(["on_hold"]);
+    expect(dunningBlockers({ message: "dunning_not_allowed" })).toEqual([]);
+    expect(dunningBlockers(null)).toEqual([]);
   });
 });

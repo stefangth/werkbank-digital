@@ -94,6 +94,17 @@
     "showArchived": "Archivierte anzeigen",
     "search": "Suchen"
   },
+  "openItems": {
+    "state": {
+      "open": "Offen",
+      "partial": "Teilweise bezahlt",
+      "overdue": "Überfällig",
+      "paid": "Bezahlt",
+      "writtenOff": "Ausgebucht",
+      "void": "Hinfällig",
+      "overpaid": "Guthaben"
+    }
+  },
   "errors": {
     "customerNoTaken": "Diese Kundennummer ist schon vergeben.",
     "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",
@@ -111,6 +122,18 @@
     "numberRangeLocked": "Dieser Nummernkreis kann nicht mehr geändert werden.",
     "activeInvoiceExists": "Zu diesem Auftrag gibt es schon eine offene Rechnung.",
     "notAllowedHere": "Das kannst du hier nicht ändern.",
+    "entriesLocked": "Gebuchte Einträge lassen sich nicht ändern. Mach den Eintrag stattdessen rückgängig.",
+    "dunningLocked": "Ein Mahnschreiben lässt sich nachträglich nicht ändern.",
+    "notPayable": "Für dieses Dokument lassen sich keine Zahlungen buchen.",
+    "futureBookingDate": "Das Buchungsdatum darf nicht in der Zukunft liegen.",
+    "refundExceedsCredit": "Die Erstattung ist höher als das Guthaben dieser Rechnung.",
+    "nothingOpen": "Auf dieser Rechnung ist nichts mehr offen.",
+    "openAmountChanged": "Der offene Betrag hat sich zwischenzeitlich geändert. Prüf ihn bitte und versuch es erneut.",
+    "alreadyReversed": "Dieser Eintrag wurde bereits rückgängig gemacht.",
+    "transferTargetInvalid": "Die Zahlung lässt sich nicht auf diese Rechnung umbuchen.",
+    "dunningNotAllowed": "Für diese Rechnung ist gerade kein Mahnschreiben möglich.",
+    "invalidEntryKind": "Diese Art von Eintrag gibt es nicht.",
+    "invalidAmount": "Gib einen Betrag mit höchstens zwei Nachkommastellen ein.",
     "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung."
   },
   "units": {

@@ -59,6 +59,7 @@ Deno.test("bundle includes the werkbank tables filtered by org", async () => {
     const t of [
       "properties", "contacts", "catalog_items", "number_ranges",
       "company_profiles", "orders", "invoices", "order_technicians", "document_items", "quote_acceptances",
+      "invoice_entries", "dunning_notices", "dunning_holds",
     ]
   ) {
     assertEquals(bundle.werkbank[t], []);
@@ -126,6 +127,9 @@ Deno.test("each werkbank table is paged in the order of a column it has", async 
     order_technicians: ["order_id", "artist_id"],
     document_items: ["id"],
     quote_acceptances: ["id"],
+    invoice_entries: ["id"],
+    dunning_notices: ["id"],
+    dunning_holds: ["invoice_id"],
   });
   assertEquals(Object.keys(orders).sort(), Object.keys(WERKBANK_ORDER).sort());
 });

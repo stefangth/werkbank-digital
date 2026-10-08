@@ -3047,6 +3047,11 @@ export type Database = {
           company_name: string
           country_code: string
           created_at: string
+          dunning_deadline_days: number
+          dunning1_after_days: number
+          dunning1_text: string | null
+          dunning2_after_days: number
+          dunning2_text: string | null
           email: string | null
           iban: string | null
           invoice_closing: string | null
@@ -3063,6 +3068,8 @@ export type Database = {
           quote_validity_days: number
           register_court: string | null
           register_number: string | null
+          reminder_after_days: number
+          reminder_text: string | null
           street: string
           tax_number: string | null
           updated_at: string
@@ -3076,6 +3083,11 @@ export type Database = {
           company_name: string
           country_code?: string
           created_at?: string
+          dunning_deadline_days?: number
+          dunning1_after_days?: number
+          dunning1_text?: string | null
+          dunning2_after_days?: number
+          dunning2_text?: string | null
           email?: string | null
           iban?: string | null
           invoice_closing?: string | null
@@ -3092,6 +3104,8 @@ export type Database = {
           quote_validity_days?: number
           register_court?: string | null
           register_number?: string | null
+          reminder_after_days?: number
+          reminder_text?: string | null
           street: string
           tax_number?: string | null
           updated_at?: string
@@ -3105,6 +3119,11 @@ export type Database = {
           company_name?: string
           country_code?: string
           created_at?: string
+          dunning_deadline_days?: number
+          dunning1_after_days?: number
+          dunning1_text?: string | null
+          dunning2_after_days?: number
+          dunning2_text?: string | null
           email?: string | null
           iban?: string | null
           invoice_closing?: string | null
@@ -3121,6 +3140,8 @@ export type Database = {
           quote_validity_days?: number
           register_court?: string | null
           register_number?: string | null
+          reminder_after_days?: number
+          reminder_text?: string | null
           street?: string
           tax_number?: string | null
           updated_at?: string
@@ -3343,6 +3364,20 @@ export type Database = {
             foreignKeyName: "document_items_invoice_fk"
             columns: ["org_id", "invoice_id"]
             isOneToOne: false
+            referencedRelation: "dunning_due"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "document_items_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_balances"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "document_items_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
             referencedRelation: "invoice_list"
             referencedColumns: ["org_id", "id"]
           },
@@ -3386,6 +3421,235 @@ export type Database = {
             columns: ["org_id", "source_item_id"]
             isOneToOne: false
             referencedRelation: "document_items"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      dunning_holds: {
+        Row: {
+          created_at: string
+          created_by: string
+          invoice_id: string
+          org_id: string
+          reason: string
+          until: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          invoice_id: string
+          org_id: string
+          reason: string
+          until?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          invoice_id?: string
+          org_id?: string
+          reason?: string
+          until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_holds_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_due"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "dunning_holds_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_balances"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "dunning_holds_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "dunning_holds_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      dunning_notices: {
+        Row: {
+          created_at: string
+          created_by: string
+          delivery: string
+          id: string
+          invoice_gross: number
+          invoice_id: string
+          notice_date: string
+          open_amount: number
+          org_id: string
+          paid_amount: number
+          payment_deadline: string
+          pdf_path: string | null
+          pdf_sha256: string | null
+          sent_at: string | null
+          sent_to: string[] | null
+          stage: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          delivery: string
+          id?: string
+          invoice_gross: number
+          invoice_id: string
+          notice_date: string
+          open_amount: number
+          org_id: string
+          paid_amount: number
+          payment_deadline: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          sent_at?: string | null
+          sent_to?: string[] | null
+          stage: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delivery?: string
+          id?: string
+          invoice_gross?: number
+          invoice_id?: string
+          notice_date?: string
+          open_amount?: number
+          org_id?: string
+          paid_amount?: number
+          payment_deadline?: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          sent_at?: string | null
+          sent_to?: string[] | null
+          stage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_notices_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_due"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "dunning_notices_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_balances"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "dunning_notices_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "dunning_notices_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      invoice_entries: {
+        Row: {
+          amount: number
+          booked_on: string
+          created_at: string
+          created_by: string
+          id: string
+          invoice_id: string
+          kind: string
+          note: string | null
+          org_id: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          transferred_from: string | null
+          write_off_reason: string | null
+        }
+        Insert: {
+          amount: number
+          booked_on: string
+          created_at?: string
+          created_by: string
+          id?: string
+          invoice_id: string
+          kind: string
+          note?: string | null
+          org_id: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          transferred_from?: string | null
+          write_off_reason?: string | null
+        }
+        Update: {
+          amount?: number
+          booked_on?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          invoice_id?: string
+          kind?: string
+          note?: string | null
+          org_id?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          transferred_from?: string | null
+          write_off_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_entries_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_due"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "invoice_entries_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_balances"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "invoice_entries_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoice_entries_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoice_entries_transferred_from_fk"
+            columns: ["org_id", "transferred_from"]
+            isOneToOne: false
+            referencedRelation: "invoice_entries"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -3488,6 +3752,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_due"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_balances"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
           {
             foreignKeyName: "invoices_cancels_fk"
             columns: ["org_id", "cancels_invoice_id"]
@@ -3986,6 +4264,90 @@ export type Database = {
         }
         Relationships: []
       }
+      dunning_due: {
+        Row: {
+          claim: number | null
+          contact_email: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_invoice_email: string | null
+          customer_name: string | null
+          days_overdue: number | null
+          due_date: string | null
+          hold_reason: string | null
+          hold_until: string | null
+          invoice_id: string | null
+          invoice_no: string | null
+          issue_date: string | null
+          last_notice_date: string | null
+          last_stage: number | null
+          next_stage: number | null
+          open_amount: number | null
+          org_id: string | null
+          paid: number | null
+          payment_state: string | null
+          property_id: string | null
+          property_name: string | null
+          status: string | null
+          written_off: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      invoice_balances: {
+        Row: {
+          claim: number | null
+          customer_id: string | null
+          customer_name: string | null
+          days_overdue: number | null
+          due_date: string | null
+          hold_reason: string | null
+          hold_until: string | null
+          invoice_id: string | null
+          invoice_no: string | null
+          issue_date: string | null
+          last_notice_date: string | null
+          last_stage: number | null
+          open_amount: number | null
+          org_id: string | null
+          paid: number | null
+          payment_state: string | null
+          property_id: string | null
+          property_name: string | null
+          status: string | null
+          written_off: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       invoice_list: {
         Row: {
           buyer_snapshot: Json | null
@@ -4026,6 +4388,20 @@ export type Database = {
           updated_at: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "dunning_due"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_balances"
+            referencedColumns: ["org_id", "invoice_id"]
+          },
           {
             foreignKeyName: "invoices_cancels_fk"
             columns: ["org_id", "cancels_invoice_id"]
@@ -4224,11 +4600,84 @@ export type Database = {
       }
     }
     Functions: {
+      authorize_invoice: {
+        Args: { p_invoice: string; p_other?: string }
+        Returns: {
+          buyer_snapshot: Json | null
+          cancels_invoice_id: string | null
+          closing_text: string | null
+          contact_id: string | null
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          due_date: string | null
+          id: string
+          intro_text: string | null
+          invoice_no: string | null
+          issue_date: string | null
+          issued_at: string | null
+          location_note: string | null
+          order_id: string | null
+          org_id: string
+          payment_due_days: number
+          payment_terms_text: string | null
+          pdf_path: string | null
+          pdf_sha256: string | null
+          property_id: string | null
+          seller_snapshot: Json | null
+          sent_at: string | null
+          sent_to: string[] | null
+          service_date_from: string | null
+          service_date_to: string | null
+          status: string
+          subject: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cancel_invoice: { Args: { p_invoice: string }; Returns: string }
+      clear_dunning_hold: { Args: { p_invoice: string }; Returns: undefined }
       copy_invoice: { Args: { p_invoice: string }; Returns: string }
       copy_quote: {
         Args: { p_customer?: string; p_property?: string; p_quote: string }
         Returns: string
+      }
+      create_dunning_notice: {
+        Args: {
+          p_delivery: string
+          p_invoice: string
+          p_payment_deadline: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          delivery: string
+          id: string
+          invoice_gross: number
+          invoice_id: string
+          notice_date: string
+          open_amount: number
+          org_id: string
+          paid_amount: number
+          payment_deadline: string
+          pdf_path: string | null
+          pdf_sha256: string | null
+          sent_at: string | null
+          sent_to: string[] | null
+          stage: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "dunning_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_invoice_from_order: { Args: { p_order: string }; Returns: string }
       create_order_from_quote: { Args: { p_quote: string }; Returns: string }
@@ -4282,7 +4731,19 @@ export type Database = {
         Args: { p_org: string; p_rows: Json }
         Returns: Json
       }
+      invoice_open_amount: { Args: { p_invoice: string }; Returns: number }
       next_number: { Args: { p_key: string; p_org: string }; Returns: string }
+      record_invoice_entry: {
+        Args: {
+          p_amount: number
+          p_booked_on: string
+          p_invoice: string
+          p_kind: string
+          p_note?: string
+          p_write_off_reason?: string
+        }
+        Returns: string
+      }
       record_quote_decision: {
         Args: {
           p_accepted_pdf_path: string
@@ -4299,7 +4760,19 @@ export type Database = {
         }
         Returns: string
       }
+      reverse_invoice_entry: {
+        Args: { p_entry: string; p_reason: string }
+        Returns: undefined
+      }
       revise_quote: { Args: { p_quote: string }; Returns: string }
+      set_dunning_hold: {
+        Args: { p_invoice: string; p_reason: string; p_until?: string }
+        Returns: undefined
+      }
+      transfer_invoice_entry: {
+        Args: { p_entry: string; p_reason: string; p_target_invoice: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
