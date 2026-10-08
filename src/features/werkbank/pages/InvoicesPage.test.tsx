@@ -37,6 +37,7 @@ vi.mock("../components/PropertyPicker", () => ({
 
 import { InvoicesPage } from "./InvoicesPage";
 import { invoicePath } from "../paths";
+import { TONES } from "@/components/ui/tones";
 
 const inv = (over: Record<string, unknown>) => ({
   id: "i", invoice_no: "RE-0001", type: "invoice", status: "issued", customer_name: "Muster HV", property_name: null, subject: "Heizung",
@@ -75,6 +76,10 @@ describe("InvoicesPage", () => {
     render();
     const row = (await screen.findByText("RE-0003")).closest("tr")!;
     expect(row).toHaveTextContent("Storno");
+    // Red is risk; the type pill is neutral, as on the invoice page.
+    const pill = within(row).getByText("Storno").closest("[class]")!;
+    expect(pill.className).toContain(TONES.neutral.bg);
+    expect(pill.className).not.toContain(TONES.risk.bg);
     expect(row.textContent).toMatch(/-\s?238,00|−\s?238,00/);
     expect(rowsShown()[1].textContent).not.toMatch(/-\s?238,00/);
   });
@@ -137,6 +142,15 @@ describe("InvoicesPage", () => {
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Rechnung anlegen" }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith(invoicePath("new1")));
     expect(create.mock.calls[0][0]).toEqual({ customerId: "k1", propertyId: "p1", profile: { invoice_intro: "Hallo", payment_due_days: 14 } });
+  });
+
+  it("shows the not-yet-invoiced notice in the empty state too", async () => {
+    state.rows = [];
+    state.orders = [{ id: "o1", status: "done" }];
+    render();
+    expect(await screen.findByText("Noch keine Rechnungen")).toBeInTheDocument();
+    const notice = screen.getByText("Erledigt, noch nicht abgerechnet").closest("div")!;
+    expect(notice).toHaveTextContent("1");
   });
 
   it("shows the empty state and the load error", async () => {

@@ -175,8 +175,10 @@ test.describe("Werkbank order to invoice", () => {
 
     await page.getByRole("button", { name: /^Leistungsdatum von/ }).click();
     // The draft starts with today as the service date; day 5 of the shown month is a changed value
-    // (the month can only be the current one, and day 5 is never today's outside-month cell).
-    await page.getByRole("grid").getByText("5", { exact: true }).click();
+    // unless today is the 5th, which the poll below then still accepts. DayPicker marks every day
+    // cell with data-day (ISO date) and the cells of the neighbouring months with data-outside, so
+    // the 5th of the shown month is exactly one cell, whatever the month layout.
+    await page.getByRole("grid").locator('[data-day$="-05"]:not([data-outside]) button').click();
     await expect.poll(async () => {
       const { data } = await werkbank().from("invoices").select("service_date_from").eq("id", invoiceId).single();
       return data?.service_date_from?.slice(8);

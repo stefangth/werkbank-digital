@@ -100,6 +100,18 @@ export function InvoicesPage() {
 
   const money = (n: number) => formatEuro(n, i18n.language);
   const none = filter === "all" && !searchTerm && (invoices ?? []).length === 0;
+  // Shown above the list and in the empty state alike (an office with done orders but no invoice yet).
+  const notice = notInvoiced > 0 && (
+    <div className="flex items-center gap-3 rounded-card border border-border px-4 py-3 text-sm">
+      <p className="m-0 flex items-center gap-2">
+        <span>{t("invoices.notice.doneNotInvoiced")}</span>
+        <Metric size="body">{notInvoiced}</Metric>
+      </p>
+      <Link to={`${ORDERS_PATH}?status=done`} className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
+        {t("invoices.notice.show")}
+      </Link>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -116,25 +128,18 @@ export function InvoicesPage() {
       ) : isError ? (
         <Alert variant="destructive">{t("invoices.loadFailed")}</Alert>
       ) : none ? (
-        <EmptyState
-          icon={Receipt}
-          title={t("invoices.empty.title")}
-          body={t("invoices.empty.body")}
-          action={{ label: t("invoices.empty.action"), onClick: () => setCreating(true) }}
-        />
+        <>
+          {notice}
+          <EmptyState
+            icon={Receipt}
+            title={t("invoices.empty.title")}
+            body={t("invoices.empty.body")}
+            action={{ label: t("invoices.empty.action"), onClick: () => setCreating(true) }}
+          />
+        </>
       ) : (
         <>
-          {notInvoiced > 0 && (
-            <div className="flex items-center gap-3 rounded-card border border-border px-4 py-3 text-sm">
-              <p className="m-0 flex items-center gap-2">
-                <span>{t("invoices.notice.doneNotInvoiced")}</span>
-                <Metric size="body">{notInvoiced}</Metric>
-              </p>
-              <Link to={`${ORDERS_PATH}?status=done`} className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
-                {t("invoices.notice.show")}
-              </Link>
-            </div>
-          )}
+          {notice}
 
           <div className="flex flex-wrap items-center gap-3">
             <SegmentedControl<InvoiceFilter>
@@ -185,7 +190,7 @@ export function InvoicesPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {i.type === "cancellation" && <StatusPill tone="risk">{t("invoices.type.cancellation")}</StatusPill>}
+                          {i.type === "cancellation" && <StatusPill tone="neutral">{t("invoices.type.cancellation")}</StatusPill>}
                           <StatusPill tone={INVOICE_STATUS_TONES[status]}>{t(`invoices.status.${status}`)}</StatusPill>
                         </div>
                       </TableCell>
