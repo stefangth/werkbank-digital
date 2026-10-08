@@ -9,13 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { berlinDateKey, formatDateDMY } from "@/lib/dates";
 import type { DunningNotice } from "../data/dunning";
-import { useDunningDownload, useIssueDunning, useSendDunning } from "../hooks/useDunningActions";
+import { useDunningDownload, useIssueDunning } from "../hooks/useDunningActions";
 import { useClearDunningHold, useDunningHold, useDunningNotices, useInvoiceBalance } from "../hooks/useOpenItems";
 import { dunningBlockers, nextDunningStage } from "../lib/dunningBlockers";
 import { stageKey } from "../lib/stageKey";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { CreateDunningDialog } from "./CreateDunningDialog";
 import { DunningHoldDialog } from "./DunningHoldDialog";
+import { SendDunningDialog } from "./SendDunningDialog";
 
 type DunningInvoice = { id: string; customer_id: string; contact_id: string | null; status: string; type: string; due_date: string | null };
 
@@ -41,6 +42,11 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
   const stage = nextDunningStage(notices);
   const blockers = dunningBlockers({ invoice, openAmount: balance.data?.open_amount, hold, notices, today });
   const holdActive = !!hold && (hold.until === null || hold.until >= today);
+  // Emailing a notice again needs what creating one needs: an issued invoice, something open and
+  // no active hold (the server checks the same). Storing an unrendered notice is always allowed.
+  const canEmail = issued && invoice.type === "invoice" && (balance.data?.open_amount ?? 0) > 0 && !holdActive;
+  const createLabel = t("dunning.create.button", { stage: t(stageKey(stage)) });
+  const blockerText = blockers[0] ? t(`dunning.blockers.${blockers[0]}`) : null;
 
   return (
     <section className="space-y-3" aria-labelledby="invoice-dunning">
@@ -49,9 +55,17 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
         {issued && (
           <div className="ml-auto flex flex-wrap gap-2">
             {!holdActive && <Button variant="secondary" onClick={() => setDialog("hold")}>{t("dunning.hold.set")}</Button>}
-            <IconTooltip label={blockers[0] ? t(`dunning.blockers.${blockers[0]}`) : null}>
-              <Button disabled={blockers.length > 0} onClick={() => setDialog("create")}>{t("dunning.create.button", { stage: t(stageKey(stage)) })}</Button>
-            </IconTooltip>
+            {blockerText ? (
+              // A disabled button takes no focus: the focusable wrapper carries label and reason, so
+              // the tooltip opens from the keyboard too.
+              <IconTooltip label={blockerText}>
+                <span role="button" aria-disabled="true" tabIndex={0} aria-label={createLabel} aria-describedby="dunning-create-blocker"
+                  className="inline-flex rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Button disabled tabIndex={-1} aria-hidden>{createLabel}</Button>
+                  <span id="dunning-create-blocker" className="sr-only">{blockerText}</span>
+                </span>
+              </IconTooltip>
+            ) : <Button onClick={() => setDialog("create")}>{createLabel}</Button>}
           </div>
         )}
       </div>
@@ -70,7 +84,7 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
 
       {notices.length ? (
         <ul className="m-0 list-none divide-y divide-border rounded-card border border-border p-0">
-          {notices.map((n) => <NoticeRow key={n.id} notice={n} />)}
+          {notices.map((n) => <NoticeRow key={n.id} notice={n} invoice={invoice} canEmail={canEmail} />)}
         </ul>
       ) : <p className="m-0 text-sm text-muted-foreground">{t("dunning.empty")}</p>}
 
@@ -80,11 +94,11 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
   );
 }
 
-function NoticeRow({ notice: n }: { notice: DunningNotice }) {
+function NoticeRow({ notice: n, invoice, canEmail }: { notice: DunningNotice; invoice: DunningInvoice; canEmail: boolean }) {
   const { t } = useTranslation("werkbank");
   const download = useDunningDownload();
-  const send = useSendDunning();
   const issue = useIssueDunning();
+  const [sendDialog, setSendDialog] = useState<"resend" | "retry" | null>(null);
   // A notice without its file is still being rendered (or the render failed): retrying resumes it.
   const unrendered = !n.pdf_path;
   const mailFailed = !unrendered && n.delivery === "email" && !n.sent_at;
@@ -101,18 +115,13 @@ function NoticeRow({ notice: n }: { notice: DunningNotice }) {
         toast.error(t("invoices.page.pdfFailed"));
       });
   };
-  const resend = () =>
-    send.mutateAsync({ noticeId: n.id, ...(recipients.length ? { to: recipients } : {}) })
-      .then(() => toast.success(t("dunning.row.resent")))
-      .catch(() => toast.error(t("dunning.row.resendFailed")));
-
-  const retryRender = () =>
-    issue.mutateAsync({
-      invoiceId: n.invoice_id, delivery: n.delivery === "email" ? "email" : "print",
-      ...(n.delivery === "email" ? { send: recipients.length ? { to: recipients } : {} } : {}),
-    })
+  // Without a send only the PDF is stored (a print notice, or an email notice that may not go out
+  // any more); an email notice that may go out asks for its recipients first.
+  const storeOnly = () =>
+    issue.mutateAsync({ invoiceId: n.invoice_id, delivery: n.delivery === "email" ? "email" : "print" })
       .then(() => toast.success(t("dunning.row.retried")))
       .catch(() => toast.error(t("dunning.row.retryFailed")));
+  const retry = () => (n.delivery === "email" && canEmail ? setSendDialog("retry") : void storeOnly());
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
@@ -125,11 +134,14 @@ function NoticeRow({ notice: n }: { notice: DunningNotice }) {
       {recipients.length > 0 && <span className="text-muted-foreground">{recipients.join(", ")}</span>}
       <span className="ml-auto flex gap-2">
         {n.pdf_path && <Button variant="secondary" disabled={download.isPending} onClick={() => void openPdf()}>{t("dunning.row.pdf")}</Button>}
-        {unrendered && <Button variant="secondary" disabled={issue.isPending} onClick={() => void retryRender()}>{t("dunning.row.retry")}</Button>}
-        {n.delivery === "email" && n.pdf_path && (
-          <Button variant="secondary" disabled={send.isPending} onClick={() => void resend()}>{t("dunning.row.resend")}</Button>
+        {unrendered && <Button variant="secondary" disabled={issue.isPending} onClick={retry}>{t("dunning.row.retry")}</Button>}
+        {n.delivery === "email" && n.pdf_path && canEmail && (
+          <Button variant="secondary" onClick={() => setSendDialog("resend")}>{t("dunning.row.resend")}</Button>
         )}
       </span>
+      {sendDialog && (
+        <SendDunningDialog notice={n} invoice={invoice} retry={sendDialog === "retry"} onOpenChange={(o) => { if (!o) setSendDialog(null); }} />
+      )}
     </li>
   );
 }

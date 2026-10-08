@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
-import { DunningActionError, dunningDownloadUrl, issueDunning, previewDunning, sendDunning } from "./dunningActions";
+import { DunningActionError, dunningActionErrorKey, dunningDownloadUrl, issueDunning, previewDunning, sendDunning } from "./dunningActions";
 
 const asClient = (fake: ReturnType<typeof createFakeSupabase>) => fake as unknown as SupabaseClient<Database>;
 const FN = "fn:werkbank-dunning";
@@ -19,10 +19,10 @@ describe("previewDunning", () => {
 
 describe("issueDunning", () => {
   it("sends the issue body and maps the result", async () => {
-    const fake = createFakeSupabase({ [FN]: { data: { notice_id: "n1", stage: 2, sent: true }, error: null } });
+    const fake = createFakeSupabase({ [FN]: { data: { notice_id: "n1", stage: 2, email_sent: true }, error: null } });
     const send = { to: ["a@example.de"] };
     expect(await issueDunning(asClient(fake), { orgId: "org-1", invoiceId: "i1", delivery: "email", paymentDeadline: "2026-11-01", send }))
-      .toEqual({ noticeId: "n1", stage: 2, sent: true });
+      .toEqual({ noticeId: "n1", stage: 2, emailSent: true });
     expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ action: "issue", org_id: "org-1", invoice_id: "i1", delivery: "email", payment_deadline: "2026-11-01", send }] });
   });
   it("maps a 409 not_allowed to blockers", async () => {
@@ -52,5 +52,16 @@ describe("sendDunning and dunningDownloadUrl", () => {
     const fake = createFakeSupabase({ [FN]: { data: { url: "https://x/y.pdf" }, error: null } });
     expect(await dunningDownloadUrl(asClient(fake), "org-1", "n1")).toBe("https://x/y.pdf");
     expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ action: "download-url", org_id: "org-1", notice_id: "n1" }] });
+  });
+});
+
+describe("dunningActionErrorKey", () => {
+  it("names a missing recipient and a missing invoice file", () => {
+    expect(dunningActionErrorKey("no_recipient")).toBe("dunning.errors.noRecipient");
+    expect(dunningActionErrorKey("invoice_file_missing")).toBe("dunning.errors.invoiceFileMissing");
+  });
+  it("falls back to the invoice action keys", () => {
+    expect(dunningActionErrorKey("invalid_recipient")).toBe("invoices.send.errors.invalidRecipient");
+    expect(dunningActionErrorKey("unknown")).toBe("invoices.send.errors.generic");
   });
 });

@@ -51,7 +51,7 @@ describe("DunningCard", () => {
     st.balance = { invoice_id: "i1", open_amount: 100, claim: 100, paid: 0, written_off: 0 };
     st.notices = [];
     st.hold = null;
-    issue.mutateAsync.mockResolvedValue({ noticeId: "n9", stage: 1, sent: true });
+    issue.mutateAsync.mockResolvedValue({ noticeId: "n9", stage: 1, emailSent: true });
     preview.mutateAsync.mockResolvedValue(new Blob(["x"]));
     sendM.mutateAsync.mockResolvedValue(undefined);
     download.mutateAsync.mockResolvedValue("https://files/n1.pdf");
@@ -72,15 +72,15 @@ describe("DunningCard", () => {
   it("disables the create button for a paid invoice", () => {
     st.balance = { invoice_id: "i1", open_amount: 0 };
     render();
-    expect(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("disables the create button before the due date and names not_overdue", async () => {
     vi.useRealTimers();
     render({ due_date: "2099-01-01" });
     const btn = screen.getByRole("button", { name: "Zahlungserinnerung erstellen" });
-    expect(btn).toBeDisabled();
-    fireEvent.pointerMove(btn.closest("span")!, { pointerType: "mouse" });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    fireEvent.pointerMove(btn, { pointerType: "mouse" });
     expect((await screen.findAllByText("Die Rechnung ist noch nicht überfällig.")).length).toBeGreaterThan(0);
   });
 
@@ -143,22 +143,80 @@ describe("DunningCard", () => {
     expect(within(alert).getByText("Es ist nichts mehr offen.")).toBeInTheDocument();
   });
 
-  it("resends an unsent email notice from the list", async () => {
-    st.notices = [notice({ sent_at: null })];
+  it("resends from a recipients dialog with the last addresses and a typed CC", async () => {
+    st.notices = [notice()];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("textbox", { name: "Empfänger" })).toHaveValue("rechnung@example.de");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "CC" }), { target: { value: "chef@example.de" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(sendM.mutateAsync).toHaveBeenCalledWith({ noticeId: "n1", to: ["rechnung@example.de"], cc: ["chef@example.de"] }));
+    expect(toast.success).toHaveBeenCalledWith("Mahnung gesendet.");
+  });
+
+  it("presets the default recipient when the first send failed and nothing was stamped", async () => {
+    st.notices = [notice({ sent_at: null, sent_to: null })];
     render();
     expect(screen.getByText("Versand fehlgeschlagen")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
-    await waitFor(() => expect(sendM.mutateAsync).toHaveBeenCalledWith({ noticeId: "n1", to: ["rechnung@example.de"] }));
+    const dialog = await screen.findByRole("dialog");
+    const to = within(dialog).getByRole("textbox", { name: "Empfänger" });
+    expect(to).toHaveValue("rechnung@example.de");
+    expect(to).toHaveAccessibleDescription("Die Rechnungs-E-Mail des Kunden, sonst die des Ansprechpartners. Du kannst sie ändern.");
+    fireEvent.change(to, { target: { value: "neu@example.de" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(sendM.mutateAsync).toHaveBeenCalledWith({ noticeId: "n1", to: ["neu@example.de"] }));
   });
 
-  it("offers a retry for unrendered notices and resumes them without a new stage", async () => {
-    st.notices = [notice({ pdf_path: null, sent_at: null })];
+  it("names a missing recipient in the dialog", async () => {
+    sendM.mutateAsync.mockRejectedValue(new DunningActionError("no_recipient"));
+    st.notices = [notice({ sent_at: null, sent_to: null })];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    expect(await within(dialog).findByText(/keine E-Mail-Adresse hinterlegt/)).toBeInTheDocument();
+  });
+
+  it("offers a retry for unrendered notices and resumes them through the recipients dialog", async () => {
+    st.notices = [notice({ pdf_path: null, sent_at: null, sent_to: null })];
     render();
     expect(screen.getByText("PDF wird erzeugt")).toBeInTheDocument();
     expect(screen.queryByText("Versand fehlgeschlagen")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Erneut senden" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "email", send: { to: ["rechnung@example.de"] } }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "CC" }), { target: { value: "chef@example.de" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({
+      invoiceId: "i1", delivery: "email", send: { to: ["rechnung@example.de"], cc: ["chef@example.de"] },
+    }));
+  });
+
+  it.each([
+    ["settled", () => { st.balance = { invoice_id: "i1", open_amount: 0 }; }, {}],
+    ["held", () => { st.hold = { invoice_id: "i1", reason: "Klärung", until: null }; }, {}],
+    ["cancelled", () => { st.balance = { invoice_id: "i1", open_amount: -100 }; }, { status: "cancelled" }],
+  ])("offers no email for a %s invoice, but still stores an unrendered notice", async (_label, arrange, over) => {
+    arrange();
+    st.notices = [notice({ sent_at: null }), notice({ id: "n2", stage: 2, pdf_path: null, sent_at: null, sent_to: null })];
+    render(over);
+    expect(screen.queryByRole("button", { name: "Erneut senden" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "PDF" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "email" }));
+  });
+
+  it("names the blocker of the disabled create button on keyboard focus", async () => {
+    vi.useRealTimers();
+    render({ due_date: "2099-01-01" });
+    const trigger = screen.getByRole("button", { name: "Zahlungserinnerung erstellen" });
+    expect(trigger).toHaveAccessibleDescription("Die Rechnung ist noch nicht überfällig.");
+    act(() => trigger.focus());
+    expect(trigger).toHaveFocus();
+    expect((await screen.findAllByText("Die Rechnung ist noch nicht überfällig.")).length).toBeGreaterThan(1);
   });
 
   it("retries an unrendered print notice without send", async () => {
@@ -179,7 +237,7 @@ describe("DunningCard", () => {
   it("sets a hold with a reason and no date", async () => {
     render();
     fireEvent.click(screen.getByRole("button", { name: "Mahnsperre setzen" }));
-    expect(await screen.findByRole("img", { name: "Ohne Datum gilt die Sperre, bis Du sie aufhebst." })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Ohne Datum gilt die Sperre, bis Du sie aufhebst." })).toBeInTheDocument();
     fireEvent.change(await screen.findByRole("textbox", { name: /Grund/ }), { target: { value: "Ratenzahlung" } });
     fireEvent.click(screen.getByRole("button", { name: "Sperre setzen" }));
     await waitFor(() => expect(setHold.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", reason: "Ratenzahlung", until: null }));
@@ -189,7 +247,7 @@ describe("DunningCard", () => {
     st.hold = { invoice_id: "i1", reason: "Ratenzahlung", until: null };
     render();
     expect(screen.getByText(/Ratenzahlung/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" })).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(screen.getByRole("button", { name: "Aufheben" }));
     await waitFor(() => expect(clearHold.mutateAsync).toHaveBeenCalledWith("i1"));
   });

@@ -339,6 +339,17 @@
       "1": "Payment reminder",
       "2": "First notice",
       "3": "Second and final notice"
+    },
+    "errors": {
+      "noRecipient": "No email address is stored for this customer. Enter a recipient.",
+      "invoiceFileMissing": "The invoice PDF is missing, so the notice cannot go out by email. Send it by post."
+    },
+    "send": {
+      "resendTitle": "Send {{stage}} again",
+      "retryTitle": "Complete and send {{stage}}",
+      "description": "The notice PDF goes out together with the invoice PDF.",
+      "hintToLast": "The addresses this notice last went to. You can change them.",
+      "submit": "Send"
     }
   },
   "errors": {

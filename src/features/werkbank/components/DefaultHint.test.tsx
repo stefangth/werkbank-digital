@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { act, screen } from "@testing-library/react";
 import { Input } from "@/components/ui/input";
 import { renderWithProviders } from "@/test/renderWithProviders";
-import { DefaultHint, HintedLabel, hintId } from "./DefaultHint";
+import { DefaultHint, HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 
 const TEXT = "Vorgabe 7 Tage. Kommt aus den Einstellungen.";
 

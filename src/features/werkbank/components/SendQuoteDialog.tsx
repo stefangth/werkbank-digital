@@ -18,7 +18,8 @@ import { useQuoteActions } from "../hooks/useQuoteActions";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { quotePreflight, type QuoteBlocker } from "../lib/quotePreflight";
 import { splitAddresses } from "../lib/addresses";
-import { HintedLabel, hintId } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 
 type SendableQuote = Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until">;
 

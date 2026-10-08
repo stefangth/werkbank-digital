@@ -2,9 +2,8 @@ import { CircleHelp } from "lucide-react";
 import { IconTooltip } from "@/components/common/IconTooltip";
 import { FormLabel, useFormField } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { hintId } from "../lib/hintId";
 
-/** The id a field's DefaultHint gets, for the control's `aria-describedby`. */
-export const hintId = (controlId: string) => `${controlId}-hint`;
 
 /** A help icon beside a field label that explains a preset value: what the default is, where it
  *  comes from and whether it can be changed here (docs/ui-conventions.md, section 5). A real button,

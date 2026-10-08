@@ -10,7 +10,8 @@ import { Metric } from "@/components/ui/metric";
 import { berlinDateKey, formatDateDMY } from "@/lib/dates";
 import { useSetDunningHold } from "../hooks/useOpenItems";
 import { DatePopover } from "./DatePopover";
-import { HintedLabel, hintId } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 
 /** Pauses dunning for one invoice: a reason and an optional last day of the pause. Without a date
  *  the hold lasts until it is lifted. The hook toasts a database error. */

@@ -18,7 +18,8 @@ import { useProperty } from "../hooks/useProperties";
 import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
 import { splitAddresses } from "../lib/addresses";
 import { defaultRecipient } from "../lib/defaultRecipient";
-import { HintedLabel, hintId } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 
 export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { edgeResponseContext } from "@/lib/edgeErrors";
+import { invoiceActionErrorKey } from "./invoiceActions";
 
 type Client = SupabaseClient<Database>;
 
@@ -18,6 +19,13 @@ export class DunningActionError extends Error {
     super(code);
     this.name = "DunningActionError";
   }
+}
+
+/** The `werkbank` i18n key for a werkbank-dunning error code (not_allowed is shown as its blockers). */
+export function dunningActionErrorKey(code: string): string {
+  if (code === "no_recipient") return "dunning.errors.noRecipient";
+  if (code === "invoice_file_missing") return "dunning.errors.invoiceFileMissing";
+  return invoiceActionErrorKey(code);
 }
 
 async function readError(error: unknown): Promise<DunningActionError> {
@@ -50,11 +58,11 @@ export async function previewDunning(client: Client, a: { orgId: string; invoice
 export async function issueDunning(
   client: Client,
   a: { orgId: string; invoiceId: string; delivery: "email" | "print"; paymentDeadline?: string; send?: DunningRecipients },
-): Promise<{ noticeId: string; stage: number; sent?: boolean }> {
-  const res = await invoke<{ notice_id: string; stage: number; sent?: boolean }>(client, "issue", {
+): Promise<{ noticeId: string; stage: number; emailSent?: boolean }> {
+  const res = await invoke<{ notice_id: string; stage: number; email_sent?: boolean }>(client, "issue", {
     org_id: a.orgId, invoice_id: a.invoiceId, delivery: a.delivery, payment_deadline: a.paymentDeadline, send: a.send,
   });
-  return { noticeId: res.notice_id, stage: res.stage, sent: res.sent };
+  return { noticeId: res.notice_id, stage: res.stage, emailSent: res.email_sent };
 }
 
 /** Mails (or re-mails) the stored PDF of an existing notice. */

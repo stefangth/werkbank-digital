@@ -339,6 +339,17 @@
       "1": "Zahlungserinnerung",
       "2": "1. Mahnung",
       "3": "2. und letzte Mahnung"
+    },
+    "errors": {
+      "noRecipient": "Für diesen Kunden ist keine E-Mail-Adresse hinterlegt. Gib einen Empfänger ein.",
+      "invoiceFileMissing": "Das PDF der Rechnung fehlt, deshalb kann die Mahnung nicht per E-Mail rausgehen. Verschicke sie per Post."
+    },
+    "send": {
+      "resendTitle": "{{stage}} erneut senden",
+      "retryTitle": "{{stage}} fertigstellen und senden",
+      "description": "Das PDF der Mahnung geht zusammen mit dem PDF der Rechnung raus.",
+      "hintToLast": "Die Adressen, an die diese Mahnung zuletzt ging. Du kannst sie ändern.",
+      "submit": "Senden"
     }
   },
   "errors": {

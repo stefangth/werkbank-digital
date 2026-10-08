@@ -186,11 +186,11 @@ test.describe("Werkbank open items", () => {
     await expect.poll(async () => (await balance(invoiceA))?.payment_state, { timeout: 15_000 }).toBe("partial");
     expect(await balance(invoiceA)).toMatchObject({ paid: 100, written_off: 0, open_amount: 107.06 });
 
-    // The invoice is not overdue yet: the notice button is disabled and says why.
+    // The invoice is not overdue yet: the notice button is disabled and says why, also on keyboard focus.
     const dunning = page.locator('section[aria-labelledby="invoice-dunning"]');
     const create = dunning.getByRole("button", { name: /erstellen$/ });
     await expect(create).toBeDisabled();
-    await create.hover({ force: true });
+    await create.focus();
     await expect(page.getByRole("tooltip").getByText("Die Rechnung ist noch nicht überfällig.")).toBeVisible();
 
     // A hold shows its banner and can be lifted again.

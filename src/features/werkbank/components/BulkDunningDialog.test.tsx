@@ -37,7 +37,7 @@ describe("BulkDunningDialog", () => {
 
   it("sends one after another and summarises sent, skipped and failed with links to the failures", async () => {
     issue.mutateAsync
-      .mockResolvedValueOnce({ noticeId: "n1", stage: 1, sent: true })
+      .mockResolvedValueOnce({ noticeId: "n1", stage: 1, emailSent: true })
       .mockRejectedValueOnce(new DunningActionError("not_allowed", ["nothing_open"]))
       .mockRejectedValueOnce(new DunningActionError("send_failed", [], true));
     render([row("a", "RE-1"), row("b", "RE-2"), row("c", "RE-3")]);

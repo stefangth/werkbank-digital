@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NumberRange } from "../data/numberRanges";
 import { formatNumber, NUMBER_RANGE_KEYS, type NumberRangeKey } from "../data/numberRanges";
-import { HintedLabel, hintId } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 import { useInvoiceRangeLocked, useNumberRange, useSaveNumberRange } from "../hooks/useNumberRanges";
 
 /** The start value the database applies to a range without a row (numberRanges.ts, werkbank.next_number). */

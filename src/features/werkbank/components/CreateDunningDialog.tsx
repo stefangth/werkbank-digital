@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Metric } from "@/components/ui/metric";
 import { berlinDateKey, formatDateDMY } from "@/lib/dates";
-import { DunningActionError } from "../data/dunningActions";
-import { invoiceActionErrorKey } from "../data/invoiceActions";
+import { DunningActionError, dunningActionErrorKey } from "../data/dunningActions";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import { useContacts } from "../hooks/useContacts";
 import { useCustomer } from "../hooks/useCustomers";
@@ -21,7 +20,8 @@ import { addDaysToKey } from "../lib/dunningBlockers";
 import { stageKey } from "../lib/stageKey";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { DatePopover } from "./DatePopover";
-import { DefaultHint } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 
 const DEFAULT_DEADLINE_DAYS = 7;
 const MAIL = /^[^@\s]+@[^@\s]+$/;
@@ -95,23 +95,19 @@ export function CreateDunningDialog({ invoice, stage, onOpenChange }: {
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="dunning-to" className="flex items-center gap-1.5">
-              {t("dunning.create.to")}
-              <DefaultHint text={t("dunning.create.hintTo")} />
-            </Label>
-            <Input id="dunning-to" type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
+            <HintedLabel htmlFor="dunning-to" hint={t("dunning.create.hintTo")}>{t("dunning.create.to")}</HintedLabel>
+            <Input id="dunning-to" aria-describedby={hintId("dunning-to")} type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="dunning-cc">{t("dunning.create.cc")}</Label>
             <Input id="dunning-cc" type="text" value={ccInput} onChange={(e) => setCcInput(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dunning-deadline" className="flex items-center gap-1.5">
+            <HintedLabel htmlFor="dunning-deadline" hint={t("dunning.create.hintDeadline", { days: profile?.dunning_deadline_days ?? DEFAULT_DEADLINE_DAYS })}>
               {t("dunning.create.deadline")}
-              <DefaultHint text={t("dunning.create.hintDeadline", { days: profile?.dunning_deadline_days ?? DEFAULT_DEADLINE_DAYS })} />
-            </Label>
+            </HintedLabel>
             <DatePopover value={deadline} minDate={berlinDateKey(new Date())} onSelect={setDeadlineInput}>
-              <Button id="dunning-deadline" type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("dunning.create.deadline")}>
+              <Button id="dunning-deadline" type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("dunning.create.deadline")} aria-describedby={hintId("dunning-deadline")}>
                 <CalendarDays className="h-4 w-4" aria-hidden />
                 <Metric size="body">{formatDateDMY(deadline)}</Metric>
               </Button>
@@ -124,7 +120,7 @@ export function CreateDunningDialog({ invoice, stage, onOpenChange }: {
                 {error.blockers.map((b) => <li key={b}>{t(`dunning.blockers.${b}`, { defaultValue: t("errors.dunningNotAllowed") })}</li>)}
               </ul>
             </Alert>
-          ) : error && <Alert variant="destructive">{t(invoiceActionErrorKey(error.code))}</Alert>}
+          ) : error && <Alert variant="destructive">{t(dunningActionErrorKey(error.code))}</Alert>}
         </div>
         <DialogFooter>
           <Button variant="secondary" disabled={pending} onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>

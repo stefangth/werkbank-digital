@@ -17,7 +17,8 @@ import { mapDbError } from "../lib/dbErrors";
 import { formatEuro, parseEuroInput } from "../lib/money";
 import { recordEntrySchema, WRITE_OFF_REASONS, type RecordEntryForm, type RecordEntryMode } from "../schemas/payment";
 import { DatePopover } from "./DatePopover";
-import { HintedLabel, hintId } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 
 const asInput = (n: number) => n.toFixed(2).replace(".", ",");
 

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateDMY } from "@/lib/dates";
 import type { Quote, QuotePatch } from "../data/quotes";
 import { DatePopover } from "./DatePopover";
-import { hintId } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 import { DocumentHeaderFields, Fact, FormField } from "./DocumentHeaderFields";
 
 type TextField = "intro_text" | "closing_text" | "payment_terms_text";
