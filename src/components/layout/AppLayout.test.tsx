@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import { screen, fireEvent, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { renderWithProviders } from "@/test/renderWithProviders";
@@ -293,15 +293,22 @@ describe("AppLayout force-English gate (language_packages entitlement)", () => {
 describe("AppLayout first-visit language (browser language fallback)", () => {
   // A fresh phone has no stored choice. While entitlements load AppLayout forces English;
   // once the org is entitled the language must fall back to the browser's, not stay English.
+  let languageSpy: MockInstance<() => string> | undefined;
+  const germanBrowser = () => {
+    languageSpy = vi.spyOn(window.navigator, "language", "get").mockReturnValue("de-DE");
+  };
   afterEach(async () => {
-    vi.restoreAllMocks();
+    // Restore only the navigator spy: restoreAllMocks would reset the useAuth mock while the
+    // previous tree is still mounted, and the next language change re-renders it.
+    languageSpy?.mockRestore();
+    languageSpy = undefined;
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LANG_PACK_CACHE_KEY);
     await i18n.changeLanguage("en");
   });
 
   it("entitled, nothing stored, German browser: the language becomes German", async () => {
-    vi.spyOn(window.navigator, "language", "get").mockReturnValue("de-DE");
+    germanBrowser();
     mockAuth();
     mockEntitlements(false);
     const { rerender } = renderWithProviders(<AppLayout>page content</AppLayout>);
@@ -315,7 +322,7 @@ describe("AppLayout first-visit language (browser language fallback)", () => {
   });
 
   it("not entitled: stays English even with a German browser", async () => {
-    vi.spyOn(window.navigator, "language", "get").mockReturnValue("de-DE");
+    germanBrowser();
     mockAuth();
     mockEntitlements(true);
     const { rerender } = renderWithProviders(<AppLayout>page content</AppLayout>);
@@ -327,7 +334,7 @@ describe("AppLayout first-visit language (browser language fallback)", () => {
   });
 
   it("entitled with a stored English choice and a German browser: stays English", async () => {
-    vi.spyOn(window.navigator, "language", "get").mockReturnValue("de-DE");
+    germanBrowser();
     mockAuth();
     mockEntitlements(false);
     const { rerender } = renderWithProviders(<AppLayout>page content</AppLayout>);
