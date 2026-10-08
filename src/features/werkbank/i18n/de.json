@@ -6,7 +6,8 @@
     "properties": "Liegenschaften",
     "quotes": "Angebote",
     "orders": "Aufträge",
-    "invoices": "Rechnungen"
+    "invoices": "Rechnungen",
+    "openItems": "Offene Posten"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -103,6 +104,66 @@
       "writtenOff": "Ausgebucht",
       "void": "Hinfällig",
       "overpaid": "Guthaben"
+    },
+    "title": "Offene Posten",
+    "sub": "Was Kunden noch schulden und welche Rechnungen eine Mahnung brauchen.",
+    "loadFailed": "Die offenen Posten konnten nicht geladen werden.",
+    "kpi": {
+      "open": "Offen gesamt",
+      "overdue": "Davon überfällig",
+      "credit": "Kundenguthaben"
+    },
+    "view": {
+      "open": "Offen",
+      "due": "Mahnfällig"
+    },
+    "searchLabel": "Offene Posten durchsuchen",
+    "searchPlaceholder": "Nummer, Kunde, Liegenschaft",
+    "empty": {
+      "title": "Nichts offen",
+      "body": "Alle ausgestellten Rechnungen sind beglichen.",
+      "reason": "Neue offene Posten erscheinen hier, sobald Du eine Rechnung ausstellst."
+    },
+    "noMatches": "Kein offener Posten passt zu Deiner Suche.",
+    "noMatchesReason": "Versuche einen anderen Suchbegriff.",
+    "holdTooltip": "Mahnsperre: {{reason}}",
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde / Liegenschaft",
+      "dueDate": "Fällig am",
+      "daysOverdue": "Tage überfällig",
+      "open": "Offen",
+      "status": "Zahlstatus",
+      "stage": "Mahnstufe",
+      "hold": "Mahnsperre",
+      "actions": "Aktionen"
+    },
+    "due": {
+      "none": "Keine Rechnung ist mahnfällig",
+      "noneReason": "Rechnungen erscheinen hier, sobald sie überfällig sind und die Wartetage vorbei sind.",
+      "selectAll": "Alle mit E-Mail-Adresse auswählen",
+      "select": "{{number}} auswählen",
+      "nextStage": "Nächste Mahnung",
+      "bulk": "Ausgewählte mahnen",
+      "print": "PDF für Postversand",
+      "printed": "Mahnung als PDF erstellt. Du findest sie an der Rechnung.",
+      "printFailed": "Die Mahnung konnte nicht erstellt werden."
+    },
+    "bulk": {
+      "title": "Mahnungen versenden",
+      "description": "Jede Mahnung wird erstellt, gesperrt und per E-Mail verschickt. Das lässt sich nicht rückgängig machen.",
+      "count_one": "{{count}} Mahnung wird versendet",
+      "count_other": "{{count}} Mahnungen werden versendet",
+      "excluded": "Ohne E-Mail-Adresse, nicht dabei:",
+      "confirm": "Jetzt mahnen",
+      "progress": "{{done}} von {{total}} erledigt",
+      "sent": "{{count}} versendet",
+      "skipped": "{{count}} übersprungen",
+      "failed": "{{count}} fehlgeschlagen",
+      "failedList": "Diese solltest Du Dir ansehen:",
+      "nothingSent": "Es wurde nichts versendet.",
+      "doneHint": "Übersprungene Rechnungen haben sich seit dem Laden der Liste geändert.",
+      "close": "Schließen"
     }
   },
   "payments": {
@@ -1114,7 +1175,8 @@
       "all": "Alle",
       "draft": "Entwürfe",
       "issued": "Ausgestellt",
-      "cancelled": "Storniert"
+      "cancelled": "Storniert",
+      "overdue": "Überfällig"
     },
     "status": {
       "draft": "Entwurf",
@@ -1139,7 +1201,9 @@
       "issueDate": "Rechnungsdatum",
       "dueDate": "Fällig am",
       "gross": "Brutto",
-      "status": "Status"
+      "status": "Status",
+      "paymentStatus": "Zahlstatus",
+      "open": "Offen"
     },
     "notice": {
       "doneNotInvoiced": "Erledigt, noch nicht abgerechnet",

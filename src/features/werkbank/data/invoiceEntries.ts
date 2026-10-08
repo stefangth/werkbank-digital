@@ -50,6 +50,16 @@ export async function fetchOpenItems(
   });
 }
 
+export type InvoiceBalanceBrief = Pick<InvoiceBalance, "invoice_id" | "open_amount" | "payment_state" | "days_overdue" | "last_stage">;
+
+/** Payment state of every invoice that has one, by invoice id: the extra columns of the invoice list. */
+export async function fetchBalanceMap(client: Client, orgId: string): Promise<Map<string, InvoiceBalanceBrief>> {
+  const rows = await fetchAllPages<InvoiceBalanceBrief>((from, to) => client.schema("werkbank")
+    .from("invoice_balances").select("invoice_id, open_amount, payment_state, days_overdue, last_stage").eq("org_id", orgId)
+    .order("invoice_id").range(from, to) as unknown as Page<InvoiceBalanceBrief>);
+  return new Map(rows.flatMap((r) => (r.invoice_id ? [[r.invoice_id, r] as const] : [])));
+}
+
 /** The total credit customers hold with the org (sum of negative open amounts), as a positive number. */
 export async function fetchCustomerCredit(client: Client, orgId: string): Promise<number> {
   const rows = await fetchAllPages<Pick<InvoiceBalance, "open_amount">>((from, to) => client.schema("werkbank")

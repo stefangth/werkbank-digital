@@ -6,7 +6,8 @@
     "properties": "Properties",
     "quotes": "Quotes",
     "orders": "Orders",
-    "invoices": "Invoices"
+    "invoices": "Invoices",
+    "openItems": "Open items"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -103,6 +104,66 @@
       "writtenOff": "Written off",
       "void": "Void",
       "overpaid": "Credit"
+    },
+    "title": "Open items",
+    "sub": "What customers still owe, and which invoices are due a notice.",
+    "loadFailed": "The open items could not be loaded.",
+    "kpi": {
+      "open": "Open in total",
+      "overdue": "Of which overdue",
+      "credit": "Customer credit"
+    },
+    "view": {
+      "open": "Open",
+      "due": "Due a notice"
+    },
+    "searchLabel": "Search open items",
+    "searchPlaceholder": "Number, customer, property",
+    "empty": {
+      "title": "Nothing open",
+      "body": "Every issued invoice is settled.",
+      "reason": "New open items appear here once you issue an invoice."
+    },
+    "noMatches": "No open item matches your search.",
+    "noMatchesReason": "Try another search term.",
+    "holdTooltip": "Dunning hold: {{reason}}",
+    "columns": {
+      "number": "No.",
+      "customer": "Customer / property",
+      "dueDate": "Due on",
+      "daysOverdue": "Days overdue",
+      "open": "Open",
+      "status": "Payment",
+      "stage": "Notice level",
+      "hold": "Dunning hold",
+      "actions": "Actions"
+    },
+    "due": {
+      "none": "No invoice is due a notice",
+      "noneReason": "Invoices appear here once they are overdue and the wait days have passed.",
+      "selectAll": "Select all with an email address",
+      "select": "Select {{number}}",
+      "nextStage": "Next notice",
+      "bulk": "Send selected notices",
+      "print": "PDF for postal mail",
+      "printed": "Notice created as a PDF. Find it on the invoice.",
+      "printFailed": "The notice could not be created."
+    },
+    "bulk": {
+      "title": "Send notices",
+      "description": "Each notice is created, locked and emailed. This cannot be undone.",
+      "count_one": "{{count}} notice will be sent",
+      "count_other": "{{count}} notices will be sent",
+      "excluded": "No email address, not included:",
+      "confirm": "Send now",
+      "progress": "{{done}} of {{total}} done",
+      "sent": "{{count}} sent",
+      "skipped": "{{count}} skipped",
+      "failed": "{{count}} failed",
+      "failedList": "These need a look:",
+      "nothingSent": "Nothing was sent.",
+      "doneHint": "Skipped invoices changed since the list loaded.",
+      "close": "Close"
     }
   },
   "payments": {
@@ -1114,7 +1175,8 @@
       "all": "All",
       "draft": "Drafts",
       "issued": "Issued",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "overdue": "Overdue"
     },
     "status": {
       "draft": "Draft",
@@ -1139,7 +1201,9 @@
       "issueDate": "Invoice date",
       "dueDate": "Due on",
       "gross": "Gross",
-      "status": "Status"
+      "status": "Status",
+      "paymentStatus": "Payment",
+      "open": "Open"
     },
     "notice": {
       "doneNotInvoiced": "Done, not invoiced yet",

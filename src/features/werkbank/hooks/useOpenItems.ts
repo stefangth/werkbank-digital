@@ -5,7 +5,7 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { clearDunningHold, fetchDunningDue, fetchDunningHold, fetchDunningNotices, setDunningHold } from "../data/dunning";
 import {
-  fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, fetchTransferTargets, recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
+  fetchBalanceMap, fetchInvoiceBalance, fetchInvoiceEntries, fetchCustomerCredit, fetchOpenItems, fetchTransferTargets, recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
   type EntryKind, type WriteOffReason,
 } from "../data/invoiceEntries";
 import { mapDbError } from "../lib/dbErrors";
@@ -25,6 +25,8 @@ export const useInvoiceBalance = (invoiceId: string | undefined) =>
 export const useInvoiceEntries = (invoiceId: string | undefined) =>
   useOrgQuery(["entries", invoiceId], !!invoiceId, (o) => fetchInvoiceEntries(supabase, o, invoiceId!));
 export const useOpenItems = (q: OpenItemsQuery) => useOrgQuery(["list", q], true, (o) => fetchOpenItems(supabase, o, q));
+export const useBalanceMap = () => useOrgQuery(["balance-map"], true, (o) => fetchBalanceMap(supabase, o));
+export const useCustomerCredit = () => useOrgQuery(["credit"], true, (o) => fetchCustomerCredit(supabase, o));
 export const useDunningDue = () => useOrgQuery(["due"], true, (o) => fetchDunningDue(supabase, o));
 export const useDunningNotices = (invoiceId: string | undefined) =>
   useOrgQuery(["notices", invoiceId], !!invoiceId, (o) => fetchDunningNotices(supabase, o, invoiceId!));

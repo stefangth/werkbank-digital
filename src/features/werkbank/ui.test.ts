@@ -17,7 +17,7 @@ import { OrderPage } from "./pages/OrderPage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { QuotePage } from "./pages/QuotePage";
 import { QuotesPage } from "./pages/QuotesPage";
-import { CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, ORDERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
+import { CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, ORDERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 const ctx = (roles: string[], orgKind: OrgKind) => ({
   isEditorMode: false,
@@ -42,7 +42,7 @@ describe("werkbank module UI", () => {
 
   it("shows an admin of a handwerk org Dashboard, Customers, Services, Technicians, Settings", () => {
     const labels = visibleNavItems(NAV_ITEMS, ctx(["admin"], "handwerk")).map((i) => i.label);
-    expect(labels).toEqual(["Dashboard", "Customers", "Properties", "Quotes", "Orders", "Invoices", "Services", "Technicians", "Help", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Customers", "Properties", "Quotes", "Orders", "Invoices", "Open items", "Services", "Technicians", "Help", "Settings"]);
   });
 
   it("hides Technicians from a handwerk artist", () => {
@@ -196,6 +196,14 @@ describe("werkbank module UI", () => {
   });
 
   it("points the nav item at the same path as the route", () => {
-    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, ORDERS_PATH, INVOICES_PATH, CATALOG_PATH, TECHNICIANS_PATH]);
+    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, ORDERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, CATALOG_PATH, TECHNICIANS_PATH]);
+  });
+
+  it("contributes the open items route for handwerk office roles", () => {
+    const route = werkbankUi.routes.find((r) => r.path === OPEN_ITEMS_PATH);
+    expect(route?.path).toBe("/open-items");
+    expect(route?.kinds).toEqual(["handwerk"]);
+    expect(route?.requiredRoles).toEqual(["admin", "producer"]);
+    expect(isLazy(route?.Page)).toBe(true);
   });
 });

@@ -12,6 +12,7 @@ import { propertiesMini } from './pages/properties';
 import { catalogMini } from './pages/catalog';
 import { quotesMini } from './pages/quotes';
 import { invoicesMini } from './pages/invoices';
+import { openItemsMini } from './pages/openItems';
 import { ordersMini } from './pages/orders';
 
 export * from './types';
@@ -38,6 +39,7 @@ export const MINIS = {
   quotes: quotesMini,
   orders: ordersMini,
   invoices: invoicesMini,
+  openItems: openItemsMini,
 } as const satisfies Record<PageKey, MiniDef>;
 
 export type RegisteredPageKey = keyof typeof MINIS;
