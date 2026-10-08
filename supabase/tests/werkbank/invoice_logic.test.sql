@@ -2,7 +2,7 @@
 -- guard, and the RPCs create_invoice_from_order, finalize_invoice, cancel_invoice, copy_invoice.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(95);
+SELECT plan(97);
 
 -- Berlin dates must not depend on the session time zone.
 SET LOCAL timezone = 'UTC';
@@ -407,6 +407,18 @@ SELECT throws_ok(format($$SELECT werkbank.cancel_invoice('%s')$$, pg_temp.id('in
   '42501', NULL, 'a technician cannot cancel an invoice');
 SELECT throws_ok(format($$SELECT werkbank.copy_invoice('%s')$$, pg_temp.id('inv2')),
   '42501', NULL, 'a technician cannot copy an invoice');
+RESET ROLE;
+
+-- A cancellation is always possible: with the profile incomplete it keeps the original's seller.
+UPDATE werkbank.company_profiles SET iban = NULL WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1';
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000c1');
+SET LOCAL ROLE authenticated;
+SELECT set_config('il.can2', werkbank.cancel_invoice(pg_temp.id('inv2'))::text, true);
+SELECT lives_ok(format($$SELECT werkbank.finalize_invoice('%s')$$, pg_temp.id('can2')),
+  'a cancellation is issued although the profile lost its IBAN');
+SELECT is((SELECT seller_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('can2')),
+  (SELECT seller_snapshot FROM werkbank.invoices WHERE id = pg_temp.id('inv2')),
+  'it then keeps the original seller snapshot');
 RESET ROLE;
 
 -- Grants -----------------------------------------------------------------------------------------

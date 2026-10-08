@@ -18,6 +18,9 @@ export interface InvoicePreflightInput {
   buyer: { street: string | null; postal_code: string | null; city: string | null } | null;
   /** null means "issue without sending": the recipient rule is skipped. */
   recipients: string[] | null;
+  /** A cancellation is never blocked by the profile or the buyer address: finalize_invoice then
+   *  keeps the original's seller and always copies its buyer. */
+  cancellation?: boolean;
 }
 
 const filled = (v: string | null | undefined): boolean => typeof v === "string" && v.trim() !== "";
@@ -28,8 +31,10 @@ export function invoicePreflight(input: InvoicePreflightInput): InvoiceBlocker[]
   const { profile, buyer } = input;
   if (input.itemCount < 1) blockers.push("no_items");
   if (!filled(input.serviceDateFrom)) blockers.push("no_service_date");
-  if (!isCompanyProfileComplete(profile) || !filled(profile?.iban)) blockers.push("profile_incomplete");
-  if (!buyer || !filled(buyer.street) || !filled(buyer.postal_code) || !filled(buyer.city)) blockers.push("no_buyer_address");
+  if (!input.cancellation) {
+    if (!isCompanyProfileComplete(profile) || !filled(profile?.iban)) blockers.push("profile_incomplete");
+    if (!buyer || !filled(buyer.street) || !filled(buyer.postal_code) || !filled(buyer.city)) blockers.push("no_buyer_address");
+  }
   if (input.recipients !== null && !input.recipients.some(filled)) blockers.push("no_recipient");
   return blockers;
 }
