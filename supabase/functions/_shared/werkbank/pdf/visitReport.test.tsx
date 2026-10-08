@@ -21,10 +21,10 @@ const data: VisitReportPdfData = {
   sections: [{ title: "Sanitär", number: "1", rows: [{ kind: "item", number: "1.1", name: "Ventil", quantity: 2, unit: "Stk" }] }],
   reports: [
     {
-      id: "r1", visitDate: "2026-10-06", technician: "Ben Berg", body: "Ventil getauscht", draft: false, photos: [PNG, PNG, PNG],
+      id: "r1", visitDate: "2026-10-06", technician: "Ben Berg", body: "Ventil getauscht", draft: false, photos: [PNG, PNG, PNG], morePhotos: false,
       signature: { name: "Frau Meier", signedAt: "2026-10-06T22:30:00Z", imageDataUrl: PNG },
     },
-    { id: "r2", visitDate: "2026-10-07", technician: "Ben Berg", body: "Nacharbeit", draft: true, photos: [], signature: null },
+    { id: "r2", visitDate: "2026-10-07", technician: "Ben Berg", body: "Nacharbeit", draft: true, photos: [], morePhotos: true, signature: null },
   ],
 };
 
@@ -47,6 +47,7 @@ Deno.test("renders the visit reports without any price", async () => {
   assertStringIncludes(t, "Nicht unterschrieben");
   assertStringIncludes(t, "Entwurf");
   assertStringIncludes(t, "Muster Sanitär");
+  assertStringIncludes(t, "Weitere Fotos sind in Werkbank gespeichert.");
   assert(!t.includes("€"), "no prices");
   assert(!t.includes("Einzelpreis"));
 });
@@ -55,4 +56,5 @@ Deno.test("no draft marker when every report is locked", async () => {
   const t = await text({ ...data, reports: [data.reports[0]] });
   assert(!t.includes("Entwurf"));
   assert(!t.includes("Nicht unterschrieben"));
+  assert(!t.includes("Weitere Fotos"));
 });

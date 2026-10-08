@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
-import { downloadVisitReportPdf, fetchVisitReports, updateOfficeNote } from "./visitReports";
+import { downloadVisitReportPdf, fetchVisitReports, updateOfficeNote, VisitReportPdfError, visitReportPdfErrorKey } from "./visitReports";
 
 const asClient = (fake: unknown) => fake as SupabaseClient<Database>;
 const T = "werkbank.visit_reports";
@@ -49,8 +49,18 @@ describe("downloadVisitReportPdf", () => {
     await downloadVisitReportPdf(asClient(fake), { orgId: "o1", orderId: "x", reportIds: ["r1"] });
     expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ org_id: "o1", order_id: "x", report_ids: ["r1"] }] });
   });
-  it("throws the function error", async () => {
-    const error = new Error("x");
-    await expect(downloadVisitReportPdf(asClient(createFakeSupabase({ [FN]: { data: null, error } })), { orgId: "o1", orderId: "x" })).rejects.toBe(error);
+  const fail = (status: number, json: unknown) =>
+    createFakeSupabase({ [FN]: { data: null, error: { context: new Response(JSON.stringify(json), { status }) } } });
+  const keyOf = (fake: ReturnType<typeof createFakeSupabase>) =>
+    downloadVisitReportPdf(asClient(fake), { orgId: "o1", orderId: "x" }).then(() => "resolved", visitReportPdfErrorKey);
+  it("maps an incomplete company profile, no reports and anything else to their keys", async () => {
+    expect(await keyOf(fail(422, { error: "preflight_failed", blockers: ["profile_incomplete"] }))).toBe("orders.reports.pdfProfileIncomplete");
+    expect(await keyOf(fail(404, { error: "no_reports" }))).toBe("orders.reports.pdfNoReports");
+    expect(await keyOf(fail(500, { error: "render_failed" }))).toBe("invoices.page.pdfFailed");
+    expect(await keyOf(createFakeSupabase({ [FN]: { data: null, error: new Error("x") } }))).toBe("invoices.page.pdfFailed");
+  });
+  it("throws a VisitReportPdfError with the code", async () => {
+    await expect(downloadVisitReportPdf(asClient(fail(404, { error: "no_reports" })), { orgId: "o1", orderId: "x" }))
+      .rejects.toEqual(new VisitReportPdfError("no_reports"));
   });
 });

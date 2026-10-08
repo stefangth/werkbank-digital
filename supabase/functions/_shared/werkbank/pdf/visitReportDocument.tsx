@@ -63,6 +63,7 @@ function Report({ report }: { report: VisitReportPdfReport }) {
           {report.photos.map((src, i) => <Image key={i} src={src} style={v.photo} />)}
         </View>
       ) : null}
+      {report.morePhotos ? <Text style={s.desc}>Weitere Fotos sind in Werkbank gespeichert.</Text> : null}
       <View style={s.signature} wrap={false}>
         {report.signature ? (
           <>

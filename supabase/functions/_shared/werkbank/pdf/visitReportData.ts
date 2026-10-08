@@ -4,7 +4,7 @@
 // org explicitly. No prices leave this module (spec non-goal).
 import type { Deps } from "../../deps.ts";
 import { draftSellerSnapshot, type SellerSnapshot } from "../einvoice/invoiceData.ts";
-import { imageDataUrl, logoDataUrl, VISITS_BUCKET } from "../documentStorage.ts";
+import { downloadImage, imageDataUrl, logoDataUrl, toDataUrl, VISITS_BUCKET } from "../documentStorage.ts";
 import { type CustomerRow, customerName, type ItemRow, locationLines, type ProfileRow, type PropertyRow } from "./quoteData.ts";
 import { buildSections, type QuotePdfRow } from "./sections.ts";
 import type { Database } from "../../database.types.ts";
@@ -32,6 +32,8 @@ export interface VisitReportPdfReport {
   draft: boolean;
   /** Photo data URLs in position order; an unreadable photo is left out. */
   photos: string[];
+  /** Photos were left out for the byte budget (PHOTO_BUDGET_BYTES): the PDF says they exist. */
+  morePhotos: boolean;
   signature: { name: string; signedAt: string; imageDataUrl?: string } | null;
 }
 
@@ -47,6 +49,11 @@ export interface VisitReportPdfData {
 }
 
 type Admin = Deps["admin"];
+
+/** Raw photo bytes one PDF may embed. The edge worker has about 256 MB; each photo is held as
+ *  bytes, as base64 and decoded by react-pdf, and the finished PDF on top. 40 MB keeps "Alle
+ *  Berichte" of a large order well below the limit. Signatures (at most 500 KB) do not count. */
+export const PHOTO_BUDGET_BYTES = 40 * 1024 * 1024;
 
 /** The order's sections with every price and subtotal dropped. */
 export function priceFreeSections(items: ItemRow[]): VisitReportSection[] {
@@ -97,15 +104,29 @@ export async function loadVisitReportData(
   }
 
   const deps = { admin };
-  const image = (path: string | null) => imageDataUrl(deps, VISITS_BUCKET, path);
-  // One download at a time: a report may hold 20 photos of up to 5 MB each.
+  // Document order (reports newest last, photos by position), one download at a time. Once the
+  // next photo would exceed the budget no further photo is downloaded.
+  let remaining = PHOTO_BUDGET_BYTES;
+  let exhausted = false;
   const pdfReports: VisitReportPdfReport[] = [];
   for (const r of reports) {
     const own = photos.filter((p) => p.report_id === r.id).sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
     const urls: string[] = [];
+    let morePhotos = false;
     for (const p of own) {
-      const url = await image(p.path);
-      if (url) urls.push(url);
+      if (exhausted) {
+        morePhotos = true;
+        continue;
+      }
+      const img = await downloadImage(deps, VISITS_BUCKET, p.path);
+      if (!img) continue;
+      if (img.size > remaining) {
+        exhausted = true;
+        morePhotos = true;
+        continue;
+      }
+      remaining -= img.size;
+      urls.push(await toDataUrl(img));
     }
     pdfReports.push({
       id: r.id,
@@ -114,8 +135,9 @@ export async function loadVisitReportData(
       body: r.body,
       draft: r.locked_at === null,
       photos: urls,
+      morePhotos,
       signature: r.signed_at && r.signer_name
-        ? { name: r.signer_name, signedAt: r.signed_at, imageDataUrl: await image(r.signature_path) }
+        ? { name: r.signer_name, signedAt: r.signed_at, imageDataUrl: await imageDataUrl(deps, VISITS_BUCKET, r.signature_path) }
         : null,
     });
   }

@@ -12,6 +12,8 @@ vi.mock("../hooks/useVisitReports", () => ({
   useVisitReportPdf: () => pdf,
 }));
 vi.mock("../lib/pdfTab", () => tab);
+const toastError = vi.hoisted(() => vi.fn());
+vi.mock("sonner", () => ({ toast: { error: toastError } }));
 vi.mock("../hooks/useAssignments", () => ({
   useVisitObjectUrls: () => ({ data: { "o/p1.jpg": "https://signed/p1.jpg", "o/sig.png": "https://signed/sig.png" } }),
 }));
@@ -92,5 +94,21 @@ describe("VisitReportsCard", () => {
     fireEvent.keyDown(screen.getByRole("button", { name: "PDF" }), { key: "Enter" });
     fireEvent.click(screen.getByRole("menuitem", { name: /Ben Kurz/ }));
     await vi.waitFor(() => expect(pdf.mutateAsync).toHaveBeenCalledWith(["r2"]));
+  });
+
+  it.each([
+    ["preflight_failed", "Deine Firmendaten sind unvollständig. Ergänze sie in den Einstellungen und versuche es noch einmal."],
+    ["no_reports", "Zu diesem Auftrag gibt es keinen passenden Einsatzbericht mehr. Lade die Seite neu."],
+  ])("shows a specific toast for %s and closes the pending tab", async (code, message) => {
+    const { VisitReportPdfError } = await import("../data/visitReports");
+    state.reports = [report()];
+    const pending = { close: vi.fn() } as unknown as Window;
+    tab.openPendingTab.mockReturnValue(pending);
+    pdf.mutateAsync.mockRejectedValue(new VisitReportPdfError(code));
+    render(<VisitReportsCard orderId="o1" />);
+    fireEvent.keyDown(screen.getByRole("button", { name: "PDF" }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Alle Berichte" }));
+    await vi.waitFor(() => expect(toastError).toHaveBeenCalledWith(message));
+    expect(pending.close).toHaveBeenCalled();
   });
 });

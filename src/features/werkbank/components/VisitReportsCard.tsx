@@ -11,7 +11,7 @@ import { Metric } from "@/components/ui/metric";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateWithWeekday, formatTimestampLocal } from "@/lib/dates";
-import type { VisitReport } from "../data/visitReports";
+import { type VisitReport, visitReportPdfErrorKey } from "../data/visitReports";
 import { useVisitObjectUrls } from "../hooks/useAssignments";
 import { useUpdateOfficeNote, useVisitReportPdf, useVisitReports } from "../hooks/useVisitReports";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
@@ -101,9 +101,9 @@ function ReportsPdfMenu({ orderId, reports }: { orderId: string; reports: VisitR
       .then((blob) =>
         showInTab(tab, URL.createObjectURL(blob), (url) =>
           toast.error(t("invoices.page.pdfBlocked"), { action: { label: t("invoices.page.pdfOpen"), onClick: () => window.open(url, "_blank") } })))
-      .catch(() => {
+      .catch((e: unknown) => {
         tab?.close();
-        toast.error(t("invoices.page.pdfFailed"));
+        toast.error(t(visitReportPdfErrorKey(e)));
       });
   };
   return (

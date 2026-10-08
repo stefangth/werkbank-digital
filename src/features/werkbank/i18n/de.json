@@ -1140,7 +1140,9 @@
       },
       "pdf": "PDF",
       "pdfAll": "Alle Berichte",
-      "pdfOne": "Bericht vom <date>{{date}}</date>, {{name}}"
+      "pdfOne": "Bericht vom <date>{{date}}</date>, {{name}}",
+      "pdfProfileIncomplete": "Deine Firmendaten sind unvollständig. Ergänze sie in den Einstellungen und versuche es noch einmal.",
+      "pdfNoReports": "Zu diesem Auftrag gibt es keinen passenden Einsatzbericht mehr. Lade die Seite neu."
     }
   },
   "publicQuote": {

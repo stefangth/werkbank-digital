@@ -1140,7 +1140,9 @@
       },
       "pdf": "PDF",
       "pdfAll": "All reports",
-      "pdfOne": "Report of <date>{{date}}</date>, {{name}}"
+      "pdfOne": "Report of <date>{{date}}</date>, {{name}}",
+      "pdfProfileIncomplete": "Your company details are incomplete. Complete them in the settings and try again.",
+      "pdfNoReports": "This order has no matching visit report any more. Reload the page."
     }
   },
   "publicQuote": {

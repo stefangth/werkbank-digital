@@ -1,6 +1,6 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
 import { makeFakeDeps, type TableSeed } from "../../testing.ts";
-import { loadVisitReportData } from "./visitReportData.ts";
+import { loadVisitReportData, PHOTO_BUDGET_BYTES } from "./visitReportData.ts";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const OTHER = "22222222-2222-4222-8222-222222222222";
@@ -35,7 +35,7 @@ const photos = [
   { id: "p1", org_id: ORG, report_id: R1, path: `${ORG}/${ORDER}/${R1}/a.jpg`, position: 0 },
 ];
 
-function setup() {
+function setup(opts: { photos?: Record<string, unknown>[]; blob?: unknown } = {}) {
   const tables: Record<string, TableSeed> = {
     "werkbank.orders": [{ when: { org_id: ORG, id: ORDER }, data: order }, { data: null }],
     "werkbank.company_profiles": [{ when: { org_id: ORG }, data: profile }, { data: null }],
@@ -47,9 +47,9 @@ function setup() {
       { when: { org_id: ORG, order_id: ORDER }, data: [r1, r2] },
       { data: [] },
     ],
-    "werkbank.visit_report_photos": [{ when: { org_id: ORG }, data: photos }, { data: [] }],
+    "werkbank.visit_report_photos": [{ when: { org_id: ORG }, data: opts.photos ?? photos }, { data: [] }],
   };
-  const blob = new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" });
+  const blob = opts.blob ?? new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" });
   return makeFakeDeps({ tables, storageDownloadResult: { data: blob, error: null } });
 }
 
@@ -69,6 +69,7 @@ Deno.test("loads the order header, price-free items and the reports with images"
   assertEquals(d.reports[0].photos, ["data:image/jpeg;base64,AQID", "data:image/jpeg;base64,AQID"]);
   assertEquals(d.reports[0].signature, { name: "Frau Meier", signedAt: "2026-10-06T10:00:00Z", imageDataUrl: "data:image/jpeg;base64,AQID" });
   assertEquals(d.reports[1].signature, null);
+  assertEquals(d.reports.map((r) => r.morePhotos), [false, false]);
   const downloads = t.calls.filter((c) => c.method === "download");
   assertEquals(downloads.map((c) => [c.table, c.args[0]]), [
     ["storage:werkbank-visits", `${ORG}/${ORDER}/${R1}/a.jpg`],
@@ -100,4 +101,22 @@ Deno.test("a missing company profile is profile_missing", async () => {
   let message = "";
   await loadVisitReportData(fake.deps.admin, ORG, ORDER).catch((e) => (message = String((e as Error).message)));
   assertEquals(message, "profile_missing");
+});
+
+Deno.test("photos stop at the byte budget; the skipped reports are flagged, signatures still load", async () => {
+  // Reports to the fake as 15 MB each: two fit into 40 MB, the third does not.
+  const big = { type: "image/jpeg", size: 15 * 1024 * 1024, arrayBuffer: () => Promise.resolve(new Uint8Array([1, 2, 3]).buffer) };
+  const many = [
+    ...photos,
+    { id: "p3", org_id: ORG, report_id: R1, path: `${ORG}/${ORDER}/${R1}/c.jpg`, position: 2 },
+    { id: "p4", org_id: ORG, report_id: R2, path: `${ORG}/${ORDER}/${R2}/d.jpg`, position: 0 },
+  ];
+  assert(2 * big.size <= PHOTO_BUDGET_BYTES && 3 * big.size > PHOTO_BUDGET_BYTES);
+  const t = setup({ photos: many, blob: big });
+  const d = await loadVisitReportData(t.deps.admin, ORG, ORDER);
+  assertEquals(d?.reports.map((r) => r.photos.length), [2, 0]);
+  assertEquals(d?.reports.map((r) => r.morePhotos), [true, true]);
+  assertEquals(d?.reports[0].signature?.imageDataUrl, "data:image/jpeg;base64,AQID");
+  // Nothing after the first photo over the budget is downloaded.
+  assertEquals(t.calls.filter((c) => c.method === "download").map((c) => String(c.args[0]).split("/").pop()), ["a.jpg", "b.jpg", "c.jpg", "signature.png"]);
 });
