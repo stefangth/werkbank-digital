@@ -1,4 +1,20 @@
 {
+  "hints": {
+    "companyPaymentDueDays": "Vorgabe 14 Tage. Gilt für jede neue Rechnung. Du kannst sie hier ändern, auf der einzelnen Rechnung auch.",
+    "companyQuoteValidity": "Vorgabe 30 Tage. Gilt für jedes neue Angebot. Du kannst sie hier ändern, im einzelnen Angebot auch.",
+    "invoicePaymentDueDays": "Vorgabe 14 Tage. Kommt aus Einstellungen, Firma. Du kannst sie hier für diese Rechnung ändern.",
+    "invoiceServiceDate": "Vorgabe ist der Tag, an dem der Auftrag abgeschlossen wurde. Du kannst das Datum hier für diese Rechnung ändern.",
+    "invoiceIntro": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für diese Rechnung ändern.",
+    "invoiceClosing": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für diese Rechnung ändern.",
+    "invoicePaymentTerms": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für diese Rechnung ändern.",
+    "quoteValidUntil": "Heute plus die Gültigkeit aus Einstellungen, Firma (Vorgabe 30 Tage). Du kannst das Datum hier für dieses Angebot ändern.",
+    "quoteIntro": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für dieses Angebot ändern.",
+    "quoteClosing": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für dieses Angebot ändern.",
+    "quotePaymentTerms": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für dieses Angebot ändern.",
+    "numberingStart": "Vorgabe {{start}}. Die Nummer zählt von selbst weiter. Du kannst den Startwert hier ändern.",
+    "invoiceRecipient": "Vorgabe: die E-Mail für Rechnungen beim Kunden, sonst die des Kontakts, sonst die allgemeine E-Mail des Kunden. Du kannst sie hier ändern.",
+    "quoteRecipient": "Vorgabe: die E-Mail des Kontakts, sonst die des Kunden. Du kannst sie hier ändern."
+  },
   "nav": {
     "customers": "Kunden",
     "catalog": "Leistungen",

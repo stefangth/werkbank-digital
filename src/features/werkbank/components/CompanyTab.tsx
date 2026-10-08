@@ -111,13 +111,16 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
     save.mutate(toCompanyProfileRow(values));
   });
 
-  const text = (name: Exclude<keyof CompanyProfileForm, "logo_path">, labelKey: string, extra: { inputMode?: "email" | "tel" | "numeric" } = {}) => (
+  const text = (name: Exclude<keyof CompanyProfileForm, "logo_path">, labelKey: string, { hintKey, ...extra }: { inputMode?: "email" | "tel" | "numeric"; hintKey?: string } = {}) => (
     <FormField
       control={form.control}
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{t(labelKey)}</FormLabel>
+          <FormLabel className={hintKey ? "inline-flex items-center gap-1.5" : undefined}>
+            {t(labelKey)}
+            {hintKey && <DefaultHint text={t(hintKey)} />}
+          </FormLabel>
           <FormControl>
             <Input autoComplete="off" {...extra} {...field} value={field.value ?? ""} />
           </FormControl>
@@ -228,14 +231,14 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
           {area("quote_intro", "company.fields.quoteIntro")}
           {area("quote_closing", "company.fields.quoteClosing")}
           {area("payment_terms_text", "company.fields.paymentTerms")}
-          <div className="sm:max-w-48">{text("quote_validity_days", "company.fields.validity", { inputMode: "numeric" })}</div>
+          <div className="sm:max-w-48">{text("quote_validity_days", "company.fields.validity", { inputMode: "numeric", hintKey: "hints.companyQuoteValidity" })}</div>
         </section>
 
         <section className="space-y-4">
           <Eyebrow>{t("company.sections.invoiceTexts")}</Eyebrow>
           {area("invoice_intro", "company.fields.invoiceIntro")}
           {area("invoice_closing", "company.fields.invoiceClosing")}
-          <div className="sm:max-w-48">{text("payment_due_days", "company.fields.paymentDueDays", { inputMode: "numeric" })}</div>
+          <div className="sm:max-w-48">{text("payment_due_days", "company.fields.paymentDueDays", { inputMode: "numeric", hintKey: "hints.companyPaymentDueDays" })}</div>
         </section>
 
         <section className="space-y-4">

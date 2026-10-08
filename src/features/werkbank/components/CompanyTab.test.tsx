@@ -42,6 +42,14 @@ describe("CompanyTab", () => {
     expect(screen.getByLabelText("Angebot gültig für (Tage)")).toHaveValue("30");
   });
 
+  it("explains the preset payment term and validity", async () => {
+    seed({ data: null, error: null });
+    renderTab();
+    await screen.findByLabelText("Firmenname");
+    expect(screen.getByRole("img", { name: /^Vorgabe 14 Tage\. Gilt für jede neue Rechnung/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^Vorgabe 30 Tage\. Gilt für jedes neue Angebot/ })).toBeInTheDocument();
+  });
+
   it("shows the stored profile", async () => {
     seed({ data: { org_id: "org-1", company_name: "Muster Bau GmbH", street: "Hauptstr. 1", postal_code: "01067", city: "Dresden", country_code: "DE", quote_validity_days: 14, iban: null, updated_at: "2026-10-08T10:00:00Z" }, error: null });
     renderTab();

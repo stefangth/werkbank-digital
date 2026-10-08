@@ -6,6 +6,7 @@ import { Metric } from "@/components/ui/metric";
 import type { Quote } from "../data/quotes";
 import { toNumber } from "../schemas/catalogItem";
 import { ContactSelect } from "./ContactSelect";
+import { DefaultHint } from "./DefaultHint";
 import { CustomerPicker } from "./CustomerPicker";
 import { PropertyPicker } from "./PropertyPicker";
 
@@ -26,10 +27,18 @@ export function Fact({ label, children }: { label: string; children: React.React
   );
 }
 
-export function FormField({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {
+export function FormField({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      {hint ? (
+        // The hint sits beside the label, not in it, so it stays out of the control's accessible name.
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor={id}>{label}</Label>
+          <DefaultHint text={hint} />
+        </div>
+      ) : (
+        <Label htmlFor={id}>{label}</Label>
+      )}
       {children}
     </div>
   );

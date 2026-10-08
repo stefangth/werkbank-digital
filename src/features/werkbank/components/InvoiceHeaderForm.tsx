@@ -88,7 +88,7 @@ export function InvoiceHeaderForm({
 
   const termFields = (
     <>
-      <FormField id="invoice-service-from" label={t("invoices.header.serviceFrom")}>
+      <FormField id="invoice-service-from" label={t("invoices.header.serviceFrom")} hint={t("hints.invoiceServiceDate")}>
         <DatePopover value={from} onSelect={pickFrom}>{dateButton("invoice-service-from", from)}</DatePopover>
       </FormField>
       <FormField id="invoice-service-to" label={t("invoices.header.serviceTo")}>
@@ -103,7 +103,7 @@ export function InvoiceHeaderForm({
           )}
         </div>
       </FormField>
-      <FormField id="invoice-payment-due-days" label={t("invoices.header.paymentDueDays")}>
+      <FormField id="invoice-payment-due-days" label={t("invoices.header.paymentDueDays")} hint={t("hints.invoicePaymentDueDays")}>
         <Input id="invoice-payment-due-days" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} onBlur={saveDays} />
       </FormField>
     </>
@@ -125,9 +125,9 @@ export function InvoiceHeaderForm({
         <DocumentHeaderFields doc={invoice} readOnly={false} idPrefix="invoice" names={names} onPatch={onPatch} afterLocation={termFields} />
       )}
       <div className="space-y-4 md:col-span-2">
-        <FormField id="invoice-intro_text" label={t("quotes.header.intro")}><Textarea rows={3} {...textProps("intro_text")} /></FormField>
-        <FormField id="invoice-closing_text" label={t("quotes.header.closing")}><Textarea rows={3} {...textProps("closing_text")} /></FormField>
-        <FormField id="invoice-payment_terms_text" label={t("quotes.header.paymentTerms")}><Textarea rows={2} {...textProps("payment_terms_text")} /></FormField>
+        <FormField id="invoice-intro_text" label={t("quotes.header.intro")} hint={t("hints.invoiceIntro")}><Textarea rows={3} {...textProps("intro_text")} /></FormField>
+        <FormField id="invoice-closing_text" label={t("quotes.header.closing")} hint={t("hints.invoiceClosing")}><Textarea rows={3} {...textProps("closing_text")} /></FormField>
+        <FormField id="invoice-payment_terms_text" label={t("quotes.header.paymentTerms")} hint={t("hints.invoicePaymentTerms")}><Textarea rows={2} {...textProps("payment_terms_text")} /></FormField>
       </div>
     </div>
   );

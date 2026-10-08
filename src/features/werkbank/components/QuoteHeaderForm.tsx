@@ -74,7 +74,7 @@ export function QuoteHeaderForm({
         names={names}
         onPatch={onPatch}
         afterLocation={
-          <FormField id="quote-valid-until" label={t("quotes.header.validUntil")}>
+          <FormField id="quote-valid-until" label={t("quotes.header.validUntil")} hint={t("hints.quoteValidUntil")}>
             <DatePopover value={quote.valid_until} onSelect={(validUntil) => onPatch({ valid_until: validUntil })}>
               <Button id="quote-valid-until" variant="secondary" className="w-full justify-start gap-2">
                 <CalendarDays className="h-4 w-4" aria-hidden />
@@ -85,9 +85,9 @@ export function QuoteHeaderForm({
         }
       />
       <div className="md:col-span-2 space-y-4">
-        <FormField id="quote-intro_text" label={t("quotes.header.intro")}><Textarea rows={3} {...textProps("intro_text")} /></FormField>
-        <FormField id="quote-closing_text" label={t("quotes.header.closing")}><Textarea rows={3} {...textProps("closing_text")} /></FormField>
-        <FormField id="quote-payment_terms_text" label={t("quotes.header.paymentTerms")}><Textarea rows={2} {...textProps("payment_terms_text")} /></FormField>
+        <FormField id="quote-intro_text" label={t("quotes.header.intro")} hint={t("hints.quoteIntro")}><Textarea rows={3} {...textProps("intro_text")} /></FormField>
+        <FormField id="quote-closing_text" label={t("quotes.header.closing")} hint={t("hints.quoteClosing")}><Textarea rows={3} {...textProps("closing_text")} /></FormField>
+        <FormField id="quote-payment_terms_text" label={t("quotes.header.paymentTerms")} hint={t("hints.quotePaymentTerms")}><Textarea rows={2} {...textProps("payment_terms_text")} /></FormField>
       </div>
     </div>
   );

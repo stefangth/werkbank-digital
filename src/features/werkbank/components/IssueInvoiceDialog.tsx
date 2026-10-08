@@ -18,6 +18,7 @@ import { useProperty } from "../hooks/useProperties";
 import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
 import { splitAddresses } from "../lib/addresses";
 import { defaultRecipient } from "../lib/defaultRecipient";
+import { DefaultHint } from "./DefaultHint";
 
 export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
 
@@ -140,7 +141,10 @@ export function IssueInvoiceDialog({
         <div className="space-y-4">
           {issueMode && <Alert variant="destructive" className="font-medium">{t("invoices.send.warning")}</Alert>}
           <div className="space-y-2">
-            <Label htmlFor="issue-invoice-to">{t("invoices.send.to")}</Label>
+            <Label htmlFor="issue-invoice-to" className="inline-flex items-center gap-1.5">
+              {t("invoices.send.to")}
+              <DefaultHint text={t("hints.invoiceRecipient")} />
+            </Label>
             <Input id="issue-invoice-to" type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
           </div>
           <div className="space-y-2">
