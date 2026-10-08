@@ -377,7 +377,8 @@ grant execute on function werkbank.create_invoice_from_order(uuid) to authentica
 -- invoice_not_ready (detail: comma-separated, in the order no_items, no_service_date,
 -- profile_incomplete, no_buyer_address), require the order (of an invoice) to be done, and only
 -- then draw the number, so a failed issue never touches the range. A cancellation copies the
--- original's buyer_snapshot; its seller_snapshot is taken fresh. Then stamp the dates and the
+-- original's buyer_snapshot; its seller_snapshot is taken fresh, or copied from the original
+-- when the profile is no longer complete (a cancellation is never blocked by it). Then stamp the dates and the
 -- snapshots and move the linked documents: invoice with order: order done -> invoiced;
 -- cancellation: original issued -> cancelled, its order invoiced -> done.
 -- Snapshots: seller = the company profile row without org_id, created_at, updated_at. buyer =
@@ -402,6 +403,7 @@ declare
   v_override boolean;
   v_buyer jsonb;
   v_blockers text[] := array[]::text[];
+  v_profile_ok boolean;
   v_today date := (now() at time zone 'Europe/Berlin')::date;
 begin
   select i.org_id into v_org from werkbank.invoices i where i.id = p_invoice;
@@ -447,12 +449,14 @@ begin
   if v_inv.service_date_from is null then
     v_blockers := array_append(v_blockers, 'no_service_date');
   end if;
-  if v_p.org_id is null
-     or btrim(coalesce(v_p.company_name, '')) = '' or btrim(coalesce(v_p.street, '')) = ''
-     or btrim(coalesce(v_p.postal_code, '')) = '' or btrim(coalesce(v_p.city, '')) = ''
-     or btrim(coalesce(v_p.email, '')) = ''
-     or (btrim(coalesce(v_p.tax_number, '')) = '' and btrim(coalesce(v_p.vat_id, '')) = '')
-     or btrim(coalesce(v_p.iban, '')) = '' then
+  v_profile_ok := v_p.org_id is not null
+     and btrim(coalesce(v_p.company_name, '')) <> '' and btrim(coalesce(v_p.street, '')) <> ''
+     and btrim(coalesce(v_p.postal_code, '')) <> '' and btrim(coalesce(v_p.city, '')) <> ''
+     and btrim(coalesce(v_p.email, '')) <> ''
+     and (btrim(coalesce(v_p.tax_number, '')) <> '' or btrim(coalesce(v_p.vat_id, '')) <> '')
+     and btrim(coalesce(v_p.iban, '')) <> '';
+  -- A cancellation is always possible: with an incomplete profile it keeps the original's seller.
+  if not v_profile_ok and v_inv.type <> 'cancellation' then
     v_blockers := array_append(v_blockers, 'profile_incomplete');
   end if;
   -- A cancellation takes the original's buyer_snapshot (R8), so the current address does not matter.
@@ -483,7 +487,8 @@ begin
     due_date = v_today + v_inv.payment_due_days,
     issued_at = now(),
     status = 'issued',
-    seller_snapshot = to_jsonb(v_p) - 'org_id' - 'created_at' - 'updated_at',
+    seller_snapshot = case when v_inv.type = 'cancellation' and not v_profile_ok then v_orig.seller_snapshot
+                           else to_jsonb(v_p) - 'org_id' - 'created_at' - 'updated_at' end,
     -- A cancellation reverses the original towards the same buyer.
     buyer_snapshot = case when v_inv.type = 'cancellation' then v_orig.buyer_snapshot else v_buyer end
   where id = p_invoice
