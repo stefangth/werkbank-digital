@@ -5,7 +5,8 @@
     "technicians": "Monteure",
     "properties": "Liegenschaften",
     "quotes": "Angebote",
-    "orders": "Aufträge"
+    "orders": "Aufträge",
+    "invoices": "Rechnungen"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -903,5 +904,71 @@
       "gross": "Brutto"
     },
     "loadFailed": "Die Angebote und Aufträge konnten nicht geladen werden."
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "sub": "Rechnungen und Stornorechnungen entwerfen, ausstellen und verfolgen.",
+    "add": "Rechnung anlegen",
+    "loadFailed": "Die Rechnungen konnten nicht geladen werden.",
+    "searchLabel": "Rechnungen durchsuchen",
+    "searchPlaceholder": "Nummer, Kunde, Betreff",
+    "filter": {
+      "all": "Alle",
+      "draft": "Entwürfe",
+      "issued": "Ausgestellt",
+      "cancelled": "Storniert"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "issued": "Ausgestellt",
+      "cancelled": "Storniert"
+    },
+    "type": {
+      "cancellation": "Storno"
+    },
+    "draftNumber": "Entwurf",
+    "noMatches": "Keine Rechnung passt zu deinen Filtern.",
+    "noMatchesReason": "Probiere einen anderen Filter oder Suchbegriff.",
+    "empty": {
+      "title": "Noch keine Rechnungen",
+      "body": "Lege eine Rechnung aus einem erledigten Auftrag an oder starte eine freie.",
+      "action": "Erste Rechnung anlegen"
+    },
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde / Objekt",
+      "subject": "Betreff",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fällig am",
+      "gross": "Brutto",
+      "status": "Status"
+    },
+    "notice": {
+      "doneNotInvoiced": "Erledigt, noch nicht abgerechnet",
+      "show": "Aufträge anzeigen"
+    },
+    "new": {
+      "title": "Neue Rechnung",
+      "customer": "Kunde",
+      "property": "Objekt (optional)",
+      "create": "Rechnung anlegen"
+    },
+    "page": {
+      "loadFailed": "Die Rechnung konnte nicht geladen werden.",
+      "back": "Alle Rechnungen"
+    },
+    "send": {
+      "errors": {
+        "forbidden": "Dafür fehlt dir die Berechtigung.",
+        "notFound": "Die Rechnung wurde nicht gefunden.",
+        "invalidState": "Die Rechnung ist in einem Zustand, in dem das nicht geht.",
+        "invalidRecipient": "Prüfe die E-Mail-Adressen.",
+        "tooManyRecipients": "Es sind zu viele Empfänger.",
+        "pdfMissing": "Das PDF fehlt. Stelle die Rechnung erneut aus.",
+        "preflight": "Die Rechnung ist noch nicht bereit. Ergänze zuerst die fehlenden Angaben.",
+        "sendFailed": "Die Rechnung wurde ausgestellt, aber die E-Mail konnte nicht gesendet werden.",
+        "generic": "Etwas ist schiefgegangen. Bitte versuche es erneut."
+      }
+    }
   }
 }

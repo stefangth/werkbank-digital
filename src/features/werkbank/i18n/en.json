@@ -5,7 +5,8 @@
     "technicians": "Technicians",
     "properties": "Properties",
     "quotes": "Quotes",
-    "orders": "Orders"
+    "orders": "Orders",
+    "invoices": "Invoices"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -903,5 +904,71 @@
       "gross": "Gross"
     },
     "loadFailed": "The quotes and orders could not be loaded."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "sub": "Draft, issue and track invoices and cancellations.",
+    "add": "Create invoice",
+    "loadFailed": "The invoices could not be loaded.",
+    "searchLabel": "Search invoices",
+    "searchPlaceholder": "Number, customer, subject",
+    "filter": {
+      "all": "All",
+      "draft": "Drafts",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "type": {
+      "cancellation": "Cancellation"
+    },
+    "draftNumber": "Draft",
+    "noMatches": "No invoice matches your filters.",
+    "noMatchesReason": "Try another filter or search term.",
+    "empty": {
+      "title": "No invoices yet",
+      "body": "Create an invoice from a finished order or start a free one.",
+      "action": "Create first invoice"
+    },
+    "columns": {
+      "number": "No.",
+      "customer": "Customer / property",
+      "subject": "Subject",
+      "issueDate": "Invoice date",
+      "dueDate": "Due on",
+      "gross": "Gross",
+      "status": "Status"
+    },
+    "notice": {
+      "doneNotInvoiced": "Done, not invoiced yet",
+      "show": "Show orders"
+    },
+    "new": {
+      "title": "New invoice",
+      "customer": "Customer",
+      "property": "Property (optional)",
+      "create": "Create invoice"
+    },
+    "page": {
+      "loadFailed": "The invoice could not be loaded.",
+      "back": "All invoices"
+    },
+    "send": {
+      "errors": {
+        "forbidden": "You are not allowed to do this.",
+        "notFound": "The invoice was not found.",
+        "invalidState": "This invoice is in a state that does not allow this.",
+        "invalidRecipient": "Check the email addresses.",
+        "tooManyRecipients": "There are too many recipients.",
+        "pdfMissing": "The PDF is missing. Issue the invoice again.",
+        "preflight": "The invoice is not ready yet. Complete the missing details first.",
+        "sendFailed": "The invoice was issued, but the email could not be sent.",
+        "generic": "Something went wrong. Please try again."
+      }
+    }
   }
 }

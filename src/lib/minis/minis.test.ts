@@ -36,7 +36,7 @@ describe('MINIS registry', () => {
   });
 
   it('covers the trade list pages with admin and producer variants', () => {
-    for (const key of ['customers', 'properties', 'catalog', 'quotes', 'orders'] as const) {
+    for (const key of ['customers', 'properties', 'catalog', 'quotes', 'orders', 'invoices'] as const) {
       expect(PAGE_KEYS, key).toContain(key);
       expect(Object.keys(MINIS[key].variants).sort(), key).toEqual(['admin', 'producer']);
     }

@@ -3,9 +3,9 @@
 // instead of the main bundle every Showflow user downloads; the core renders module
 // pages and dashboards inside Suspense (SuspendedPage).
 import { lazy } from "react";
-import { Building2, ClipboardList, FileText, HardHat, Home, Wrench } from "lucide-react";
+import { Building2, ClipboardList, FileText, Receipt, HardHat, Home, Wrench } from "lucide-react";
 import type { ModuleUi } from "@/modules/ui";
-import { CATALOG_PATH, CUSTOMERS_PATH, ORDERS_PATH, PROPERTIES_PATH, PUBLIC_QUOTE_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
+import { CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, ORDERS_PATH, PROPERTIES_PATH, PUBLIC_QUOTE_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 export const loadTechniciansPage = () =>
   import("./pages/TechniciansPage").then((m) => ({ default: m.TechniciansPage }));
@@ -39,10 +39,18 @@ export const loadOrdersPage = () =>
 export const loadOrderPage = () =>
   import("./pages/OrderPage").then((m) => ({ default: m.OrderPage }));
 
+export const loadInvoicesPage = () =>
+  import("./pages/InvoicesPage").then((m) => ({ default: m.InvoicesPage }));
+
+export const loadInvoicePage = () =>
+  import("./pages/InvoicePage").then((m) => ({ default: m.InvoicePage }));
+
 export const loadQuotePublicPage = () =>
   import("./pages/QuotePublicPage").then((m) => ({ default: m.QuotePublicPage }));
 
 const QuotePublicPage = lazy(loadQuotePublicPage);
+const InvoicesPage = lazy(loadInvoicesPage);
+const InvoicePage = lazy(loadInvoicePage);
 const OrdersPage = lazy(loadOrdersPage);
 const OrderPage = lazy(loadOrderPage);
 const QuotesPage = lazy(loadQuotesPage);
@@ -89,6 +97,15 @@ export const werkbankUi: ModuleUi = {
       icon: ClipboardList,
       label: "Orders",
       labelKey: "werkbank:nav.orders",
+      section: "workspace",
+      roles: ["admin", "producer"],
+      kinds: ["handwerk"],
+    },
+    {
+      to: INVOICES_PATH,
+      icon: Receipt,
+      label: "Invoices",
+      labelKey: "werkbank:nav.invoices",
       section: "workspace",
       roles: ["admin", "producer"],
       kinds: ["handwerk"],
@@ -160,6 +177,18 @@ export const werkbankUi: ModuleUi = {
       kinds: ["handwerk"],
       requiredRoles: ["admin", "producer"],
       Page: OrderPage,
+    },
+    {
+      path: INVOICES_PATH,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer"],
+      Page: InvoicesPage,
+    },
+    {
+      path: `${INVOICES_PATH}/:id`,
+      kinds: ["handwerk"],
+      requiredRoles: ["admin", "producer"],
+      Page: InvoicePage,
     },
     {
       path: CATALOG_PATH,

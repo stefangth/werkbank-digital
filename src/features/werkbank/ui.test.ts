@@ -3,7 +3,7 @@ import { NAV_ITEMS, visibleNavItems } from "@/components/layout/navItems";
 import type { OrgKind } from "@/lib/orgKind";
 import { MODULE_UIS } from "@/modules/ui";
 import {
-  loadCatalogPage, loadCustomerDetailPage, loadCustomersPage, loadOrderPage, loadOrdersPage, loadPropertiesPage, loadPropertyDetailPage, loadQuotePage, loadQuotesPage, loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
+  loadCatalogPage, loadCustomerDetailPage, loadCustomersPage, loadInvoicePage, loadInvoicesPage, loadOrderPage, loadOrdersPage, loadPropertiesPage, loadPropertyDetailPage, loadQuotePage, loadQuotesPage, loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
 import { WerkbankDashboard } from "./components/WerkbankDashboard";
 import { CatalogPage } from "./pages/CatalogPage";
 import { CustomerDetailPage } from "./pages/CustomerDetailPage";
@@ -11,11 +11,13 @@ import { CustomersPage } from "./pages/CustomersPage";
 import { TechniciansPage } from "./pages/TechniciansPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
 import { PropertyDetailPage } from "./pages/PropertyDetailPage";
+import { InvoicePage } from "./pages/InvoicePage";
+import { InvoicesPage } from "./pages/InvoicesPage";
 import { OrderPage } from "./pages/OrderPage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { QuotePage } from "./pages/QuotePage";
 import { QuotesPage } from "./pages/QuotesPage";
-import { CATALOG_PATH, CUSTOMERS_PATH, ORDERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
+import { CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, ORDERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 const ctx = (roles: string[], orgKind: OrgKind) => ({
   isEditorMode: false,
@@ -40,7 +42,7 @@ describe("werkbank module UI", () => {
 
   it("shows an admin of a handwerk org Dashboard, Customers, Services, Technicians, Settings", () => {
     const labels = visibleNavItems(NAV_ITEMS, ctx(["admin"], "handwerk")).map((i) => i.label);
-    expect(labels).toEqual(["Dashboard", "Customers", "Properties", "Quotes", "Orders", "Services", "Technicians", "Help", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Customers", "Properties", "Quotes", "Orders", "Invoices", "Services", "Technicians", "Help", "Settings"]);
   });
 
   it("hides Technicians from a handwerk artist", () => {
@@ -155,6 +157,20 @@ describe("werkbank module UI", () => {
     expect(labels(["admin"], "production")).not.toContain("Orders");
   });
 
+  it("contributes the invoices list and invoice routes for handwerk office roles", () => {
+    for (const path of [INVOICES_PATH, "/invoices/:id"]) {
+      const route = werkbankUi.routes.find((r) => r.path === path);
+      expect(route?.kinds).toEqual(["handwerk"]);
+      expect(route?.requiredRoles).toEqual(["admin", "producer"]);
+      expect(isLazy(route?.Page)).toBe(true);
+    }
+  });
+
+  it("loads the invoices pages lazily", async () => {
+    expect((await loadInvoicesPage()).default).toBe(InvoicesPage);
+    expect((await loadInvoicePage()).default).toBe(InvoicePage);
+  });
+
   it("loads the orders pages lazily", async () => {
     expect((await loadOrdersPage()).default).toBe(OrdersPage);
     expect((await loadOrderPage()).default).toBe(OrderPage);
@@ -180,6 +196,6 @@ describe("werkbank module UI", () => {
   });
 
   it("points the nav item at the same path as the route", () => {
-    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, ORDERS_PATH, CATALOG_PATH, TECHNICIANS_PATH]);
+    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, ORDERS_PATH, INVOICES_PATH, CATALOG_PATH, TECHNICIANS_PATH]);
   });
 });
