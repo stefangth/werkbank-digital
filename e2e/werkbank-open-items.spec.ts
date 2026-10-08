@@ -238,9 +238,11 @@ test.describe("Werkbank open items", () => {
     expect(await issueOnly(page)).toBe("RE-0004");
     expect((await balance(copyId))?.payment_state).toBe("open");
 
-    // Move the payment from B to the copy.
+    // Move the payment from B to the copy, from the credit notice that names the amount.
     await page.goto(`/invoices/${invoiceB}`);
-    await page.locator('section[aria-labelledby="invoice-payments"]').getByRole("button", { name: "Umbuchen" }).click();
+    const creditNotice = page.locator('section[aria-labelledby="invoice-payments"]').getByRole("alert");
+    await expect(creditNotice).toContainText("Zahlung auf die korrigierte Rechnung umbuchen?");
+    await creditNotice.getByRole("button", { name: "Umbuchen" }).click();
     const transfer = page.getByRole("dialog");
     await transfer.getByRole("radio", { name: /RE-0004/ }).click();
     await transfer.getByLabel("Grund").fill("Korrigierte Rechnung");
