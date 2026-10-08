@@ -40,9 +40,11 @@ describe("openPendingTab", () => {
 
 describe("pdfBlobUrl", () => {
   it("shares one pagehide listener and frees every preview url on unload", () => {
+    // jsdom has no object URLs, so the test provides them.
     let n = 0;
-    const create = vi.spyOn(URL, "createObjectURL").mockImplementation(() => `blob:${++n}`);
-    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const create = vi.fn(() => `blob:${++n}`);
+    const revoke = vi.fn();
+    Object.assign(URL, { createObjectURL: create, revokeObjectURL: revoke });
     const listen = vi.spyOn(window, "addEventListener");
     try {
       expect(pdfBlobUrl(btoa("%PDF-1"))).toBe("blob:1");
@@ -51,8 +53,8 @@ describe("pdfBlobUrl", () => {
       window.dispatchEvent(new Event("pagehide"));
       expect(revoke.mock.calls.map(([u]) => u)).toEqual(["blob:1", "blob:2"]);
     } finally {
-      create.mockRestore();
-      revoke.mockRestore();
+      Reflect.deleteProperty(URL, "createObjectURL");
+      Reflect.deleteProperty(URL, "revokeObjectURL");
       listen.mockRestore();
     }
   });
