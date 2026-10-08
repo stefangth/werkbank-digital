@@ -107,6 +107,12 @@ describe("open items errors", () => {
   it("maps the not_a_payment detail like transfer_target_invalid", () => {
     expect(mapDbError({ code: "22023", message: "x", details: "not_a_payment" })).toBe("errors.transferTargetInvalid");
   });
+  it("prefers dunning_not_allowed over blocker names in the detail", () => {
+    expect(mapDbError({ code: "22023", message: "dunning_not_allowed", details: "not_issued,nothing_open" })).toBe("errors.dunningNotAllowed");
+  });
+  it("maps transfer_target_invalid with a not_a_payment detail", () => {
+    expect(mapDbError({ code: "22023", message: "transfer_target_invalid", details: "not_a_payment" })).toBe("errors.transferTargetInvalid");
+  });
   it("keeps not allowed as forbidden", () => {
     expect(mapDbError({ code: "42501", message: "not allowed" })).toBe("errors.forbidden");
   });

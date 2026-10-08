@@ -68,7 +68,7 @@ describe("rpcs", () => {
       args: [{ p_invoice: "i1", p_kind: "write_off", p_amount: 10, p_booked_on: "2026-10-08", p_note: "n", p_write_off_reason: "skonto" }],
     }));
   });
-  it("recordInvoiceEntry sends null for missing note and reason", async () => {
+  it("recordInvoiceEntry omits a missing note and reason", async () => {
     const fake = createFakeSupabase({ "rpc:werkbank.record_invoice_entry": { data: "e1", error: null } });
     await recordInvoiceEntry(asClient(fake), { invoiceId: "i1", kind: "payment", amount: 5, bookedOn: "2026-10-08" });
     expect(fake.calls).toContainEqual(expect.objectContaining({

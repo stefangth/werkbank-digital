@@ -16,8 +16,9 @@ export function parseEuroInput(raw: string): number | null {
     if (!/^(\d{1,3}(\.\d{3})+|\d+),\d+$/.test(s)) return null;
     normalized = s.replace(/\./g, "").replace(",", ".");
   } else {
-    if (!/^\d+(\.\d+)?$/.test(s)) return null;
-    normalized = s;
+    if (/^\d{1,3}(\.\d{3})+$/.test(s)) normalized = s.replace(/\./g, "");
+    else if (/^\d+(\.\d+)?$/.test(s)) normalized = s;
+    else return null;
   }
   const decimals = normalized.split(".")[1];
   if (decimals && decimals.length > 2) return null;

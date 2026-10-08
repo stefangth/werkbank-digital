@@ -64,6 +64,8 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (text.includes("number_range_locked")) return "errors.numberRangeLocked";
   if (text.includes("property_customer_mismatch")) return "errors.propertyMismatch";
   if (text.includes("invalid_transition")) return "errors.invalidTransition";
+  if (text.includes("dunning_not_allowed")) return "errors.dunningNotAllowed";
+  if (text.includes("transfer_target_invalid") || text.includes("not_a_payment")) return "errors.transferTargetInvalid";
   if (text.includes("entries_locked")) return "errors.entriesLocked";
   if (text.includes("dunning_locked")) return "errors.dunningLocked";
   if (text.includes("not_payable")) return "errors.notPayable";
@@ -72,8 +74,6 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (text.includes("nothing_open")) return "errors.nothingOpen";
   if (text.includes("open_amount_changed")) return "errors.openAmountChanged";
   if (text.includes("already_reversed")) return "errors.alreadyReversed";
-  if (text.includes("transfer_target_invalid") || text.includes("not_a_payment")) return "errors.transferTargetInvalid";
-  if (text.includes("dunning_not_allowed")) return "errors.dunningNotAllowed";
   if (text.includes("invalid_entry_kind")) return "errors.invalidEntryKind";
   if (text.includes("invalid_amount")) return "errors.invalidAmount";
   if (/quote_service_only|order_service_only|provenance_service_only|item_reparent/.test(text)) {
