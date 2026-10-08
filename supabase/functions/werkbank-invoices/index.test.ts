@@ -413,6 +413,21 @@ Deno.test("send without a recipient is a no_recipient preflight failure", async 
   }
 });
 
+Deno.test("issue renders only for issued or cancelled invoices without a file", async () => {
+  // A later status (for example paid, Teil 5) must never get a file rendered by the resume path.
+  const t = setup({ invoice: issuedRow({ status: "paid" as never }) });
+  const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV }), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "invalid_state" });
+  assertEquals(t.einvoiceRendered.length, 0);
+});
+
+Deno.test("the attachment filename keeps only safe characters of the invoice number", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH, invoice_no: "RE/2026 0007" }), opts: stored });
+  await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+  assertEquals(emails(t)[0].attachments[0].filename, "RE_2026_0007.pdf");
+});
+
 Deno.test("idempotency keys come from the invoice, its last send and the recipient, never the clock", async () => {
   // A retry after a partial failure (sent_at still unchanged) reuses the keys, so the provider drops
   // the messages that already went out; a deliberate resend after a success gets fresh keys.

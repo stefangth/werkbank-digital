@@ -234,6 +234,8 @@ async function issueInvoice(
     sendInput = parsed;
   }
   if (loaded.pdf_path) return json({ error: "invalid_state" }, 409);
+  // Resume renders only the statuses this function issues; any later status (paid, Teil 5) is not ours.
+  if (!["draft", "issued", "cancelled"].includes(loaded.status)) return json({ error: "invalid_state" }, 409);
 
   let invoice = loaded;
   if (invoice.status === "draft") {
@@ -371,7 +373,9 @@ async function emailInvoice(
 
   const cancellation = invoice.type === "cancellation";
   const replyTo = seller.email?.trim();
-  const attachment = { filename: `${invoice.invoice_no}.pdf`, content_base64: encodeBase64(file) };
+  // The prefix is admin-editable, so only safe characters reach the attachment name.
+  const filename = `${String(invoice.invoice_no).replace(/[^A-Za-z0-9._-]/g, "_")}.pdf`;
+  const attachment = { filename, content_base64: encodeBase64(file) };
   const recipients = [...input.to, ...input.cc];
   const stamp = deps.now();
   // Keyed on the last completed send, not the clock: a retry after a partial failure (sent_at still
