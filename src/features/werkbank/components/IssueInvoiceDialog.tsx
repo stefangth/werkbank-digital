@@ -87,6 +87,7 @@ export function IssueInvoiceDialog({
       serviceDateFrom: invoice.service_date_from,
       buyer,
       recipients,
+      cancellation: invoice.type === "cancellation",
     });
   // An issued invoice only needs a recipient: its PDF is already stored.
   const sendBlockers = issueMode ? check(to) : check(to).filter((b) => b === "no_recipient");

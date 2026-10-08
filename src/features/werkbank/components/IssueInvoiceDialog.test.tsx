@@ -86,6 +86,12 @@ describe("IssueInvoiceDialog", () => {
     }
   });
 
+  it("does not block a cancellation on an incomplete profile", () => {
+    profile.data = { ...COMPLETE, iban: null };
+    renderDialog({ inv: invoice({ type: "cancellation" }) });
+    expect(screen.getByRole("button", { name: "Nur abschließen" })).toBeEnabled();
+  });
+
   it("shows the irreversibility warning", () => {
     renderDialog();
     expect(screen.getByText("Danach ist die Rechnung nicht mehr änderbar.")).toBeInTheDocument();
