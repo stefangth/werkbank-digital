@@ -21,7 +21,6 @@ export type InvoicePatch = Partial<Pick<Invoice,
 export type InvoiceDefaults = Pick<CompanyProfile, "invoice_intro" | "invoice_closing" | "payment_terms_text" | "payment_due_days">;
 
 type Client = SupabaseClient<Database>;
-type InvoiceInsert = Database["werkbank"]["Tables"]["invoices"]["Insert"];
 
 /** Keeps a search term from breaking out of the PostgREST `or(...)` filter. */
 function safeTerm(term: string): string {
@@ -88,7 +87,7 @@ export async function createFreeInvoice(
       closing_text: profile?.invoice_closing ?? null,
       payment_terms_text: profile?.payment_terms_text ?? null,
       ...(profile ? { payment_due_days: profile.payment_due_days } : {}),
-    } as InvoiceInsert) // invoice_no, status, type, snapshots: assigned by the database
+    }) // invoice_no, status, type, snapshots: assigned by the database
     .select("id")
     .single();
   if (error) throw error;
