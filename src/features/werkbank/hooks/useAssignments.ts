@@ -97,7 +97,7 @@ export function useAssignmentActions(orderId: string) {
       uploadVisitPhoto(supabase, { orgId: orgId!, orderId, reportId: v.reportId, file: v.file, caption: v.caption })),
     removePhoto: useTechnicianMutation((photoId: string) => removeVisitPhoto(supabase, photoId)),
     lockReport: useTechnicianMutation((reportId: string) => lockVisitReport(supabase, reportId)),
-    signReport: useTechnicianMutation((v: { reportId: string; signerName: string; png: Blob }) =>
-      signVisitReport(supabase, { orgId: orgId!, orderId, reportId: v.reportId, signerName: v.signerName, png: v.png })),
+    signReport: useTechnicianMutation((v: { reportId: string; signerName: string; png: Blob; uploaded?: boolean }) =>
+      signVisitReport(supabase, { orgId: orgId!, orderId, ...v })),
   };
 }

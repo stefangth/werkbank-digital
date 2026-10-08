@@ -4,7 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import {
   completeAssignment, createVisitReport, fetchAssignment, fetchAssignments, fetchTechnicianOrgs, lockVisitReport, removeVisitPhoto,
-  signVisitReport, startAssignment, updateVisitReport, uploadVisitPhoto, visitObjectUrls,
+  isSignatureUploaded, signVisitReport, startAssignment, updateVisitReport, uploadVisitPhoto, visitObjectUrls,
 } from "./technicianApp";
 
 const asClient = (fake: unknown) => fake as SupabaseClient<Database>;
@@ -142,10 +142,23 @@ describe("signVisitReport", () => {
     await expect(signVisitReport(client, input)).rejects.toBe(error);
     expect(fake.calls).toEqual([]);
   });
-  it("throws a signing error", async () => {
+  it("throws a signing error, marked as after the upload", async () => {
     const error = new Error("report_locked");
     const { client } = withStorage({ [R("sign_visit_report")]: { data: null, error } });
     await expect(signVisitReport(client, input)).rejects.toBe(error);
+    expect(isSignatureUploaded(error)).toBe(true);
+  });
+  it("does not mark an upload error", async () => {
+    const error = { message: "Payload too large", statusCode: "413" };
+    const { client } = withStorage({}, { uploadError: error });
+    await expect(signVisitReport(client, input)).rejects.toBe(error);
+    expect(isSignatureUploaded(error)).toBe(false);
+  });
+  it("only signs when the signature is already uploaded", async () => {
+    const { client, fake, upload } = withStorage();
+    await signVisitReport(client, { ...input, uploaded: true });
+    expect(upload).not.toHaveBeenCalled();
+    expect(fake.calls).toHaveLength(1);
   });
 });
 

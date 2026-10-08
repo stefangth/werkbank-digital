@@ -133,6 +133,10 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
     );
   };
 
+  // The customer signs the text the database holds: a failed save keeps the edit step (the hook
+  // has toasted why), so the summary never shows text the locked report would not store.
+  const toSignStep = () => { save().then(() => setStep("sign"), () => undefined); };
+
   if (step === "sign") {
     return <SignStep orderId={orderId} report={report} body={body} onBack={() => setStep("edit")} onSigned={onClose} />;
   }
@@ -181,7 +185,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       </section>
 
       <div className="flex flex-col gap-2">
-        <Button size="touch" onClick={() => { save().catch(() => undefined); setStep("sign"); }}>{t("app.report.sign")}</Button>
+        <Button size="touch" disabled={updateReport.isPending} onClick={toSignStep}>{t("app.report.sign")}</Button>
         <Button variant="secondary" size="touch" onClick={() => setLocking(true)}>{t("app.report.lock")}</Button>
       </div>
 

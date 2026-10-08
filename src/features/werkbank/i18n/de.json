@@ -1480,7 +1480,8 @@
       "signedOn": "Unterschrieben von {{name}} am <date>{{date}}</date>",
       "lockedOn": "Abgeschlossen am <date>{{date}}</date>",
       "signatureAlt": "Unterschrift von {{name}}",
-      "othersReport": "Diesen Bericht schreibt {{name}}. Du kannst ihn nur lesen."
+      "othersReport": "Diesen Bericht schreibt {{name}}. Du kannst ihn nur lesen.",
+      "signatureStored": "Die Unterschrift ist gespeichert. Es fehlt nur noch die Bestätigung, tipp dafür noch einmal auf Unterschreiben."
     }
   }
 }

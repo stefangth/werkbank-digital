@@ -147,19 +147,29 @@ function isAlreadyExists(error: unknown): boolean {
   return String(statusCode) === "409" || (typeof message === "string" && /already exists/i.test(message));
 }
 
+/** True for a signing error raised after signature.png was stored: a retry must send the same
+ *  image (`uploaded: true`), because the stored object is what gets signed. */
+export function isSignatureUploaded(error: unknown): boolean {
+  return typeof error === "object" && error !== null && (error as { signatureUploaded?: unknown }).signatureUploaded === true;
+}
+
 /** Uploads signature.png, then signs. An "already exists" answer means an earlier attempt got the
- *  object there (a retry after a dropped connection, or a double tap), so the call goes on. */
+ *  object there (a retry after a dropped connection, or a double tap), so the call goes on. With
+ *  `uploaded` the upload is skipped. A signing error after the upload is marked, see
+ *  `isSignatureUploaded`. */
 export async function signVisitReport(
   client: Client,
-  input: { orgId: string; orderId: string; reportId: string; signerName: string; png: Blob },
+  input: { orgId: string; orderId: string; reportId: string; signerName: string; png: Blob; uploaded?: boolean },
 ): Promise<void> {
   const path = `${input.orgId}/${input.orderId}/${input.reportId}/signature.png`;
-  const { error: uploadError } = await client.storage.from(VISITS_BUCKET).upload(path, input.png, { contentType: "image/png", upsert: false });
-  if (uploadError && !isAlreadyExists(uploadError)) throw uploadError;
+  if (!input.uploaded) {
+    const { error: uploadError } = await client.storage.from(VISITS_BUCKET).upload(path, input.png, { contentType: "image/png", upsert: false });
+    if (uploadError && !isAlreadyExists(uploadError)) throw uploadError;
+  }
   const { error } = await client.schema("werkbank").rpc("sign_visit_report", {
     p_report: input.reportId, p_signer_name: input.signerName, p_signature_path: path,
   });
-  if (error) throw error;
+  if (error) throw Object.assign(error, { signatureUploaded: true });
 }
 
 /** Signed URLs (300 s) for photo and signature paths, by path. */

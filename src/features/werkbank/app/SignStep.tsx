@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,16 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AssignmentReport } from "../data/technicianApp";
+import { isSignatureUploaded } from "../data/technicianApp";
 import { useAssignmentActions } from "../hooks/useAssignments";
 import { SIGNATURE_MAX_BYTES } from "../lib/visitDefaults";
 import { FinalConfirmDialog } from "./FinalConfirmDialog";
 import { SignaturePad } from "./SignaturePad";
+
+/** Signatures stored as signature.png whose `sign_visit_report` failed, by report id. They outlive
+ *  the sign step (back to the report, sheet closed and reopened), so a retry signs the stored
+ *  image and never a redrawn one, which the upload would answer with "already exists". */
+const uploadedSignatures = new Map<string, { png: Blob; signerName: string }>();
 
 /** The customer signs on the technician's phone: a read-only summary of the report, the signer's
  *  name and the pad. Signing uploads the PNG, then locks the report with `sign_visit_report`. */
@@ -23,10 +29,13 @@ export function SignStep({ orderId, report, body, onBack, onSigned }: {
 }) {
   const { t } = useTranslation("werkbank");
   const { signReport } = useAssignmentActions(orderId);
-  const [name, setName] = useState("");
-  const [png, setPng] = useState<Blob | null>(null);
+  const [uploaded, setUploaded] = useState(() => uploadedSignatures.get(report.id) ?? null);
+  const [name, setName] = useState(uploaded?.signerName ?? "");
+  const [png, setPng] = useState<Blob | null>(uploaded?.png ?? null);
   const [confirming, setConfirming] = useState(false);
   const signer = name.trim();
+  const frozenUrl = useMemo(() => (uploaded ? URL.createObjectURL(uploaded.png) : null), [uploaded]);
+  useEffect(() => () => { if (frozenUrl) URL.revokeObjectURL(frozenUrl); }, [frozenUrl]);
 
   const sign = (done: () => void) => {
     if (!png || !signer) return done();
@@ -35,10 +44,17 @@ export function SignStep({ orderId, report, body, onBack, onSigned }: {
       setConfirming(false);
       return done();
     }
-    signReport.mutate({ reportId: report.id, signerName: signer, png }, {
+    signReport.mutate({ reportId: report.id, signerName: signer, png, ...(uploaded ? { uploaded: true } : {}) }, {
       onSuccess: () => {
+        uploadedSignatures.delete(report.id);
         toast.success(t("app.report.signedToast"));
         onSigned();
+      },
+      onError: (e) => {
+        if (uploaded || !isSignatureUploaded(e)) return;
+        const stored = { png, signerName: signer };
+        uploadedSignatures.set(report.id, stored);
+        setUploaded(stored);
       },
       onSettled: () => {
         done();
@@ -56,12 +72,25 @@ export function SignStep({ orderId, report, body, onBack, onSigned }: {
 
       <div className="space-y-1.5">
         <Label htmlFor="report-signer">{t("app.report.signerName")}</Label>
-        <Input id="report-signer" className="h-11" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input
+          id="report-signer" className="h-11" autoComplete="name" value={name} readOnly={!!uploaded}
+          onChange={(e) => setName(e.target.value)}
+        />
       </div>
 
       <div className="space-y-1.5">
         <h3 className="m-0"><Eyebrow>{t("app.report.signature")}</Eyebrow></h3>
-        <SignaturePad onChange={setPng} />
+        {uploaded && frozenUrl ? (
+          <>
+            <img
+              src={frozenUrl} alt={t("app.report.signatureAlt", { name: uploaded.signerName })}
+              className="block h-48 w-full rounded-control border border-border object-contain"
+            />
+            <p className="m-0 text-control text-muted-foreground">{t("app.report.signatureStored")}</p>
+          </>
+        ) : (
+          <SignaturePad onChange={setPng} />
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

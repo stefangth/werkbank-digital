@@ -1480,7 +1480,8 @@
       "signedOn": "Signed by {{name}} on <date>{{date}}</date>",
       "lockedOn": "Closed on <date>{{date}}</date>",
       "signatureAlt": "Signature of {{name}}",
-      "othersReport": "{{name}} writes this report. You can only read it."
+      "othersReport": "{{name}} writes this report. You can only read it.",
+      "signatureStored": "The signature is saved. Only the confirmation is missing, so sign again to finish."
     }
   }
 }

@@ -109,6 +109,7 @@ describe("ReportSheet", () => {
   it("signs with a name and a drawn signature after a confirm, once on a double tap", async () => {
     renderSheet(report({ body: "Thermostat getauscht" }));
     fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
+    await screen.findByLabelText("Name of the signer");
     expect(screen.getByText("Thermostat getauscht")).toBeInTheDocument();
     expect(screen.getByText("2 photos")).toBeInTheDocument();
     const sign = screen.getByRole("button", { name: "Sign" });
@@ -130,6 +131,53 @@ describe("ReportSheet", () => {
       { reportId: "r1", signerName: "Frau Meier", png: expect.any(Blob) }, expect.anything(),
     );
     expect(confirm).toBeDisabled();
+  });
+
+  it("stays on the report when saving the text fails", async () => {
+    actions.updateReport.mutate.mockImplementation((_v, opts) => opts.onError(new Error("network")));
+    renderSheet();
+    fireEvent.change(screen.getByLabelText("What was done"), { target: { value: "Neu" } });
+    fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
+    await waitFor(() => expect(actions.updateReport.mutate).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByLabelText("Name of the signer")).toBeNull();
+    expect(screen.getByLabelText("What was done")).toBeInTheDocument();
+  });
+
+  it("enters the sign step once the changed text is saved", async () => {
+    actions.updateReport.mutate.mockImplementation((_v, opts) => opts.onSuccess());
+    renderSheet();
+    fireEvent.change(screen.getByLabelText("What was done"), { target: { value: "Neu" } });
+    fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
+    expect(await screen.findByLabelText("Name of the signer")).toBeInTheDocument();
+    expect(screen.getByText("Neu").tagName).toBe("P");
+  });
+
+  it("keeps an uploaded signature after a failed sign and retries the confirmation only", async () => {
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:sig"), revokeObjectURL: vi.fn() }));
+    actions.signReport.mutate.mockImplementationOnce((_v, opts) => {
+      opts.onError(Object.assign(new Error("network"), { signatureUploaded: true }));
+      opts.onSettled();
+    });
+    renderSheet(report({ id: "r-frozen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
+    fireEvent.change(await screen.findByLabelText("Name of the signer"), { target: { value: "Frau Meier" } });
+    fireEvent.click(screen.getByRole("button", { name: "draw" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Sign" }));
+    const png = actions.signReport.mutate.mock.calls[0][0].png;
+
+    expect(await screen.findByText("The signature is saved. Only the confirmation is missing, so sign again to finish.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "draw" })).toBeNull();
+    expect(screen.getByRole("img", { name: "Signature of Frau Meier" })).toHaveAttribute("src", "blob:sig");
+    expect(screen.getByLabelText("Name of the signer")).toHaveAttribute("readonly");
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Sign" }));
+    expect(actions.signReport.mutate).toHaveBeenLastCalledWith(
+      { reportId: "r-frozen", signerName: "Frau Meier", png, uploaded: true }, expect.anything(),
+    );
+    vi.unstubAllGlobals();
   });
 
   it("closes without a signature after a confirm, once on a double tap", async () => {
