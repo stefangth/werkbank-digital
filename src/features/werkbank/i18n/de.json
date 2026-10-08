@@ -1137,7 +1137,10 @@
         "open": "offen",
         "locked": "abgeschlossen",
         "signed": "unterschrieben"
-      }
+      },
+      "pdf": "PDF",
+      "pdfAll": "Alle Berichte",
+      "pdfOne": "Bericht vom <date>{{date}}</date>, {{name}}"
     }
   },
   "publicQuote": {

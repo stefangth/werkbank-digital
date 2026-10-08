@@ -4,10 +4,14 @@ import "@/i18n";
 
 const state = vi.hoisted(() => ({ reports: [] as unknown[] | undefined }));
 const note = vi.hoisted(() => ({ mutate: vi.fn() }));
+const pdf = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }));
+const tab = vi.hoisted(() => ({ openPendingTab: vi.fn(), showInTab: vi.fn() }));
 vi.mock("../hooks/useVisitReports", () => ({
   useVisitReports: () => ({ data: state.reports }),
   useUpdateOfficeNote: () => note,
+  useVisitReportPdf: () => pdf,
 }));
+vi.mock("../lib/pdfTab", () => tab);
 vi.mock("../hooks/useAssignments", () => ({
   useVisitObjectUrls: () => ({ data: { "o/p1.jpg": "https://signed/p1.jpg", "o/sig.png": "https://signed/sig.png" } }),
 }));
@@ -70,5 +74,23 @@ describe("VisitReportsCard", () => {
     fireEvent.change(field, { target: { value: "neu" } });
     fireEvent.blur(field);
     expect(note.mutate).toHaveBeenCalledWith({ reportId: "r1", note: "neu" });
+  });
+
+  it("opens the PDF of all reports or of one from the menu", async () => {
+    state.reports = [report({ id: "r1" }), report({ id: "r2", visit_date: "2026-10-08", technician_name: "Ben Kurz" })];
+    const pending = { closed: false } as unknown as Window;
+    tab.openPendingTab.mockReturnValue(pending);
+    pdf.mutateAsync.mockResolvedValue(new Blob(["%PDF"], { type: "application/pdf" }));
+    URL.createObjectURL = vi.fn(() => "blob:pdf");
+    render(<VisitReportsCard orderId="o1" />);
+    const trigger = screen.getByRole("button", { name: "PDF" });
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Alle Berichte" }));
+    await vi.waitFor(() => expect(tab.showInTab).toHaveBeenCalledWith(pending, "blob:pdf", expect.any(Function)));
+    expect(pdf.mutateAsync).toHaveBeenCalledWith(undefined);
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "PDF" }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: /Ben Kurz/ }));
+    await vi.waitFor(() => expect(pdf.mutateAsync).toHaveBeenCalledWith(["r2"]));
   });
 });

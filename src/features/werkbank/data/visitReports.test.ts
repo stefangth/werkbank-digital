@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
-import { fetchVisitReports, updateOfficeNote } from "./visitReports";
+import { downloadVisitReportPdf, fetchVisitReports, updateOfficeNote } from "./visitReports";
 
 const asClient = (fake: unknown) => fake as SupabaseClient<Database>;
 const T = "werkbank.visit_reports";
@@ -33,5 +33,24 @@ describe("updateOfficeNote", () => {
   it("throws a database error", async () => {
     const error = new Error("x");
     await expect(updateOfficeNote(asClient(createFakeSupabase({ [T]: { data: null, error } })), "r1", null)).rejects.toBe(error);
+  });
+});
+
+describe("downloadVisitReportPdf", () => {
+  const FN = "fn:werkbank-reports";
+  it("asks for all reports of the order and returns the blob", async () => {
+    const blob = new Blob(["%PDF"], { type: "application/pdf" });
+    const fake = createFakeSupabase({ [FN]: { data: blob, error: null } });
+    expect(await downloadVisitReportPdf(asClient(fake), { orgId: "o1", orderId: "x" })).toBe(blob);
+    expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ org_id: "o1", order_id: "x" }] });
+  });
+  it("passes the selected reports", async () => {
+    const fake = createFakeSupabase({ [FN]: { data: new Blob([]), error: null } });
+    await downloadVisitReportPdf(asClient(fake), { orgId: "o1", orderId: "x", reportIds: ["r1"] });
+    expect(fake.calls).toContainEqual({ table: FN, method: "invoke", args: [{ org_id: "o1", order_id: "x", report_ids: ["r1"] }] });
+  });
+  it("throws the function error", async () => {
+    const error = new Error("x");
+    await expect(downloadVisitReportPdf(asClient(createFakeSupabase({ [FN]: { data: null, error } })), { orgId: "o1", orderId: "x" })).rejects.toBe(error);
   });
 });

@@ -1137,7 +1137,10 @@
         "open": "Open",
         "locked": "Closed",
         "signed": "Signed"
-      }
+      },
+      "pdf": "PDF",
+      "pdfAll": "All reports",
+      "pdfOne": "Report of <date>{{date}}</date>, {{name}}"
     }
   },
   "publicQuote": {

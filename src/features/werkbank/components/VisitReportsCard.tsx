@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Label } from "@/components/ui/label";
 import { Metric } from "@/components/ui/metric";
@@ -10,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateWithWeekday, formatTimestampLocal } from "@/lib/dates";
 import type { VisitReport } from "../data/visitReports";
 import { useVisitObjectUrls } from "../hooks/useAssignments";
-import { useUpdateOfficeNote, useVisitReports } from "../hooks/useVisitReports";
+import { useUpdateOfficeNote, useVisitReportPdf, useVisitReports } from "../hooks/useVisitReports";
+import { openPendingTab, showInTab } from "../lib/pdfTab";
 
 type ReportState = "open" | "locked" | "signed";
 const reportState = (r: VisitReport): ReportState => (r.signed_at ? "signed" : r.locked_at ? "locked" : "open");
@@ -87,8 +91,47 @@ function ReportItem({ report, orderId, onOpenPhoto }: { report: VisitReport; ord
   );
 }
 
+/** Opens the visit report PDF (werkbank-reports) of all reports or of one, in a new tab. */
+function ReportsPdfMenu({ orderId, reports }: { orderId: string; reports: VisitReport[] }) {
+  const { t } = useTranslation("werkbank");
+  const pdf = useVisitReportPdf(orderId);
+  const open = (reportIds?: string[]) => {
+    const tab = openPendingTab();
+    return pdf.mutateAsync(reportIds)
+      .then((blob) =>
+        showInTab(tab, URL.createObjectURL(blob), (url) =>
+          toast.error(t("invoices.page.pdfBlocked"), { action: { label: t("invoices.page.pdfOpen"), onClick: () => window.open(url, "_blank") } })))
+      .catch(() => {
+        tab?.close();
+        toast.error(t("invoices.page.pdfFailed"));
+      });
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="secondary" size="sm" disabled={pdf.isPending}>{t("orders.reports.pdf")}</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => void open()}>{t("orders.reports.pdfAll")}</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {reports.map((r) => (
+          <DropdownMenuItem key={r.id} onSelect={() => void open([r.id])}>
+            <span>
+              <Trans
+                t={t} i18nKey="orders.reports.pdfOne"
+                values={{ date: formatDateWithWeekday(r.visit_date), name: r.technician_name }}
+                components={{ date: <Metric size="body">{null}</Metric> }}
+              />
+            </span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /** The technicians' visit reports of an order, oldest first, with the office's internal note per
- *  report. Hidden while the order has no reports. */
+ *  report and a PDF menu (all reports or one). Hidden while the order has no reports. */
 export function VisitReportsCard({ orderId }: { orderId: string }) {
   const { t } = useTranslation("werkbank");
   const { data: reports } = useVisitReports(orderId);
@@ -96,7 +139,10 @@ export function VisitReportsCard({ orderId }: { orderId: string }) {
   if (!reports || reports.length === 0) return null;
   return (
     <Card>
-      <CardHeader><h2 className="m-0"><Eyebrow>{t("orders.reports.title")}</Eyebrow></h2></CardHeader>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <h2 className="m-0"><Eyebrow>{t("orders.reports.title")}</Eyebrow></h2>
+        <ReportsPdfMenu orderId={orderId} reports={reports} />
+      </CardHeader>
       <CardContent>
         <ul className="m-0 list-none space-y-4 p-0">
           {reports.map((r) => <ReportItem key={r.id} report={r} orderId={orderId} onOpenPhoto={(url, alt) => setPhoto({ url, alt })} />)}

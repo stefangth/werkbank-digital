@@ -23,3 +23,16 @@ export async function updateOfficeNote(client: Client, reportId: string, note: s
   const { error } = await client.schema("werkbank").from("visit_reports").update({ office_note: note }).eq("id", reportId);
   if (error) throw error;
 }
+
+/** The visit report PDF of an order (werkbank-reports): every report, or only `reportIds`. Nothing
+ *  is stored; resolves to the PDF bytes. */
+export async function downloadVisitReportPdf(
+  client: Client,
+  a: { orgId: string; orderId: string; reportIds?: string[] },
+): Promise<Blob> {
+  const { data, error } = await client.functions.invoke("werkbank-reports", {
+    body: { org_id: a.orgId, order_id: a.orderId, ...(a.reportIds ? { report_ids: a.reportIds } : {}) },
+  });
+  if (error) throw error;
+  return data as Blob;
+}

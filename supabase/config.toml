@@ -191,3 +191,8 @@ verify_jwt = true
 # then the PDF) and download. No public actions, so the gateway verifies the JWT.
 [functions.werkbank-dunning]
 verify_jwt = true
+
+# werkbank-reports: the visit report PDF of an order (Teil 6a, R7). Office only (admin, producer),
+# stores nothing. No public actions, so the gateway verifies the JWT.
+[functions.werkbank-reports]
+verify_jwt = true
