@@ -67,7 +67,9 @@ export interface AssignmentDetail {
   };
   contact: { name: string | null; phone: string | null; mobile: string | null; email: string | null } | null;
   items: AssignmentItem[];
+  /** Co-technicians of the order, without the caller. */
   technicians: string[];
+  /** Newest first. */
   reports: AssignmentReport[];
 }
 

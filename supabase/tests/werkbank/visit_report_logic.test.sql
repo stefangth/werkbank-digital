@@ -84,6 +84,11 @@ CREATE OR REPLACE FUNCTION pg_temp.act_as(_uid text) RETURNS void LANGUAGE plpgs
 BEGIN
   PERFORM set_config('request.jwt.claims', json_build_object('sub',_uid,'role','authenticated')::text, true);
 END $$;
+-- Report r1 as my_assignment returns it to the current caller (reports come newest first).
+CREATE OR REPLACE FUNCTION pg_temp.report_r1() RETURNS jsonb LANGUAGE sql AS $$
+  SELECT r FROM jsonb_array_elements(werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'reports') r
+  WHERE r ->> 'id' = current_setting('wbt.r1')
+$$;
 
 -- Bucket -------------------------------------------------------------------------------------
 SELECT results_eq(
@@ -188,8 +193,8 @@ SELECT is_empty(
   $$SELECT k FROM jsonb_object_keys(werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'items' -> 1) k
     WHERE k ~ '(price|discount|total|^vat)'$$,
   'my_assignment: no price, discount, total or vat key on an item');
-SELECT is((werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9')) -> 'technicians', '["Tina Technik"]'::jsonb,
-  'my_assignment: the technician names');
+SELECT is((werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9')) -> 'technicians', '[]'::jsonb,
+  'my_assignment: no co-technicians, the caller is not listed (20261008190000)');
 SELECT is((werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9')) -> 'reports', '[]'::jsonb,
   'my_assignment: no reports yet');
 RESET ROLE;
@@ -347,15 +352,15 @@ SELECT throws_ok($$SELECT werkbank.add_visit_photo(current_setting('wbt.r2')::uu
   '42501', 'not_author', 'add_visit_photo: A cannot add to B''s report');
 SELECT throws_ok($$SELECT werkbank.sign_visit_report(current_setting('wbt.r2')::uuid, 'Kunde', 'x')$$,
   '42501', 'not_author', 'sign_visit_report: A cannot sign B''s report');
-SELECT ok(NOT (werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'reports' -> 0 ? 'office_note'),
+SELECT ok(NOT (pg_temp.report_r1() ? 'office_note'),
   'my_assignment: a report has no office_note');
-SELECT is((werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'reports' -> 0) - 'id' - 'photos' - 'visit_date',
+SELECT is(pg_temp.report_r1() - 'id' - 'photos' - 'visit_date',
   jsonb_build_object('artist_id', '99999999-0000-4000-9000-0000000006c1', 'technician_name', 'Tina Technik', 'body', 'Therme getauscht',
     'locked_at', NULL, 'signer_name', NULL, 'signature_path', NULL, 'signed_at', NULL, 'is_mine', true),
-  'my_assignment: the oldest report first with its fields');
-SELECT is(jsonb_array_length(werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'reports' -> 0 -> 'photos'), 20,
+  'my_assignment: A''s report r1 with its fields');
+SELECT is(jsonb_array_length(pg_temp.report_r1() -> 'photos'), 20,
   'my_assignment: the photos of a report');
-SELECT is((werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'reports' -> 0 -> 'photos' -> 0) - 'id' - 'path',
+SELECT is((pg_temp.report_r1() -> 'photos' -> 0) - 'id' - 'path',
   '{"position":0,"caption":null}'::jsonb, 'my_assignment: a photo has position and caption');
 
 -- Lock and sign.
@@ -365,7 +370,7 @@ SELECT throws_ok($$SELECT werkbank.update_visit_report(current_setting('wbt.r1')
 SELECT throws_ok($$SELECT werkbank.lock_visit_report(current_setting('wbt.r1')::uuid)$$,
   '55000', 'report_locked', 'lock_visit_report: a second lock fails');
 SELECT throws_ok($$SELECT werkbank.remove_visit_photo(
-  (werkbank.my_assignment('33333333-0000-4000-a000-0000000006c9') -> 'reports' -> 0 -> 'photos' -> 0 ->> 'id')::uuid)$$,
+  (pg_temp.report_r1() -> 'photos' -> 0 ->> 'id')::uuid)$$,
   '55000', 'report_locked', 'remove_visit_photo: not from a locked report');
 SELECT throws_ok($$SELECT werkbank.sign_visit_report(current_setting('wbt.r3')::uuid, '   ',
   'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r3') || '/signature.png')$$,
