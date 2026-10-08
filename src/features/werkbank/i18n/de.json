@@ -564,7 +564,10 @@
     "lineNet": "Netto",
     "deleteTitle": "Titel löschen",
     "invalidNumber": "Bitte gib eine Zahl ein, zum Beispiel 12,50.",
-    "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten."
+    "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten.",
+    "newItem": "Neue Position",
+    "newTitle": "Neuer Titel",
+    "newText": "Neuer Text"
   },
   "totals": {
     "title": "Summen",

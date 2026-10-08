@@ -564,7 +564,10 @@
     "lineNet": "Net",
     "deleteTitle": "Delete title",
     "invalidNumber": "Enter a number, for example 12.50.",
-    "deleteTitleBody": "This title has items. Only the title is deleted, the items stay."
+    "deleteTitleBody": "This title has items. Only the title is deleted, the items stay.",
+    "newItem": "New item",
+    "newTitle": "New title",
+    "newText": "New text"
   },
   "totals": {
     "title": "Totals",

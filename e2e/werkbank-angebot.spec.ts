@@ -137,7 +137,8 @@ test.describe("Werkbank quote to order", () => {
     await page.getByLabel("Ort", { exact: true }).fill("Hamburg");
     await page.getByLabel("E-Mail", { exact: true }).fill("info@muster-haustechnik.example");
     await page.getByLabel("Steuernummer").fill("201/123/45678");
-    await page.getByRole("button", { name: "Speichern", exact: true }).click();
+    // The settings page also shows a disabled Speichern of another card; click the enabled one.
+    await page.getByRole("button", { name: "Speichern", exact: true, disabled: false }).click();
     await expect(page.getByText("Firmendaten gespeichert")).toBeVisible({ timeout: 15_000 });
 
     const { data } = await werkbank().from("company_profiles").select("company_name, tax_number").eq("org_id", orgId);
@@ -279,8 +280,10 @@ test.describe("Werkbank quote to order", () => {
     await page.getByRole("button", { name: "Auftrag anlegen" }).click();
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}/, { timeout: 15_000 });
 
-    await page.getByRole("button", { name: "Datum wählen" }).click();
-    await page.getByRole("gridcell", { name: "15", exact: true }).first().click();
+    // The button is named by its <Label htmlFor>, not by its "Datum wählen" content.
+    await page.getByRole("button", { name: "Datum", exact: true }).click();
+    // DayPicker marks each day cell with data-day (ISO date) and neighbouring months with data-outside.
+    await page.getByRole("grid").locator('[data-day$="-15"]:not([data-outside]) button').click();
     await page.getByLabel("Uhrzeit").fill("08:30");
     await page.getByLabel("Uhrzeit").blur();
     await page.getByRole("combobox", { name: "Monteure" }).click();

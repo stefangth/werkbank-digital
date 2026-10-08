@@ -30,10 +30,12 @@ const VAT_RATES = ["19", "7", "0"] as const;
 type Mutation<V> = { mutate: (vars: V) => void; isPending: boolean };
 type Patch = Partial<ItemDraft>;
 
-const blankDraft = (kind: ItemDraft["kind"]): ItemDraft => ({
+/** A new line. The DB requires a non-blank name (item, title) or description (text), so it starts
+ *  with `placeholder` for the user to overwrite. */
+const blankDraft = (kind: ItemDraft["kind"], placeholder: string): ItemDraft => ({
   kind,
-  name: kind === "text" ? null : "",
-  description: null,
+  name: kind === "text" ? null : placeholder,
+  description: kind === "text" ? placeholder : null,
   catalog_item_id: null,
   item_no: null,
   quantity: kind === "item" ? 1 : null,
@@ -351,11 +353,11 @@ export function LineItemsEditor({
       {!readOnly && (
         <div className="flex flex-wrap gap-2">
           <CatalogItemCombobox onPick={(c) => addDraft(snapshotDraft(c))} />
-          <Button type="button" variant="outline" size="sm" onClick={() => addDraft(blankDraft("item"))}>
+          <Button type="button" variant="outline" size="sm" onClick={() => addDraft(blankDraft("item", t("lineItems.newItem")))}>
             <Plus className="mr-1 h-4 w-4" />{t("lineItems.addFree")}
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => addDraft(blankDraft("title"))}>{t("lineItems.addTitle")}</Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => addDraft(blankDraft("text"))}>{t("lineItems.addText")}</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => addDraft(blankDraft("title", t("lineItems.newTitle")))}>{t("lineItems.addTitle")}</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => addDraft(blankDraft("text", t("lineItems.newText")))}>{t("lineItems.addText")}</Button>
         </div>
       )}
 
