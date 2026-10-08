@@ -32,6 +32,9 @@ describe("invoicePreflight", () => {
   it("skips no_recipient when recipients is null", () => {
     expect(invoicePreflight({ ...ok, recipients: null })).toEqual([]);
   });
+  it("never blocks a cancellation on the profile or the buyer address (the SQL takes the original's)", () => {
+    expect(invoicePreflight({ ...ok, cancellation: true, profile: null, buyer: null })).toEqual([]);
+  });
   it("keeps the declared order", () => {
     expect(invoicePreflight({ profile: null, itemCount: 0, serviceDateFrom: null, buyer: null, recipients: [] })).toEqual([
       "no_items", "no_service_date", "profile_incomplete", "no_buyer_address", "no_recipient",
