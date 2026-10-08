@@ -106,7 +106,8 @@ SELECT is((SELECT array_agg(column_name::text ORDER BY ordinal_position) FROM in
     'customer_name','property_name','net_total','discount_total','vat_total','gross_total','labour_total','vat_breakdown',
     'is_expired','has_order'],
   'quote_list keeps its Teil 3 columns');
-SELECT is((SELECT array_agg(column_name::text ORDER BY ordinal_position) FROM information_schema.columns
+-- Teil 6a appends completed_by and completed_by_technician, so only the leading columns are pinned.
+SELECT is((SELECT (array_agg(column_name::text ORDER BY ordinal_position))[1:28] FROM information_schema.columns
   WHERE table_schema = 'werkbank' AND table_name = 'order_list'),
   ARRAY['id','org_id','order_no','quote_id','customer_id','property_id','contact_id','location_note','subject',
     'discount_percent','notes','status','scheduled_date','scheduled_time','completed_at','cancelled_at','created_at','updated_at',
