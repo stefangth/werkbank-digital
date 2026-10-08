@@ -124,6 +124,8 @@ export function notificationTarget(n: NotificationEntityRef, ctx: NotificationRo
     // module's admins and producers receive these.
     case "werkbank_quote":
       return n.related_entity_id ? `/quotes/${n.related_entity_id}` : null;
+    case "werkbank_order":
+      return n.related_entity_id ? `/orders/${n.related_entity_id}` : null;
     case "airtable_sync_log":
       return canReachPath(ROUTES.SETTINGS, ctx) ? `${ROUTES.SETTINGS}?tab=airtable` : null;
     case "cron_job":

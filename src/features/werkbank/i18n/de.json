@@ -387,7 +387,16 @@
     "invalidEntryKind": "Diese Art von Eintrag gibt es nicht.",
     "invalidAmount": "Gib einen Betrag mit höchstens zwei Nachkommastellen ein.",
     "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung.",
-    "holdUntilPast": "Das Enddatum einer Mahnsperre darf nicht in der Vergangenheit liegen."
+    "holdUntilPast": "Das Enddatum einer Mahnsperre darf nicht in der Vergangenheit liegen.",
+    "notAssigned": "Dieser Auftrag ist Dir nicht mehr zugeteilt.",
+    "notAuthor": "Nur der Monteur, der diesen Bericht geschrieben hat, kann ihn ändern.",
+    "reportLocked": "Der Bericht ist abgeschlossen und kann nicht mehr geändert werden.",
+    "reportNotEmpty": "Der Bericht hat bereits Inhalt.",
+    "orderClosed": "Dieser Auftrag ist abgeschlossen. Es lassen sich keine Berichte mehr anlegen.",
+    "photoMissing": "Der Upload ist nicht angekommen. Versuch es bitte noch einmal.",
+    "photoLimit": "Ein Bericht kann höchstens 20 Fotos enthalten.",
+    "signerRequired": "Gib den Namen der unterschreibenden Person ein.",
+    "orderHasReports": "Der Auftrag hat Einsatzberichte und kann nicht gelöscht werden. Storniere ihn stattdessen."
   },
   "units": {
     "HUR": "Std",

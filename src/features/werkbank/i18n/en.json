@@ -387,7 +387,16 @@
     "invalidEntryKind": "That kind of entry does not exist.",
     "invalidAmount": "Enter an amount with at most two decimal places.",
     "cancellationExists": "This invoice already has a cancellation invoice.",
-    "holdUntilPast": "The end date of a hold cannot be in the past."
+    "holdUntilPast": "The end date of a hold cannot be in the past.",
+    "notAssigned": "This order is no longer assigned to you.",
+    "notAuthor": "Only the technician who wrote this report can change it.",
+    "reportLocked": "The report is closed and can no longer be changed.",
+    "reportNotEmpty": "The report already has content.",
+    "orderClosed": "This order is closed. No reports can be added.",
+    "photoMissing": "The upload did not arrive. Please try again.",
+    "photoLimit": "A report can hold at most 20 photos.",
+    "signerRequired": "Enter the name of the person who signs.",
+    "orderHasReports": "The order has visit reports and cannot be deleted. Cancel it instead."
   },
   "units": {
     "HUR": "h",
