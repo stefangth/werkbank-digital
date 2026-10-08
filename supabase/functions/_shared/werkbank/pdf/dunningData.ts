@@ -16,6 +16,8 @@ export interface DunningData {
   invoice: { no: string; issueDate: string; dueDate: string; propertyName: string | null };
   invoiceGross: number;
   paidAmount: number;
+  /** invoiceGross - paidAmount - openAmount (skonto, goodwill): the row that makes the table add up. */
+  writtenOff: number;
   openAmount: number;
   text: string;
   earlierNotices: { stage: Stage; date: string }[];
@@ -47,6 +49,8 @@ export function buildDunningData(input: DunningInput): DunningData {
     invoice: { no: invoice.invoice_no, issueDate: invoice.issue_date, dueDate: invoice.due_date, propertyName: input.propertyName },
     invoiceGross: notice.invoice_gross,
     paidAmount: notice.paid_amount,
+    // The snapshot holds no written-off amount; it is what the other three leave over (cents).
+    writtenOff: Math.round((Number(notice.invoice_gross) - Number(notice.paid_amount) - Number(notice.open_amount)) * 100) / 100,
     openAmount: notice.open_amount,
     text: stageText(stage, profile),
     earlierNotices: input.earlier

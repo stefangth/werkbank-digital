@@ -47,3 +47,15 @@ Deno.test("stage 2 names the earlier notices; draft prints the watermark", async
   assert(!plain.includes("ENTWURF"));
   assertStringIncludes(await text(build(1, true)), "ENTWURF");
 });
+
+Deno.test("a written-off part gets its own row so the table adds up; none without one", async () => {
+  assert(!(await text(build(1))).includes("Ausgebucht"));
+  const d = buildDunningData({
+    notice: { stage: 1, notice_date: "2026-10-08", payment_deadline: "2026-10-15", invoice_gross: 1190, paid_amount: 1000, open_amount: 150 },
+    invoice, propertyName: null, profile, earlier: [], draft: false,
+  });
+  const t = await text(d);
+  // Text runs are extracted without separators (and ligatures dropped): check the row order.
+  assertStringIncludes(t, "Bereits gezahlt1.000,00 €Ausgebucht40,00 €");
+  assertStringIncludes(t, "Betrag150,00 €");
+});

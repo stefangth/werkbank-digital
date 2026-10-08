@@ -44,3 +44,12 @@ Deno.test("stage 3 uses the profile text; seller and buyer come from the invoice
   assertEquals(d.draft, true);
   assertEquals(d.earlierNotices.map((e) => e.stage), [1, 2]);
 });
+
+Deno.test("written off is derived as gross minus paid minus open, 0 when nothing was written off", () => {
+  assertEquals(buildDunningData({ ...base, notice: notice(1, 100) }).writtenOff, 0);
+  const d = buildDunningData({
+    ...base,
+    notice: { stage: 1, notice_date: "2026-10-08", payment_deadline: "2026-10-15", invoice_gross: 1190, paid_amount: 1000.1, open_amount: 149.8 },
+  });
+  assertEquals(d.writtenOff, 40.1);
+});
