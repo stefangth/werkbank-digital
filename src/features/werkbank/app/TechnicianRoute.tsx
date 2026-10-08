@@ -12,7 +12,7 @@ export function TechnicianRoute({ children }: { children: ReactNode }) {
   const isTechnician = useIsTechnicianHere();
   if (isTechnician === undefined) return <Skeleton role="status" aria-busy="true" className="h-40 w-full" />;
   if (!isTechnician) {
-    return <EmptyState icon={HardHat} title={t("app.notTechnician")} body={t("app.notTechnicianReason")} reason={t("app.notTechnicianReason")} />;
+    return <EmptyState icon={HardHat} title={t("app.notTechnicianTitle")} body={t("app.notTechnician")} reason={t("app.notTechnicianReason")} />;
   }
   return <>{children}</>;
 }

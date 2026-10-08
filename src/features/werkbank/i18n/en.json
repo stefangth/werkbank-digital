@@ -1395,6 +1395,30 @@
     "assignmentTitle": "Assignment",
     "back": "Back",
     "unnamedUser": "Technician",
-    "notTechnicianReason": "Ask the office to add you under Technicians."
+    "notTechnicianReason": "Ask the office to add you under Technicians.",
+    "notTechnicianTitle": "Not set up as a technician",
+    "emptyTitle": "No assignments yet",
+    "emptyBody": "As soon as the office assigns you to an order, it shows up here.",
+    "emptyReason": "The office assigns orders to you.",
+    "loadFailed": "The assignments could not be loaded.",
+    "groups": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Next 7 days",
+      "unscheduled": "No date",
+      "done": "Done"
+    },
+    "groupHints": {
+      "upcoming": "Default 7 days. Orders dated later appear once they are within a week. Not changeable here.",
+      "done": "Default 14 days. Finished orders stay in the list for two weeks. Not changeable here."
+    },
+    "noTime": "No time",
+    "install": {
+      "title": "Install the app",
+      "iosBody": "Tap Share, then Add to Home Screen, to open Werkbank like an app.",
+      "body": "Add Werkbank to your home screen to open it like an app.",
+      "button": "Install",
+      "dismiss": "Not now"
+    }
   }
 }

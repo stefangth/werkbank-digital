@@ -1395,6 +1395,30 @@
     "assignmentTitle": "Einsatz",
     "back": "Zurück",
     "unnamedUser": "Monteur",
-    "notTechnicianReason": "Frag im Büro, ob Du unter Monteure angelegt wirst."
+    "notTechnicianReason": "Frag im Büro, ob Du unter Monteure angelegt wirst.",
+    "notTechnicianTitle": "Nicht als Monteur hinterlegt",
+    "emptyTitle": "Noch keine Einsätze",
+    "emptyBody": "Sobald das Büro Dich einem Auftrag zuteilt, steht er hier.",
+    "emptyReason": "Das Büro teilt Dir Aufträge zu.",
+    "loadFailed": "Die Einsätze konnten nicht geladen werden.",
+    "groups": {
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "upcoming": "Nächste 7 Tage",
+      "unscheduled": "Ohne Termin",
+      "done": "Erledigt"
+    },
+    "groupHints": {
+      "upcoming": "Vorgabe 7 Tage. Später terminierte Aufträge erscheinen, sobald sie innerhalb einer Woche liegen. Hier nicht änderbar.",
+      "done": "Vorgabe 14 Tage. Erledigte Aufträge bleiben zwei Wochen in der Liste. Hier nicht änderbar."
+    },
+    "noTime": "Ohne Uhrzeit",
+    "install": {
+      "title": "App installieren",
+      "iosBody": "Tippe auf Teilen, dann auf Zum Home-Bildschirm, um Werkbank wie eine App zu öffnen.",
+      "body": "Füge Werkbank zum Home-Bildschirm hinzu, um es wie eine App zu öffnen.",
+      "button": "Installieren",
+      "dismiss": "Später"
+    }
   }
 }
