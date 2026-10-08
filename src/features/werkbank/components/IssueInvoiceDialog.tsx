@@ -17,6 +17,7 @@ import { useIssueInvoice, useSendInvoice } from "../hooks/useInvoiceActions";
 import { useProperty } from "../hooks/useProperties";
 import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
 import { splitAddresses } from "../lib/addresses";
+import { defaultRecipient } from "../lib/defaultRecipient";
 
 export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
 
@@ -50,7 +51,7 @@ export function IssueInvoiceDialog({
   const contact = invoice.contact_id
     ? [...(propertyContacts ?? []), ...(customerContacts ?? [])].find((c) => c.id === invoice.contact_id)
     : undefined;
-  const defaultTo = customer?.invoice_email?.trim() || contact?.email?.trim() || customer?.email?.trim() || "";
+  const defaultTo = defaultRecipient(customer ?? null, contact ?? null);
 
   // null = untouched, so the prefill follows the customer and contact data as it loads.
   const [toInput, setToInput] = useState<string | null>(null);

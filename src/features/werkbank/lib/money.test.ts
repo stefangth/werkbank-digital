@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatEuro } from "./money";
+import { formatEuro, parseEuroInput } from "./money";
 
 const plain = (s: string) => s.replace(/\s/g, " ");
 
@@ -13,5 +13,14 @@ describe("formatEuro", () => {
   });
   it("falls back to German for an empty language tag", () => {
     expect(plain(formatEuro(1, ""))).toBe("1,00 €");
+  });
+});
+
+describe("parseEuroInput", () => {
+  it.each([
+    ["1.190,50", 1190.5], ["1190,5", 1190.5], ["1190.50", 1190.5], ["1.190", 1190], ["12.345.678", 12345678], ["1190.5", 1190.5], ["  12 ", 12], ["0,01", 0.01],
+    ["12,345", null], ["-5", null], ["0", null], ["", null], ["abc", null], ["1,2,3", null],
+  ])("%j -> %j", (raw, expected) => {
+    expect(parseEuroInput(raw)).toBe(expected);
   });
 });

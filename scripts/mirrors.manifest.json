@@ -133,6 +133,18 @@
     },
     {
       "mode": "file",
+      "source": "src/features/werkbank/lib/defaultRecipient.ts",
+      "target": "supabase/functions/_shared/werkbank/defaultRecipient.ts",
+      "why": "The prefilled document recipient (invoice email, contact, customer), import-free. The send dialogs and the dunning edge function pick the same address."
+    },
+    {
+      "mode": "file",
+      "source": "src/features/werkbank/lib/dunningDefaults.ts",
+      "target": "supabase/functions/_shared/werkbank/dunningDefaults.ts",
+      "why": "Dunning stage titles, default texts and blocker names, import-free. The app, the notice PDF and the edge function print and check the same words."
+    },
+    {
+      "mode": "file",
       "source": "src/features/werkbank/lib/quoteDisplayNumber.ts",
       "target": "supabase/functions/_shared/werkbank/quoteDisplayNumber.ts",
       "why": "The quote display number (version suffix from version 2), import-free. The app, the PDF, the emails, the consent text and the public page print the same number."

@@ -125,8 +125,14 @@ type Profile = W["Tables"]["company_profiles"]["Row"];
 type Customer = W["Tables"]["customers"]["Row"];
 type Property = W["Tables"]["properties"]["Row"];
 
+// The dunning settings are profile columns too (migration 20261008130000), so finalize_invoice
+// snapshots them along with the rest.
+const dunningSettings = {
+  reminder_after_days: 7, dunning1_after_days: 14, dunning2_after_days: 14, dunning_deadline_days: 7,
+  reminder_text: null, dunning1_text: null, dunning2_text: null,
+};
 const profileRow: Profile = {
-  ...seller, org_id: "o", created_at: "2026-01-01", updated_at: "2026-01-02",
+  ...seller, ...dunningSettings, org_id: "o", created_at: "2026-01-01", updated_at: "2026-01-02",
 };
 const customerRow = (extra: Partial<Customer> = {}): Customer => ({
   archived_at: null, city: "Hamburg", company_name: null, country_code: "DE", created_at: "", customer_no: "K-0001",
@@ -142,7 +148,7 @@ const propertyRow = (extra: Partial<Property> = {}): Property => ({
 });
 
 Deno.test("draft seller is the profile without org_id and timestamps", () => {
-  assertEquals(draftSellerSnapshot(profileRow), seller);
+  assertEquals(draftSellerSnapshot(profileRow), { ...seller, ...dunningSettings });
 });
 
 Deno.test("draft buyer of a private customer: last, first and the customer address", () => {

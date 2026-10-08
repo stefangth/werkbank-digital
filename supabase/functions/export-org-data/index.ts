@@ -37,6 +37,9 @@ export const WERKBANK_ORDER = {
   order_technicians: "order_id",
   document_items: "id",
   quote_acceptances: "id",
+  invoice_entries: "id",
+  dunning_notices: "id",
+  dunning_holds: "invoice_id",
 } as const satisfies { [T in keyof WerkbankTables]: keyof WerkbankTables[T]["Row"] & string };
 // order_technicians has a composite key (order_id, artist_id); the second column breaks ties so a
 // page boundary inside one order cannot skip or repeat a technician.
