@@ -6,7 +6,7 @@ import * as React from "npm:react@18.3.1";
 import { Section, Text } from "npm:@react-email/components@0.0.22";
 import type { TemplateData, TemplateEntry } from "../../transactional-email-templates/registry.ts";
 import type { BrandDef } from "../../brand.ts";
-import { DEFAULT_APP_BASE_URL, EmailShell, emailRoleStyle } from "../../transactional-email-templates/_shell/EmailShell.tsx";
+import { EmailShell, emailRoleStyle } from "../../transactional-email-templates/_shell/EmailShell.tsx";
 import { applyEmailTokens, EMAIL_COPY_DEFAULTS, type EmailCopy, type EmailLocale } from "../../transactional-email-templates/_shell/emailCopy.ts";
 import { EMAIL_THEME_DEFAULTS, type EmailFamily, type EmailRoleKey, type EmailTheme } from "../../transactional-email-templates/_shell/emailTheme.ts";
 

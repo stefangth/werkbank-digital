@@ -333,8 +333,17 @@ Deno.test("issue on an issued invoice with a file is invalid_state (double issue
 const SEND = { to: ["kunde@example.com"], cc: ["buchhaltung@example.com"], message: "Anbei die Rechnung." };
 const STORED = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x41, 0x33, 0x01]);
 const stored = { storageDownloadResult: { data: new Blob([STORED]), error: null } };
+interface SentEmail {
+  template_name: string;
+  recipient_email: string;
+  reply_to?: string;
+  locale?: string;
+  org_id?: string;
+  templateData: Record<string, string>;
+  attachments: Array<{ filename: string; content_base64: string }>;
+}
 const emails = (t: { invokeCalls: Array<{ name: string; body: unknown }> }) =>
-  t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => c.body as Record<string, any>);
+  t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => c.body as SentEmail);
 
 // ── send ─────────────────────────────────────────────────────────────────────
 
