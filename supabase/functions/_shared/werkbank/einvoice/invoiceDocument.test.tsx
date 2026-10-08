@@ -48,6 +48,26 @@ Deno.test("a cancellation is titled Stornorechnung and names the original", asyn
   assertStringIncludes(t, "zu Rechnung RE-0001 vom 30.09.2026");
 });
 
+Deno.test("a cancellation is no payment request: no due date, a reversal sentence, negative totals", async () => {
+  const t = await text(data({ type: "cancellation", number: "RE-0002", precedingInvoice: { number: "RE-0001", issueDate: "2026-09-30" } }));
+  assert(!t.includes("Fällig am"), "no due date");
+  // The extractor drops the "tt" ligature ("Bitte" reads "Bie"), so match on "überweisen".
+  assert(!t.includes("überweisen"), "no payment request");
+  assert(!t.includes("14 Tage"), "no payment terms");
+  assertStringIncludes(t, "Diese Stornorechnung hebt die Rechnung RE-0001 vom 30.09.2026 vollständig auf.");
+  assertStringIncludes(t, "-119,00");
+  assertStringIncludes(t, "-19,00");
+  assertStringIncludes(t, "DE02120300000000202051"); // bank details stay in the footer
+});
+
+Deno.test("an invoice keeps the payment request and positive totals", async () => {
+  const t = await text(data());
+  assertStringIncludes(t, "überweisen Sie den Betrag bis zum 22.10.2026");
+  assertStringIncludes(t, "14 Tage");
+  assert(!t.includes("-119,00"));
+  assert(!t.includes("hebt die Rechnung"));
+});
+
 Deno.test("Lohnanteil only for a private buyer", async () => {
   const priv = await text(data({ buyer: { ...buyer, is_private: true }, totals: { ...data().totals, labour: 40 } }));
   assertStringIncludes(priv, "davon Lohnanteil (§35a EStG)");

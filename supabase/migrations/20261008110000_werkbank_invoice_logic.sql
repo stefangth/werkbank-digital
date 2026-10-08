@@ -135,6 +135,9 @@ begin
         return new;
       end if;
     end if;
+    -- Share-lock the invoice first, so a concurrent finalize (which holds it for update) either
+    -- waits for this item write or has committed and is seen by the check below.
+    perform 1 from werkbank.invoices i where i.id = v_invoice for share;
     if exists (select 1 from werkbank.invoices i
                where i.id = v_invoice and (i.status <> 'draft' or (i.type = 'cancellation' and not v_owner))) then
       raise exception 'invoice_locked' using errcode = '55000';
@@ -449,8 +452,10 @@ begin
      or btrim(coalesce(v_p.iban, '')) = '' then
     v_blockers := array_append(v_blockers, 'profile_incomplete');
   end if;
-  if btrim(coalesce(v_buyer ->> 'name', '')) = '' or btrim(coalesce(v_buyer ->> 'street', '')) = ''
-     or btrim(coalesce(v_buyer ->> 'postal_code', '')) = '' or btrim(coalesce(v_buyer ->> 'city', '')) = '' then
+  -- A cancellation takes the original's buyer_snapshot (R8), so the current address does not matter.
+  if v_inv.type <> 'cancellation' and (
+     btrim(coalesce(v_buyer ->> 'name', '')) = '' or btrim(coalesce(v_buyer ->> 'street', '')) = ''
+     or btrim(coalesce(v_buyer ->> 'postal_code', '')) = '' or btrim(coalesce(v_buyer ->> 'city', '')) = '') then
     v_blockers := array_append(v_blockers, 'no_buyer_address');
   end if;
   if cardinality(v_blockers) > 0 then

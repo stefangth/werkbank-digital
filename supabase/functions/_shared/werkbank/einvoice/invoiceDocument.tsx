@@ -9,6 +9,10 @@ import type { InvoiceData } from "./invoiceData.ts";
 
 const orUndef = (v: string | null): string | undefined => (v?.trim() ? v : undefined);
 
+// A cancellation reverses the original: its totals print negative. Display only, the stored
+// amounts and the XML stay positive (R19).
+const signed = (n: number, negative: boolean) => (negative && n !== 0 ? -n : n);
+
 function pdfSeller(d: InvoiceData, logoDataUrl?: string): QuotePdfData["seller"] {
   const x = d.seller;
   return {
@@ -50,7 +54,9 @@ export function InvoiceDocument({ data, logoDataUrl }: { data: InvoiceData; logo
               <Text style={s.metaLabel}>{data.serviceTo ? "Leistungszeitraum" : "Leistungsdatum"}</Text>
               <Text>{data.serviceTo ? `${formatDateDe(data.serviceFrom)} bis ${formatDateDe(data.serviceTo)}` : formatDateDe(data.serviceFrom)}</Text>
             </View>
-            <View style={s.metaRow}><Text style={s.metaLabel}>Fällig am</Text><Text>{formatDateDe(data.dueDate)}</Text></View>
+            {isCancellation ? null : (
+              <View style={s.metaRow}><Text style={s.metaLabel}>Fällig am</Text><Text>{formatDateDe(data.dueDate)}</Text></View>
+            )}
             {buyer.customer_no ? <View style={s.metaRow}><Text style={s.metaLabel}>Kundennummer</Text><Text>{buyer.customer_no}</Text></View> : null}
             {propLines.length > 0 ? (
               <View style={{ marginTop: 6 }}>
@@ -94,25 +100,40 @@ export function InvoiceDocument({ data, logoDataUrl }: { data: InvoiceData; logo
         ))}
 
         <View style={s.totals} wrap={false}>
-          <Line label="Summe netto" value={money(totals.net)} />
+          <Line label="Summe netto" value={money(signed(totals.net, isCancellation))} />
           {totals.discountPercent > 0 ? (
-            <Line label={`Rabatt ${pct.format(totals.discountPercent)} %`} value={`-${money(totals.discount)}`} />
+            <Line label={`Rabatt ${pct.format(totals.discountPercent)} %`} value={money(signed(totals.discount, !isCancellation))} />
           ) : null}
           {totals.vat.map((v) => (
-            <Line key={v.rate} label={`Umsatzsteuer ${pct.format(v.rate)} % auf ${money(v.discountedNet)}`} value={money(v.vat)} />
+            <Line
+              key={v.rate}
+              label={`Umsatzsteuer ${pct.format(v.rate)} % auf ${money(signed(v.discountedNet, isCancellation))}`}
+              value={money(signed(v.vat, isCancellation))}
+            />
           ))}
-          <Line label="Gesamtbetrag brutto" value={money(totals.gross)} style={s.grossRow} />
-          {totals.labour !== null ? <Line label="davon Lohnanteil (§35a EStG)" value={money(totals.labour)} /> : null}
+          <Line label="Gesamtbetrag brutto" value={money(signed(totals.gross, isCancellation))} style={s.grossRow} />
+          {totals.labour !== null ? (
+            <Line label="davon Lohnanteil (§35a EStG)" value={money(signed(totals.labour, isCancellation))} />
+          ) : null}
         </View>
 
         <View style={{ marginTop: 18 }} wrap={false}>
-          <Text style={s.paragraph}>
-            {`Bitte überweisen Sie den Betrag bis zum ${formatDateDe(data.dueDate)}`}
-            {seller.iban ? ` auf IBAN ${seller.iban}${seller.bic ? `, BIC ${seller.bic}` : ""}` : ""}
-            {`. Bitte geben Sie die ${isCancellation ? "Stornonummer" : "Rechnungsnummer"} ${data.number} an.`}
-          </Text>
+          {isCancellation ? (
+            <Text style={s.paragraph}>
+              {data.precedingInvoice
+                ? `Diese Stornorechnung hebt die Rechnung ${data.precedingInvoice.number} vom ${formatDateDe(data.precedingInvoice.issueDate)} vollständig auf.`
+                : "Diese Stornorechnung hebt die ursprüngliche Rechnung vollständig auf."}
+            </Text>
+          ) : (
+            <Text style={s.paragraph}>
+              {`Bitte überweisen Sie den Betrag bis zum ${formatDateDe(data.dueDate)}`}
+              {seller.iban ? ` auf IBAN ${seller.iban}${seller.bic ? `, BIC ${seller.bic}` : ""}` : ""}
+              {`. Bitte geben Sie die Rechnungsnummer ${data.number} an.`}
+            </Text>
+          )}
         </View>
-        {data.paymentTerms ? <Text style={s.paragraph}>{data.paymentTerms}</Text> : null}
+        {/* Payment terms would read as a second bill on a cancellation. */}
+        {data.paymentTerms && !isCancellation ? <Text style={s.paragraph}>{data.paymentTerms}</Text> : null}
         {data.closing ? <Text style={s.paragraph}>{data.closing}</Text> : null}
 
         <PageFooter seller={seller} />
