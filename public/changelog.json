@@ -1,5 +1,41 @@
 [
   {
+    "version": "1.22.0",
+    "date": "2026-10-08",
+    "dateLabel": "October 8, 2026",
+    "title": "Offene Posten und Mahnungen",
+    "changes": {
+      "new": [
+        {
+          "title": "Offene Posten",
+          "description": "Eine neue Seite zeigt alle Rechnungen, bei denen noch etwas offen ist, mit Zahlstatus und Überfälligkeit. Auch bei Kunden, in den Einstellungen und auf dem Dashboard siehst du, was noch aussteht."
+        },
+        {
+          "title": "Zahlungen erfassen",
+          "description": "Buche Zahlungen und Teilzahlungen auf eine Rechnung, buche einen Rest mit Grund aus oder zahle ein Guthaben aus. Falsche Buchungen stornierst du, sie bleiben sichtbar."
+        },
+        {
+          "title": "Umbuchen",
+          "description": "Buche eine Zahlung auf eine andere Rechnung desselben Kunden um, etwa nach einer Stornierung."
+        },
+        {
+          "title": "Mahnungen",
+          "description": "Erstelle Zahlungserinnerung, 1. Mahnung und 2. und letzte Mahnung als PDF mit fester Zahlungsfrist und schicke sie per E-Mail oder druck sie für den Postversand."
+        },
+        {
+          "title": "Mahnsperre",
+          "description": "Pausiere das Mahnen für eine Rechnung mit Grund und auf Wunsch bis zu einem Datum."
+        }
+      ],
+      "improved": [
+        {
+          "title": "Voreinstellungen erklärt",
+          "description": "Ein kleiner Hinweis in den Formularen sagt dir, woher ein vorausgefüllter Wert kommt und dass du ihn ändern kannst."
+        }
+      ]
+    }
+  },
+  {
     "version": "1.21.0",
     "date": "2026-10-08",
     "dateLabel": "October 8, 2026",

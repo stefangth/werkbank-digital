@@ -19,6 +19,13 @@ export const TERMS = {
   hireOrder:      { en: 'Contract',                 de: 'Engagementvertrag' },
   voidOrder:      { en: 'Void',                     de: 'Ungültig machen' },
   blockedDate:    { en: 'Not free',                 de: 'Nicht frei' },
+  openItem:       { en: 'Open item',                de: 'Offener Posten' },
+  paymentReminder:{ en: 'Payment reminder',         de: 'Zahlungserinnerung' },
+  dunningNotice:  { en: 'Dunning notice',           de: 'Mahnung' },
+  dunningHold:    { en: 'Dunning hold',             de: 'Mahnsperre' },
+  writeOff:       { en: 'Write off',                de: 'Ausbuchen' },
+  credit:         { en: 'Credit',                   de: 'Guthaben' },
+  paymentState:   { en: 'Payment status',           de: 'Zahlstatus' },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type TermKey = keyof typeof TERMS;

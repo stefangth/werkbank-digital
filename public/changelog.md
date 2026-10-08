@@ -2,6 +2,20 @@
 
 Was neu ist, neueste Einträge zuerst.
 
+## 1.22.0 — October 8, 2026
+
+*Offene Posten und Mahnungen*
+
+### New
+- **Offene Posten** — Eine neue Seite zeigt alle Rechnungen, bei denen noch etwas offen ist, mit Zahlstatus und Überfälligkeit. Auch bei Kunden, in den Einstellungen und auf dem Dashboard siehst du, was noch aussteht.
+- **Zahlungen erfassen** — Buche Zahlungen und Teilzahlungen auf eine Rechnung, buche einen Rest mit Grund aus oder zahle ein Guthaben aus. Falsche Buchungen stornierst du, sie bleiben sichtbar.
+- **Umbuchen** — Buche eine Zahlung auf eine andere Rechnung desselben Kunden um, etwa nach einer Stornierung.
+- **Mahnungen** — Erstelle Zahlungserinnerung, 1. Mahnung und 2. und letzte Mahnung als PDF mit fester Zahlungsfrist und schicke sie per E-Mail oder druck sie für den Postversand.
+- **Mahnsperre** — Pausiere das Mahnen für eine Rechnung mit Grund und auf Wunsch bis zu einem Datum.
+
+### Improved
+- **Voreinstellungen erklärt** — Ein kleiner Hinweis in den Formularen sagt dir, woher ein vorausgefüllter Wert kommt und dass du ihn ändern kannst.
+
 ## 1.21.0 — October 8, 2026
 
 *Vom Auftrag zur Rechnung*
