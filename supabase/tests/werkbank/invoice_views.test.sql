@@ -1,7 +1,7 @@
 -- Werkbank Teil 4 (R3, R4): invoice branch of document_totals, invoice_list, immutable invoice files.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(31);
+SELECT plan(34);
 
 SET LOCAL timezone = 'UTC';
 
@@ -162,6 +162,15 @@ SELECT throws_ok($$UPDATE storage.objects SET name = 'bbbbbbbb-0000-4000-b000-00
   '55000', 'invoice_locked', 'an invoice file cannot be updated');
 SELECT throws_ok($$DELETE FROM storage.objects WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/invoices/x.pdf'$$,
   '55000', 'invoice_locked', 'an invoice file cannot be deleted');
+SELECT throws_ok($$UPDATE storage.objects SET metadata = '{"size": 1}'::jsonb
+  WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/invoices/x.pdf'$$,
+  '55000', 'invoice_locked', 'an invoice file cannot be overwritten (metadata)');
+SELECT throws_ok($$UPDATE storage.objects SET version = 'v2'
+  WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/invoices/x.pdf'$$,
+  '55000', 'invoice_locked', 'an invoice file cannot be overwritten (version)');
+SELECT lives_ok($$UPDATE storage.objects SET last_accessed_at = now(), updated_at = now()
+  WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/invoices/x.pdf'$$,
+  'the Storage service may still stamp access times on an invoice file');
 SELECT lives_ok($$DELETE FROM storage.objects WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/quotes/q.pdf'$$,
   'a quote file can still be deleted');
 SELECT lives_ok($$DELETE FROM storage.objects WHERE bucket_id = 'werkbank-assets'$$,
