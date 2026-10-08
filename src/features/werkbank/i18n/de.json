@@ -1434,7 +1434,9 @@
       "reportSigned": "Unterschrieben von {{name}}",
       "noDate": "Ohne Datum",
       "notAssignedBack": "Zurück zu meinen Einsätzen",
-      "photos": "{{count}} Fotos"
+      "photos_one": "{{count}} Foto",
+      "photos": "{{count}} Fotos",
+      "newReport": "Neuer Bericht"
     },
     "noTime": "Ohne Uhrzeit",
     "install": {
@@ -1443,6 +1445,42 @@
       "body": "Füge Werkbank zum Home-Bildschirm hinzu, um es wie eine App zu öffnen.",
       "button": "Installieren",
       "dismiss": "Später"
+    },
+    "report": {
+      "title": "Einsatzbericht",
+      "visitDate": "Einsatzdatum",
+      "visitDateHint": "Vorgabe heute. Du kannst das Datum ändern, solange der Bericht offen ist.",
+      "body": "Was wurde gemacht",
+      "photos": "Fotos",
+      "photoLimitHint": "Vorgabe {{max}} Fotos pro Bericht. Hier nicht änderbar.",
+      "resizeHint": "Fotos werden auf {{px}} px verkleinert (lange Kante), damit sie auch bei schwachem Netz hochladen. Hier nicht änderbar.",
+      "addPhoto": "Foto hinzufügen",
+      "uploading": "Foto wird hochgeladen",
+      "removePhoto": "Foto entfernen",
+      "photoAlt": "Foto {{n}}",
+      "photoOnlineOnly": "Foto nur online",
+      "photoTooLarge": "Das Foto ist auch verkleinert zu groß.",
+      "photoUnreadable": "Das Foto konnte nicht gelesen werden.",
+      "sign": "Unterschreiben lassen",
+      "lock": "Ohne Unterschrift abschließen",
+      "signerName": "Name der unterschreibenden Person",
+      "signature": "Unterschrift",
+      "padLabel": "Unterschriftsfeld",
+      "clear": "Löschen",
+      "noText": "Kein Text.",
+      "signSubmit": "Unterschreiben",
+      "backToReport": "Zurück zum Bericht",
+      "signTitle": "Bericht unterschreiben?",
+      "lockTitle": "Bericht abschließen?",
+      "lockSubmit": "Abschließen",
+      "finalBody": "Danach kann der Bericht nicht mehr geändert werden.",
+      "signedToast": "Bericht unterschrieben.",
+      "lockedToast": "Bericht abgeschlossen.",
+      "signatureTooLarge": "Die Unterschrift ist zu groß. Lösch sie und unterschreib neu.",
+      "signedOn": "Unterschrieben von {{name}} am <date>{{date}}</date>",
+      "lockedOn": "Abgeschlossen am <date>{{date}}</date>",
+      "signatureAlt": "Unterschrift von {{name}}",
+      "othersReport": "Diesen Bericht schreibt {{name}}. Du kannst ihn nur lesen."
     }
   }
 }

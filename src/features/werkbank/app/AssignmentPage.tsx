@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Mail, Navigation, Phone } from "lucide-react";
+import { Mail, Navigation, Phone, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,14 +8,14 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Metric } from "@/components/ui/metric";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Token } from "@/components/ui/token";
 import { useAuth } from "@/features/auth/AuthContext";
-import { formatDateWithWeekday } from "@/lib/dates";
+import { berlinDateKey, formatDateWithWeekday } from "@/lib/dates";
 import type { AssignmentDetail } from "../data/technicianApp";
 import { ASSIGNMENTS_KEY, useAssignment, useAssignmentActions } from "../hooks/useAssignments";
 import { mapDbError } from "../lib/dbErrors";
@@ -24,6 +24,7 @@ import { UNIT_CODES, unitLabelKey, type UnitCode } from "../lib/units";
 import { ASSIGNMENTS_PATH } from "../paths";
 import { mapsLink } from "./mapsLink";
 import { MobileShell } from "./MobileShell";
+import { ReportSheet } from "./ReportSheet";
 import { TechnicianRoute } from "./TechnicianRoute";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -37,13 +38,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentDetail; refetch: () => Promise<{ data?: AssignmentDetail }> }) {
   const { t } = useTranslation("werkbank");
-  const { start, complete } = useAssignmentActions(orderId);
+  const { start, complete, createReport } = useAssignmentActions(orderId);
   const [confirming, setConfirming] = useState(false);
+  const [openReportId, setOpenReportId] = useState<string | null>(null);
   const { order, contact, items, technicians, reports } = data;
   const status = order.status as OrderStatus;
   const route = mapsLink(order);
   const address = [order.street, [order.postal_code, order.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const unitLabel = (u: string | null) => (u && (UNIT_CODES as readonly string[]).includes(u) ? t(unitLabelKey(u as UnitCode)) : (u ?? ""));
+
+  const canReport = status !== "cancelled" && status !== "invoiced";
+  const newReport = () => createReport.mutate(berlinDateKey(new Date()), { onSuccess: (id) => setOpenReportId(id) });
 
   const onComplete = () => {
     setConfirming(false);
@@ -137,19 +142,34 @@ function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentD
         {reports.length === 0 ? <p className="m-0 text-control text-muted-foreground">{t("app.detail.noReports")}</p> : (
           <ul className="m-0 list-none space-y-2 p-0">
             {reports.map((r) => (
-              <li key={r.id} className="rounded-card border border-border bg-card p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-body"><Metric size="body">{formatDateWithWeekday(r.visit_date)}</Metric>, {r.technician_name}</span>
-                  <StatusPill tone={r.signed_at ? "confirmed" : r.locked_at ? "neutral" : "waiting"}>
-                    {r.signed_at ? t("app.detail.reportSigned", { name: r.signer_name ?? "" }) : r.locked_at ? t("app.detail.reportLocked") : t("app.detail.reportOpen")}
-                  </StatusPill>
-                </div>
-                {r.photos.length > 0 && <p className="m-0 mt-1 text-control text-muted-foreground">{t("app.detail.photos", { count: r.photos.length })}</p>}
+              <li key={r.id}>
+                <button
+                  type="button" onClick={() => setOpenReportId(r.id)}
+                  className="block min-h-11 w-full rounded-card border border-border bg-card p-3 text-left hover:bg-hover-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-body"><Metric size="body">{formatDateWithWeekday(r.visit_date)}</Metric>, {r.technician_name}</span>
+                    <StatusPill tone={r.signed_at ? "confirmed" : r.locked_at ? "neutral" : "waiting"}>
+                      {r.signed_at ? t("app.detail.reportSigned", { name: r.signer_name ?? "" }) : r.locked_at ? t("app.detail.reportLocked") : t("app.detail.reportOpen")}
+                    </StatusPill>
+                  </span>
+                  {r.photos.length > 0 && <span className="mt-1 block text-control text-muted-foreground">{t("app.detail.photos", { count: r.photos.length })}</span>}
+                </button>
               </li>
             ))}
           </ul>
         )}
+        {canReport && (
+          <Button variant="secondary" size="touch" className="w-full" disabled={createReport.isPending} onClick={newReport}>
+            <Plus aria-hidden="true" />{t("app.detail.newReport")}
+          </Button>
+        )}
       </Section>
+
+      <ReportSheet
+        orderId={orderId} report={reports.find((r) => r.id === openReportId)} open={openReportId !== null}
+        onOpenChange={(open) => { if (!open) setOpenReportId(null); }}
+      />
 
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
@@ -158,8 +178,8 @@ function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentD
             <AlertDialogDescription>{t("app.detail.completeBody")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <Button disabled={complete.isPending} onClick={onComplete}>{t("app.detail.complete")}</Button>
+            <AlertDialogCancel className={buttonVariants({ variant: "secondary", size: "touch" })}>{t("common.cancel")}</AlertDialogCancel>
+            <Button size="touch" disabled={complete.isPending} onClick={onComplete}>{t("app.detail.complete")}</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -192,7 +212,7 @@ function Body({ orderId }: { orderId: string }) {
   return <Detail orderId={orderId} data={data} refetch={() => refetch()} />;
 }
 
-/** One assigned order: facts, the status action, contact, work and read-only visit reports. */
+/** One assigned order: facts, the status action, contact, work and the visit reports. */
 export function AssignmentPage() {
   const { t } = useTranslation("werkbank");
   const { orderId } = useParams<{ orderId: string }>();

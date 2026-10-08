@@ -1434,7 +1434,9 @@
       "reportSigned": "Signed by {{name}}",
       "noDate": "No date",
       "notAssignedBack": "Back to my assignments",
-      "photos": "{{count}} photos"
+      "photos_one": "{{count}} photo",
+      "photos": "{{count}} photos",
+      "newReport": "New report"
     },
     "noTime": "No time",
     "install": {
@@ -1443,6 +1445,42 @@
       "body": "Add Werkbank to your home screen to open it like an app.",
       "button": "Install",
       "dismiss": "Not now"
+    },
+    "report": {
+      "title": "Visit report",
+      "visitDate": "Visit date",
+      "visitDateHint": "Default today. You can change the date while the report is open.",
+      "body": "What was done",
+      "photos": "Photos",
+      "photoLimitHint": "Default {{max}} photos per report. Not changeable here.",
+      "resizeHint": "Photos are resized to {{px}} px on the long edge, so they upload on a weak connection too. Not changeable here.",
+      "addPhoto": "Add photo",
+      "uploading": "Uploading photo",
+      "removePhoto": "Remove photo",
+      "photoAlt": "Photo {{n}}",
+      "photoOnlineOnly": "Photo only online",
+      "photoTooLarge": "The photo is too large even after resizing.",
+      "photoUnreadable": "The photo could not be read.",
+      "sign": "Get signature",
+      "lock": "Close without signature",
+      "signerName": "Name of the signer",
+      "signature": "Signature",
+      "padLabel": "Signature field",
+      "clear": "Clear",
+      "noText": "No text.",
+      "signSubmit": "Sign",
+      "backToReport": "Back to the report",
+      "signTitle": "Sign the report?",
+      "lockTitle": "Close the report?",
+      "lockSubmit": "Close report",
+      "finalBody": "The report cannot be changed afterwards.",
+      "signedToast": "Report signed.",
+      "lockedToast": "Report closed.",
+      "signatureTooLarge": "The signature is too large. Clear it and sign again.",
+      "signedOn": "Signed by {{name}} on <date>{{date}}</date>",
+      "lockedOn": "Closed on <date>{{date}}</date>",
+      "signatureAlt": "Signature of {{name}}",
+      "othersReport": "{{name}} writes this report. You can only read it."
     }
   }
 }

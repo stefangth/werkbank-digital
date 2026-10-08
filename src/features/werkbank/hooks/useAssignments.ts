@@ -5,13 +5,17 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   completeAssignment, createVisitReport, fetchAssignment, fetchAssignments, fetchTechnicianOrgs, lockVisitReport,
-  removeVisitPhoto, signVisitReport, startAssignment, updateVisitReport, uploadVisitPhoto,
+  removeVisitPhoto, signVisitReport, startAssignment, updateVisitReport, uploadVisitPhoto, visitObjectUrls,
 } from "../data/technicianApp";
 import { mapDbError, type DbErrorKey } from "../lib/dbErrors";
 import { ORDERS_KEY } from "./useOrders";
 
 export const ASSIGNMENTS_KEY = ["werkbank", "assignments"] as const;
 export const TECHNICIAN_ORGS_KEY = ["werkbank", "technician-orgs"] as const;
+/** Outside the assignments domain on purpose: signed URLs expire and are never persisted offline. */
+export const VISIT_OBJECT_URLS_KEY = ["werkbank", "visit-object-urls"] as const;
+/** Refetched before the 300 s signed URLs run out. */
+const OBJECT_URL_STALE_MS = 240_000;
 
 /** Orgs where the signed-in user is a technician. */
 export function useTechnicianOrgs() {
@@ -47,6 +51,16 @@ export function useAssignment(orderId: string | undefined) {
   return useQuery({
     queryKey: [...ASSIGNMENTS_KEY, userId, orgId, orderId], enabled: !!userId && !!orgId && !!orderId,
     queryFn: () => fetchAssignment(supabase, orderId!),
+  });
+}
+
+/** Signed URLs for visit photos and signatures, by path. Offline the query fails and the caller
+ *  shows a placeholder. */
+export function useVisitObjectUrls(paths: string[]) {
+  const sorted = [...paths].sort();
+  return useQuery({
+    queryKey: [...VISIT_OBJECT_URLS_KEY, ...sorted], enabled: sorted.length > 0, staleTime: OBJECT_URL_STALE_MS,
+    refetchInterval: OBJECT_URL_STALE_MS, queryFn: () => visitObjectUrls(supabase, sorted),
   });
 }
 

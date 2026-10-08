@@ -11,6 +11,9 @@ vi.mock("../hooks/useAssignments", () => ({
 }));
 const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { error: toastError, success: vi.fn() } }));
+vi.mock("./ReportSheet", () => ({
+  ReportSheet: ({ report, open }: { report?: { id: string }; open: boolean }) => (open ? <div role="dialog">sheet {report?.id ?? "loading"}</div> : null),
+}));
 
 import { useAssignment, useAssignmentActions } from "../hooks/useAssignments";
 import { AssignmentPage } from "./AssignmentPage";
@@ -27,6 +30,7 @@ const detail = (o: Partial<AssignmentDetail["order"]> = {}, rest: Partial<Assign
 
 const start = { mutate: vi.fn(), isPending: false };
 const complete = { mutate: vi.fn(), isPending: false };
+const createReport = { mutate: vi.fn(), isPending: false };
 const refetch = vi.fn();
 function mockQuery(state: object) {
   vi.mocked(useAssignment).mockReturnValue({ isLoading: false, isError: false, refetch, ...state } as unknown as ReturnType<typeof useAssignment>);
@@ -39,7 +43,7 @@ const renderPage = () => renderWithProviders(
 describe("AssignmentPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAssignmentActions).mockReturnValue({ start, complete } as unknown as ReturnType<typeof useAssignmentActions>);
+    vi.mocked(useAssignmentActions).mockReturnValue({ start, complete, createReport } as unknown as ReturnType<typeof useAssignmentActions>);
   });
 
   it("shows order number, date and status and starts an open order", async () => {
@@ -116,5 +120,45 @@ describe("AssignmentPage", () => {
     }] }) });
     renderPage();
     expect(screen.getByText("Signed by Frau Meier")).toBeInTheDocument();
+  });
+
+  const reportRow = { id: "r1", artist_id: "a", technician_name: "Kai", visit_date: "2026-10-08", body: "x", locked_at: null, signer_name: null,
+    signature_path: null, signed_at: null, is_mine: true, photos: [] };
+
+  it("opens a report in the sheet", () => {
+    mockQuery({ data: detail({}, { reports: [reportRow] }) });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: /Kai/ }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("sheet r1");
+  });
+
+  it("creates a new report dated today (Berlin) and opens it", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-08T22:30:00Z"));
+    try {
+      createReport.mutate.mockImplementation((_d, opts) => opts.onSuccess("r9"));
+      mockQuery({ data: detail({ status: "in_progress" }) });
+      renderPage();
+      fireEvent.click(screen.getByRole("button", { name: "New report" }));
+      expect(createReport.mutate).toHaveBeenCalledWith("2026-10-09", expect.anything());
+      expect(screen.getByRole("dialog")).toHaveTextContent("sheet loading");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("offers no new report on a closed order", () => {
+    mockQuery({ data: detail({ status: "invoiced" }) });
+    renderPage();
+    expect(screen.queryByRole("button", { name: "New report" })).toBeNull();
+  });
+
+  it("uses touch-sized confirm actions", async () => {
+    mockQuery({ data: detail({ status: "in_progress" }) });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Report as done" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByRole("button", { name: "Report as done" }).className).toContain("h-11");
+    expect(within(dialog).getByRole("button", { name: "Cancel" }).className).toContain("h-11");
   });
 });
