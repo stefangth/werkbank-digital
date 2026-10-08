@@ -7,9 +7,28 @@ package (every build, source maps, an Excel library) into the edge function bund
 exceeds the Supabase upload limit (HTTP 413). Vendoring also fixes the exact bytes that render the
 legally relevant e-invoice: nothing changes unless this file changes in git.
 
-The build bundles the library's dependencies (among them `@cantoo/pdf-lib`, `@e965/xlsx`, `ajv`,
-`xmlbuilder2`, `jsonpath-plus`); each keeps its own license. It imports only pinned Node polyfills
-from `https://deno.land/std@0.177.1/node/`.
+The build bundles the library's dependencies; each keeps its own license. Its direct
+dependencies (versions as resolved by npm when this copy was taken; their own dependencies are
+bundled too and keep their licenses):
+
+| Package | License |
+|---|---|
+| `@e-invoice-eu/core` 3.4.0 | WTFPL (`LICENSE` here) |
+| `@cantoo/pdf-lib` 2.11.1 | MIT |
+| `@e965/xlsx` 0.20.3 | Apache-2.0 |
+| `@esgettext/runtime` 1.3.10 | WTFPL |
+| `ajv` 8.20.0 | MIT |
+| `jsonpath-plus` 11.1.1 | MIT |
+| `tmp-promise` 3.0.3 | MIT |
+| `tslib` 2.8.1 | 0BSD |
+| `xmlbuilder2` 4.0.3 | MIT |
+
+The file imports only pinned Node polyfills from `https://deno.land/std@0.177.1/node/`, which the
+Supabase bundler inlines at deploy time (so a deploy needs deno.land reachable, like other
+functions that import `std`).
+
+The sha256 in the file header is that of the downloaded build, before the header was added and the
+source map comment removed.
 
 Types come from the package's `dist/index.d.ts` (type-only import, no runtime effect).
 

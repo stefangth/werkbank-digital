@@ -1,4 +1,4 @@
-// GENERATED FILE. Do not edit. Vendored third-party code: @e-invoice-eu/core 3.4.0 (WTFPL, see LICENSE), the
+// VENDORED FILE. Do not edit (not a sync:mirrors target). Third-party code: @e-invoice-eu/core 3.4.0 (WTFPL, see LICENSE), the
 // single-file Deno build from https://esm.sh/@e-invoice-eu/core@3.4.0/deno/core.bundle.mjs
 // (sha256 8e80d87c048ed8f2fd996011dd50389172e4a5eec1207e4bce9670fecc266d95 before this header and
 // with the source map comment removed). Vendored so the bytes that render the e-invoice are fixed
