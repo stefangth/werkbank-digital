@@ -737,6 +737,7 @@
       "complete": "Erledigt",
       "reopen": "Wieder öffnen",
       "createInvoice": "Rechnung erstellen",
+      "openInvoiceDraft": "Rechnungsentwurf öffnen",
       "cancel": "Stornieren"
     },
     "noMatches": "Kein Auftrag passt zu deinen Filtern.",

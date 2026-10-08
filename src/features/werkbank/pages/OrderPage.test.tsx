@@ -14,7 +14,7 @@ const { state, mut, refetch, route, navigate, inv } = vi.hoisted(() => {
     refetch: vi.fn(),
     route: { id: "o1" },
     navigate: vi.fn(),
-    inv: { active: null as { id: string; invoice_no: string } | null, fromOrder: { mutate: vi.fn(), isPending: false } },
+    inv: { loading: false, active: null as { id: string; invoice_no: string } | null, fromOrder: { mutate: vi.fn(), isPending: false } },
   };
 });
 vi.mock("react-router-dom", async (orig) => ({
@@ -28,7 +28,7 @@ vi.mock("../hooks/useOrders", () => ({
   useOrderMutations: () => mut,
 }));
 vi.mock("../hooks/useInvoices", () => ({
-  useActiveInvoiceForOrder: () => ({ data: inv.active }),
+  useActiveInvoiceForOrder: () => ({ data: inv.active, isLoading: inv.loading }),
   useInvoiceMutations: () => ({ fromOrder: inv.fromOrder }),
 }));
 vi.mock("../hooks/useQuotes", () => ({ useQuote: (id?: string) => ({ data: id ? state.quote : undefined }) }));
@@ -72,6 +72,7 @@ describe("OrderPage", () => {
     vi.clearAllMocks();
     route.id = "o1";
     inv.active = null;
+    inv.loading = false;
     state.order = order();
     state.list = [{ id: "o1", customer_name: "Muster HV", property_name: null, technician_names: ["Anna Berg"] }];
     state.quote = null;
@@ -149,6 +150,21 @@ describe("OrderPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Rechnung erstellen" }));
     expect(inv.fromOrder.mutate).toHaveBeenCalledWith("o1", expect.anything());
     expect(navigate).toHaveBeenCalledWith("/invoices/inv1");
+  });
+
+  it("links the draft instead of offering a second invoice on a done order", async () => {
+    state.order = order({ status: "done" });
+    inv.active = { id: "inv1", invoice_no: "RE-0001" };
+    render();
+    expect(await screen.findByRole("link", { name: "Rechnungsentwurf öffnen" })).toHaveAttribute("href", "/invoices/inv1");
+    expect(screen.queryByRole("button", { name: "Rechnung erstellen" })).not.toBeInTheDocument();
+  });
+
+  it("disables Rechnung erstellen while the invoice lookup loads", async () => {
+    state.order = order({ status: "done" });
+    inv.loading = true;
+    render();
+    expect(await screen.findByRole("button", { name: "Rechnung erstellen" })).toBeDisabled();
   });
 
   it("shows an invoiced order read only with a link to its invoice and no actions", async () => {

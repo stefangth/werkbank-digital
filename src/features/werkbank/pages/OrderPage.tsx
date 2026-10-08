@@ -45,7 +45,7 @@ export function OrderPage() {
   const { data: quote } = useQuote(order?.quote_id ?? undefined);
   const { data: quoteItems } = useDocumentItems(order?.quote_id ? { quoteId: order.quote_id } : undefined);
   const { data: orderItems } = useDocumentItems(order ? { orderId: order.id } : undefined);
-  const { data: activeInvoice } = useActiveInvoiceForOrder(order?.status === "invoiced" ? order.id : undefined);
+  const { data: activeInvoice, isLoading: invoiceLoading } = useActiveInvoiceForOrder(order?.status === "invoiced" || order?.status === "done" ? order.id : undefined);
   const { fromOrder } = useInvoiceMutations();
   const { update, setStatus, setTechnicians, remove } = useOrderMutations();
   // Keyed by the order id and the status it was set at: the route reuses this component, so a
@@ -108,8 +108,13 @@ export function OrderPage() {
                 {t(`orders.action.${action}`)}
               </Button>
             ))}
-            {status === "done" && !locked && (
-              <Button disabled={fromOrder.isPending} onClick={() => fromOrder.mutate(order.id, { onSuccess: (invoiceId) => navigate(invoicePath(invoiceId)) })}>
+            {status === "done" && !locked && activeInvoice && (
+              <Button variant="secondary" asChild>
+                <Link to={invoicePath(activeInvoice.id)}>{t("orders.action.openInvoiceDraft")}</Link>
+              </Button>
+            )}
+            {status === "done" && !locked && !activeInvoice && (
+              <Button disabled={invoiceLoading || fromOrder.isPending} onClick={() => fromOrder.mutate(order.id, { onSuccess: (invoiceId) => navigate(invoicePath(invoiceId)) })}>
                 {t("orders.action.createInvoice")}
               </Button>
             )}
