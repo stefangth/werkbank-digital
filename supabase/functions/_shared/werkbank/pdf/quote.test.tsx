@@ -29,7 +29,7 @@ const profile = {
   company_name: "Muster Sanitär", legal_form: "GmbH", street: "Werkstr. 2", postal_code: "80331", city: "München",
 } as ProfileRow;
 const totals = {
-  quote_id: "q", order_id: null,
+  quote_id: "q", order_id: null, invoice_id: null,
   net_total: 1000, discount_total: 0, vat_total: 190, gross_total: 1190, labour_total: 400,
   vat_breakdown: [{ rate: 19, net: 1000, discounted_net: 1000, vat: 190 }],
 } as TotalsRow;

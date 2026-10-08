@@ -90,7 +90,9 @@ the schema carries 242 migrations. The maintainer is a single person.
 The order matters; each step names why.
 
 1. Export every Werkbank org's data and hand it to the business (invoices are subject to
-   statutory retention; the obligation is the business's, but it needs its data).
+   statutory retention; the obligation is the business's, but it needs its data). The org
+   export holds the rows only: download the issued invoice PDFs from `werkbank-documents`
+   (`<org>/invoices/`) as well, since the stored file is the original.
 2. Delete the `handwerk` organizations while the schema still exists. This works because
    every table in schema `werkbank` that references `public.organizations` declares
    `on delete cascade` (a rule for Teil 2 and later), so an org's Werkbank rows go with it.
@@ -125,9 +127,14 @@ The order matters; each step names why.
 
 Storage is not covered by any of these steps: neither the org delete nor
 `drop schema werkbank` touches the buckets `werkbank-assets` and `werkbank-documents`, and
-their objects hold customer data (logos, quote PDFs, signatures). After the export in step 1,
-empty both buckets through the Storage API (dashboard or CLI; direct deletes from
-`storage.objects` are blocked) and delete them, and drop the five `Werkbank ...` policies on
+their objects hold customer data (logos, quote PDFs, invoice PDFs, signatures). After the
+org delete in step 2, empty both buckets through the Storage API (dashboard or CLI; direct
+deletes from `storage.objects` are blocked) and delete them. The order is required: the
+trigger `werkbank.protect_invoice_files` refuses to replace or delete an invoice PDF
+(`<org>/invoices/...` in `werkbank-documents`) while its org row exists, so invoice files can
+be deleted only once the org rows are gone. The same order applies when a single org is
+erased or deleted outside this removal (platform delete, GDPR erasure, any retention job):
+delete the org row first, then its `<org>/` folder in both buckets. Then drop the five `Werkbank ...` policies on
 `storage.objects` in the removal migration of step 4.
 
 At go-live the mirror image applies: apply the `*_werkbank_schema` migration in

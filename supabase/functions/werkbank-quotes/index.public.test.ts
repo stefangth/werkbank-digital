@@ -31,7 +31,7 @@ const customer = {
   street: "Hauptstr. 1", postal_code: "80331", city: "München", email: "anna@privat.example", phone: "0171 555",
 };
 const totals = {
-  quote_id: QUOTE, order_id: null, net_total: 100, discount_total: 0, vat_total: 19, gross_total: 119,
+  quote_id: QUOTE, order_id: null, invoice_id: null, net_total: 100, discount_total: 0, vat_total: 19, gross_total: 119,
   labour_total: 50, vat_breakdown: [{ rate: 19, net: 100, discounted_net: 100, vat: 19 }],
 };
 const items = [

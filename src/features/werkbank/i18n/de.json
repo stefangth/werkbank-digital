@@ -103,6 +103,11 @@
     "propertyMismatch": "Das Objekt gehört nicht zu diesem Kunden.",
     "invalidTransition": "Das ist im aktuellen Status nicht möglich.",
     "orderExists": "Zu diesem Angebot gibt es schon einen Auftrag.",
+    "invoiceLocked": "Diese Rechnung ist kein Entwurf mehr und kann nicht geändert werden.",
+    "invoiceNotReady": "Diese Rechnung kann noch nicht gestellt werden.",
+    "orderNotDone": "Der Auftrag muss erledigt sein, bevor er abgerechnet werden kann.",
+    "numberRangeLocked": "Dieser Nummernkreis kann nicht mehr geändert werden.",
+    "activeInvoiceExists": "Zu diesem Auftrag gibt es schon eine offene Rechnung.",
     "notAllowedHere": "Das kannst du hier nicht ändern."
   },
   "units": {
@@ -559,7 +564,10 @@
     "lineNet": "Netto",
     "deleteTitle": "Titel löschen",
     "invalidNumber": "Bitte gib eine Zahl ein, zum Beispiel 12,50.",
-    "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten."
+    "deleteTitleBody": "Dieser Titel hat Positionen. Nur der Titel wird gelöscht, die Positionen bleiben erhalten.",
+    "newItem": "Neue Position",
+    "newTitle": "Neuer Titel",
+    "newText": "Neuer Text"
   },
   "totals": {
     "title": "Summen",

@@ -3049,9 +3049,12 @@ export type Database = {
           created_at: string
           email: string | null
           iban: string | null
+          invoice_closing: string | null
+          invoice_intro: string | null
           legal_form: string | null
           logo_path: string | null
           org_id: string
+          payment_due_days: number
           payment_terms_text: string | null
           phone: string | null
           postal_code: string
@@ -3075,9 +3078,12 @@ export type Database = {
           created_at?: string
           email?: string | null
           iban?: string | null
+          invoice_closing?: string | null
+          invoice_intro?: string | null
           legal_form?: string | null
           logo_path?: string | null
           org_id: string
+          payment_due_days?: number
           payment_terms_text?: string | null
           phone?: string | null
           postal_code: string
@@ -3101,9 +3107,12 @@ export type Database = {
           created_at?: string
           email?: string | null
           iban?: string | null
+          invoice_closing?: string | null
+          invoice_intro?: string | null
           legal_form?: string | null
           logo_path?: string | null
           org_id?: string
+          payment_due_days?: number
           payment_terms_text?: string | null
           phone?: string | null
           postal_code?: string
@@ -3261,6 +3270,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          invoice_id: string | null
           item_no: string | null
           kind: string
           labour_price: number | null
@@ -3282,6 +3292,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          invoice_id?: string | null
           item_no?: string | null
           kind: string
           labour_price?: number | null
@@ -3303,6 +3314,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          invoice_id?: string | null
           item_no?: string | null
           kind?: string
           labour_price?: number | null
@@ -3321,11 +3333,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "document_items_catalog_item_id_fkey"
-            columns: ["catalog_item_id"]
+            foreignKeyName: "document_items_catalog_fk"
+            columns: ["org_id", "catalog_item_id"]
             isOneToOne: false
             referencedRelation: "catalog_items"
-            referencedColumns: ["id"]
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "document_items_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "document_items_invoice_fk"
+            columns: ["org_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["org_id", "id"]
           },
           {
             foreignKeyName: "document_items_order_fk"
@@ -3360,6 +3386,155 @@ export type Database = {
             columns: ["org_id", "source_item_id"]
             isOneToOne: false
             referencedRelation: "document_items"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          buyer_snapshot: Json | null
+          cancels_invoice_id: string | null
+          closing_text: string | null
+          contact_id: string | null
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          due_date: string | null
+          id: string
+          intro_text: string | null
+          invoice_no: string | null
+          issue_date: string | null
+          issued_at: string | null
+          location_note: string | null
+          order_id: string | null
+          org_id: string
+          payment_due_days: number
+          payment_terms_text: string | null
+          pdf_path: string | null
+          pdf_sha256: string | null
+          property_id: string | null
+          seller_snapshot: Json | null
+          sent_at: string | null
+          sent_to: string[] | null
+          service_date_from: string | null
+          service_date_to: string | null
+          status: string
+          subject: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_snapshot?: Json | null
+          cancels_invoice_id?: string | null
+          closing_text?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_id: string
+          discount_percent?: number
+          due_date?: string | null
+          id?: string
+          intro_text?: string | null
+          invoice_no?: string | null
+          issue_date?: string | null
+          issued_at?: string | null
+          location_note?: string | null
+          order_id?: string | null
+          org_id: string
+          payment_due_days?: number
+          payment_terms_text?: string | null
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          property_id?: string | null
+          seller_snapshot?: Json | null
+          sent_at?: string | null
+          sent_to?: string[] | null
+          service_date_from?: string | null
+          service_date_to?: string | null
+          status?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_snapshot?: Json | null
+          cancels_invoice_id?: string | null
+          closing_text?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string
+          discount_percent?: number
+          due_date?: string | null
+          id?: string
+          intro_text?: string | null
+          invoice_no?: string | null
+          issue_date?: string | null
+          issued_at?: string | null
+          location_note?: string | null
+          order_id?: string | null
+          org_id?: string
+          payment_due_days?: number
+          payment_terms_text?: string | null
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          property_id?: string | null
+          seller_snapshot?: Json | null
+          sent_at?: string | null
+          sent_to?: string[] | null
+          service_date_from?: string | null
+          service_date_to?: string | null
+          status?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_contact_fk"
+            columns: ["org_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "order_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -3801,6 +3976,7 @@ export type Database = {
         Row: {
           discount_total: number | null
           gross_total: number | null
+          invoice_id: string | null
           labour_total: number | null
           net_total: number | null
           order_id: string | null
@@ -3809,6 +3985,97 @@ export type Database = {
           vat_total: number | null
         }
         Relationships: []
+      }
+      invoice_list: {
+        Row: {
+          buyer_snapshot: Json | null
+          cancelled_by_no: string | null
+          cancels_invoice_id: string | null
+          cancels_no: string | null
+          closing_text: string | null
+          contact_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          discount_percent: number | null
+          due_date: string | null
+          gross_total: number | null
+          id: string | null
+          intro_text: string | null
+          invoice_no: string | null
+          issue_date: string | null
+          issued_at: string | null
+          location_note: string | null
+          net_total: number | null
+          order_id: string | null
+          org_id: string | null
+          payment_due_days: number | null
+          payment_terms_text: string | null
+          pdf_path: string | null
+          pdf_sha256: string | null
+          property_id: string | null
+          property_name: string | null
+          seller_snapshot: Json | null
+          sent_at: string | null
+          sent_to: string[] | null
+          service_date_from: string | null
+          service_date_to: string | null
+          status: string | null
+          subject: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_cancels_fk"
+            columns: ["org_id", "cancels_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_contact_fk"
+            columns: ["org_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_fk"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "order_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "invoices_property_fk"
+            columns: ["org_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
       }
       order_list: {
         Row: {
@@ -3957,11 +4224,55 @@ export type Database = {
       }
     }
     Functions: {
+      cancel_invoice: { Args: { p_invoice: string }; Returns: string }
+      copy_invoice: { Args: { p_invoice: string }; Returns: string }
       copy_quote: {
         Args: { p_customer?: string; p_property?: string; p_quote: string }
         Returns: string
       }
+      create_invoice_from_order: { Args: { p_order: string }; Returns: string }
       create_order_from_quote: { Args: { p_quote: string }; Returns: string }
+      finalize_invoice: {
+        Args: { p_invoice: string }
+        Returns: {
+          buyer_snapshot: Json | null
+          cancels_invoice_id: string | null
+          closing_text: string | null
+          contact_id: string | null
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          due_date: string | null
+          id: string
+          intro_text: string | null
+          invoice_no: string | null
+          issue_date: string | null
+          issued_at: string | null
+          location_note: string | null
+          order_id: string | null
+          org_id: string
+          payment_due_days: number
+          payment_terms_text: string | null
+          pdf_path: string | null
+          pdf_sha256: string | null
+          property_id: string | null
+          seller_snapshot: Json | null
+          sent_at: string | null
+          sent_to: string[] | null
+          service_date_from: string | null
+          service_date_to: string | null
+          status: string
+          subject: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       import_catalog_items: {
         Args: { p_org: string; p_rows: Json }
         Returns: Json

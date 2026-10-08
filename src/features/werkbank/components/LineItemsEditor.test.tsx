@@ -37,7 +37,7 @@ import { LineItemsEditor } from "./LineItemsEditor";
 
 const row = (over: Partial<DocumentItem>): DocumentItem => ({
   id: "i", kind: "item", name: "Position", description: null, catalog_item_id: null, item_no: null, quantity: 2, unit_code: "HUR",
-  labour_price: 50, material_price: 10, vat_rate: 19, line_net: 120, sort_order: 0, org_id: "o", quote_id: "q1", order_id: null,
+  labour_price: 50, material_price: 10, vat_rate: 19, line_net: 120, sort_order: 0, org_id: "o", quote_id: "q1", order_id: null, invoice_id: null,
   source_item_id: null, created_at: "", updated_at: "", ...over,
 });
 
@@ -88,12 +88,14 @@ describe("LineItemsEditor", () => {
 
   it("adds a free item, a title and a text block", () => {
     renderWithProviders(<LineItemsEditor docRef={{ quoteId: "q1" }} readOnly={false} />);
+    // The DB requires a non-blank name (item, title) or description (text), so new lines start
+    // with a placeholder the user overwrites.
     fireEvent.click(screen.getByRole("button", { name: "Freie Position" }));
-    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "item", catalog_item_id: null }) }));
+    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "item", catalog_item_id: null, name: "Neue Position" }) }));
     fireEvent.click(screen.getByRole("button", { name: "Titel hinzufügen" }));
-    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "title" }) }));
+    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "title", name: "Neuer Titel" }) }));
     fireEvent.click(screen.getByRole("button", { name: "Text hinzufügen" }));
-    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "text" }) }));
+    expect(mut.add.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ draft: expect.objectContaining({ kind: "text", name: null, description: "Neuer Text" }) }));
   });
 
   it("saves a typed quantity once, 500 ms after the last keystroke", () => {

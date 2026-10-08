@@ -127,6 +127,12 @@
     },
     {
       "mode": "file",
+      "source": "src/features/werkbank/lib/invoicePreflight.ts",
+      "target": "supabase/functions/_shared/werkbank/invoicePreflight.ts",
+      "why": "Invoice issue preflight shared by the issue dialog and werkbank-invoices"
+    },
+    {
+      "mode": "file",
       "source": "src/features/werkbank/lib/quoteDisplayNumber.ts",
       "target": "supabase/functions/_shared/werkbank/quoteDisplayNumber.ts",
       "why": "The quote display number (version suffix from version 2), import-free. The app, the PDF, the emails, the consent text and the public page print the same number."

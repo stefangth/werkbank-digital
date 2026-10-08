@@ -103,6 +103,11 @@
     "propertyMismatch": "The property does not belong to this customer.",
     "invalidTransition": "That is not possible in the current status.",
     "orderExists": "An order already exists for this quote.",
+    "invoiceLocked": "This invoice is no longer a draft and cannot be changed.",
+    "invoiceNotReady": "This invoice is not ready to be issued yet.",
+    "orderNotDone": "The order must be done before it can be invoiced.",
+    "numberRangeLocked": "This number range cannot be changed anymore.",
+    "activeInvoiceExists": "There is already an open invoice for this order.",
     "notAllowedHere": "You cannot change that here."
   },
   "units": {
@@ -559,7 +564,10 @@
     "lineNet": "Net",
     "deleteTitle": "Delete title",
     "invalidNumber": "Enter a number, for example 12.50.",
-    "deleteTitleBody": "This title has items. Only the title is deleted, the items stay."
+    "deleteTitleBody": "This title has items. Only the title is deleted, the items stay.",
+    "newItem": "New item",
+    "newTitle": "New title",
+    "newText": "New text"
   },
   "totals": {
     "title": "Totals",
