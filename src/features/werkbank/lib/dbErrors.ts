@@ -23,6 +23,7 @@ export type DbErrorKey =
   | "errors.futureBookingDate"
   | "errors.refundExceedsCredit"
   | "errors.transferExceedsCredit"
+  | "errors.holdUntilPast"
   | "errors.nothingOpen"
   | "errors.openAmountChanged"
   | "errors.alreadyReversed"
@@ -73,6 +74,7 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (text.includes("future_booking_date")) return "errors.futureBookingDate";
   if (text.includes("refund_exceeds_credit")) return "errors.refundExceedsCredit";
   if (text.includes("transfer_exceeds_credit")) return "errors.transferExceedsCredit";
+  if (text.includes("hold_until_past")) return "errors.holdUntilPast";
   if (text.includes("nothing_open")) return "errors.nothingOpen";
   if (text.includes("open_amount_changed")) return "errors.openAmountChanged";
   if (text.includes("already_reversed")) return "errors.alreadyReversed";

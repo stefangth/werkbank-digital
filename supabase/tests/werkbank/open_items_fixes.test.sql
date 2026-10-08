@@ -3,7 +3,7 @@
 -- cleared once set.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(17);
+SELECT plan(20);
 
 SET LOCAL timezone = 'UTC';
 
@@ -98,6 +98,14 @@ SELECT is(pg_temp.open(103), 1190::numeric, 'the failed transfer changed nothing
 SELECT lives_ok($$SELECT werkbank.transfer_invoice_entry('77777777-0000-4000-a000-0000000000e3', pg_temp.n(103), 'Umbuchung')$$,
   'a transfer within the credit of a cancelled invoice works');
 SELECT is(pg_temp.open(104), 0::numeric, 'the source is settled after the transfer');
+
+-- 2b. A hold cannot end in the past (it would never count as active) ---------------------------
+SELECT throws_ok($$SELECT werkbank.set_dunning_hold(pg_temp.n(103), 'Reklamation', pg_temp.today() - 1)$$,
+  '22023', 'hold_until_past', 'a hold ending yesterday is refused');
+SELECT lives_ok($$SELECT werkbank.set_dunning_hold(pg_temp.n(103), 'Reklamation', pg_temp.today())$$,
+  'a hold ending today is accepted');
+SELECT lives_ok($$SELECT werkbank.set_dunning_hold(pg_temp.n(103), 'Reklamation', NULL)$$,
+  'a hold without an end date is accepted');
 
 -- 3. The formula holds row by row ------------------------------------------------------------------
 SELECT is((SELECT count(*)::int FROM werkbank.invoice_balances WHERE open_amount <> claim - paid - written_off), 0,

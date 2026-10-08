@@ -222,7 +222,8 @@
       "noteRequired": "Notiz",
       "reason": "Grund",
       "target": "Umbuchen auf",
-      "none": "Es gibt keine andere abgeschlossene Rechnung für diesen Kunden."
+      "none": "Es gibt keine andere abgeschlossene Rechnung für diesen Kunden.",
+      "parsed": "Wird gebucht als"
     },
     "hints": {
       "date": "Heute. Du kannst das Datum ändern.",
@@ -384,7 +385,8 @@
     "dunningNotAllowed": "Für diese Rechnung ist gerade kein Mahnschreiben möglich.",
     "invalidEntryKind": "Diese Art von Eintrag gibt es nicht.",
     "invalidAmount": "Gib einen Betrag mit höchstens zwei Nachkommastellen ein.",
-    "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung."
+    "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung.",
+    "holdUntilPast": "Das Enddatum einer Mahnsperre darf nicht in der Vergangenheit liegen."
   },
   "units": {
     "HUR": "Std",

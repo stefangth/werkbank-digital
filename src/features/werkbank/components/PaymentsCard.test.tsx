@@ -103,6 +103,18 @@ describe("PaymentsCard", () => {
   };
   const submit = () => fireEvent.click(screen.getByRole("button", { name: "Zahlung buchen" }));
 
+  it("shows the parsed amount before booking, so 1.500 reads as 1.500,00 €", async () => {
+    await openPayment("1.500");
+    expect(await screen.findByText(/Wird gebucht als/)).toHaveTextContent(/1\.500,00\s€/);
+    fireEvent.change(screen.getByRole("textbox", { name: /Betrag/ }), { target: { value: "1,5" } });
+    expect(await screen.findByText(/Wird gebucht als/)).toHaveTextContent(/1,50\s€/);
+  });
+
+  it("shows no parsed amount for an invalid entry", async () => {
+    await openPayment("12,345");
+    expect(screen.queryByText(/Wird gebucht als/)).not.toBeInTheDocument();
+  });
+
   it("submits 1.190,50 as 1190.5", async () => {
     await openPayment("1.190,50");
     submit();

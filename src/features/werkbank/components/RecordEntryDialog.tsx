@@ -132,6 +132,11 @@ export function RecordEntryDialog({
                 {t("payments.form.amount")}
               </HintedLabel>
               <Input id="entry-amount" aria-describedby={hintId("entry-amount")} inputMode="decimal" autoComplete="off" {...register("amount")} />
+              {typed !== null && (
+                <p className="m-0 text-sm text-muted-foreground">
+                  {t("payments.form.parsed")} <Metric size="body">{formatEuro(typed, i18n.language)}</Metric>
+                </p>
+              )}
               {errors.amount && <p className="m-0 text-sm text-destructive">{errors.amount.message}</p>}
               {overOpen && <Alert>{t("payments.warnings.overOpen")}</Alert>}
             </div>

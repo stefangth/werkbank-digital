@@ -102,6 +102,7 @@ describe("open items errors", () => {
     ["transfer_target_invalid", "errors.transferTargetInvalid"], ["dunning_not_allowed", "errors.dunningNotAllowed"],
     ["invalid_entry_kind", "errors.invalidEntryKind"], ["invalid_amount", "errors.invalidAmount"],
     ["transfer_exceeds_credit", "errors.transferExceedsCredit"],
+    ["hold_until_past", "errors.holdUntilPast"],
   ])("maps %s", (message, key) => {
     expect(mapDbError({ code: "22023", message })).toBe(key);
   });

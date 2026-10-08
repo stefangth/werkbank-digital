@@ -222,7 +222,8 @@
       "noteRequired": "Note",
       "reason": "Reason",
       "target": "Move to",
-      "none": "There is no other issued invoice for this customer."
+      "none": "There is no other issued invoice for this customer.",
+      "parsed": "Booked as"
     },
     "hints": {
       "date": "Today. You can change the date.",
@@ -384,7 +385,8 @@
     "dunningNotAllowed": "A dunning notice is not possible for this invoice right now.",
     "invalidEntryKind": "That kind of entry does not exist.",
     "invalidAmount": "Enter an amount with at most two decimal places.",
-    "cancellationExists": "This invoice already has a cancellation invoice."
+    "cancellationExists": "This invoice already has a cancellation invoice.",
+    "holdUntilPast": "The end date of a hold cannot be in the past."
   },
   "units": {
     "HUR": "h",

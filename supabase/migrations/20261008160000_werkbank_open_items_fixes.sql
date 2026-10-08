@@ -168,3 +168,27 @@ from (
    and (h.until is null or h.until >= (now() at time zone 'Europe/Berlin')::date)
   where i.type = 'invoice' and i.status in ('issued', 'cancelled')
 ) x;
+
+-- A hold that ended before today would never count as active: refuse it instead of storing a dead
+-- row (PR review). Body otherwise as in 20261008140000.
+create or replace function werkbank.set_dunning_hold(p_invoice uuid, p_reason text, p_until date default null)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_inv werkbank.invoices;
+begin
+  v_inv := werkbank.authorize_invoice(p_invoice);
+  if p_until is not null and p_until < (now() at time zone 'Europe/Berlin')::date then
+    raise exception 'hold_until_past' using errcode = '22023';
+  end if;
+  insert into werkbank.dunning_holds (invoice_id, org_id, reason, until, created_by)
+  values (v_inv.id, v_inv.org_id, p_reason, p_until, auth.uid())
+  on conflict (invoice_id) do update
+  set reason = excluded.reason, until = excluded.until, created_by = excluded.created_by, created_at = now();
+end;
+$$;
+revoke all on function werkbank.set_dunning_hold(uuid, text, date) from public, anon;
+grant execute on function werkbank.set_dunning_hold(uuid, text, date) to authenticated;
