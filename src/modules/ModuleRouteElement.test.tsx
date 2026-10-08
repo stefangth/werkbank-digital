@@ -12,13 +12,13 @@ const Page = () => <p>module page</p>;
 
 describe("ModuleRouteElement", () => {
   it("wraps a default route in the app shell", async () => {
-    render(<ModuleRouteElement route={{ path: "/x", kinds: ["handwerk"], requiredRoles: ["admin"], Page }} />);
+    render(<ModuleRouteElement route={{ path: "/x", kinds: ["production"], requiredRoles: ["admin"], Page }} />);
     expect(await screen.findByText("module page")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "sidebar" })).toBeInTheDocument();
   });
 
   it("renders a bare route without the app shell", async () => {
-    render(<ModuleRouteElement route={{ path: "/x", kinds: ["handwerk"], requiredRoles: ["admin"], shell: "bare", Page }} />);
+    render(<ModuleRouteElement route={{ path: "/x", kinds: ["production"], requiredRoles: ["admin"], shell: "bare", Page }} />);
     expect(await screen.findByText("module page")).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "sidebar" })).not.toBeInTheDocument();
   });
