@@ -24,6 +24,11 @@
 //     for a send that cannot go out. A failed email answers 502 { error: "send_failed", issued: true }
 //     (the notice stays stored; the UI offers send). delivery "print" ignores `send` and never emails.
 //
+// Resume with send and `send` re-check the business blockers first (an issued invoice, an open
+// amount, no active hold): 409 { error: "not_allowed", blockers }. A resume without send still stores.
+// payment_deadline must be a calendar date not before Berlin today (400 bad_request); preview needs
+// an issued invoice (409 not_issued).
+//
 // verify_jwt = true in config.toml: there are no public actions here.
 // DI: exports handle(req, deps, render); Deno.serve wiring at the bottom.
 
@@ -64,6 +69,13 @@ const isRecord = (v: unknown): v is Body => typeof v === "object" && v !== null 
 const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !== "" ? v.trim() : null);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** A real calendar date in YYYY-MM-DD (2026-02-30 is not). */
+function isCalendarDate(v: string): boolean {
+  if (!DATE.test(v)) return false;
+  const d = new Date(`${v}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+}
+
 /** Today in Europe/Berlin, YYYY-MM-DD. */
 const berlinToday = (now: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(now);
 
@@ -98,7 +110,9 @@ export async function handle(
   let deadline: string | null = null;
   if (body.payment_deadline !== undefined && body.payment_deadline !== null) {
     deadline = str(body.payment_deadline);
-    if (!deadline || !DATE.test(deadline) || Number.isNaN(Date.parse(deadline))) return json({ error: "bad_request" }, 400);
+    if (!deadline || !isCalendarDate(deadline) || deadline < berlinToday(deps.now())) {
+      return json({ error: "bad_request" }, 400);
+    }
   }
   let delivery: "email" | "print" = "email";
   if (action === "issue") {
@@ -173,7 +187,7 @@ const contextError = (c: "error" | "no_profile") =>
 // ── preview ──────────────────────────────────────────────────────────────────
 
 async function previewNotice(deps: Deps, render: DunningRenderers, invoice: InvoiceRow, deadline: string | null): Promise<Response> {
-  if (invoice.status === "draft") return json({ error: "not_allowed", blockers: ["not_issued"] }, 409);
+  if (invoice.type !== "invoice" || invoice.status !== "issued") return json({ error: "not_allowed", blockers: ["not_issued"] }, 409);
   const ctx = await loadContext(deps, invoice);
   if (typeof ctx === "string") return contextError(ctx);
 
@@ -242,8 +256,14 @@ async function issueNotice(
     target = prepared;
   }
 
-  // Resume: a notice without a file is stored as it is, the RPC is not called again.
+  // Resume: a notice without a file is stored as it is, the RPC is not called again. Storing it is
+  // always allowed; emailing it is not once the invoice is settled, held or cancelled (the RPC that
+  // checked this ran before, so the business blockers are checked again here).
   let notice = ctx.notices.find((n) => !n.pdf_path) ?? null;
+  if (notice && target) {
+    const blocked = await sendBlocked(deps, invoice, ctx.balance);
+    if (blocked) return blocked;
+  }
   if (!notice) {
     const paymentDeadline = deadline ?? addDays(berlinToday(deps.now()), ctx.profile.dunning_deadline_days);
     // The caller's JWT (requireOrgRole already checked the header), never the service role:
@@ -367,6 +387,28 @@ async function prepareSend(deps: Deps, invoice: InvoiceRow, input: SendInput): P
   return checked;
 }
 
+/**
+ * The business blockers that forbid emailing a notice of this invoice now: not an issued invoice
+ * (not_issued), nothing open (nothing_open) or an active hold (on_hold: until null or not before
+ * Berlin today). The same names and rule as create_dunning_notice. null when the email may go out,
+ * else the 409 response.
+ */
+async function sendBlocked(
+  deps: Deps,
+  invoice: InvoiceRow,
+  balance: { open_amount: number | null } | null,
+): Promise<Response | null> {
+  const { data: hold, error } = await deps.admin.schema("werkbank").from("dunning_holds")
+    .select("until").eq("invoice_id", invoice.id).eq("org_id", invoice.org_id).maybeSingle();
+  if (error) return json({ error: "load_failed" }, 500);
+  const blockers: DunningBlocker[] = [];
+  if (invoice.type !== "invoice" || invoice.status !== "issued") blockers.push("not_issued");
+  if (!(Number(balance?.open_amount ?? 0) > 0)) blockers.push("nothing_open");
+  const until = (hold as { until: string | null } | null)?.until;
+  if (hold && (until === null || until === undefined || until >= berlinToday(deps.now()))) blockers.push("on_hold");
+  return blockers.length > 0 ? json({ error: "not_allowed", blockers }, 409) : null;
+}
+
 function sendFailure(error: "load_failed" | "send_failed"): Response {
   return error === "send_failed" ? json({ error, issued: true }, 502) : json({ error, issued: true }, 500);
 }
@@ -383,6 +425,10 @@ async function sendNotice(deps: Deps, orgId: string, noticeId: string, input: Se
   const invoice = await loadInvoice(deps, orgId, notice.invoice_id);
   if (invoice === "error") return json({ error: "load_failed" }, 500);
   if (!invoice) return json({ error: "not_found" }, 404);
+  const balance = await w.from("invoice_balances").select("open_amount").eq("invoice_id", invoice.id).maybeSingle();
+  if (balance.error) return json({ error: "load_failed" }, 500);
+  const blocked = await sendBlocked(deps, invoice, balance.data as { open_amount: number | null } | null);
+  if (blocked) return blocked;
   const target = await prepareSend(deps, invoice, input);
   if (target instanceof Response) return target;
 
