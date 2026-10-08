@@ -15,6 +15,7 @@ import { splitAddresses } from "../lib/addresses";
 import { defaultRecipient } from "../lib/defaultRecipient";
 import { stageKey } from "../lib/stageKey";
 import { HintedLabel } from "./DefaultHint";
+import { focusFirstField } from "../lib/focusFirstField";
 import { hintId } from "../lib/hintId";
 
 const MAIL = /^[^@\s]+@[^@\s]+$/;
@@ -66,7 +67,7 @@ export function SendDunningDialog({ notice, invoice, retry, onOpenChange }: {
 
   return (
     <Dialog open onOpenChange={(next) => { if (next || !pending) onOpenChange(next); }}>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={focusFirstField}>
         <DialogHeader>
           <DialogTitle>{t(retry ? "dunning.send.retryTitle" : "dunning.send.resendTitle", { stage })}</DialogTitle>
           <DialogDescription>{t("dunning.send.description")}</DialogDescription>

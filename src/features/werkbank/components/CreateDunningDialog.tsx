@@ -21,6 +21,7 @@ import { stageKey } from "../lib/stageKey";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { DatePopover } from "./DatePopover";
 import { HintedLabel } from "./DefaultHint";
+import { focusFirstField } from "../lib/focusFirstField";
 import { hintId } from "../lib/hintId";
 
 const DEFAULT_DEADLINE_DAYS = 7;
@@ -88,7 +89,7 @@ export function CreateDunningDialog({ invoice, stage, onOpenChange }: {
 
   return (
     <Dialog open onOpenChange={(next) => { if (next || !pending) onOpenChange(next); }}>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={focusFirstField}>
         <DialogHeader>
           <DialogTitle>{t("dunning.create.title", { stage: t(stageKey(stage)) })}</DialogTitle>
           <DialogDescription>{t("dunning.create.description")}</DialogDescription>

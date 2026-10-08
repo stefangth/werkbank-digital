@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -18,19 +18,22 @@ import { formatEuro, parseEuroInput } from "../lib/money";
 import { recordEntrySchema, WRITE_OFF_REASONS, type RecordEntryForm, type RecordEntryMode } from "../schemas/payment";
 import { DatePopover } from "./DatePopover";
 import { HintedLabel } from "./DefaultHint";
+import { focusFirstField } from "../lib/focusFirstField";
 import { hintId } from "../lib/hintId";
 
 const asInput = (n: number) => n.toFixed(2).replace(".", ",");
 
 /** Books a payment (preset: Berlin today and the open amount), a write-off (always the whole open
  *  amount) or a refund of credit. `openAmount` is negative while the invoice holds credit. When the
- *  database reports the open amount moved meanwhile, the dialog says so and `onStale` refetches. */
+ *  database reports the open amount moved meanwhile, the dialog says so and `onStale` refetches;
+ *  `refreshing` is true while that balance refetch runs. */
 export function RecordEntryDialog({
-  invoiceId, mode, openAmount, onStale, onOpenChange,
+  invoiceId, mode, openAmount, refreshing, onStale, onOpenChange,
 }: {
   invoiceId: string;
   mode: RecordEntryMode;
   openAmount: number;
+  refreshing: boolean;
   onStale: () => void;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -39,6 +42,7 @@ export function RecordEntryDialog({
   const [stale, setStale] = useState(false);
   // The preset when the stale error came; null once the refetched amount was put in (once per error).
   const [syncFrom, setSyncFrom] = useState<number | null>(null);
+  const sawRefetch = useRef(false);
   const open = Math.max(openAmount, 0);
   const credit = Math.max(-openAmount, 0);
   const preset = mode === "refund" ? credit : open;
@@ -53,13 +57,14 @@ export function RecordEntryDialog({
   const overOpen = mode === "payment" && typed !== null && Math.round(typed * 100) > Math.round(open * 100);
 
   // After a stale error the refetched open amount (or credit) replaces the old preset once; date and
-  // note stay, and a later balance change does not overwrite what was typed since.
+  // note stay. The sync disarms when the refetch is done, changed or not, so a later balance change
+  // does not overwrite what was typed since.
   useEffect(() => {
-    if (syncFrom !== null && preset !== syncFrom) {
-      setValue("amount", asInput(preset));
-      setSyncFrom(null);
-    }
-  }, [syncFrom, preset, setValue]);
+    if (syncFrom === null) return;
+    if (refreshing) { sawRefetch.current = true; return; }
+    if (preset !== syncFrom) setValue("amount", asInput(preset));
+    if (preset !== syncFrom || sawRefetch.current) setSyncFrom(null);
+  }, [syncFrom, preset, refreshing, setValue]);
 
   const submit = form.handleSubmit(async (v) => {
     setStale(false);
@@ -76,6 +81,7 @@ export function RecordEntryDialog({
       // The hook already toasted; the stale amount also needs the page to show the new one.
       if (mapDbError(e) === "errors.openAmountChanged") {
         setStale(true);
+        sawRefetch.current = false;
         setSyncFrom(preset);
         onStale();
       }
@@ -85,7 +91,7 @@ export function RecordEntryDialog({
 
   return (
     <Dialog open onOpenChange={(next) => { if (next || !record.isPending) onOpenChange(next); }}>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={focusFirstField}>
         <DialogHeader>
           <DialogTitle>{t(`${copy}.title`)}</DialogTitle>
           <DialogDescription>{t(`${copy}.description`)}</DialogDescription>
@@ -94,7 +100,7 @@ export function RecordEntryDialog({
           <div className="space-y-2">
             <HintedLabel htmlFor="entry-date" hint={t("payments.hints.date")}>{t("payments.form.date")}</HintedLabel>
             <DatePopover value={bookedOn} onSelect={(d) => setValue("bookedOn", d, { shouldValidate: true })}>
-              <Button id="entry-date" type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("payments.form.date")} aria-describedby={hintId("entry-date")}>
+              <Button id="entry-date" data-autofocus type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("payments.form.date")} aria-describedby={hintId("entry-date")}>
                 <CalendarDays className="h-4 w-4" aria-hidden />
                 {bookedOn ? <Metric size="body">{formatDateDMY(bookedOn)}</Metric> : t("payments.form.pickDate")}
               </Button>

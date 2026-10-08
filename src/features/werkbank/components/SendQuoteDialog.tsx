@@ -19,6 +19,7 @@ import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { quotePreflight, type QuoteBlocker } from "../lib/quotePreflight";
 import { splitAddresses } from "../lib/addresses";
 import { HintedLabel } from "./DefaultHint";
+import { focusFirstField } from "../lib/focusFirstField";
 import { hintId } from "../lib/hintId";
 
 type SendableQuote = Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until">;
@@ -104,7 +105,7 @@ export function SendQuoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={focusFirstField}>
         <DialogHeader>
           <DialogTitle>{resendMode ? t("quotes.send.resendTitle") : t("quotes.send.title")}</DialogTitle>
           <DialogDescription>{resendMode ? t("quotes.send.resendHint") : t("quotes.send.hint")}</DialogDescription>

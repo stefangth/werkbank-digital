@@ -19,6 +19,7 @@ import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
 import { splitAddresses } from "../lib/addresses";
 import { defaultRecipient } from "../lib/defaultRecipient";
 import { HintedLabel } from "./DefaultHint";
+import { focusFirstField } from "../lib/focusFirstField";
 import { hintId } from "../lib/hintId";
 
 export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
@@ -133,7 +134,7 @@ export function IssueInvoiceDialog({
   // Not dismissable while issuing or sending: the call would finish behind a closed dialog.
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next || !pending) onOpenChange(next); }}>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={focusFirstField}>
         <DialogHeader>
           <DialogTitle>{issueMode ? t("invoices.send.issueTitle") : t(resend ? "invoices.send.resendTitle" : "invoices.send.sendTitle")}</DialogTitle>
           <DialogDescription>{issueMode ? t("invoices.send.issueHint") : t("invoices.send.sendHint")}</DialogDescription>
