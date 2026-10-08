@@ -248,21 +248,22 @@ async function issueNotice(
   const ctx = await loadContext(deps, invoice);
   if (typeof ctx === "string") return contextError(ctx);
 
+  // Resume: a notice without a file is stored as it is, the RPC is not called again. Storing it is
+  // always allowed; emailing it is not once the invoice is settled, held or cancelled (the RPC that
+  // checked this ran before, so the business blockers are checked again here). The blockers come
+  // before the recipient check: a held invoice without an address answers on_hold.
+  let notice = ctx.notices.find((n) => !n.pdf_path) ?? null;
+  if (notice && sendInput) {
+    const blocked = await sendBlocked(deps, invoice, ctx.balance);
+    if (blocked) return blocked;
+  }
+
   // A requested send is checked before the RPC draws a stage: no notice for a send that cannot go out.
   let target: Recipients | null = null;
   if (sendInput) {
     const prepared = await prepareSend(deps, invoice, sendInput);
     if (prepared instanceof Response) return prepared;
     target = prepared;
-  }
-
-  // Resume: a notice without a file is stored as it is, the RPC is not called again. Storing it is
-  // always allowed; emailing it is not once the invoice is settled, held or cancelled (the RPC that
-  // checked this ran before, so the business blockers are checked again here).
-  let notice = ctx.notices.find((n) => !n.pdf_path) ?? null;
-  if (notice && target) {
-    const blocked = await sendBlocked(deps, invoice, ctx.balance);
-    if (blocked) return blocked;
   }
   if (!notice) {
     const paymentDeadline = deadline ?? addDays(berlinToday(deps.now()), ctx.profile.dunning_deadline_days);

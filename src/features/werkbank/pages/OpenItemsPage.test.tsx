@@ -130,6 +130,22 @@ describe("OpenItemsPage", () => {
     expect(await screen.findByRole("dialog")).toHaveTextContent("1 Mahnung wird versendet");
   });
 
+  it("clears a row ticked during the debounce window once the search applies, so what is ticked is what is sent", async () => {
+    st.due = [due("a", "RE-1"), due("b", "RE-2", { customer_name: "Andere GmbH" })];
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render();
+    fireEvent.click(await screen.findByRole("tab", { name: /Mahnfällig/ }));
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Andere" } });
+    // still inside the debounce window: both rows are listed and the tick is allowed
+    fireEvent.click(within(body()[1]).getByRole("checkbox"));
+    expect(within(body()[1]).getByRole("checkbox")).toBeChecked();
+    await act(async () => { vi.advanceTimersByTime(400); });
+    expect(body()).toHaveLength(1);
+    expect(within(body()[0]).getByRole("checkbox")).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Ausgewählte mahnen" })).toBeDisabled();
+    vi.useRealTimers();
+  });
+
   it("creates a print-only notice for a row without address", async () => {
     st.due = [due("b", "RE-2", { customer_invoice_email: null })];
     issue.mutateAsync.mockResolvedValue({ noticeId: "n", stage: 1 });

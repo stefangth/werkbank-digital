@@ -96,7 +96,7 @@ export function PaymentsCard({ invoiceId, customerId, status }: { invoiceId: str
       ) : <p className="m-0 text-sm text-muted-foreground">{t("payments.empty")}</p>}
 
       {dialog?.type === "record" && (
-        <RecordEntryDialog invoiceId={invoiceId} mode={dialog.mode} openAmount={open} onStale={() => void balanceQuery.refetch()} onOpenChange={close} />
+        <RecordEntryDialog invoiceId={invoiceId} mode={dialog.mode} openAmount={open} refreshing={balanceQuery.isFetching} onStale={() => void balanceQuery.refetch()} onOpenChange={close} />
       )}
       {dialog?.type === "reverse" && <ReverseEntryDialog entryId={dialog.entryId} onOpenChange={close} />}
       {dialog?.type === "transfer" && <TransferEntryDialog entryId={dialog.entryId} invoiceId={invoiceId} customerId={customerId} onOpenChange={close} />}

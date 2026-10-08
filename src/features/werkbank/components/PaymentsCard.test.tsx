@@ -7,7 +7,7 @@ import { STORAGE_KEY } from "@/i18n/config";
 import { WerkbankDataError } from "../lib/dbErrors";
 
 const { st, record, reverse, transfer, refetchBalance } = vi.hoisted(() => ({
-  st: { balance: null as unknown, entries: [] as unknown[], targets: [] as unknown[], destinations: new Map() as Map<string, unknown> },
+  st: { fetching: false, balance: null as unknown, entries: [] as unknown[], targets: [] as unknown[], destinations: new Map() as Map<string, unknown> },
   record: { mutateAsync: vi.fn(), isPending: false },
   reverse: { mutateAsync: vi.fn(), isPending: false },
   transfer: { mutateAsync: vi.fn(), isPending: false },
@@ -15,7 +15,7 @@ const { st, record, reverse, transfer, refetchBalance } = vi.hoisted(() => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 vi.mock("../hooks/useOpenItems", () => ({
-  useInvoiceBalance: () => ({ data: st.balance, isLoading: false, isError: false, refetch: refetchBalance }),
+  useInvoiceBalance: () => ({ data: st.balance, isLoading: false, isError: false, isFetching: st.fetching, refetch: refetchBalance }),
   useInvoiceEntries: () => ({ data: st.entries, isLoading: false, isError: false }),
   useRecordEntry: () => record,
   useReverseEntry: () => reverse,
@@ -37,6 +37,7 @@ const entry = (over: Record<string, unknown> = {}) => ({
 describe("PaymentsCard", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    st.fetching = false;
     st.balance = balance();
     st.entries = [entry()];
     st.targets = [];
@@ -155,36 +156,59 @@ describe("PaymentsCard", () => {
     expect(within(dialog).getAllByRole("button", { name: /Heute\. Du kannst/ })).toHaveLength(1);
   });
 
+  const again = (view: { rerender: (ui: React.ReactElement) => void }) =>
+    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
+  // The refetch starts (isFetching) and later lands, with the new balance or an unchanged one.
+  const staleThenRefetch = async (view: { rerender: (ui: React.ReactElement) => void }, next: number | null) => {
+    submit();
+    await screen.findByText(/offene Betrag hat sich zwischenzeitlich geändert/);
+    expect(st.fetching).toBe(true);
+    again(view);
+    st.fetching = false;
+    if (next !== null) st.balance = balance({ open_amount: next });
+    again(view);
+    await act(async () => {});
+  };
+
   it("replaces the amount preset with the refetched open amount after a stale error, keeping the note", async () => {
     record.mutateAsync.mockRejectedValue(new WerkbankDataError("P0001", "open_amount_changed"));
-    refetchBalance.mockImplementation(() => { st.balance = balance({ open_amount: 300 }); });
+    refetchBalance.mockImplementation(() => { st.fetching = true; });
     const view = render();
     fireEvent.click(screen.getByRole("button", { name: "Zahlung erfassen" }));
     fireEvent.change(await screen.findByRole("textbox", { name: /Betrag/ }), { target: { value: "100" } });
     fireEvent.change(screen.getByRole("textbox", { name: /Notiz/ }), { target: { value: "Bar" } });
-    submit();
-    await screen.findByText(/offene Betrag hat sich zwischenzeitlich geändert/);
-    // The refetched balance arrives and re-renders the card (the real query does this itself).
-    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
+    await staleThenRefetch(view, 300);
     await waitFor(() => expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("300,00"));
     expect(screen.getByRole("textbox", { name: /Notiz/ })).toHaveValue("Bar");
   });
 
   it("syncs the amount once per stale error, so a later balance change keeps a typed amount", async () => {
     record.mutateAsync.mockRejectedValue(new WerkbankDataError("P0001", "open_amount_changed"));
-    refetchBalance.mockImplementation(() => { st.balance = balance({ open_amount: 300 }); });
+    refetchBalance.mockImplementation(() => { st.fetching = true; });
     const view = render();
     fireEvent.click(screen.getByRole("button", { name: "Zahlung erfassen" }));
     fireEvent.change(await screen.findByRole("textbox", { name: /Betrag/ }), { target: { value: "100" } });
-    submit();
-    await screen.findByText(/offene Betrag hat sich zwischenzeitlich geändert/);
-    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
+    await staleThenRefetch(view, 300);
     await waitFor(() => expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("300,00"));
     fireEvent.change(screen.getByRole("textbox", { name: /Betrag/ }), { target: { value: "250" } });
     st.balance = balance({ open_amount: 200 });
-    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
+    again(view);
     await act(async () => {});
     expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("250");
+  });
+
+  it("disarms the sync when the refetch returns an unchanged balance, so a later change keeps a typed amount", async () => {
+    record.mutateAsync.mockRejectedValue(new WerkbankDataError("P0001", "open_amount_changed"));
+    refetchBalance.mockImplementation(() => { st.fetching = true; });
+    const view = render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlung erfassen" }));
+    fireEvent.change(await screen.findByRole("textbox", { name: /Betrag/ }), { target: { value: "100" } });
+    await staleThenRefetch(view, null);
+    fireEvent.change(screen.getByRole("textbox", { name: /Betrag/ }), { target: { value: "55" } });
+    st.balance = balance({ open_amount: 200 });
+    again(view);
+    await act(async () => {});
+    expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("55");
   });
 
   it("limits a refund to the credit", async () => {

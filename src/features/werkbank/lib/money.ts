@@ -15,15 +15,18 @@ export function parseEuroInput(raw: string): number | null {
     // Comma is the decimal separator, dots are thousands separators.
     if (!/^([1-9]\d{0,2}(\.\d{3})+|\d+),\d+$/.test(s)) return null;
     normalized = s.replace(/\./g, "").replace(",", ".");
+    // With a comma every decimal counts: "1,500" is not 1,50.
+    if ((normalized.split(".")[1]?.length ?? 0) > 2) return null;
   } else {
     // A leading 0 is never a thousands group: "0.500" is half a euro.
     if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) normalized = s.replace(/\./g, "");
-    else if (/^\d+(\.\d+)?$/.test(s)) normalized = s;
-    else return null;
+    else if (/^\d+(\.\d+)?$/.test(s)) {
+      normalized = s;
+      // Dot decimals only: trailing zeros carry no cents ("0.500" is fine, "0.1234" is not).
+      const decimals = s.split(".")[1]?.replace(/0+$/, "");
+      if (decimals && decimals.length > 2) return null;
+    } else return null;
   }
-  // Trailing zeros carry no cents: "0.500" and "1.190,500" are fine, "0.1234" is not.
-  const decimals = normalized.split(".")[1]?.replace(/0+$/, "");
-  if (decimals && decimals.length > 2) return null;
   const n = Number(normalized);
   return Number.isFinite(n) && n > 0 ? n : null;
 }

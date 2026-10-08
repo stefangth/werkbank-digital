@@ -525,6 +525,19 @@ const blockedCases: Array<[string, Partial<Setup>, string]> = [
   ["cancelled", { invoice: { ...invoice, status: "cancelled" }, balance: { ...balance, claim: 0, open_amount: -19 } }, "not_issued"],
 ];
 
+Deno.test("resume with send on a held invoice without an address answers not_allowed on_hold, not no_recipient", async () => {
+  const t = setup({
+    notices: [noticeRow()], hold: { until: null }, customer: { invoice_email: null, email: null },
+    opts: { ...stored, now: NOW },
+  });
+  const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+  assertEquals(res.status, 409);
+  const out = await res.json();
+  assertEquals(out.error, "not_allowed");
+  assert(out.blockers.includes("on_hold"));
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
 for (const [label, over, blocker] of blockedCases) {
   Deno.test(`resume with send on a ${label} invoice is 409 ${blocker} and neither renders nor emails`, async () => {
     const t = setup({ notices: [noticeRow()], ...over, opts: { ...stored, now: NOW } });

@@ -42,8 +42,14 @@ export function OpenItemsPage() {
   const [view, setView] = useState<View>("open");
   const [search, setSearch] = useState("");
   const term = useDebouncedValue(search, SEARCH_DEBOUNCE_MS).trim();
-  // Cleared on every search change: the bulk run must never mail a selected row the search hides.
+  // Cleared when the debounced term applies, the same term that filters the visible rows: what is
+  // ticked is what is sent, and the bulk run never mails a row the search hides.
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedFor, setSelectedFor] = useState(term);
+  if (selectedFor !== term) {
+    setSelectedFor(term);
+    setSelected(new Set());
+  }
   const [bulk, setBulk] = useState(false);
 
   // The tiles always cover everything; the table follows the search.
@@ -96,7 +102,7 @@ export function OpenItemsPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <SegmentedControl<View> value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t(`openItems.view.${v}`) }))} />
                 <Input type="search" className="w-72" aria-label={t("openItems.searchLabel")} placeholder={t("openItems.searchPlaceholder")}
-                  value={search} onChange={(e) => { setSearch(e.target.value); setSelected(new Set()); }} />
+                  value={search} onChange={(e) => setSearch(e.target.value)} />
                 {view === "due" && (
                   <Button className="ml-auto" disabled={chosen.length === 0} onClick={() => setBulk(true)}>{t("openItems.due.bulk")}</Button>
                 )}
