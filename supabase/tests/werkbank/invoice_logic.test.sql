@@ -2,7 +2,7 @@
 -- guard, and the RPCs create_invoice_from_order, finalize_invoice, cancel_invoice, copy_invoice.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(93);
+SELECT plan(95);
 
 -- Berlin dates must not depend on the session time zone.
 SET LOCAL timezone = 'UTC';
@@ -339,9 +339,15 @@ SELECT results_eq(
   'a copy of an issued invoice drops the order');
 SELECT lives_ok(format($$DELETE FROM werkbank.invoices WHERE id = '%s'$$, pg_temp.id('copy2')),
   'a draft invoice can be deleted');
+SELECT set_config('il.copy3', werkbank.copy_invoice(pg_temp.id('can1'))::text, true);
+SELECT is((SELECT intro_text FROM werkbank.invoices WHERE id = pg_temp.id('copy3')),
+  'Wir berechnen', 'a copy of a cancellation starts with the profile intro, not "Storno zu"');
 RESET ROLE;
 
 -- Number range guard ------------------------------------------------------------------------------
+-- The rename check needs a second range; quote and customer ranges are seeded only on first use.
+INSERT INTO werkbank.number_ranges (org_id, key, prefix, next_value, padding)
+  VALUES ('bbbbbbbb-0000-4000-b000-0000000000c1', 'quote', 'A-', 1, 4) ON CONFLICT DO NOTHING;
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000000c1');
 SET LOCAL ROLE authenticated;
 SELECT throws_ok($$UPDATE werkbank.number_ranges SET prefix = 'R-'
@@ -359,6 +365,9 @@ SELECT throws_ok($$UPDATE werkbank.number_ranges SET next_value = 100
 SELECT lives_ok($$UPDATE werkbank.number_ranges SET prefix = 'AN-'
   WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1' AND key = 'quote'$$,
   'other ranges are not guarded');
+SELECT throws_ok($$UPDATE werkbank.number_ranges SET key = 'invoice'
+  WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1' AND key = 'quote'$$,
+  '55000', 'number_range_locked', 'another range cannot be renamed to the invoice range');
 RESET ROLE;
 SELECT throws_ok($$DELETE FROM werkbank.number_ranges WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000000c1' AND key = 'invoice'$$,
   '55000', 'number_range_locked', 'the invoice range cannot be deleted after the first issue');

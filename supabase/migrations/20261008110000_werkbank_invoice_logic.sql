@@ -82,6 +82,9 @@ revoke all on function werkbank.guard_invoice_range() from public, anon;
 
 create trigger number_ranges_guard_invoice before update or delete on werkbank.number_ranges
   for each row when (old.key = 'invoice') execute function werkbank.guard_invoice_range();
+-- Renaming another range to 'invoice' is guarded too (old.key differs, so the trigger above skips it).
+create trigger number_ranges_guard_invoice_rename before update on werkbank.number_ranges
+  for each row when (new.key = 'invoice' and old.key <> 'invoice') execute function werkbank.guard_invoice_range();
 
 -- Invoice lock ------------------------------------------------------------------------------
 -- On invoices:
@@ -589,7 +592,12 @@ begin
     subject, discount_percent, intro_text, closing_text, payment_terms_text, service_date_from, service_date_to,
     payment_due_days)
   values (v_inv.org_id, 'invoice', v_order, v_inv.customer_id, v_inv.property_id, v_inv.contact_id,
-    v_inv.location_note, v_inv.subject, v_inv.discount_percent, v_inv.intro_text, v_inv.closing_text,
+    v_inv.location_note, v_inv.subject, v_inv.discount_percent,
+    -- A cancellation's intro is its "Storno zu ..." line; a new invoice starts with the profile intro.
+    case when v_inv.type = 'cancellation'
+      then (select p.invoice_intro from werkbank.company_profiles p where p.org_id = v_inv.org_id)
+      else v_inv.intro_text end,
+    v_inv.closing_text,
     v_inv.payment_terms_text, v_inv.service_date_from, v_inv.service_date_to, v_inv.payment_due_days)
   returning id into v_id;
 
