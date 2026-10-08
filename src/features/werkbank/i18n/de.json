@@ -1,4 +1,20 @@
 {
+  "hints": {
+    "companyPaymentDueDays": "Vorgabe 14 Tage. Gilt für jede neue Rechnung. Du kannst sie hier ändern, auf der einzelnen Rechnung auch.",
+    "companyQuoteValidity": "Vorgabe 30 Tage. Gilt für jedes neue Angebot. Du kannst sie hier ändern, im einzelnen Angebot auch.",
+    "invoicePaymentDueDays": "Vorgabe 14 Tage. Kommt aus Einstellungen, Firma. Du kannst sie hier für diese Rechnung ändern.",
+    "invoiceServiceDate": "Vorgabe ist der Tag, an dem der Auftrag abgeschlossen wurde. Du kannst das Datum hier für diese Rechnung ändern.",
+    "invoiceIntro": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für diese Rechnung ändern.",
+    "invoiceClosing": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für diese Rechnung ändern.",
+    "invoicePaymentTerms": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für diese Rechnung ändern.",
+    "quoteValidUntil": "Heute plus die Gültigkeit aus Einstellungen, Firma (Vorgabe 30 Tage). Du kannst das Datum hier für dieses Angebot ändern.",
+    "quoteIntro": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für dieses Angebot ändern.",
+    "quoteClosing": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für dieses Angebot ändern.",
+    "quotePaymentTerms": "Kommt aus Einstellungen, Firma, sofern dort ein Text steht. Du kannst ihn hier für dieses Angebot ändern.",
+    "numberingStart": "Vorgabe {{start}}. Die Nummer zählt von selbst weiter. Du kannst den Startwert hier ändern.",
+    "invoiceRecipient": "Vorgabe: die E-Mail für Rechnungen beim Kunden, sonst die des Kontakts, sonst die allgemeine E-Mail des Kunden. Du kannst sie hier ändern.",
+    "quoteRecipient": "Vorgabe: die E-Mail des Kontakts, sonst die des Kunden. Du kannst sie hier ändern."
+  },
   "nav": {
     "customers": "Kunden",
     "catalog": "Leistungen",
@@ -6,7 +22,8 @@
     "properties": "Liegenschaften",
     "quotes": "Angebote",
     "orders": "Aufträge",
-    "invoices": "Rechnungen"
+    "invoices": "Rechnungen",
+    "openItems": "Offene Posten"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -18,13 +35,17 @@
       "catalog": "Leistungen anlegen oder importieren",
       "customers": "Kunden anlegen oder importieren",
       "loadFailed": "Der Stand konnte nicht geladen werden.",
-      "invoice": "Erste Rechnung ausstellen"
+      "invoice": "Erste Rechnung ausstellen",
+      "first_payment": "Erste Zahlung erfassen"
     },
     "tiles": {
       "acceptedNoOrder": "Angenommen, ohne Auftrag",
       "unscheduled": "Aufträge ohne Termin",
       "label": "Offene Punkte",
-      "loadFailed": "Die Anzahl konnte nicht geladen werden."
+      "loadFailed": "Die Anzahl konnte nicht geladen werden.",
+      "overdue": "Überfällig",
+      "overdueNote_one": "davon {{count}} mahnfällig",
+      "overdueNote_other": "davon {{count}} mahnfällig"
     }
   },
   "technicians": {
@@ -103,6 +124,236 @@
       "writtenOff": "Ausgebucht",
       "void": "Hinfällig",
       "overpaid": "Guthaben"
+    },
+    "title": "Offene Posten",
+    "sub": "Was Kunden noch schulden und welche Rechnungen eine Mahnung brauchen.",
+    "loadFailed": "Die offenen Posten konnten nicht geladen werden.",
+    "kpi": {
+      "open": "Offen gesamt",
+      "overdue": "Davon überfällig",
+      "credit": "Kundenguthaben"
+    },
+    "view": {
+      "open": "Offen",
+      "due": "Mahnfällig"
+    },
+    "searchLabel": "Offene Posten durchsuchen",
+    "searchPlaceholder": "Nummer, Kunde, Liegenschaft",
+    "empty": {
+      "title": "Nichts offen",
+      "body": "Alle ausgestellten Rechnungen sind beglichen.",
+      "reason": "Neue offene Posten erscheinen hier, sobald Du eine Rechnung ausstellst."
+    },
+    "noMatches": "Kein offener Posten passt zu Deiner Suche.",
+    "noMatchesReason": "Versuche einen anderen Suchbegriff.",
+    "holdTooltip": "Mahnsperre: {{reason}}",
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde / Liegenschaft",
+      "dueDate": "Fällig am",
+      "daysOverdue": "Tage überfällig",
+      "open": "Offen",
+      "status": "Zahlstatus",
+      "stage": "Mahnstufe",
+      "hold": "Mahnsperre",
+      "actions": "Aktionen"
+    },
+    "due": {
+      "none": "Keine Rechnung ist mahnfällig",
+      "noneReason": "Rechnungen erscheinen hier, sobald sie überfällig sind und die Wartetage vorbei sind.",
+      "selectAll": "Alle mit E-Mail-Adresse auswählen",
+      "select": "{{number}} auswählen",
+      "nextStage": "Nächste Mahnung",
+      "bulk": "Ausgewählte mahnen",
+      "print": "PDF für Postversand",
+      "printed": "Mahnung als PDF erstellt. Du findest sie an der Rechnung.",
+      "printFailed": "Die Mahnung konnte nicht erstellt werden."
+    },
+    "bulk": {
+      "title": "Mahnungen versenden",
+      "description": "Jede Mahnung wird erstellt, gesperrt und per E-Mail verschickt. Das lässt sich nicht rückgängig machen.",
+      "count_one": "{{count}} Mahnung wird versendet",
+      "count_other": "{{count}} Mahnungen werden versendet",
+      "excluded": "Ohne E-Mail-Adresse, nicht dabei:",
+      "confirm": "Jetzt mahnen",
+      "progress": "{{done}} von {{total}} erledigt",
+      "sent": "{{count}} versendet",
+      "skipped": "{{count}} übersprungen",
+      "failed": "{{count}} fehlgeschlagen",
+      "failedList": "Diese solltest Du Dir ansehen:",
+      "nothingSent": "Es wurde nichts versendet.",
+      "doneHint": "Übersprungene Rechnungen haben sich seit dem Laden der Liste geändert.",
+      "close": "Schließen"
+    }
+  },
+  "payments": {
+    "title": "Zahlungen",
+    "claim": "Forderung",
+    "paid": "Bezahlt",
+    "writtenOff": "Ausgebucht",
+    "open": "Offen",
+    "credit": "Guthaben",
+    "loadFailed": "Die Zahlungen konnten nicht geladen werden.",
+    "empty": "Noch keine Buchungen.",
+    "recordPayment": "Zahlung erfassen",
+    "writeOff": "Ausbuchen",
+    "refund": "Guthaben auszahlen",
+    "kind": {
+      "payment": "Zahlung",
+      "refund": "Auszahlung",
+      "write_off": "Ausbuchung"
+    },
+    "reason": {
+      "skonto": "Skonto",
+      "goodwill": "Kulanz",
+      "bad_debt": "Forderungsausfall",
+      "other": "Sonstiges"
+    },
+    "reversedNote": "Storniert: {{reason}}",
+    "movedHere": "Von einer anderen Rechnung umgebucht",
+    "reverse": "Stornieren",
+    "transfer": "Umbuchen",
+    "cancelledCredit": "Zahle es aus oder storniere zuerst die Erstattung, dann kannst Du die Zahlung umbuchen.",
+    "form": {
+      "date": "Buchungsdatum",
+      "pickDate": "Datum wählen",
+      "amount": "Betrag",
+      "note": "Notiz (optional)",
+      "noteRequired": "Notiz",
+      "reason": "Grund",
+      "target": "Umbuchen auf",
+      "none": "Es gibt keine andere abgeschlossene Rechnung für diesen Kunden.",
+      "parsed": "Wird gebucht als"
+    },
+    "hints": {
+      "date": "Heute. Du kannst das Datum ändern.",
+      "amount": "Der offene Betrag. Bei einer Teilzahlung kannst Du ihn ändern.",
+      "refund": "Das ganze Guthaben. Bei einer Teilauszahlung kannst Du es ändern."
+    },
+    "warnings": {
+      "overOpen": "Das ist mehr als der offene Betrag. Der Rest wird als Guthaben gebucht."
+    },
+    "payment": {
+      "title": "Zahlung erfassen",
+      "description": "Buche eine Zahlung des Kunden auf diese Rechnung.",
+      "submit": "Zahlung buchen",
+      "saved": "Zahlung gebucht."
+    },
+    "write_off": {
+      "title": "Offenen Betrag ausbuchen",
+      "description": "Der gesamte offene Betrag wird ausgebucht.",
+      "submit": "Ausbuchen",
+      "hint": "Betrifft nur die offenen Posten in Werkbank. Eine Umsatzsteuerkorrektur macht Dein Steuerberater.",
+      "saved": "Ausbuchung gebucht."
+    },
+    "refund_dialog": {
+      "title": "Guthaben auszahlen",
+      "description": "Buche die Auszahlung eines Guthabens an den Kunden.",
+      "submit": "Auszahlung buchen",
+      "saved": "Auszahlung gebucht."
+    },
+    "reverseDialog": {
+      "title": "Buchung stornieren",
+      "description": "Die Buchung bleibt in der Liste sichtbar und wird als storniert markiert.",
+      "reason": "Grund",
+      "submit": "Buchung stornieren",
+      "saved": "Buchung storniert."
+    },
+    "transferDialog": {
+      "title": "Zahlung umbuchen",
+      "description": "Die Zahlung wird auf eine andere abgeschlossene Rechnung desselben Kunden umgebucht.",
+      "reason": "Grund",
+      "submit": "Zahlung umbuchen",
+      "saved": "Zahlung umgebucht."
+    },
+    "errors": {
+      "date": "Wähle ein Buchungsdatum.",
+      "amount": "Gib einen Betrag mit höchstens zwei Nachkommastellen ein, zum Beispiel 1.190,50.",
+      "refundMax": "Die Auszahlung kann nicht höher sein als das Guthaben.",
+      "reason": "Wähle einen Grund.",
+      "noteRequired": "Ergänze eine Notiz beim Grund Sonstiges.",
+      "reversalReason": "Gib einen Grund ein.",
+      "target": "Wähle eine Rechnung.",
+      "transferReason": "Gib einen Grund ein."
+    },
+    "cancelledCreditMove": "Zahlung auf die korrigierte Rechnung umbuchen?",
+    "movedTo": "Umgebucht auf"
+  },
+  "dunning": {
+    "title": "Mahnungen",
+    "loadFailed": "Die Mahnungen konnten nicht geladen werden.",
+    "empty": "Noch keine Mahnung erstellt.",
+    "row": {
+      "deadline": "Frist",
+      "email": "Per E-Mail",
+      "print": "Per Post",
+      "sendFailed": "Versand fehlgeschlagen",
+      "pdf": "PDF",
+      "resend": "Erneut senden",
+      "resent": "Mahnung gesendet.",
+      "resendFailed": "Die Mahnung konnte nicht gesendet werden.",
+      "rendering": "PDF wird erzeugt",
+      "retry": "Erneut versuchen",
+      "retried": "Mahnung fertiggestellt.",
+      "retryFailed": "Die Mahnung konnte nicht fertiggestellt werden."
+    },
+    "blockers": {
+      "not_issued": "Nur für abgeschlossene Rechnungen möglich.",
+      "not_overdue": "Die Rechnung ist noch nicht überfällig.",
+      "nothing_open": "Es ist nichts mehr offen.",
+      "on_hold": "Für diese Rechnung ist die Mahnung gesperrt.",
+      "previous_stage_open": "Die vorige Mahnung ist noch nicht fertig versendet.",
+      "max_stage": "Die letzte Mahnstufe ist schon erreicht."
+    },
+    "create": {
+      "button": "{{stage}} erstellen",
+      "title": "{{stage}} erstellen",
+      "description": "Die Mahnung bekommt eine feste Frist und kann danach nicht mehr geändert werden.",
+      "to": "Empfänger",
+      "cc": "CC",
+      "deadline": "Zahlungsfrist",
+      "hintTo": "Die Rechnungs-E-Mail des Kunden, sonst die des Ansprechpartners. Du kannst sie ändern.",
+      "hintDeadline": "Heute plus {{days}} Tage, wie in Deinen Firmendaten. Du kannst das Datum ändern.",
+      "preview": "Vorschau",
+      "send": "Erstellen und senden",
+      "printOnly": "Nur PDF für Postversand",
+      "sent": "{{stage}} erstellt und gesendet.",
+      "created": "{{stage}} erstellt.",
+      "issuedSendFailed": "Erstellt, Versand fehlgeschlagen. Sende die Mahnung erneut über die Liste.",
+      "issuedRenderFailed": "Erstellt, das PDF ist noch nicht fertig. Klicke in der Liste auf Erneut versuchen."
+    },
+    "hold": {
+      "set": "Mahnsperre setzen",
+      "title": "Mahnsperre setzen",
+      "description": "Solange die Sperre gilt, wird für diese Rechnung keine Mahnung vorgeschlagen oder erstellt.",
+      "reason": "Grund",
+      "until": "Gesperrt bis",
+      "noDate": "Kein Datum",
+      "clearDate": "Datum entfernen",
+      "hint": "Ohne Datum gilt die Sperre, bis Du sie aufhebst.",
+      "submit": "Sperre setzen",
+      "saved": "Mahnsperre gesetzt.",
+      "banner": "Mahnsperre aktiv: {{reason}}.",
+      "bannerUntil": "Gilt bis",
+      "bannerOpen": "Gilt, bis Du sie aufhebst.",
+      "clear": "Aufheben"
+    },
+    "stage": {
+      "1": "Zahlungserinnerung",
+      "2": "1. Mahnung",
+      "3": "2. und letzte Mahnung"
+    },
+    "errors": {
+      "noRecipient": "Für diesen Kunden ist keine E-Mail-Adresse hinterlegt. Gib einen Empfänger ein.",
+      "invoiceFileMissing": "Das PDF der Rechnung fehlt, deshalb kann die Mahnung nicht per E-Mail rausgehen. Verschicke sie per Post.",
+      "notLatestNotice": "Nur die neueste Mahnung kann erneut gesendet werden."
+    },
+    "send": {
+      "resendTitle": "{{stage}} erneut senden",
+      "retryTitle": "{{stage}} fertigstellen und senden",
+      "description": "Das PDF der Mahnung geht zusammen mit dem PDF der Rechnung raus.",
+      "hintToLast": "Die Adressen, an die diese Mahnung zuletzt ging. Du kannst sie ändern.",
+      "submit": "Senden"
     }
   },
   "errors": {
@@ -127,6 +378,7 @@
     "notPayable": "Für dieses Dokument lassen sich keine Zahlungen buchen.",
     "futureBookingDate": "Das Buchungsdatum darf nicht in der Zukunft liegen.",
     "refundExceedsCredit": "Die Erstattung ist höher als das Guthaben dieser Rechnung.",
+    "transferExceedsCredit": "Die Zahlung ist höher als das verbleibende Guthaben dieser stornierten Rechnung. Storniere zuerst die Erstattung.",
     "nothingOpen": "Auf dieser Rechnung ist nichts mehr offen.",
     "openAmountChanged": "Der offene Betrag hat sich zwischenzeitlich geändert. Prüf ihn bitte und versuch es erneut.",
     "alreadyReversed": "Dieser Eintrag wurde bereits rückgängig gemacht.",
@@ -134,7 +386,8 @@
     "dunningNotAllowed": "Für diese Rechnung ist gerade kein Mahnschreiben möglich.",
     "invalidEntryKind": "Diese Art von Eintrag gibt es nicht.",
     "invalidAmount": "Gib einen Betrag mit höchstens zwei Nachkommastellen ein.",
-    "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung."
+    "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung.",
+    "holdUntilPast": "Das Enddatum einer Mahnsperre darf nicht in der Vergangenheit liegen."
   },
   "units": {
     "HUR": "Std",
@@ -238,7 +491,8 @@
       "legal": "Steuer und Register",
       "bank": "Bankverbindung",
       "texts": "Standards für Angebote",
-      "invoiceTexts": "Rechnungsvorgaben"
+      "invoiceTexts": "Rechnungsvorgaben",
+      "dunning": "Mahnwesen"
     },
     "fields": {
       "companyName": "Firmenname",
@@ -285,7 +539,20 @@
       "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
       "iban": "Gib eine gültige IBAN ein, zum Beispiel DE89 3704 0044 0532 0130 00",
       "validity": "Gib ganze Tage von 1 bis 365 ein",
-      "paymentDueDays": "Gib ganze Tage von 0 bis 365 ein"
+      "paymentDueDays": "Gib ganze Tage von 0 bis 365 ein",
+      "dunningDays": "Gib ganze Tage von 0 bis 365 ein"
+    },
+    "dunning": {
+      "afterDays": "{{stage}} nach (Tage)",
+      "textLabel": "Text für {{stage}} (optional)",
+      "deadline": "Zahlungsfrist in Mahnungen (Tage)",
+      "hint": {
+        "reminder": "Vorgabe 7 Tage nach Fälligkeit der Rechnung. Du kannst den Wert hier ändern.",
+        "dunning1": "Vorgabe 14 Tage nach der Zahlungserinnerung. Du kannst den Wert hier ändern.",
+        "dunning2": "Vorgabe 14 Tage nach der 1. Mahnung. Du kannst den Wert hier ändern.",
+        "deadline": "Vorgabe 7 Tage. So lange hat der Kunde nach einer Mahnung Zeit zu zahlen. Du kannst den Wert hier ändern.",
+        "text": "Leer lassen für den Standardtext."
+      }
     }
   },
   "customers": {
@@ -387,6 +654,12 @@
         "add": "Liegenschaft anlegen",
         "empty": "Dieser Kunde hat noch keine Liegenschaften.",
         "loadFailed": "Die Liegenschaften konnten nicht geladen werden."
+      },
+      "openItems": {
+        "title": "Offene Posten",
+        "open": "Offen gesamt",
+        "credit": "Guthaben",
+        "loadFailed": "Die offenen Posten konnten nicht geladen werden."
       }
     }
   },
@@ -964,7 +1237,8 @@
       "all": "Alle",
       "draft": "Entwürfe",
       "issued": "Ausgestellt",
-      "cancelled": "Storniert"
+      "cancelled": "Storniert",
+      "overdue": "Überfällig"
     },
     "status": {
       "draft": "Entwurf",
@@ -989,7 +1263,9 @@
       "issueDate": "Rechnungsdatum",
       "dueDate": "Fällig am",
       "gross": "Brutto",
-      "status": "Status"
+      "status": "Status",
+      "paymentStatus": "Zahlstatus",
+      "open": "Offen"
     },
     "notice": {
       "doneNotInvoiced": "Erledigt, noch nicht abgerechnet",

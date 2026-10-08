@@ -60,6 +60,11 @@ describe("SendQuoteDialog", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it("explains the prefilled recipient", () => {
+    renderDialog();
+    expect(screen.getByRole("button", { name: /^Vorgabe: die E-Mail des Kontakts, sonst die des Kunden/ })).toBeInTheDocument();
+  });
+
   it("prefills the contact email", () => {
     renderDialog();
     expect(screen.getByLabelText("An")).toHaveValue("kontakt@example.de");

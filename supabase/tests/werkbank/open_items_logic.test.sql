@@ -95,6 +95,12 @@ CREATE OR REPLACE FUNCTION pg_temp.open(_inv text) RETURNS numeric LANGUAGE sql 
 $$;
 GRANT EXECUTE ON FUNCTION pg_temp.open(text) TO PUBLIC;
 
+-- An expired hold: set_dunning_hold refuses a past end date, so the test owner backdates the row.
+CREATE OR REPLACE FUNCTION pg_temp.expire_hold(_inv uuid) RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE werkbank.dunning_holds SET until = pg_temp.berlin_today() - 1 WHERE invoice_id = _inv
+$$;
+GRANT EXECUTE ON FUNCTION pg_temp.expire_hold(uuid) TO PUBLIC;
+
 -- Function shape ---------------------------------------------------------------------------
 SELECT is((SELECT count(*)::int FROM pg_proc p
   WHERE p.pronamespace = 'werkbank'::regnamespace AND p.prosecdef AND p.proconfig = ARRAY['search_path=""']
@@ -343,7 +349,7 @@ SELECT is(pg_temp.err_detail($$SELECT werkbank.create_dunning_notice('66666666-0
   'on_hold', 'a hold until Berlin today still blocks');
 SELECT throws_ok($$SELECT werkbank.set_dunning_hold('66666666-0000-4000-a000-0000000000ea', ' ')$$,
   '23514', NULL, 'a hold needs a reason');
-SELECT lives_ok($$SELECT werkbank.set_dunning_hold('66666666-0000-4000-a000-0000000000ea', 'Abgelaufen', pg_temp.berlin_today() - 1)$$,
+SELECT lives_ok($$SELECT pg_temp.expire_hold('66666666-0000-4000-a000-0000000000ea')$$,
   'the hold ends yesterday');
 
 SELECT set_config('ol.n1', (werkbank.create_dunning_notice('66666666-0000-4000-a000-0000000000ea', 'email', pg_temp.berlin_today() + 7)).id::text, true);

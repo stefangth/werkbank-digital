@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ContactsSection } from "../components/ContactsSection";
 import { CustomerFormDialog } from "../components/CustomerFormDialog";
+import { CustomerOpenItems } from "../components/CustomerOpenItems";
 import { DocumentsSection } from "../components/DocumentsSection";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { PropertyFormDialog } from "../components/PropertyFormDialog";
@@ -157,6 +158,8 @@ export function CustomerDetailPage() {
           </ul>
         )}
       </section>
+
+      <CustomerOpenItems customerId={customer.id} />
 
       <DocumentsSection customerId={customer.id} />
 

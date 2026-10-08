@@ -9,7 +9,8 @@ import { STORAGE_KEY } from "@/i18n/config";
 // Opt in to the v7 behaviour so the tests do not log the upgrade warnings.
 const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true } as const;
 
-const { customer, properties, archive, sections, deleteCustomer, documents } = vi.hoisted(() => ({
+const { customer, properties, archive, sections, deleteCustomer, documents, open } = vi.hoisted(() => ({
+  open: { props: [] as unknown[] },
   documents: { props: [] as unknown[] },
   customer: { data: undefined as unknown, isLoading: false, isError: false },
   properties: { data: [] as unknown[], isLoading: false, isError: false },
@@ -35,6 +36,12 @@ vi.mock("../components/DocumentsSection", () => ({
   DocumentsSection: (props: unknown) => {
     documents.props.push(props);
     return <div>documents-section</div>;
+  },
+}));
+vi.mock("../components/CustomerOpenItems", () => ({
+  CustomerOpenItems: (props: unknown) => {
+    open.props.push(props);
+    return <div>open-items-section</div>;
   },
 }));
 vi.mock("../components/ContactsSection", () => ({
@@ -76,11 +83,18 @@ describe("CustomerDetailPage", () => {
     Object.assign(properties, { data: [{ id: "p1", name: "WEG Musterstr. 5", object_no: "O-100", street: "Musterstraße 5", postal_code: "04109", city: "Leipzig", archived_at: null }], isLoading: false, isError: false });
     sections.parents = [];
     documents.props = [];
+    open.props = [];
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
   });
   afterAll(async () => {
     await act(async () => { await i18n.changeLanguage("en"); });
+  });
+
+  it("shows the open items section for this customer", () => {
+    renderPage();
+    expect(screen.getByText("open-items-section")).toBeInTheDocument();
+    expect(open.props[0]).toEqual({ customerId: "k1" });
   });
 
   it("shows the customer's quotes and orders", () => {

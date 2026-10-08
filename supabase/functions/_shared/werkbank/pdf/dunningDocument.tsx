@@ -44,6 +44,9 @@ export function DunningDocument({ data, logoDataUrl }: { data: DunningData; logo
         <View style={s.totals} wrap={false}>
           <View style={s.totalRow}><Text>Rechnungsbetrag</Text><Text>{money(data.invoiceGross)}</Text></View>
           <View style={s.totalRow}><Text>Bereits gezahlt</Text><Text>{money(data.paidAmount)}</Text></View>
+          {data.writtenOff !== 0 && (
+            <View style={s.totalRow}><Text>Ausgebucht</Text><Text>{money(data.writtenOff)}</Text></View>
+          )}
           <View style={s.grossRow}><Text>Offener Betrag</Text><Text>{money(data.openAmount)}</Text></View>
           <View style={s.totalRow}><Text>Ursprünglich fällig am</Text><Text>{formatDateDe(invoice.dueDate)}</Text></View>
         </View>

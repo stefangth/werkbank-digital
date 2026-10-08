@@ -56,20 +56,33 @@ interface Setup {
   rpc?: { data?: unknown; error?: unknown };
   customer?: Record<string, unknown> | null;
   contact?: Record<string, unknown> | null;
+  balance?: Record<string, unknown> | null;
+  hold?: Record<string, unknown> | null;
+  /** The caller is also a producer of OTHER_ORG (a handwerk org). */
+  memberOfOther?: boolean;
   opts?: FakeDepsOptions;
 }
 
 function setup(s: Setup = {}) {
   const tables: Record<string, TableSeed> = {
-    org_memberships: [{ when: { org_id: ORG }, data: { role: "producer" } }],
-    organizations: [{ when: { id: ORG }, data: { org_kind: s.orgKind ?? "handwerk" } }],
+    org_memberships: [
+      { when: { org_id: ORG }, data: { role: "producer" } },
+      ...(s.memberOfOther ? [{ when: { org_id: OTHER_ORG }, data: { role: "producer" } }] : []),
+    ],
+    organizations: [
+      { when: { id: ORG }, data: { org_kind: s.orgKind ?? "handwerk" } },
+      { when: { id: OTHER_ORG }, data: { org_kind: "handwerk" } },
+    ],
     "werkbank.invoices": [{ when: { id: INV, org_id: ORG }, data: s.invoice === undefined ? invoice : s.invoice }],
-    "werkbank.invoice_balances": { data: balance, error: null },
+    "werkbank.invoice_balances": { data: s.balance === undefined ? balance : s.balance, error: null },
+    "werkbank.dunning_holds": { data: s.hold ?? null, error: null },
     "werkbank.company_profiles": { data: profile, error: null },
     "werkbank.customers": { data: s.customer === undefined ? { invoice_email: "kunde@example.com", email: null } : s.customer, error: null },
     "werkbank.contacts": { data: s.contact ?? null, error: null },
     "werkbank.dunning_notices": [
       { when: { id: NOTICE, org_id: ORG }, data: (s.notices ?? [])[0] ?? null },
+      // The notice is scoped by org: looked up under another org it does not exist.
+      { when: { id: NOTICE, org_id: OTHER_ORG }, data: null },
       { when: { __write: true }, data: { id: NOTICE } },
       { data: s.notices ?? [], error: null },
     ],
@@ -395,6 +408,14 @@ Deno.test("send of a notice without a stored file is 409 pdf_missing", async () 
   assertEquals(emails(t), []);
 });
 
+Deno.test("send of an older stage after a newer one exists is 409 not_latest_notice and emails nothing", async () => {
+  const t = setup({ notices: [filed(), filed({ id: "n-2", stage: 2 })], opts: stored });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "not_latest_notice" });
+  assertEquals(emails(t), []);
+});
+
 Deno.test("send of an unknown notice is 404", async () => {
   const t = setup({ opts: stored });
   const res = await handle(request(sendBody), t.deps, t.render);
@@ -499,4 +520,109 @@ Deno.test("download-url without a stored file is 409 pdf_missing; unknown notice
   const none = setup();
   const res2 = await handle(request({ action: "download-url", org_id: ORG, notice_id: NOTICE }), none.deps, none.render);
   assertEquals(res2.status, 404);
+});
+
+// ── business blockers on resume with send and on send (R13) ───────────────────
+
+const NOW = new Date("2026-10-08T10:00:00Z");
+const blockedCases: Array<[string, Partial<Setup>, string]> = [
+  ["paid", { balance: { ...balance, paid: 119, open_amount: 0 } }, "nothing_open"],
+  ["overpaid", { balance: { ...balance, paid: 130, open_amount: -11 } }, "nothing_open"],
+  ["held without end", { hold: { until: null } }, "on_hold"],
+  ["held until today", { hold: { until: "2026-10-08" } }, "on_hold"],
+  ["cancelled", { invoice: { ...invoice, status: "cancelled" }, balance: { ...balance, claim: 0, open_amount: -19 } }, "not_issued"],
+];
+
+Deno.test("resume with send on a held invoice without an address answers not_allowed on_hold, not no_recipient", async () => {
+  const t = setup({
+    notices: [noticeRow()], hold: { until: null }, customer: { invoice_email: null, email: null },
+    opts: { ...stored, now: NOW },
+  });
+  const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+  assertEquals(res.status, 409);
+  const out = await res.json();
+  assertEquals(out.error, "not_allowed");
+  assert(out.blockers.includes("on_hold"));
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
+for (const [label, over, blocker] of blockedCases) {
+  Deno.test(`resume with send on a ${label} invoice is 409 ${blocker} and neither renders nor emails`, async () => {
+    const t = setup({ notices: [noticeRow()], ...over, opts: { ...stored, now: NOW } });
+    const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+    assertEquals(res.status, 409);
+    const out = await res.json();
+    assertEquals(out.error, "not_allowed");
+    assert(out.blockers.includes(blocker), `blockers ${out.blockers} include ${blocker}`);
+    assertEquals(t.rendered.length, 0);
+    assertEquals(emails(t), []);
+    assertEquals(writes([...t.calls, ...t.userCalls]), []);
+  });
+
+  Deno.test(`send on a ${label} invoice is 409 ${blocker} and emails nothing`, async () => {
+    const t = setup({ notices: [filed()], ...over, opts: { ...stored, now: NOW } });
+    const res = await handle(request(sendBody), t.deps, t.render);
+    assertEquals(res.status, 409);
+    const out = await res.json();
+    assertEquals(out.error, "not_allowed");
+    assert(out.blockers.includes(blocker), `blockers ${out.blockers} include ${blocker}`);
+    assertEquals(emails(t), []);
+    assertEquals(t.calls.filter((c) => c.method === "update"), []);
+  });
+}
+
+Deno.test("resume without send still stores the notice of a paid invoice", async () => {
+  const t = setup({ notices: [noticeRow({ delivery: "print" })], balance: { ...balance, open_amount: 0 }, opts: { now: NOW } });
+  const res = await handle(request({ ...issueBody, delivery: "print" }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(t.rendered.length, 1);
+  assertEquals(t.calls.find((c) => c.method === "upload")?.args[0], PATH);
+});
+
+Deno.test("resume with send on an open invoice renders, stores and emails", async () => {
+  const t = setup({ notices: [noticeRow()], hold: { until: "2026-10-07" }, opts: { ...stored, now: NOW } });
+  const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { notice_id: NOTICE, stage: 1, email_sent: true });
+  assertEquals(emails(t).length, 1);
+});
+
+Deno.test("send on an open invoice with an ended hold goes out", async () => {
+  const t = setup({ notices: [filed()], hold: { until: "2026-10-07" }, opts: { ...stored, now: NOW } });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(emails(t).length, 1);
+});
+
+Deno.test("send of another org's notice is 404 for a producer of that other org", async () => {
+  const t = setup({ notices: [filed()], memberOfOther: true, opts: stored });
+  const res = await handle(request({ ...sendBody, org_id: OTHER_ORG }), t.deps, t.render);
+  assertEquals(res.status, 404);
+  assertEquals(await res.json(), { error: "not_found" });
+  assertEquals(emails(t), []);
+});
+
+// ── deadline and preview guards (R15) ─────────────────────────────────────────
+
+Deno.test("a payment_deadline before Berlin today or not a calendar date is 400 before any write", async () => {
+  // 22:30 UTC on Oct 8 is Oct 9 in Berlin: Oct 8 is already in the past.
+  const t = setup({ opts: { now: new Date("2026-10-08T22:30:00Z") } });
+  for (const d of ["2026-10-08", "2026-02-30", "2026-13-01"]) {
+    const res = await handle(request({ ...issueBody, payment_deadline: d }), t.deps, t.render);
+    assertEquals(res.status, 400, d);
+    assertEquals(await res.json(), { error: "bad_request" });
+  }
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+  const ok = await handle(request({ ...issueBody, payment_deadline: "2026-10-09" }), t.deps, t.render);
+  assertEquals(ok.status, 200);
+});
+
+Deno.test("preview refuses a cancelled invoice and a cancellation invoice", async () => {
+  for (const inv of [{ ...invoice, status: "cancelled" }, { ...invoice, type: "cancellation" }]) {
+    const t = setup({ invoice: inv });
+    const res = await handle(request({ action: "preview", org_id: ORG, invoice_id: INV }), t.deps, t.render);
+    assertEquals(res.status, 409);
+    assertEquals(await res.json(), { error: "not_allowed", blockers: ["not_issued"] });
+    assertEquals(t.rendered.length, 0);
+  }
 });

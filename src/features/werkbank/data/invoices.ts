@@ -7,7 +7,10 @@ import type { DocumentTotals } from "./quotes";
 export type Invoice = Database["werkbank"]["Tables"]["invoices"]["Row"];
 export type InvoiceListRow = Database["werkbank"]["Views"]["invoice_list"]["Row"];
 export type InvoiceWithTotals = Invoice & { totals: DocumentTotals | null };
-export type InvoiceFilter = "all" | "draft" | "issued" | "cancelled";
+export type InvoiceFilter = "all" | "draft" | "issued" | "cancelled" | "overdue";
+
+/** The invoice_list status a filter reads; `overdue` is issued invoices narrowed by their balance (days_overdue > 0). */
+export const filterStatus = (f: InvoiceFilter): string | null => (f === "all" ? null : f === "overdue" ? "issued" : f);
 
 export type InvoiceListQuery = { filter: InvoiceFilter; search: string; customerId?: string; propertyId?: string };
 
@@ -32,7 +35,8 @@ export async function fetchInvoices(client: Client, orgId: string, query: Invoic
   const term = safeTerm(query.search);
   return fetchAllPages<InvoiceListRow>((from, to) => {
     let q = client.schema("werkbank").from("invoice_list").select("*").eq("org_id", orgId);
-    if (query.filter !== "all") q = q.eq("status", query.filter);
+    const status = filterStatus(query.filter);
+    if (status) q = q.eq("status", status);
     if (query.customerId) q = q.eq("customer_id", query.customerId);
     if (query.propertyId) q = q.eq("property_id", query.propertyId);
     if (term) {

@@ -1,0 +1,270 @@
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from "vitest";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { renderWithProviders } from "@/test/renderWithProviders";
+import i18n from "@/i18n";
+import { STORAGE_KEY } from "@/i18n/config";
+
+const { st, issue, preview, sendM, download, setHold, clearHold, toast, pdf } = vi.hoisted(() => ({
+  st: { balance: null as unknown, notices: [] as unknown[], hold: null as unknown },
+  issue: { mutateAsync: vi.fn(), isPending: false },
+  preview: { mutateAsync: vi.fn(), isPending: false },
+  sendM: { mutateAsync: vi.fn(), isPending: false },
+  download: { mutateAsync: vi.fn(), isPending: false },
+  setHold: { mutateAsync: vi.fn(), isPending: false },
+  clearHold: { mutateAsync: vi.fn(), isPending: false },
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+  pdf: { tab: { close: vi.fn() }, showInTab: vi.fn() },
+}));
+vi.mock("sonner", () => ({ toast }));
+vi.mock("../hooks/useOpenItems", () => ({
+  useInvoiceBalance: () => ({ data: st.balance, isLoading: false, isError: false }),
+  useDunningNotices: () => ({ data: st.notices, isLoading: false, isError: false }),
+  useDunningHold: () => ({ data: st.hold, isLoading: false, isError: false }),
+  useSetDunningHold: () => setHold,
+  useClearDunningHold: () => clearHold,
+}));
+vi.mock("../hooks/useDunningActions", () => ({
+  useIssueDunning: () => issue,
+  usePreviewDunning: () => preview,
+  useSendDunning: () => sendM,
+  useDunningDownload: () => download,
+}));
+vi.mock("../lib/pdfTab", () => ({ openPendingTab: () => pdf.tab, showInTab: (...a: unknown[]) => pdf.showInTab(...a) }));
+vi.mock("../hooks/useCustomers", () => ({ useCustomer: () => ({ data: { id: "c1", email: "kunde@example.de", invoice_email: "rechnung@example.de" } }) }));
+vi.mock("../hooks/useContacts", () => ({ useContacts: () => ({ data: [] }) }));
+vi.mock("../hooks/useCompanyProfile", () => ({ useCompanyProfile: () => ({ data: { dunning_deadline_days: 7 } }) }));
+
+import { DunningActionError } from "../data/dunningActions";
+import { DunningCard } from "./DunningCard";
+
+const inv = (over: Record<string, unknown> = {}) => ({ id: "i1", customer_id: "c1", contact_id: null, status: "issued", type: "invoice", due_date: "2026-09-01", ...over });
+const notice = (over: Record<string, unknown> = {}) => ({
+  id: "n1", invoice_id: "i1", stage: 1, notice_date: "2026-09-15", payment_deadline: "2026-09-22", delivery: "email",
+  sent_to: ["rechnung@example.de"], sent_at: "2026-09-15T10:00:00Z", pdf_path: "n1.pdf", ...over,
+});
+
+describe("DunningCard", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-08T10:00:00Z"));
+    st.balance = { invoice_id: "i1", open_amount: 100, claim: 100, paid: 0, written_off: 0 };
+    st.notices = [];
+    st.hold = null;
+    issue.mutateAsync.mockResolvedValue({ noticeId: "n9", stage: 1, emailSent: true });
+    preview.mutateAsync.mockResolvedValue(new Blob(["x"]));
+    sendM.mutateAsync.mockResolvedValue(undefined);
+    download.mutateAsync.mockResolvedValue("https://files/n1.pdf");
+    setHold.mutateAsync.mockResolvedValue(undefined);
+    clearHold.mutateAsync.mockResolvedValue(undefined);
+    URL.createObjectURL = vi.fn(() => "blob:x");
+    localStorage.setItem(STORAGE_KEY, "de");
+    await act(async () => { await i18n.changeLanguage("de"); });
+  });
+  afterEach(() => { vi.useRealTimers(); });
+  afterAll(async () => {
+    localStorage.removeItem(STORAGE_KEY);
+    await act(async () => { await i18n.changeLanguage("en"); });
+  });
+
+  const render = (over: Record<string, unknown> = {}) => renderWithProviders(<DunningCard invoice={inv(over)} />);
+
+  it("disables the create button for a paid invoice", () => {
+    st.balance = { invoice_id: "i1", open_amount: 0 };
+    render();
+    expect(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("disables the create button before the due date and names not_overdue", async () => {
+    vi.useRealTimers();
+    render({ due_date: "2099-01-01" });
+    const btn = screen.getByRole("button", { name: "Zahlungserinnerung erstellen" });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    fireEvent.pointerMove(btn, { pointerType: "mouse" });
+    expect((await screen.findAllByText("Die Rechnung ist noch nicht überfällig.")).length).toBeGreaterThan(0);
+  });
+
+  it("labels the next stage after one notice", () => {
+    st.notices = [notice()];
+    render();
+    expect(screen.getByRole("button", { name: "1. Mahnung erstellen" })).toBeEnabled();
+    expect(screen.getByText("Zahlungserinnerung")).toBeInTheDocument();
+  });
+
+  it("presets recipient and deadline in the dialog", async () => {
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
+    expect(await screen.findByRole("textbox", { name: /Empfänger/ })).toHaveValue("rechnung@example.de");
+    expect(screen.getByRole("button", { name: /Zahlungsfrist/ })).toHaveTextContent("15/10/2026");
+  });
+
+  it("creates a print-only notice without send", async () => {
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Nur PDF für Postversand" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "print", paymentDeadline: "2026-10-15" }));
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("creates and sends by email to the typed recipients", async () => {
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
+    fireEvent.change(await screen.findByRole("textbox", { name: /CC/ }), { target: { value: "chef@example.de" } });
+    fireEvent.click(screen.getByRole("button", { name: "Erstellen und senden" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({
+      invoiceId: "i1", delivery: "email", paymentDeadline: "2026-10-15", send: { to: ["rechnung@example.de"], cc: ["chef@example.de"] },
+    }));
+  });
+
+  it("opens the preview in a tab", async () => {
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Vorschau" }));
+    await waitFor(() => expect(pdf.showInTab).toHaveBeenCalled());
+    expect(preview.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", paymentDeadline: "2026-10-15" });
+  });
+
+  it("warns Erstellt, Versand fehlgeschlagen and closes the dialog when the mail fails", async () => {
+    issue.mutateAsync.mockRejectedValue(new DunningActionError("send_failed", [], true));
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Erstellen und senden" }));
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining("Erstellt, Versand fehlgeschlagen")));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("lists server blockers inside the dialog", async () => {
+    issue.mutateAsync.mockRejectedValue(new DunningActionError("not_allowed", ["on_hold", "nothing_open"]));
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Erstellen und senden" }));
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("Für diese Rechnung ist die Mahnung gesperrt.")).toBeInTheDocument();
+    expect(within(alert).getByText("Es ist nichts mehr offen.")).toBeInTheDocument();
+  });
+
+  it("offers Erneut senden only for the latest stage", async () => {
+    st.notices = [notice(), notice({ id: "n2", stage: 2, pdf_path: "n2.pdf" })];
+    render();
+    expect(screen.getAllByRole("button", { name: "Erneut senden" })).toHaveLength(1);
+  });
+
+  it("resends from a recipients dialog with the last addresses and a typed CC", async () => {
+    st.notices = [notice()];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("textbox", { name: "Empfänger" })).toHaveValue("rechnung@example.de");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "CC" }), { target: { value: "chef@example.de" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(sendM.mutateAsync).toHaveBeenCalledWith({ noticeId: "n1", to: ["rechnung@example.de"], cc: ["chef@example.de"] }));
+    expect(toast.success).toHaveBeenCalledWith("Mahnung gesendet.");
+  });
+
+  it("presets the default recipient when the first send failed and nothing was stamped", async () => {
+    st.notices = [notice({ sent_at: null, sent_to: null })];
+    render();
+    expect(screen.getByText("Versand fehlgeschlagen")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
+    const dialog = await screen.findByRole("dialog");
+    const to = within(dialog).getByRole("textbox", { name: "Empfänger" });
+    expect(to).toHaveValue("rechnung@example.de");
+    expect(to).toHaveAccessibleDescription("Die Rechnungs-E-Mail des Kunden, sonst die des Ansprechpartners. Du kannst sie ändern.");
+    fireEvent.change(to, { target: { value: "neu@example.de" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(sendM.mutateAsync).toHaveBeenCalledWith({ noticeId: "n1", to: ["neu@example.de"] }));
+  });
+
+  it("names a missing recipient in the dialog", async () => {
+    sendM.mutateAsync.mockRejectedValue(new DunningActionError("no_recipient"));
+    st.notices = [notice({ sent_at: null, sent_to: null })];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    expect(await within(dialog).findByText(/keine E-Mail-Adresse hinterlegt/)).toBeInTheDocument();
+  });
+
+  it("offers a retry for unrendered notices and resumes them through the recipients dialog", async () => {
+    st.notices = [notice({ pdf_path: null, sent_at: null, sent_to: null })];
+    render();
+    expect(screen.getByText("PDF wird erzeugt")).toBeInTheDocument();
+    expect(screen.queryByText("Versand fehlgeschlagen")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Erneut senden" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "CC" }), { target: { value: "chef@example.de" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Senden" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({
+      invoiceId: "i1", delivery: "email", send: { to: ["rechnung@example.de"], cc: ["chef@example.de"] },
+    }));
+  });
+
+  it.each([
+    ["settled", () => { st.balance = { invoice_id: "i1", open_amount: 0 }; }, {}],
+    ["held", () => { st.hold = { invoice_id: "i1", reason: "Klärung", until: null }; }, {}],
+    ["cancelled", () => { st.balance = { invoice_id: "i1", open_amount: -100 }; }, { status: "cancelled" }],
+  ])("offers no email for a %s invoice, but still stores an unrendered notice", async (_label, arrange, over) => {
+    arrange();
+    st.notices = [notice({ sent_at: null }), notice({ id: "n2", stage: 2, pdf_path: null, sent_at: null, sent_to: null })];
+    render(over);
+    expect(screen.queryByRole("button", { name: "Erneut senden" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "PDF" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "email" }));
+  });
+
+  it("names the blocker of the disabled create button on keyboard focus", async () => {
+    vi.useRealTimers();
+    render({ due_date: "2099-01-01" });
+    const trigger = screen.getByRole("button", { name: "Zahlungserinnerung erstellen" });
+    expect(trigger).toHaveAccessibleDescription("Die Rechnung ist noch nicht überfällig.");
+    act(() => trigger.focus());
+    expect(trigger).toHaveFocus();
+    expect((await screen.findAllByText("Die Rechnung ist noch nicht überfällig.")).length).toBeGreaterThan(1);
+  });
+
+  it("retries an unrendered print notice without send", async () => {
+    st.notices = [notice({ pdf_path: null, delivery: "print", sent_to: null, sent_at: null })];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "print" }));
+  });
+
+  it("opens a stored PDF", async () => {
+    st.notices = [notice()];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "PDF" }));
+    await waitFor(() => expect(download.mutateAsync).toHaveBeenCalledWith("n1"));
+    expect(pdf.showInTab).toHaveBeenCalledWith(pdf.tab, "https://files/n1.pdf", expect.any(Function));
+  });
+
+  it("sets a hold with a reason and no date", async () => {
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Mahnsperre setzen" }));
+    expect(await screen.findByRole("button", { name: "Ohne Datum gilt die Sperre, bis Du sie aufhebst." })).toBeInTheDocument();
+    fireEvent.change(await screen.findByRole("textbox", { name: /Grund/ }), { target: { value: "Ratenzahlung" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sperre setzen" }));
+    await waitFor(() => expect(setHold.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", reason: "Ratenzahlung", until: null }));
+  });
+
+  it("shows the active hold banner and clears it", async () => {
+    st.hold = { invoice_id: "i1", reason: "Ratenzahlung", until: null };
+    render();
+    expect(screen.getByText(/Ratenzahlung/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" })).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Aufheben" }));
+    await waitFor(() => expect(clearHold.mutateAsync).toHaveBeenCalledWith("i1"));
+  });
+
+  it("shows notices read only for a cancelled invoice", () => {
+    st.notices = [notice()];
+    st.hold = { invoice_id: "i1", reason: "x", until: null };
+    render({ status: "cancelled" });
+    expect(screen.getByText("Zahlungserinnerung")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /erstellen$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mahnsperre setzen" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Aufheben" })).not.toBeInTheDocument();
+  });
+});

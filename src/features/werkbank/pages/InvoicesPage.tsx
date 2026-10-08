@@ -22,15 +22,17 @@ import { CustomerPicker } from "../components/CustomerPicker";
 import { PropertyPicker } from "../components/PropertyPicker";
 import type { InvoiceFilter } from "../data/invoices";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
+import { useBalanceMap } from "../hooks/useOpenItems";
 import { useInvoiceMutations, useInvoices } from "../hooks/useInvoices";
 import { useOrderList } from "../hooks/useOrders";
 import { INVOICE_STATUS_TONES, signedGross, type InvoiceStatus } from "../lib/invoiceStatus";
 import { formatEuro } from "../lib/money";
+import { paymentStatus } from "../lib/paymentStatus";
 import { useDebouncedValue } from "../lib/useDebouncedValue";
 import { ORDERS_PATH, invoicePath } from "../paths";
 
 const SEARCH_DEBOUNCE_MS = 275;
-const FILTERS: readonly InvoiceFilter[] = ["all", "draft", "issued", "cancelled"];
+const FILTERS: readonly InvoiceFilter[] = ["all", "draft", "issued", "overdue", "cancelled"];
 
 function NewInvoiceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation("werkbank");
@@ -91,7 +93,10 @@ export function InvoicesPage() {
   const [creating, setCreating] = useState(false);
 
   const searchTerm = debouncedSearch.trim();
-  const { data: invoices, isLoading, isError } = useInvoices({ filter, search: searchTerm });
+  const { data: fetched, isLoading, isError } = useInvoices({ filter, search: searchTerm });
+  const balances = useBalanceMap().data;
+  // overdue = issued invoices whose balance row is past due (the list view has no payment columns)
+  const invoices = filter === "overdue" ? (fetched ?? []).filter((i) => (balances?.get(i.id!)?.days_overdue ?? 0) > 0) : fetched;
   const { data: orders } = useOrderList();
 
   // Every done order is still to be invoiced: issuing an invoice moves it to invoiced.
@@ -170,11 +175,15 @@ export function InvoicesPage() {
                   <TableHead>{t("invoices.columns.dueDate")}</TableHead>
                   <TableHead className="text-right">{t("invoices.columns.gross")}</TableHead>
                   <TableHead>{t("invoices.columns.status")}</TableHead>
+                  <TableHead>{t("invoices.columns.paymentStatus")}</TableHead>
+                  <TableHead className="text-right">{t("invoices.columns.open")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(invoices ?? []).map((i) => {
                   const status = (i.status ?? "draft") as InvoiceStatus;
+                  const balance = balances?.get(i.id!);
+                  const pay = balance ? paymentStatus(balance) : null;
                   return (
                     <TableRow key={i.id} className="cursor-pointer" onClick={() => navigate(invoicePath(i.id!))}>
                       <TableCell>{i.invoice_no ? <Token>{i.invoice_no}</Token> : t("invoices.draftNumber")}</TableCell>
@@ -193,6 +202,10 @@ export function InvoicesPage() {
                           {i.type === "cancellation" && <StatusPill tone="neutral">{t("invoices.type.cancellation")}</StatusPill>}
                           <StatusPill tone={INVOICE_STATUS_TONES[status]}>{t(`invoices.status.${status}`)}</StatusPill>
                         </div>
+                      </TableCell>
+                      <TableCell>{pay && <StatusPill tone={pay.tone}>{t(pay.labelKey)}</StatusPill>}</TableCell>
+                      <TableCell className="text-right">
+                        {balance && <Metric size="body">{money(balance.open_amount ?? 0)}</Metric>}
                       </TableCell>
                     </TableRow>
                   );

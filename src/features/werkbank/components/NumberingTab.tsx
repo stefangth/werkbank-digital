@@ -8,8 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NumberRange } from "../data/numberRanges";
 import { formatNumber, NUMBER_RANGE_KEYS, type NumberRangeKey } from "../data/numberRanges";
+import { HintedLabel } from "./DefaultHint";
+import { hintId } from "../lib/hintId";
 import { useInvoiceRangeLocked, useNumberRange, useSaveNumberRange } from "../hooks/useNumberRanges";
 
+/** The start value the database applies to a range without a row (numberRanges.ts, werkbank.next_number). */
+const DEFAULT_START: Record<NumberRangeKey, number> = { customer: 10001, quote: 1, order: 1, invoice: 1 };
 const MAX_PREFIX_LENGTH = 10;
 /** Postgres bigint upper bound is far above this; JS numbers stay exact up to it. */
 const MAX_NEXT_VALUE = Number.MAX_SAFE_INTEGER;
@@ -70,9 +74,12 @@ function RangeForm({ rangeKey, range, locked }: { rangeKey: NumberRangeKey; rang
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`numbering-next-${rangeKey}`}>{t("numbering.nextValue")}</Label>
+          <HintedLabel htmlFor={`numbering-next-${rangeKey}`} hint={t("hints.numberingStart", { start: DEFAULT_START[rangeKey] })}>
+            {t("numbering.nextValue")}
+          </HintedLabel>
           <Input
             id={`numbering-next-${rangeKey}`}
+            aria-describedby={hintId(`numbering-next-${rangeKey}`)}
             inputMode="numeric"
             autoComplete="off"
             value={nextText}

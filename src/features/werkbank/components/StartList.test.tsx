@@ -14,7 +14,7 @@ const COMPLETE = {
   email: "info@muster.example", tax_number: "201/123/45678", vat_id: null,
 };
 
-function renderList(counts: { artists: number; items: number; customers: number; invoices?: number }, company: unknown = null, isAdmin = true) {
+function renderList(counts: { artists: number; items: number; customers: number; invoices?: number; payments?: number }, company: unknown = null, isAdmin = true) {
   Object.assign(
     client,
     createFakeSupabase({
@@ -23,6 +23,7 @@ function renderList(counts: { artists: number; items: number; customers: number;
       "werkbank.customers": { data: null, error: null, count: counts.customers },
       "werkbank.company_profiles": { data: company, error: null },
       "werkbank.invoices": { data: null, error: null, count: counts.invoices ?? 0 },
+      "werkbank.invoice_entries": { data: null, error: null, count: counts.payments ?? 0 },
     }),
   );
   return renderWithProviders(
@@ -34,7 +35,7 @@ function renderList(counts: { artists: number; items: number; customers: number;
 }
 
 describe("StartList", () => {
-  it("shows the five steps in order with their links", async () => {
+  it("shows the six steps in order with their links", async () => {
     renderList({ artists: 0, items: 0, customers: 0 });
     const links = await screen.findAllByRole("link");
     expect(links.map((l) => [l.textContent, l.getAttribute("href")])).toEqual([
@@ -43,6 +44,7 @@ describe("StartList", () => {
       ["Add or import services", "/catalog"],
       ["Add or import customers", "/customers"],
       ["Issue your first invoice", "/invoices"],
+      ["Record your first payment", "/open-items"],
     ]);
     expect(screen.queryByTestId("step-done")).not.toBeInTheDocument();
   });
@@ -80,6 +82,7 @@ describe("StartList", () => {
       "Add or import services",
       "Add or import customers",
       "Issue your first invoice",
+      "Record your first payment",
     ]);
   });
 
@@ -87,5 +90,20 @@ describe("StartList", () => {
     renderList({ artists: 0, items: 0, customers: 0, invoices: 2 });
     const step = (await screen.findByRole("link", { name: /Issue your first invoice/ })).closest("li")!;
     await waitFor(() => expect(within(step).getByTestId("step-done")).toBeInTheDocument());
+  });
+
+  it("marks the payment step done once a payment exists, and asks only for payment entries", async () => {
+    renderList({ artists: 0, items: 0, customers: 0, payments: 1 });
+    const step = (await screen.findByRole("link", { name: /Record your first payment/ })).closest("li")!;
+    await waitFor(() => expect(within(step).getByTestId("step-done")).toBeInTheDocument());
+    const calls = (client as unknown as ReturnType<typeof createFakeSupabase>).calls.filter((c) => c.table === "werkbank.invoice_entries");
+    expect(calls.some((c) => c.method === "eq" && c.args[0] === "kind" && c.args[1] === "payment")).toBe(true);
+  });
+
+  it("keeps the payment step open while there is no payment", async () => {
+    renderList({ artists: 0, items: 0, customers: 0, invoices: 1 });
+    const step = (await screen.findByRole("link", { name: /Record your first payment/ })).closest("li")!;
+    await waitFor(() => expect(screen.getByTestId("step-done")).toBeInTheDocument());
+    expect(within(step).queryByTestId("step-done")).not.toBeInTheDocument();
   });
 });

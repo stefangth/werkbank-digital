@@ -910,4 +910,44 @@ export const HELP_ITEMS: readonly HelpItem[] = [
       de: 'Öffne den Kunden oder die Liegenschaft: Der Abschnitt Rechnungen listet alle zugehörigen Rechnungen mit Nummer, Status und Betrag, und ein Klick öffnet die Rechnung. Dieselben Rechnungen siehst du auf der Seite Rechnungen, wo du nach Status filtern kannst. Die Startliste auf dem Dashboard hat einen Schritt für die erste Rechnung, der zeigt, was noch fehlt, etwa die IBAN.',
     },
   },
+  {
+    id: 'W7.1', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Zahlungen', updated: '2026-10-08',
+    q: { en: 'How do I record a payment?', de: 'Wie erfasse ich eine Zahlung?' },
+    a: {
+      en: 'Open the issued invoice and choose Record payment in the Payments card. The date is today and the amount is the open amount, both can be changed, so a part payment is just a smaller amount. If you enter more than is open, the rest is booked as credit. The invoice then shows Partly paid, Paid or Credit. If you booked something wrong, choose Reverse on that line: it stays visible, marked as cancelled, and is never deleted. The Open items page lists every invoice that still has something open.',
+      de: 'Öffne die abgeschlossene Rechnung und wähl in der Karte Zahlungen Zahlung erfassen. Das Datum ist heute und der Betrag der offene Betrag, beides kannst du ändern, eine Teilzahlung ist also einfach ein kleinerer Betrag. Gibst du mehr ein als offen ist, wird der Rest als Guthaben gebucht. Die Rechnung zeigt danach Teilweise bezahlt, Bezahlt oder Guthaben. Hast du etwas falsch gebucht, wähl bei der Zeile Stornieren: Sie bleibt sichtbar und ist als storniert markiert, gelöscht wird nie etwas. Die Seite Offene Posten listet jede Rechnung, bei der noch etwas offen ist.',
+    },
+  },
+  {
+    id: 'W7.2', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Ausbuchen', updated: '2026-10-08',
+    q: { en: 'How do I write off a remainder?', de: 'Wie buche ich einen Rest aus?' },
+    a: {
+      en: 'When a customer pays less than the invoice and you do not want to chase the rest, choose Write off in the Payments card. The whole open amount is written off, and you pick a reason: discount, goodwill, bad debt or other, which needs a note. The invoice then shows Written off and leaves the open items. This only affects the open items in Werkbank. A VAT correction is a matter for your tax advisor. A line that was written off can be cancelled again.',
+      de: 'Zahlt ein Kunde weniger als die Rechnung und du willst dem Rest nicht nachlaufen, wähl in der Karte Zahlungen Ausbuchen. Ausgebucht wird immer der ganze offene Betrag, und du wählst einen Grund: Skonto, Kulanz, Forderungsausfall oder Sonstiges, dafür brauchst du eine Notiz. Die Rechnung zeigt danach Ausgebucht und verschwindet aus den offenen Posten. Das betrifft nur die offenen Posten in Werkbank. Eine Umsatzsteuerkorrektur macht dein Steuerberater. Eine Ausbuchung lässt sich wieder stornieren.',
+    },
+  },
+  {
+    id: 'W7.3', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Umbuchen', updated: '2026-10-08',
+    q: { en: 'How do I move a payment to another invoice?', de: 'Wie buche ich eine Zahlung auf eine andere Rechnung um?' },
+    a: {
+      en: 'This helps when you cancelled an invoice that was already paid and issued a corrected one. On the line of the payment choose Move, pick another issued invoice of the same customer and give a reason. The payment moves over, the old invoice loses its credit and the new one counts it as paid. A credit that stays on a cancelled invoice can instead be paid out to the customer with Refund credit.',
+      de: 'Das hilft, wenn du eine bereits bezahlte Rechnung storniert und eine korrigierte abgeschlossen hast. Wähl bei der Zeile der Zahlung Umbuchen, such eine andere abgeschlossene Rechnung desselben Kunden aus und gib einen Grund an. Die Zahlung wandert hinüber, die alte Rechnung verliert ihr Guthaben, und die neue zählt sie als bezahlt. Bleibt ein Guthaben auf einer stornierten Rechnung, kannst du es stattdessen mit Guthaben auszahlen an den Kunden zurückzahlen.',
+    },
+  },
+  {
+    id: 'W7.4', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Mahnungen', updated: '2026-10-08',
+    q: { en: 'How do I send a payment reminder or dunning notice?', de: 'Wie schicke ich eine Zahlungserinnerung oder Mahnung?' },
+    a: {
+      en: 'Once an invoice is overdue, choose the button in the Dunning card. There are three stages: payment reminder, first notice and second and final notice. Each gets a fixed payment deadline, and you choose whether it goes out by email with the PDF or as a PDF only for the post. A notice cannot be changed afterwards, and a new stage is possible only when the previous one has gone out. The button is greyed out with a reason while the invoice is not overdue, nothing is open, the notice is on hold or the last stage is reached. The default texts and days come from your company data.',
+      de: 'Ist eine Rechnung überfällig, wähl in der Karte Mahnungen den Button für die nächste Stufe. Es gibt drei Stufen: Zahlungserinnerung, 1. Mahnung und 2. und letzte Mahnung. Jede bekommt eine feste Zahlungsfrist, und du wählst, ob sie per E-Mail mit dem PDF rausgeht oder nur als PDF für den Postversand. Eine Mahnung lässt sich danach nicht mehr ändern, und eine neue Stufe geht erst, wenn die vorige raus ist. Solange die Rechnung nicht überfällig ist, nichts mehr offen ist, eine Mahnsperre gilt oder die letzte Stufe erreicht ist, ist der Button grau und nennt den Grund. Die Standardtexte und Fristen kommen aus deinen Firmendaten.',
+    },
+  },
+  {
+    id: 'W7.5', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Mahnsperre', updated: '2026-10-08',
+    q: { en: 'How do I pause dunning for an invoice?', de: 'Wie pausiere ich das Mahnen bei einer Rechnung?' },
+    a: {
+      en: 'Choose Put on hold in the Dunning card, give a reason, for example that the customer promised to pay, and optionally a last day. Without a date the hold lasts until you lift it with Lift. While it applies, no notice is suggested or created for this invoice, and a banner shows the reason. Notices that already went out stay as they are.',
+      de: 'Wähl in der Karte Mahnungen Mahnsperre setzen, gib einen Grund an, zum Beispiel dass der Kunde die Zahlung zugesagt hat, und auf Wunsch ein letztes Datum. Ohne Datum gilt die Sperre, bis du sie mit Aufheben beendest. Solange sie gilt, wird für diese Rechnung keine Mahnung vorgeschlagen oder erstellt, und ein Banner zeigt den Grund. Mahnungen, die schon rausgegangen sind, bleiben unverändert.',
+    },
+  },
 ] as const;

@@ -25,6 +25,12 @@ describe("fetchInvoices", () => {
     expect(fake.calls).toContainEqual(expect.objectContaining({ method: "eq", args: ["status", "issued"] }));
     expect(fake.calls).toContainEqual(expect.objectContaining({ method: "eq", args: ["org_id", "org-1"] }));
   });
+  it("reads the overdue filter as issued invoices", async () => {
+    const fake = createFakeSupabase({ "werkbank.invoice_list": { data: [], error: null } });
+    await fetchInvoices(asClient(fake), "org-1", { filter: "overdue", search: "" });
+    expect(fake.calls).toContainEqual(expect.objectContaining({ method: "eq", args: ["status", "issued"] }));
+    expect(fake.calls.some((c) => c.method === "eq" && c.args[1] === "overdue")).toBe(false);
+  });
   it("narrows by customer and property", async () => {
     const fake = createFakeSupabase({ "werkbank.invoice_list": { data: [], error: null } });
     await fetchInvoices(asClient(fake), "org-1", { filter: "draft", search: "", customerId: "c1", propertyId: "p1" });

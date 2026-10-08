@@ -1,7 +1,7 @@
 -- Werkbank Teil 5 (R3, R4): views invoice_balances and dunning_due, protection of notice files.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(50);
+SELECT plan(51);
 
 SET LOCAL timezone = 'UTC';
 
@@ -154,6 +154,8 @@ SELECT results_eq($$SELECT paid, open_amount, payment_state FROM werkbank.invoic
   $$VALUES (1000::numeric, 190.00::numeric, 'partial')$$, 'paid is payments minus refunds, reversed entries are ignored');
 SELECT results_eq($$SELECT written_off, open_amount, payment_state FROM werkbank.invoice_balances WHERE invoice_id = pg_temp.n(22)$$,
   $$VALUES (0::numeric, 1190.00::numeric, 'open')$$, 'a reversed write-off does not count');
+SELECT is((SELECT count(*)::int FROM werkbank.invoice_balances WHERE open_amount <> claim - paid - written_off), 0,
+  'open_amount = claim - paid - written_off for every fixture');
 SELECT results_eq(
   $$SELECT invoice_no, customer_name, property_name, due_date, last_stage, last_notice_date, hold_reason, hold_until
     FROM werkbank.invoice_balances WHERE invoice_id = pg_temp.n(1)$$,

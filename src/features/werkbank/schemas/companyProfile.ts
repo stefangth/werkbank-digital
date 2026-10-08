@@ -23,6 +23,10 @@ export const normalizeIban = (v: string): string => v.replace(/\s+/g, "").toUppe
 /** VAT ids are typed in any case and in groups; the database wants them compact and uppercase. */
 export const normalizeVatId = (v: string): string => v.replace(/\s+/g, "").toUpperCase();
 
+/** Whole days from 0 to 365, as the check constraints on the dunning columns. */
+const dunningDays = (t: TFunction) =>
+  z.string().trim().refine((v) => DIGITS.test(v) && Number(v) >= 0 && Number(v) <= 365, t("company.errors.dunningDays"));
+
 export const companyProfileSchema = (t: TFunction) =>
   z
     .object({
@@ -45,6 +49,13 @@ export const companyProfileSchema = (t: TFunction) =>
       payment_terms_text: z.string(),
       invoice_intro: z.string(),
       invoice_closing: z.string(),
+      reminder_after_days: dunningDays(t),
+      dunning1_after_days: dunningDays(t),
+      dunning2_after_days: dunningDays(t),
+      dunning_deadline_days: dunningDays(t),
+      reminder_text: z.string(),
+      dunning1_text: z.string(),
+      dunning2_text: z.string(),
       payment_due_days: z
         .string()
         .trim()
@@ -79,6 +90,9 @@ export function toCompanyProfileRow(form: CompanyProfileForm): CompanyProfileRow
     payment_terms_text: form.payment_terms_text,
     invoice_intro: form.invoice_intro,
     invoice_closing: form.invoice_closing,
+    reminder_text: form.reminder_text,
+    dunning1_text: form.dunning1_text,
+    dunning2_text: form.dunning2_text,
   });
   return {
     company_name: form.company_name.trim(),
@@ -89,5 +103,9 @@ export function toCompanyProfileRow(form: CompanyProfileForm): CompanyProfileRow
     ...text,
     quote_validity_days: Number(form.quote_validity_days),
     payment_due_days: Number(form.payment_due_days),
+    reminder_after_days: Number(form.reminder_after_days),
+    dunning1_after_days: Number(form.dunning1_after_days),
+    dunning2_after_days: Number(form.dunning2_after_days),
+    dunning_deadline_days: Number(form.dunning_deadline_days),
   };
 }

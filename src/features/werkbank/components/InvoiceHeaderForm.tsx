@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateDMY } from "@/lib/dates";
 import type { Invoice, InvoicePatch } from "../data/invoices";
 import { DatePopover } from "./DatePopover";
+import { hintId } from "../lib/hintId";
 import { DocumentHeaderFields, Fact, FormField } from "./DocumentHeaderFields";
 
 type TextField = "intro_text" | "closing_text" | "payment_terms_text";
@@ -63,6 +64,7 @@ export function InvoiceHeaderForm({
   };
   const textProps = (field: TextField) => ({
     id: `invoice-${field}`,
+    "aria-describedby": hintId(`invoice-${field}`),
     value: text[field],
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => setText((s) => ({ ...s, [field]: e.target.value })),
     onBlur: () => saveText(field),
@@ -79,17 +81,20 @@ export function InvoiceHeaderForm({
   const pickFrom = (date: string) =>
     onPatch(to && to < date ? { service_date_from: date, service_date_to: null } : { service_date_from: date });
 
-  const dateButton = (id: string, value: string | null) => (
-    <Button id={id} variant="secondary" className="w-full justify-start gap-2">
+  const dateButton = (id: string, value: string | null, described = false) => (
+    <Button id={id} variant="secondary" className="w-full justify-start gap-2" aria-describedby={described ? hintId(id) : undefined}>
       <CalendarDays className="h-4 w-4" aria-hidden />
       {value ? <Metric size="body">{formatDateDMY(value)}</Metric> : t("quotes.header.pickDate")}
     </Button>
   );
 
+  // On a cancellation draft service period and payment term come from the original invoice, so the
+  // presets the hints explain do not apply there.
+  const isCancellation = invoice.type === "cancellation";
   const termFields = (
     <>
-      <FormField id="invoice-service-from" label={t("invoices.header.serviceFrom")}>
-        <DatePopover value={from} onSelect={pickFrom}>{dateButton("invoice-service-from", from)}</DatePopover>
+      <FormField id="invoice-service-from" label={t("invoices.header.serviceFrom")} hint={isCancellation ? undefined : t("hints.invoiceServiceDate")}>
+        <DatePopover value={from} onSelect={pickFrom}>{dateButton("invoice-service-from", from, !isCancellation)}</DatePopover>
       </FormField>
       <FormField id="invoice-service-to" label={t("invoices.header.serviceTo")}>
         <div className="flex items-center gap-2">
@@ -103,13 +108,11 @@ export function InvoiceHeaderForm({
           )}
         </div>
       </FormField>
-      <FormField id="invoice-payment-due-days" label={t("invoices.header.paymentDueDays")}>
-        <Input id="invoice-payment-due-days" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} onBlur={saveDays} />
+      <FormField id="invoice-payment-due-days" label={t("invoices.header.paymentDueDays")} hint={isCancellation ? undefined : t("hints.invoicePaymentDueDays")}>
+        <Input id="invoice-payment-due-days" aria-describedby={isCancellation ? undefined : hintId("invoice-payment-due-days")} inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} onBlur={saveDays} />
       </FormField>
     </>
   );
-
-  const isCancellation = invoice.type === "cancellation";
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -125,9 +128,9 @@ export function InvoiceHeaderForm({
         <DocumentHeaderFields doc={invoice} readOnly={false} idPrefix="invoice" names={names} onPatch={onPatch} afterLocation={termFields} />
       )}
       <div className="space-y-4 md:col-span-2">
-        <FormField id="invoice-intro_text" label={t("quotes.header.intro")}><Textarea rows={3} {...textProps("intro_text")} /></FormField>
-        <FormField id="invoice-closing_text" label={t("quotes.header.closing")}><Textarea rows={3} {...textProps("closing_text")} /></FormField>
-        <FormField id="invoice-payment_terms_text" label={t("quotes.header.paymentTerms")}><Textarea rows={2} {...textProps("payment_terms_text")} /></FormField>
+        <FormField id="invoice-intro_text" label={t("quotes.header.intro")} hint={t("hints.invoiceIntro")}><Textarea rows={3} {...textProps("intro_text")} /></FormField>
+        <FormField id="invoice-closing_text" label={t("quotes.header.closing")} hint={t("hints.invoiceClosing")}><Textarea rows={3} {...textProps("closing_text")} /></FormField>
+        <FormField id="invoice-payment_terms_text" label={t("quotes.header.paymentTerms")} hint={t("hints.invoicePaymentTerms")}><Textarea rows={2} {...textProps("payment_terms_text")} /></FormField>
       </div>
     </div>
   );

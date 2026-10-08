@@ -6,6 +6,7 @@ import { Metric } from "@/components/ui/metric";
 import type { Quote } from "../data/quotes";
 import { toNumber } from "../schemas/catalogItem";
 import { ContactSelect } from "./ContactSelect";
+import { HintedLabel } from "./DefaultHint";
 import { CustomerPicker } from "./CustomerPicker";
 import { PropertyPicker } from "./PropertyPicker";
 
@@ -26,10 +27,11 @@ export function Fact({ label, children }: { label: string; children: React.React
   );
 }
 
-export function FormField({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {
+/** A label and its control. With a hint the control should point to it: `aria-describedby={hintId(id)}`. */
+export function FormField({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      {hint ? <HintedLabel htmlFor={id} hint={hint}>{label}</HintedLabel> : <Label htmlFor={id}>{label}</Label>}
       {children}
     </div>
   );

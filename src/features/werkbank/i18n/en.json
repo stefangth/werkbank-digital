@@ -1,4 +1,20 @@
 {
+  "hints": {
+    "companyPaymentDueDays": "Preset: 14 days. Applies to every new invoice. You can change it here, and on each invoice too.",
+    "companyQuoteValidity": "Preset: 30 days. Applies to every new quote. You can change it here, and on each quote too.",
+    "invoicePaymentDueDays": "Preset: 14 days. Comes from Settings, Company. You can change it here for this invoice.",
+    "invoiceServiceDate": "Preset is the day the order was completed. You can change the date here for this invoice.",
+    "invoiceIntro": "Comes from Settings, Company, if a text is set there. You can change it here for this invoice.",
+    "invoiceClosing": "Comes from Settings, Company, if a text is set there. You can change it here for this invoice.",
+    "invoicePaymentTerms": "Comes from Settings, Company, if a text is set there. You can change it here for this invoice.",
+    "quoteValidUntil": "Today plus the validity from Settings, Company (preset 30 days). You can change the date here for this quote.",
+    "quoteIntro": "Comes from Settings, Company, if a text is set there. You can change it here for this quote.",
+    "quoteClosing": "Comes from Settings, Company, if a text is set there. You can change it here for this quote.",
+    "quotePaymentTerms": "Comes from Settings, Company, if a text is set there. You can change it here for this quote.",
+    "numberingStart": "Preset: {{start}}. The number counts up by itself. You can change the start value here.",
+    "invoiceRecipient": "Preset: the invoice email of the customer, else the contact's, else the customer's general email. You can change it here.",
+    "quoteRecipient": "Preset: the contact's email, else the customer's. You can change it here."
+  },
   "nav": {
     "customers": "Customers",
     "catalog": "Services",
@@ -6,7 +22,8 @@
     "properties": "Properties",
     "quotes": "Quotes",
     "orders": "Orders",
-    "invoices": "Invoices"
+    "invoices": "Invoices",
+    "openItems": "Open items"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -18,13 +35,17 @@
       "catalog": "Add or import services",
       "customers": "Add or import customers",
       "loadFailed": "Could not load your progress.",
-      "invoice": "Issue your first invoice"
+      "invoice": "Issue your first invoice",
+      "first_payment": "Record your first payment"
     },
     "tiles": {
       "acceptedNoOrder": "Accepted, no order yet",
       "unscheduled": "Orders without a date",
       "label": "Open items",
-      "loadFailed": "The count could not be loaded."
+      "loadFailed": "The count could not be loaded.",
+      "overdue": "Overdue",
+      "overdueNote_one": "of which {{count}} due a notice",
+      "overdueNote_other": "of which {{count}} due a notice"
     }
   },
   "technicians": {
@@ -103,6 +124,236 @@
       "writtenOff": "Written off",
       "void": "Void",
       "overpaid": "Credit"
+    },
+    "title": "Open items",
+    "sub": "What customers still owe, and which invoices are due a notice.",
+    "loadFailed": "The open items could not be loaded.",
+    "kpi": {
+      "open": "Open in total",
+      "overdue": "Of which overdue",
+      "credit": "Customer credit"
+    },
+    "view": {
+      "open": "Open",
+      "due": "Due a notice"
+    },
+    "searchLabel": "Search open items",
+    "searchPlaceholder": "Number, customer, property",
+    "empty": {
+      "title": "Nothing open",
+      "body": "Every issued invoice is settled.",
+      "reason": "New open items appear here once you issue an invoice."
+    },
+    "noMatches": "No open item matches your search.",
+    "noMatchesReason": "Try another search term.",
+    "holdTooltip": "Dunning hold: {{reason}}",
+    "columns": {
+      "number": "No.",
+      "customer": "Customer / property",
+      "dueDate": "Due on",
+      "daysOverdue": "Days overdue",
+      "open": "Open",
+      "status": "Payment",
+      "stage": "Notice level",
+      "hold": "Dunning hold",
+      "actions": "Actions"
+    },
+    "due": {
+      "none": "No invoice is due a notice",
+      "noneReason": "Invoices appear here once they are overdue and the wait days have passed.",
+      "selectAll": "Select all with an email address",
+      "select": "Select {{number}}",
+      "nextStage": "Next notice",
+      "bulk": "Send selected notices",
+      "print": "PDF for postal mail",
+      "printed": "Notice created as a PDF. Find it on the invoice.",
+      "printFailed": "The notice could not be created."
+    },
+    "bulk": {
+      "title": "Send notices",
+      "description": "Each notice is created, locked and emailed. This cannot be undone.",
+      "count_one": "{{count}} notice will be sent",
+      "count_other": "{{count}} notices will be sent",
+      "excluded": "No email address, not included:",
+      "confirm": "Send now",
+      "progress": "{{done}} of {{total}} done",
+      "sent": "{{count}} sent",
+      "skipped": "{{count}} skipped",
+      "failed": "{{count}} failed",
+      "failedList": "These need a look:",
+      "nothingSent": "Nothing was sent.",
+      "doneHint": "Skipped invoices changed since the list loaded.",
+      "close": "Close"
+    }
+  },
+  "payments": {
+    "title": "Payments",
+    "claim": "Claim",
+    "paid": "Paid",
+    "writtenOff": "Written off",
+    "open": "Open",
+    "credit": "Credit",
+    "loadFailed": "Payments could not be loaded.",
+    "empty": "No entries yet.",
+    "recordPayment": "Record payment",
+    "writeOff": "Write off",
+    "refund": "Refund credit",
+    "kind": {
+      "payment": "Payment",
+      "refund": "Refund",
+      "write_off": "Write-off"
+    },
+    "reason": {
+      "skonto": "Cash discount",
+      "goodwill": "Goodwill",
+      "bad_debt": "Bad debt",
+      "other": "Other"
+    },
+    "reversedNote": "Reversed: {{reason}}",
+    "movedHere": "Moved here from another invoice",
+    "reverse": "Reverse",
+    "transfer": "Move",
+    "cancelledCredit": "Refund it or reverse the refund first, then move the payment.",
+    "form": {
+      "date": "Booking date",
+      "pickDate": "Pick a date",
+      "amount": "Amount",
+      "note": "Note (optional)",
+      "noteRequired": "Note",
+      "reason": "Reason",
+      "target": "Move to",
+      "none": "There is no other issued invoice for this customer.",
+      "parsed": "Booked as"
+    },
+    "hints": {
+      "date": "Today. You can change the date.",
+      "amount": "The open amount. You can change it for a part payment.",
+      "refund": "The full credit. You can change it for a part refund."
+    },
+    "warnings": {
+      "overOpen": "This is more than the open amount. The rest is booked as credit."
+    },
+    "payment": {
+      "title": "Record payment",
+      "description": "Book a payment of the customer on this invoice.",
+      "submit": "Book payment",
+      "saved": "Payment booked."
+    },
+    "write_off": {
+      "title": "Write off open amount",
+      "description": "The whole open amount is written off.",
+      "submit": "Write off",
+      "hint": "This only affects the open items in Werkbank. A VAT correction is done by your tax advisor.",
+      "saved": "Write-off booked."
+    },
+    "refund_dialog": {
+      "title": "Refund credit",
+      "description": "Book the refund of a credit to the customer.",
+      "submit": "Book refund",
+      "saved": "Refund booked."
+    },
+    "reverseDialog": {
+      "title": "Reverse entry",
+      "description": "The entry stays visible in the list, marked as reversed.",
+      "reason": "Reason",
+      "submit": "Reverse entry",
+      "saved": "Entry reversed."
+    },
+    "transferDialog": {
+      "title": "Move payment",
+      "description": "The payment is moved to another issued invoice of the same customer.",
+      "reason": "Reason",
+      "submit": "Move payment",
+      "saved": "Payment moved."
+    },
+    "errors": {
+      "date": "Pick a booking date.",
+      "amount": "Enter an amount with at most two decimal places, for example 1.190,50.",
+      "refundMax": "The refund cannot be higher than the credit.",
+      "reason": "Choose a reason.",
+      "noteRequired": "Add a note for the reason Other.",
+      "reversalReason": "Enter a reason.",
+      "target": "Choose an invoice.",
+      "transferReason": "Enter a reason."
+    },
+    "cancelledCreditMove": "Move the payment to the corrected invoice?",
+    "movedTo": "Moved to"
+  },
+  "dunning": {
+    "title": "Dunning",
+    "loadFailed": "The dunning notices could not be loaded.",
+    "empty": "No dunning notice yet.",
+    "row": {
+      "deadline": "Deadline",
+      "email": "By email",
+      "print": "By post",
+      "sendFailed": "Sending failed",
+      "pdf": "PDF",
+      "resend": "Send again",
+      "resent": "Notice sent.",
+      "resendFailed": "The notice could not be sent.",
+      "rendering": "PDF is being created",
+      "retry": "Try again",
+      "retried": "Notice completed.",
+      "retryFailed": "The notice could not be completed."
+    },
+    "blockers": {
+      "not_issued": "Only possible for finalised invoices.",
+      "not_overdue": "The invoice is not overdue yet.",
+      "nothing_open": "Nothing is open any more.",
+      "on_hold": "Dunning is on hold for this invoice.",
+      "previous_stage_open": "The previous notice has not been fully sent yet.",
+      "max_stage": "The last dunning stage has been reached."
+    },
+    "create": {
+      "button": "Create {{stage}}",
+      "title": "Create {{stage}}",
+      "description": "The notice gets a fixed deadline and cannot be changed afterwards.",
+      "to": "Recipient",
+      "cc": "CC",
+      "deadline": "Payment deadline",
+      "hintTo": "The customer's invoice email, else the contact's. You can change it.",
+      "hintDeadline": "Today plus {{days}} days, as set in your company data. You can change the date.",
+      "preview": "Preview",
+      "send": "Create and send",
+      "printOnly": "PDF for postal delivery only",
+      "sent": "{{stage}} created and sent.",
+      "created": "{{stage}} created.",
+      "issuedSendFailed": "Created, sending failed. Send the notice again from the list.",
+      "issuedRenderFailed": "Created, the PDF is not ready yet. Choose Try again in the list."
+    },
+    "hold": {
+      "set": "Put on hold",
+      "title": "Put dunning on hold",
+      "description": "While the hold applies, no notice is suggested or created for this invoice.",
+      "reason": "Reason",
+      "until": "On hold until",
+      "noDate": "No date",
+      "clearDate": "Remove date",
+      "hint": "Without a date the hold applies until you lift it.",
+      "submit": "Set hold",
+      "saved": "Hold set.",
+      "banner": "Dunning on hold: {{reason}}.",
+      "bannerUntil": "Applies until",
+      "bannerOpen": "Applies until you lift it.",
+      "clear": "Lift"
+    },
+    "stage": {
+      "1": "Payment reminder",
+      "2": "First notice",
+      "3": "Second and final notice"
+    },
+    "errors": {
+      "noRecipient": "No email address is stored for this customer. Enter a recipient.",
+      "invoiceFileMissing": "The invoice PDF is missing, so the notice cannot go out by email. Send it by post.",
+      "notLatestNotice": "Only the latest notice can be sent again."
+    },
+    "send": {
+      "resendTitle": "Send {{stage}} again",
+      "retryTitle": "Complete and send {{stage}}",
+      "description": "The notice PDF goes out together with the invoice PDF.",
+      "hintToLast": "The addresses this notice last went to. You can change them.",
+      "submit": "Send"
     }
   },
   "errors": {
@@ -127,6 +378,7 @@
     "notPayable": "This document cannot take payments.",
     "futureBookingDate": "The booking date cannot be in the future.",
     "refundExceedsCredit": "The refund is higher than the credit on this invoice.",
+    "transferExceedsCredit": "The payment is higher than the credit left on this cancelled invoice. Reverse the refund first.",
     "nothingOpen": "Nothing is open on this invoice any more.",
     "openAmountChanged": "The open amount has changed in the meantime. Please check it and try again.",
     "alreadyReversed": "This entry has already been reversed.",
@@ -134,7 +386,8 @@
     "dunningNotAllowed": "A dunning notice is not possible for this invoice right now.",
     "invalidEntryKind": "That kind of entry does not exist.",
     "invalidAmount": "Enter an amount with at most two decimal places.",
-    "cancellationExists": "This invoice already has a cancellation invoice."
+    "cancellationExists": "This invoice already has a cancellation invoice.",
+    "holdUntilPast": "The end date of a hold cannot be in the past."
   },
   "units": {
     "HUR": "h",
@@ -238,7 +491,8 @@
       "legal": "Tax and register",
       "bank": "Bank details",
       "texts": "Quote defaults",
-      "invoiceTexts": "Invoice defaults"
+      "invoiceTexts": "Invoice defaults",
+      "dunning": "Dunning"
     },
     "fields": {
       "companyName": "Company name",
@@ -285,7 +539,20 @@
       "vatId": "Enter a valid VAT ID, for example DE123456789",
       "iban": "Enter a valid IBAN, for example DE89 3704 0044 0532 0130 00",
       "validity": "Enter whole days from 1 to 365",
-      "paymentDueDays": "Enter whole days from 0 to 365"
+      "paymentDueDays": "Enter whole days from 0 to 365",
+      "dunningDays": "Enter whole days from 0 to 365"
+    },
+    "dunning": {
+      "afterDays": "{{stage}} after (days)",
+      "textLabel": "Text for {{stage}} (optional)",
+      "deadline": "Payment deadline in notices (days)",
+      "hint": {
+        "reminder": "Default 7 days after the invoice is due. You can change the value here.",
+        "dunning1": "Default 14 days after the payment reminder. You can change the value here.",
+        "dunning2": "Default 14 days after the first notice. You can change the value here.",
+        "deadline": "Default 7 days. This is how long a customer has to pay after a notice. You can change the value here.",
+        "text": "Leave empty for the default text."
+      }
     }
   },
   "customers": {
@@ -387,6 +654,12 @@
         "add": "Add property",
         "empty": "This customer has no properties yet.",
         "loadFailed": "The properties could not be loaded."
+      },
+      "openItems": {
+        "title": "Open items",
+        "open": "Open in total",
+        "credit": "Credit",
+        "loadFailed": "The open items could not be loaded."
       }
     }
   },
@@ -964,7 +1237,8 @@
       "all": "All",
       "draft": "Drafts",
       "issued": "Issued",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "overdue": "Overdue"
     },
     "status": {
       "draft": "Draft",
@@ -989,7 +1263,9 @@
       "issueDate": "Invoice date",
       "dueDate": "Due on",
       "gross": "Gross",
-      "status": "Status"
+      "status": "Status",
+      "paymentStatus": "Payment",
+      "open": "Open"
     },
     "notice": {
       "doneNotInvoiced": "Done, not invoiced yet",

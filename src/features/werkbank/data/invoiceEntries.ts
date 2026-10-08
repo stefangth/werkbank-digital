@@ -13,7 +13,8 @@ type Page<T> = PromiseLike<{ data: T[] | null; error: unknown }>;
 
 /** Keeps a search term from breaking out of the PostgREST `or(...)` filter. */
 function safeTerm(term: string): string {
-  return term.replace(/[,()%*\\"]/g, " ").replace(/\s+/g, " ").trim();
+  // "_" is an ilike wildcard: escaped so "RE_1" matches only itself.
+  return term.replace(/[,()%*\\"]/g, " ").replace(/\s+/g, " ").trim().replace(/_/g, "\\_");
 }
 
 /** The payment state of one invoice, or null if it has none (draft, cancellation, other org). */
@@ -50,6 +51,16 @@ export async function fetchOpenItems(
   });
 }
 
+export type InvoiceBalanceBrief = Pick<InvoiceBalance, "invoice_id" | "open_amount" | "payment_state" | "days_overdue" | "last_stage">;
+
+/** Payment state of every invoice that has one, by invoice id: the extra columns of the invoice list. */
+export async function fetchBalanceMap(client: Client, orgId: string): Promise<Map<string, InvoiceBalanceBrief>> {
+  const rows = await fetchAllPages<InvoiceBalanceBrief>((from, to) => client.schema("werkbank")
+    .from("invoice_balances").select("invoice_id, open_amount, payment_state, days_overdue, last_stage").eq("org_id", orgId)
+    .order("invoice_id").range(from, to) as unknown as Page<InvoiceBalanceBrief>);
+  return new Map(rows.flatMap((r) => (r.invoice_id ? [[r.invoice_id, r] as const] : [])));
+}
+
 /** The total credit customers hold with the org (sum of negative open amounts), as a positive number. */
 export async function fetchCustomerCredit(client: Client, orgId: string): Promise<number> {
   const rows = await fetchAllPages<Pick<InvoiceBalance, "open_amount">>((from, to) => client.schema("werkbank")
@@ -57,6 +68,28 @@ export async function fetchCustomerCredit(client: Client, orgId: string): Promis
     .order("invoice_id").range(from, to) as unknown as Page<Pick<InvoiceBalance, "open_amount">>);
   const cents = rows.reduce((sum, r) => sum + Math.round(-(r.open_amount ?? 0) * 100), 0);
   return cents / 100;
+}
+
+/** Where reversed entries were moved to: entry id to the invoice its transferred copy was booked on. */
+export async function fetchTransferDestinations(
+  client: Client,
+  orgId: string,
+  entryIds: string[],
+): Promise<Map<string, { invoiceId: string; invoiceNo: string | null }>> {
+  const map = new Map<string, { invoiceId: string; invoiceNo: string | null }>();
+  if (entryIds.length === 0) return map;
+  const w = client.schema("werkbank");
+  const { data: copies, error } = await w.from("invoice_entries").select("transferred_from, invoice_id")
+    .eq("org_id", orgId).in("transferred_from", entryIds);
+  if (error) throw error;
+  const rows = (copies ?? []) as { transferred_from: string | null; invoice_id: string }[];
+  if (rows.length === 0) return map;
+  const { data: invoices, error: invErr } = await w.from("invoices").select("id, invoice_no")
+    .eq("org_id", orgId).in("id", [...new Set(rows.map((r) => r.invoice_id))]);
+  if (invErr) throw invErr;
+  const numbers = new Map((invoices ?? []).map((i) => [i.id, i.invoice_no]));
+  for (const r of rows) if (r.transferred_from) map.set(r.transferred_from, { invoiceId: r.invoice_id, invoiceNo: numbers.get(r.invoice_id) ?? null });
+  return map;
 }
 
 /** Books a payment, refund or write-off; returns the entry id. The database checks everything. */

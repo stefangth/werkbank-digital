@@ -11,5 +11,6 @@ export const ORDERS_PATH = "/orders";
 export const orderPath = (id: string) => `${ORDERS_PATH}/${id}`;
 export const INVOICES_PATH = "/invoices";
 export const invoicePath = (id: string) => `${INVOICES_PATH}/${id}`;
+export const OPEN_ITEMS_PATH = "/open-items";
 export const PUBLIC_QUOTE_PATH = "/quote/:token";
 export const COMPANY_SETTINGS_PATH = "/settings?tab=company";

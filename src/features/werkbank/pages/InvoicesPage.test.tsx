@@ -6,7 +6,7 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { state, navigate, create, useInvoicesSpy } = vi.hoisted(() => ({
-  state: { rows: [] as unknown[], orders: [] as unknown[] | undefined, loading: false, error: false },
+  state: { rows: [] as unknown[], orders: [] as unknown[] | undefined, balances: new Map<string, unknown>(), loading: false, error: false },
   navigate: vi.fn(),
   create: vi.fn(),
   useInvoicesSpy: vi.fn(),
@@ -22,6 +22,7 @@ vi.mock("../hooks/useInvoices", () => ({
   },
   useInvoiceMutations: () => ({ create: { mutate: create, isPending: false } }),
 }));
+vi.mock("../hooks/useOpenItems", () => ({ useBalanceMap: () => ({ data: state.balances }) }));
 vi.mock("../hooks/useOrders", () => ({
   useOrderList: () => ({ data: state.orders }),
 }));
@@ -55,6 +56,7 @@ describe("InvoicesPage", () => {
     state.loading = false; state.error = false;
     state.rows = rows;
     state.orders = [];
+    state.balances = new Map();
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
   });
@@ -88,6 +90,32 @@ describe("InvoicesPage", () => {
     render();
     fireEvent.click(await screen.findByRole("tab", { name: /Entwürfe/ }));
     await waitFor(() => expect(useInvoicesSpy).toHaveBeenLastCalledWith({ filter: "draft", search: "" }));
+  });
+
+  it("renames the issued filter to Ausgestellt and adds Überfällig", async () => {
+    render();
+    expect(await screen.findByRole("tab", { name: "Ausgestellt" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Offen" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Überfällig" }));
+    await waitFor(() => expect(useInvoicesSpy).toHaveBeenLastCalledWith({ filter: "overdue", search: "" }));
+  });
+
+  it("shows Zahlstatus and Offen from the balance and narrows Überfällig to invoices past due", async () => {
+    state.rows = [inv({ id: "i2", invoice_no: "RE-0002" }), inv({ id: "i4", invoice_no: "RE-0004" })];
+    state.balances = new Map([
+      ["i2", { invoice_id: "i2", open_amount: 50, payment_state: "partial", days_overdue: 0, last_stage: null }],
+      ["i4", { invoice_id: "i4", open_amount: 119, payment_state: "open", days_overdue: 9, last_stage: 1 }],
+    ]);
+    render();
+    expect(await screen.findByRole("columnheader", { name: "Zahlstatus" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Offen" })).toBeInTheDocument();
+    const row = screen.getByText("RE-0004").closest("tr")!;
+    expect(row).toHaveTextContent("Überfällig");
+    expect(row.textContent).toMatch(/119,00/);
+    expect(screen.getByText("RE-0002").closest("tr")).toHaveTextContent("Teilweise bezahlt");
+    fireEvent.click(screen.getByRole("tab", { name: "Überfällig" }));
+    await waitFor(() => expect(screen.queryByText("RE-0002")).not.toBeInTheDocument());
+    expect(screen.getByText("RE-0004")).toBeInTheDocument();
   });
 
   it("debounces the search", async () => {

@@ -198,7 +198,7 @@ test.describe("Werkbank quote to order", () => {
 
     await page.getByRole("button", { name: "Senden", exact: true }).click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByLabel("An")).toHaveValue(CUSTOMER_EMAIL);
+    await expect(dialog.getByLabel("An", { exact: true })).toHaveValue(CUSTOMER_EMAIL);
     await dialog.getByRole("button", { name: "Senden", exact: true }).click();
 
     await expect.poll(async () => {

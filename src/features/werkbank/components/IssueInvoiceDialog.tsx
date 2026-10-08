@@ -18,6 +18,9 @@ import { useProperty } from "../hooks/useProperties";
 import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
 import { splitAddresses } from "../lib/addresses";
 import { defaultRecipient } from "../lib/defaultRecipient";
+import { HintedLabel } from "./DefaultHint";
+import { focusFirstField } from "../lib/focusFirstField";
+import { hintId } from "../lib/hintId";
 
 export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
 
@@ -131,7 +134,7 @@ export function IssueInvoiceDialog({
   // Not dismissable while issuing or sending: the call would finish behind a closed dialog.
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next || !pending) onOpenChange(next); }}>
-      <DialogContent>
+      <DialogContent onOpenAutoFocus={focusFirstField}>
         <DialogHeader>
           <DialogTitle>{issueMode ? t("invoices.send.issueTitle") : t(resend ? "invoices.send.resendTitle" : "invoices.send.sendTitle")}</DialogTitle>
           <DialogDescription>{issueMode ? t("invoices.send.issueHint") : t("invoices.send.sendHint")}</DialogDescription>
@@ -140,8 +143,8 @@ export function IssueInvoiceDialog({
         <div className="space-y-4">
           {issueMode && <Alert variant="destructive" className="font-medium">{t("invoices.send.warning")}</Alert>}
           <div className="space-y-2">
-            <Label htmlFor="issue-invoice-to">{t("invoices.send.to")}</Label>
-            <Input id="issue-invoice-to" type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
+            <HintedLabel htmlFor="issue-invoice-to" hint={t("hints.invoiceRecipient")}>{t("invoices.send.to")}</HintedLabel>
+            <Input id="issue-invoice-to" aria-describedby={hintId("issue-invoice-to")} type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="issue-invoice-cc">{t("invoices.send.cc")}</Label>

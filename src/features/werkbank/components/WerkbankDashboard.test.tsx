@@ -33,6 +33,12 @@ describe("WerkbankDashboard", () => {
         "werkbank.catalog_items": { data: null, error: null, count: 0 },
         "werkbank.customers": { data: null, error: null, count: 0 },
         "werkbank.company_profiles": { data: null, error: null },
+        "werkbank.invoice_balances": { data: [
+          { invoice_id: "i1", days_overdue: 20, open_amount: 100 },
+          { invoice_id: "i2", days_overdue: 5, open_amount: 50 },
+          { invoice_id: "i3", days_overdue: 40, open_amount: 70 },
+        ], error: null },
+        "werkbank.dunning_due": { data: [{ invoice_id: "i1" }, { invoice_id: "i3" }], error: null },
         "werkbank.quote_list": { data: [
           { id: "q1", status: "accepted", has_order: false },
           { id: "q2", status: "accepted", has_order: false },
@@ -82,7 +88,7 @@ describe("WerkbankDashboard", () => {
     authAs("admin");
     renderDashboard();
     expect(screen.queryByText("–")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("status")).toHaveLength(2);
+    expect(screen.getAllByRole("status")).toHaveLength(3);
   });
 
   it("says so when a count cannot be loaded, and still shows the other tile", async () => {
@@ -99,6 +105,15 @@ describe("WerkbankDashboard", () => {
     expect(await screen.findByText("The count could not be loaded.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("link", { name: /Orders without a date/ })).toHaveTextContent("1"));
     expect(screen.queryByText("–")).not.toBeInTheDocument();
+  });
+
+  it("shows the overdue tile with the count, the notice caption and a link to the open items", async () => {
+    authAs("admin");
+    renderDashboard();
+    const tile = await screen.findByRole("link", { name: /Overdue/ });
+    expect(tile).toHaveAttribute("href", "/open-items");
+    await waitFor(() => expect(tile).toHaveTextContent("3"));
+    expect(tile).toHaveTextContent("of which 2 due a notice");
   });
 
   it("shows no tiles for a technician", () => {

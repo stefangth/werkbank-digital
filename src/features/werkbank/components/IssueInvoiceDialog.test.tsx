@@ -73,6 +73,11 @@ describe("IssueInvoiceDialog", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it("explains the prefilled recipient", () => {
+    renderDialog();
+    expect(screen.getByRole("button", { name: /^Vorgabe: die E-Mail für Rechnungen beim Kunden/ })).toBeInTheDocument();
+  });
+
   it("cannot be dismissed while an issue call is running", () => {
     issue.isPending = true;
     const onOpenChange = vi.fn();

@@ -14,6 +14,7 @@ import { propertiesArt } from './PropertiesMini';
 import { catalogArt } from './CatalogMini';
 import { quotesArt } from './QuotesMini';
 import { invoicesArt } from './InvoicesMini';
+import { openItemsArt } from './OpenItemsMini';
 import { ordersArt } from './OrdersMini';
 
 export type ArtTuple = readonly [ReactNode, ReactNode, ReactNode, ReactNode];
@@ -39,6 +40,7 @@ export const ART: Record<RegisteredPageKey, ArtEntry> = {
   quotes: quotesArt,
   orders: ordersArt,
   invoices: invoicesArt,
+  openItems: openItemsArt,
 };
 
 /** Resolve an ART entry to its four nodes, passing vocabulary to the factory forms. */

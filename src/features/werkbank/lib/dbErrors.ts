@@ -22,6 +22,8 @@ export type DbErrorKey =
   | "errors.notPayable"
   | "errors.futureBookingDate"
   | "errors.refundExceedsCredit"
+  | "errors.transferExceedsCredit"
+  | "errors.holdUntilPast"
   | "errors.nothingOpen"
   | "errors.openAmountChanged"
   | "errors.alreadyReversed"
@@ -71,6 +73,8 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (text.includes("not_payable")) return "errors.notPayable";
   if (text.includes("future_booking_date")) return "errors.futureBookingDate";
   if (text.includes("refund_exceeds_credit")) return "errors.refundExceedsCredit";
+  if (text.includes("transfer_exceeds_credit")) return "errors.transferExceedsCredit";
+  if (text.includes("hold_until_past")) return "errors.holdUntilPast";
   if (text.includes("nothing_open")) return "errors.nothingOpen";
   if (text.includes("open_amount_changed")) return "errors.openAmountChanged";
   if (text.includes("already_reversed")) return "errors.alreadyReversed";
@@ -87,7 +91,7 @@ export function mapDbError(error: unknown): DbErrorKey {
 const BLOCKERS: readonly DunningBlocker[] = ["not_issued", "not_overdue", "nothing_open", "on_hold", "previous_stage_open", "max_stage"];
 
 /** The blockers a `dunning_not_allowed` error carries in its detail (comma separated, unknown names dropped). */
-export function dunningBlockers(error: unknown): DunningBlocker[] {
+export function blockersFromError(error: unknown): DunningBlocker[] {
   if (typeof error !== "object" || error === null) return [];
   const { details } = error as { details?: unknown };
   if (typeof details !== "string") return [];
