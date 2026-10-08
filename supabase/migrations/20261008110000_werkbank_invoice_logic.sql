@@ -533,6 +533,8 @@ begin
     service_date_from, service_date_to, payment_due_days)
   values (v_inv.org_id, 'cancellation', v_inv.id, v_inv.order_id, v_inv.customer_id, v_inv.property_id,
     v_inv.contact_id, v_inv.location_note, v_inv.subject, v_inv.discount_percent,
+    -- German on purpose: invoices and their PDFs are German-only in V1 (spec non-goals), and the
+    -- text is stored on the document, so it cannot follow the UI language anyway.
     'Storno zu ' || v_inv.invoice_no || ' vom ' || to_char(v_inv.issue_date, 'DD.MM.YYYY'),
     v_inv.closing_text, v_inv.payment_terms_text, v_inv.service_date_from, v_inv.service_date_to,
     v_inv.payment_due_days)
