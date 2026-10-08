@@ -66,6 +66,7 @@ vi.mock("../components/LineItemsEditor", () => ({
     <div data-testid="items" data-readonly={String(readOnly)} data-invoice={docRef.invoiceId} />,
 }));
 vi.mock("../components/PaymentsCard", () => ({ PaymentsCard: ({ invoiceId, status }: { invoiceId: string; status: string }) => <div data-testid="payments" data-invoice={invoiceId} data-status={status} /> }));
+vi.mock("../components/DunningCard", () => ({ DunningCard: ({ invoice }: { invoice: { id: string; status: string } }) => <div data-testid="dunning" data-invoice={invoice.id} data-status={invoice.status} /> }));
 vi.mock("../components/DocumentTotalsCard", () => ({ DocumentTotalsCard: () => <div data-testid="totals" /> }));
 vi.mock("../components/CustomerPicker", () => ({ CustomerPicker: () => <div>test-customer-picker</div> }));
 vi.mock("../components/PropertyPicker", () => ({ PropertyPicker: () => <div>test-property-picker</div> }));
@@ -121,6 +122,7 @@ describe("InvoicePage", () => {
     state.invoice = invoice({ status: "issued", invoice_no: "RE-1" });
     const view = render();
     expect(await screen.findByTestId("payments")).toHaveAttribute("data-status", "issued");
+    expect(screen.getByTestId("dunning")).toHaveAttribute("data-invoice", "i1");
     view.unmount();
     state.invoice = invoice({ status: "cancelled", invoice_no: "RE-1" });
     const second = render();
@@ -131,6 +133,7 @@ describe("InvoicePage", () => {
       const v = render();
       await screen.findByTestId("totals");
       expect(screen.queryByTestId("payments")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("dunning")).not.toBeInTheDocument();
       v.unmount();
     }
   });

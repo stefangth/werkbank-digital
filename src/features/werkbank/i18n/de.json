@@ -195,6 +195,62 @@
       "transferReason": "Gib einen Grund ein."
     }
   },
+  "dunning": {
+    "title": "Mahnungen",
+    "loadFailed": "Die Mahnungen konnten nicht geladen werden.",
+    "empty": "Noch keine Mahnung erstellt.",
+    "row": {
+      "deadline": "Frist",
+      "email": "Per E-Mail",
+      "print": "Per Post",
+      "sendFailed": "Versand fehlgeschlagen",
+      "pdf": "PDF",
+      "resend": "Erneut senden",
+      "resent": "Mahnung gesendet.",
+      "resendFailed": "Die Mahnung konnte nicht gesendet werden."
+    },
+    "blockers": {
+      "not_issued": "Nur für abgeschlossene Rechnungen möglich.",
+      "not_overdue": "Die Rechnung ist noch nicht überfällig.",
+      "nothing_open": "Es ist nichts mehr offen.",
+      "on_hold": "Für diese Rechnung ist die Mahnung gesperrt.",
+      "previous_stage_open": "Die vorige Mahnung ist noch nicht fertig versendet.",
+      "max_stage": "Die letzte Mahnstufe ist schon erreicht."
+    },
+    "create": {
+      "button": "{{stage}} erstellen",
+      "title": "{{stage}} erstellen",
+      "description": "Die Mahnung bekommt eine feste Frist und kann danach nicht mehr geändert werden.",
+      "to": "Empfänger",
+      "cc": "CC",
+      "deadline": "Zahlungsfrist",
+      "hintTo": "Die Rechnungs-E-Mail des Kunden, sonst die des Ansprechpartners. Du kannst sie ändern.",
+      "hintDeadline": "Heute plus {{days}} Tage, wie in Deinen Firmendaten. Du kannst das Datum ändern.",
+      "preview": "Vorschau",
+      "send": "Erstellen und senden",
+      "printOnly": "Nur PDF für Postversand",
+      "sent": "{{stage}} erstellt und gesendet.",
+      "created": "{{stage}} erstellt.",
+      "issuedSendFailed": "Erstellt, Versand fehlgeschlagen. Sende die Mahnung erneut über die Liste.",
+      "issuedRenderFailed": "Erstellt, das PDF ist noch nicht fertig. Versuche es gleich in der Liste noch einmal."
+    },
+    "hold": {
+      "set": "Mahnsperre setzen",
+      "title": "Mahnsperre setzen",
+      "description": "Solange die Sperre gilt, wird für diese Rechnung keine Mahnung vorgeschlagen oder erstellt.",
+      "reason": "Grund",
+      "until": "Gesperrt bis",
+      "noDate": "Kein Datum",
+      "clearDate": "Datum entfernen",
+      "hint": "Ohne Datum gilt die Sperre, bis Du sie aufhebst.",
+      "submit": "Sperre setzen",
+      "saved": "Mahnsperre gesetzt.",
+      "banner": "Mahnsperre aktiv: {{reason}}.",
+      "bannerUntil": "Gilt bis",
+      "bannerOpen": "Gilt, bis Du sie aufhebst.",
+      "clear": "Aufheben"
+    }
+  },
   "errors": {
     "customerNoTaken": "Diese Kundennummer ist schon vergeben.",
     "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",

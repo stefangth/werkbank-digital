@@ -14,6 +14,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { Token } from "@/components/ui/token";
 import { formatDateDMY } from "@/lib/dates";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
+import { DunningCard } from "../components/DunningCard";
 import { DocumentTotalsCard } from "../components/DocumentTotalsCard";
 import { InvoiceHeaderForm } from "../components/InvoiceHeaderForm";
 import { InvoiceActions, PdfPendingNotice } from "../components/InvoiceActions";
@@ -175,6 +176,7 @@ export function InvoicePage() {
       />
       <DocumentTotalsCard totals={invoice.totals} isPrivateCustomer={customer?.kind === "private"} negate={isCancellation} />
       {!isDraft && !isCancellation && <PaymentsCard invoiceId={invoice.id} customerId={invoice.customer_id} status={invoice.status} />}
+      {!isDraft && !isCancellation && <DunningCard invoice={invoice} />}
       <InvoiceHistory invoice={invoice} cancelledBy={cancelledBy} />
 
       {issuing && isDraft && (

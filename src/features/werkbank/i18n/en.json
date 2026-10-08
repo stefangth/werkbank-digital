@@ -195,6 +195,62 @@
       "transferReason": "Enter a reason."
     }
   },
+  "dunning": {
+    "title": "Dunning",
+    "loadFailed": "The dunning notices could not be loaded.",
+    "empty": "No dunning notice yet.",
+    "row": {
+      "deadline": "Deadline",
+      "email": "By email",
+      "print": "By post",
+      "sendFailed": "Sending failed",
+      "pdf": "PDF",
+      "resend": "Send again",
+      "resent": "Notice sent.",
+      "resendFailed": "The notice could not be sent."
+    },
+    "blockers": {
+      "not_issued": "Only possible for finalised invoices.",
+      "not_overdue": "The invoice is not overdue yet.",
+      "nothing_open": "Nothing is open any more.",
+      "on_hold": "Dunning is on hold for this invoice.",
+      "previous_stage_open": "The previous notice has not been fully sent yet.",
+      "max_stage": "The last dunning stage has been reached."
+    },
+    "create": {
+      "button": "Create {{stage}}",
+      "title": "Create {{stage}}",
+      "description": "The notice gets a fixed deadline and cannot be changed afterwards.",
+      "to": "Recipient",
+      "cc": "CC",
+      "deadline": "Payment deadline",
+      "hintTo": "The customer's invoice email, else the contact's. You can change it.",
+      "hintDeadline": "Today plus {{days}} days, as set in your company data. You can change the date.",
+      "preview": "Preview",
+      "send": "Create and send",
+      "printOnly": "PDF for postal delivery only",
+      "sent": "{{stage}} created and sent.",
+      "created": "{{stage}} created.",
+      "issuedSendFailed": "Created, sending failed. Send the notice again from the list.",
+      "issuedRenderFailed": "Created, the PDF is not ready yet. Try again from the list in a moment."
+    },
+    "hold": {
+      "set": "Put on hold",
+      "title": "Put dunning on hold",
+      "description": "While the hold applies, no notice is suggested or created for this invoice.",
+      "reason": "Reason",
+      "until": "On hold until",
+      "noDate": "No date",
+      "clearDate": "Remove date",
+      "hint": "Without a date the hold applies until you lift it.",
+      "submit": "Set hold",
+      "saved": "Hold set.",
+      "banner": "Dunning on hold: {{reason}}.",
+      "bannerUntil": "Applies until",
+      "bannerOpen": "Applies until you lift it.",
+      "clear": "Lift"
+    }
+  },
   "errors": {
     "customerNoTaken": "This customer number is already taken.",
     "itemNoTaken": "This item number is already taken.",
