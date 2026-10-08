@@ -129,12 +129,40 @@ describe("signVisitReport", () => {
       table: R("sign_visit_report"), args: [{ p_report: "r1", p_signer_name: "Frau Meier", p_signature_path: "o1/x/r1/signature.png" }],
     }));
   });
-  it("continues when the signature already exists", async () => {
+  it("replaces a signature.png left by a lost attempt with the fresh drawing, then signs", async () => {
     for (const uploadError of [{ message: "The resource already exists", statusCode: "409" }, { message: "Duplicate", statusCode: 409 }]) {
-      const { client, fake } = withStorage({}, { uploadError });
+      const { client, fake, upload, remove } = withStorage();
+      upload.mockResolvedValueOnce({ data: null, error: uploadError });
+      remove.mockResolvedValueOnce({ data: [{ name: "o1/x/r1/signature.png" }], error: null });
       await signVisitReport(client, input);
-      expect(fake.calls).toHaveLength(1);
+      expect(remove).toHaveBeenCalledWith(["o1/x/r1/signature.png"]);
+      expect(upload).toHaveBeenCalledTimes(2);
+      expect(upload).toHaveBeenLastCalledWith("o1/x/r1/signature.png", input.png, { contentType: "image/png", upsert: false });
+      expect(remove.mock.invocationCallOrder[0]).toBeLessThan(upload.mock.invocationCallOrder[1]);
+      expect(fake.calls).toEqual([expect.objectContaining({ table: R("sign_visit_report") })]);
     }
+  });
+  it("reports a locked report when the old signature.png may not be removed, and never signs", async () => {
+    const { client, fake, upload, remove } = withStorage();
+    upload.mockResolvedValueOnce({ data: null, error: { message: "The resource already exists", statusCode: "409" } });
+    remove.mockResolvedValueOnce({ data: [], error: null });
+    const err = await signVisitReport(client, input).catch((e: unknown) => e);
+    expect(err).toEqual(expect.objectContaining({ message: "report_locked" }));
+    expect(isSignatureUploaded(err)).toBe(false);
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(fake.calls).toEqual([]);
+  });
+  it("rethrows a failed removal or a failed second upload without signing", async () => {
+    const removeError = { message: "network" };
+    const a = withStorage({}, { uploadError: { message: "Duplicate", statusCode: 409 }, removeError });
+    await expect(signVisitReport(a.client, input)).rejects.toBe(removeError);
+    expect(a.fake.calls).toEqual([]);
+    const again = { message: "network again" };
+    const b = withStorage();
+    b.upload.mockResolvedValueOnce({ data: null, error: { message: "Duplicate", statusCode: 409 } }).mockResolvedValueOnce({ data: null, error: again });
+    b.remove.mockResolvedValueOnce({ data: [{ name: "o1/x/r1/signature.png" }], error: null });
+    await expect(signVisitReport(b.client, input)).rejects.toBe(again);
+    expect(b.fake.calls).toEqual([]);
   });
   it("rethrows other upload errors without signing", async () => {
     const error = { message: "Payload too large", statusCode: "413" };
@@ -155,9 +183,10 @@ describe("signVisitReport", () => {
     expect(isSignatureUploaded(error)).toBe(false);
   });
   it("only signs when the signature is already uploaded", async () => {
-    const { client, fake, upload } = withStorage();
+    const { client, fake, upload, remove } = withStorage();
     await signVisitReport(client, { ...input, uploaded: true });
     expect(upload).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
     expect(fake.calls).toHaveLength(1);
   });
 });

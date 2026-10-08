@@ -155,9 +155,13 @@ export function isSignatureUploaded(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { signatureUploaded?: unknown }).signatureUploaded === true;
 }
 
-/** Uploads signature.png, then signs. An "already exists" answer means an earlier attempt got the
- *  object there (a retry after a dropped connection, or a double tap), so the call goes on. With
- *  `uploaded` the upload is skipped. A signing error after the upload is marked, see
+/** Uploads signature.png, then signs. With `uploaded` (the stored image of a failed attempt, see
+ *  `uploadedSignatures`) the upload is skipped. Without it `png` is a fresh drawing: an "already
+ *  exists" answer means an earlier attempt stored another image whose upload state was lost (a
+ *  reload), so that object is removed and the fresh one stored, or the report would show a
+ *  signature the signer never drew. Storage only lets the author remove it while the report is
+ *  unlocked and the path is no signature yet; a refused removal means the report was signed or
+ *  closed meanwhile and fails as `report_locked`. A signing error after the upload is marked, see
  *  `isSignatureUploaded`. */
 export async function signVisitReport(
   client: Client,
@@ -165,8 +169,17 @@ export async function signVisitReport(
 ): Promise<void> {
   const path = `${input.orgId}/${input.orderId}/${input.reportId}/signature.png`;
   if (!input.uploaded) {
-    const { error: uploadError } = await client.storage.from(VISITS_BUCKET).upload(path, input.png, { contentType: "image/png", upsert: false });
-    if (uploadError && !isAlreadyExists(uploadError)) throw uploadError;
+    const bucket = client.storage.from(VISITS_BUCKET);
+    const upload = () => bucket.upload(path, input.png, { contentType: "image/png", upsert: false });
+    const { error: uploadError } = await upload();
+    if (uploadError) {
+      if (!isAlreadyExists(uploadError)) throw uploadError;
+      const { data: removed, error: removeError } = await bucket.remove([path]);
+      if (removeError) throw removeError;
+      if (!removed?.length) throw new Error("report_locked");
+      const { error: retryError } = await upload();
+      if (retryError) throw retryError;
+    }
   }
   const { error } = await client.schema("werkbank").rpc("sign_visit_report", {
     p_report: input.reportId, p_signer_name: input.signerName, p_signature_path: path,
