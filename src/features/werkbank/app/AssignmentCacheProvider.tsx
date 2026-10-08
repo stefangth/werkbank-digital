@@ -3,12 +3,14 @@ import { IsRestoringProvider, defaultShouldDehydrateQuery, useQueryClient } from
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { APP_META } from "@/config/app.config";
 import { useAuth } from "@/features/auth/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import type { AssignmentRow } from "../data/technicianApp";
 import { ASSIGNMENTS_KEY } from "../hooks/useAssignments";
 import { offlineOrderIds, shouldPersistQuery } from "../lib/assignments";
 import { assignmentCacheKey, createIdbPersister, trackPersistence } from "../lib/idbPersister";
 import { OFFLINE_MAX_AGE_MS } from "../lib/visitDefaults";
 import { registerServiceWorker } from "./registerServiceWorker";
+import { watchSignOut } from "./signOutCleanup";
 
 /** Offline reading for the technician routes only: restores the signed-in user's cached
  *  assignments from IndexedDB into the app's query client, then keeps that copy current. The
@@ -22,6 +24,8 @@ export function AssignmentCacheProvider({ children }: { children: ReactNode }) {
   const restoring = !!userId && restoredFor !== userId;
 
   useEffect(() => { registerServiceWorker(); }, []);
+  // Any sign out, not only the shell's button, empties the offline copy (spec R5).
+  useEffect(() => { watchSignOut(supabase.auth, qc); }, [qc]);
 
   useEffect(() => {
     if (!userId) return;

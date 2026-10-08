@@ -10,6 +10,9 @@ import { assignmentCacheKey, createIdbPersister } from "../lib/idbPersister";
 
 vi.mock("./registerServiceWorker", () => ({ registerServiceWorker: vi.fn() }));
 import { registerServiceWorker } from "./registerServiceWorker";
+vi.mock("./signOutCleanup", () => ({ watchSignOut: vi.fn() }));
+import { watchSignOut } from "./signOutCleanup";
+import { supabase } from "@/integrations/supabase/client";
 import { AssignmentCacheProvider } from "./AssignmentCacheProvider";
 
 const auth = (id: string) => ({ authOverrides: { user: { id }, currentOrg: { id: "org" } } as unknown as Partial<AuthContextType> });
@@ -36,6 +39,12 @@ describe("AssignmentCacheProvider", () => {
   it("registers the service worker only here", () => {
     renderWithProviders(<AssignmentCacheProvider><p>x</p></AssignmentCacheProvider>, auth("a"));
     expect(registerServiceWorker).toHaveBeenCalledOnce();
+  });
+
+  it("watches every sign out with the app's query client", () => {
+    const queryClient = createTestQueryClient();
+    renderWithProviders(<AssignmentCacheProvider><p>x</p></AssignmentCacheProvider>, { queryClient, ...auth("a") });
+    expect(watchSignOut).toHaveBeenCalledWith(supabase.auth, queryClient);
   });
 
   it("restores the signed-in user's cache and never another user's", async () => {
