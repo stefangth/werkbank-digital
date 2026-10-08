@@ -6,7 +6,7 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { state, navigate, create, useInvoicesSpy } = vi.hoisted(() => ({
-  state: { rows: [] as unknown[], all: [] as unknown[], orders: [] as unknown[], loading: false, error: false },
+  state: { rows: [] as unknown[], orders: [] as unknown[] | undefined, loading: false, error: false },
   navigate: vi.fn(),
   create: vi.fn(),
   useInvoicesSpy: vi.fn(),
@@ -18,8 +18,7 @@ vi.mock("react-router-dom", () => ({
 vi.mock("../hooks/useInvoices", () => ({
   useInvoices: (q: { filter: string; search: string }) => {
     useInvoicesSpy(q);
-    const unfiltered = q.filter === "all" && q.search === "";
-    return { data: unfiltered ? state.all : state.rows, isLoading: state.loading, isError: state.error };
+    return { data: state.rows, isLoading: state.loading, isError: state.error };
   },
   useInvoiceMutations: () => ({ create: { mutate: create, isPending: false } }),
 }));
@@ -53,7 +52,7 @@ describe("InvoicesPage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     state.loading = false; state.error = false;
-    state.rows = rows; state.all = rows;
+    state.rows = rows;
     state.orders = [];
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
@@ -97,23 +96,27 @@ describe("InvoicesPage", () => {
     vi.useRealTimers();
   });
 
-  it("counts done orders without an active invoice and links to the done orders", async () => {
+  it("counts all done orders, drafts included, and links to the done orders", async () => {
     state.orders = [
       { id: "o1", status: "done" },
       { id: "o2", status: "done" },
       { id: "o3", status: "done" },
       { id: "o4", status: "open" },
     ];
-    state.all = [...rows, inv({ id: "i9", order_id: "o1", status: "draft" }), inv({ id: "i8", order_id: "o2", status: "cancelled" })];
+    state.rows = [...rows, inv({ id: "i9", order_id: "o1", status: "draft" })];
     render();
     const notice = (await screen.findByText("Erledigt, noch nicht abgerechnet")).closest("div")!;
-    expect(notice).toHaveTextContent("2");
+    expect(notice).toHaveTextContent("3");
     expect(within(notice).getByRole("link", { name: "Aufträge anzeigen" })).toHaveAttribute("href", "/orders?status=done");
   });
 
-  it("hides the notice when every done order has an invoice", async () => {
-    state.orders = [{ id: "o1", status: "done" }];
-    state.all = [...rows, inv({ id: "i9", order_id: "o1", status: "issued" })];
+  it("hides the notice without done orders and while orders load", async () => {
+    state.orders = [{ id: "o1", status: "open" }];
+    const { unmount } = render();
+    await screen.findByText("RE-0002");
+    expect(screen.queryByText("Erledigt, noch nicht abgerechnet")).not.toBeInTheDocument();
+    unmount();
+    state.orders = undefined;
     render();
     await screen.findByText("RE-0002");
     expect(screen.queryByText("Erledigt, noch nicht abgerechnet")).not.toBeInTheDocument();
@@ -137,7 +140,7 @@ describe("InvoicesPage", () => {
   });
 
   it("shows the empty state and the load error", async () => {
-    state.all = []; state.rows = [];
+    state.rows = [];
     const { unmount } = render();
     expect(await screen.findByText("Noch keine Rechnungen")).toBeInTheDocument();
     unmount();

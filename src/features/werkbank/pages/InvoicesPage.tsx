@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { Receipt } from "lucide-react";
@@ -90,20 +90,16 @@ export function InvoicesPage() {
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
   const [creating, setCreating] = useState(false);
 
-  // Unfiltered list: decides the empty state and which done orders already have an invoice.
-  const everything = useInvoices({ filter: "all", search: "" });
-  const { data: invoices, isLoading, isError } = useInvoices({ filter, search: debouncedSearch.trim() });
+  const searchTerm = debouncedSearch.trim();
+  const { data: invoices, isLoading, isError } = useInvoices({ filter, search: searchTerm });
   const { data: orders } = useOrderList();
 
-  const notInvoiced = useMemo(() => {
-    const invoiced = new Set(
-      (everything.data ?? []).filter((i) => i.type === "invoice" && i.status !== "cancelled" && i.order_id).map((i) => i.order_id),
-    );
-    return (orders ?? []).filter((o) => o.status === "done" && !invoiced.has(o.id)).length;
-  }, [everything.data, orders]);
+  // Every done order is still to be invoiced: issuing an invoice moves it to invoiced.
+  // Hidden until the order list has loaded.
+  const notInvoiced = (orders ?? []).filter((o) => o.status === "done").length;
 
   const money = (n: number) => formatEuro(n, i18n.language);
-  const none = !isLoading && !isError && (everything.data ?? []).length === 0 && !everything.isLoading;
+  const none = filter === "all" && !searchTerm && (invoices ?? []).length === 0;
 
   return (
     <div className="space-y-6">
