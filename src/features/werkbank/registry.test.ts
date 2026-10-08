@@ -29,14 +29,14 @@ describe("werkbank org kind", () => {
   });
 
   it("describes the roles in full sentences per language", () => {
-    expect(roleDescription("artist", "handwerk", "de")).toBe("Sieht die eigenen Aufträge und meldet sie als erledigt.");
+    expect(roleDescription("artist", "handwerk", "de")).toBe("Sieht die eigenen Aufträge, schreibt Einsatzberichte und meldet die Arbeit als erledigt.");
     expect(roleDescription("producer", "handwerk", "de")).toBe(
       "Erstellt Angebote, Aufträge und Rechnungen und plant die Monteure ein.",
     );
     expect(roleDescription("admin", "handwerk", "de")).toBe(
       "Volle Kontrolle über den Betrieb, inklusive Personen und Einstellungen.",
     );
-    expect(roleDescription("artist", "handwerk", "en")).toBe("Sees their assigned jobs and marks them as done.");
+    expect(roleDescription("artist", "handwerk", "en")).toBe("Sees their own jobs, writes visit reports and marks the work as done.");
     expect(roleDescription("producer", "handwerk", "en")).toBe(
       "Creates quotes, jobs and invoices and schedules the technicians.",
     );

@@ -1,5 +1,35 @@
 [
   {
+    "version": "1.23.0",
+    "date": "2026-10-09",
+    "dateLabel": "October 9, 2026",
+    "title": "Monteure vor Ort",
+    "changes": {
+      "new": [
+        {
+          "title": "Monteur-App",
+          "description": "Deine Monteure öffnen die App auf dem Handy und sehen unter Meine Einsätze nur die Aufträge, die du ihnen zugeteilt hast, mit Adresse, Routenlink, Kontakt und den Arbeiten, aber ohne Preise. Sie beginnen die Arbeit und melden sie als erledigt."
+        },
+        {
+          "title": "Auch ohne Netz lesen",
+          "description": "Die Aufträge von heute, überfällige und die der nächsten 7 Tage bleiben auf dem Handy. Im Keller oder auf dem Land schaut der Monteur trotzdem nach, was ansteht. Speichern braucht Netz."
+        },
+        {
+          "title": "Einsatzberichte",
+          "description": "Der Monteur schreibt, was gemacht wurde, hängt Fotos an und lässt den Kunden direkt auf dem Bildschirm unterschreiben. Ein unterschriebener Bericht ist gesperrt."
+        },
+        {
+          "title": "Bericht als PDF",
+          "description": "Am Auftrag lädst du alle Berichte oder einen einzelnen als PDF mit deinem Briefkopf, den Fotos und der Unterschrift herunter. Zu jedem Bericht kannst du eine interne Notiz ergänzen."
+        },
+        {
+          "title": "Vom Monteur gemeldet",
+          "description": "Auf dem Dashboard zählt eine neue Kachel die Aufträge, die ein Monteur als erledigt gemeldet hat. Du bekommst dazu eine Benachrichtigung."
+        }
+      ]
+    }
+  },
+  {
     "version": "1.22.0",
     "date": "2026-10-08",
     "dateLabel": "October 8, 2026",

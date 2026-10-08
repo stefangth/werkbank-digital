@@ -16,7 +16,7 @@ import { NAV_ITEMS, visibleNavItems, groupNavBySections, isHiddenForViewAs, type
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/features/i18n/LanguageContext';
 import { VocabularyBridge } from '@/features/i18n/VocabularyBridge';
-import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, loadStoredLang } from '@/i18n/config';
+import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, detectInitialLang } from '@/i18n/config';
 import i18n from '@/i18n';
 import { cn } from '@/lib/utils';
 import { useSettingsWarnings } from '@/hooks/useSettingsWarnings';
@@ -105,7 +105,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       if (i18n.language !== 'en') void i18n.changeLanguage('en');
       return;
     }
-    const stored = loadStoredLang();
+    const stored = detectInitialLang(); // stored choice, else the browser language
     if (stored && i18n.language !== stored) void i18n.changeLanguage(stored);
   }, [languagePacksEnabled, entitlementsLoading]);
 

@@ -950,4 +950,28 @@ export const HELP_ITEMS: readonly HelpItem[] = [
       de: 'Wähl in der Karte Mahnungen Mahnsperre setzen, gib einen Grund an, zum Beispiel dass der Kunde die Zahlung zugesagt hat, und auf Wunsch ein letztes Datum. Ohne Datum gilt die Sperre, bis du sie mit Aufheben beendest. Solange sie gilt, wird für diese Rechnung keine Mahnung vorgeschlagen oder erstellt, und ein Banner zeigt den Grund. Mahnungen, die schon rausgegangen sind, bleiben unverändert.',
     },
   },
+  {
+    id: 'W8.1', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Aufträge · Einsatzberichte', updated: '2026-10-09',
+    q: { en: 'How do technicians see their orders, and what do they report?', de: 'Wie sehen Monteure ihre Aufträge?' },
+    a: {
+      en: 'A technician signs in on the phone and lands on My assignments, which lists only the orders you assigned to them: overdue, today, the next 7 days, without a date and done in the last 14 days. They see the address with a route link, the contact, your notes and the work to do, but no prices. They start the work, write a visit report with text and photos, let the customer sign on the screen and report the order as done. You get a notification, and the order shows the reports under Visit reports. On the dashboard, the tile Reported by technician counts done orders that a technician reported. You can add an internal note to each report and download the reports as a PDF with PDF on the order.',
+      de: 'Ein Monteur meldet sich auf dem Handy an und landet bei Meine Einsätze. Dort stehen nur die Aufträge, die du ihm zugeteilt hast: überfällig, heute, die nächsten 7 Tage, ohne Termin und in den letzten 14 Tagen erledigt. Er sieht die Adresse mit Routenlink, den Kontakt, deine Hinweise und die Arbeiten, aber keine Preise. Er beginnt die Arbeit, schreibt einen Einsatzbericht mit Text und Fotos, lässt den Kunden auf dem Bildschirm unterschreiben und meldet den Auftrag als erledigt. du bekommst eine Benachrichtigung, und am Auftrag stehen die Berichte unter Einsatzberichte. Auf dem Dashboard zählt die Kachel Vom Monteur gemeldet erledigte Aufträge, die ein Monteur gemeldet hat. Zu jedem Bericht kannst du eine interne Notiz schreiben und die Berichte mit PDF am Auftrag als PDF herunterladen.',
+    },
+  },
+  {
+    id: 'W8.2', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Monteure · App installieren', updated: '2026-10-09',
+    q: { en: 'How does a technician install the app on the phone?', de: 'Wie installiert ein Monteur die App auf dem Handy?' },
+    a: {
+      en: 'Create the technician under Technicians, which sends the invitation by email. After the first sign in, the app shows an install hint. On an iPhone, tap Share in Safari, then Add to Home Screen. On Android, tap Install when the browser offers it, or use the browser menu. The app then opens like any other app. Reading works without signal: the orders of today, overdue ones and the next 7 days are kept on the phone for 7 days, and a banner shows when the data was last updated. Saving does not: writing a report, adding photos, signing and changing the status need a connection, and those buttons stay disabled while the phone is offline.',
+      de: 'Leg den Monteur unter Monteure an, damit geht die Einladung per E-Mail raus. Nach der ersten Anmeldung zeigt die App einen Hinweis zum Installieren. Auf dem iPhone tippt der Monteur in Safari auf Teilen und dann auf Zum Home-Bildschirm. Auf Android tippt er auf Installieren, sobald der Browser es anbietet, oder nutzt das Browsermenü. Danach öffnet sich die App wie jede andere. Lesen geht auch ohne Netz: Die Aufträge von heute, überfällige und die der nächsten 7 Tage bleiben 7 Tage auf dem Handy, und ein Hinweis zeigt, wann die Daten zuletzt aktualisiert wurden. Speichern geht nicht ohne Netz: Bericht schreiben, Fotos hinzufügen, Unterschreiben und der Statuswechsel brauchen eine Verbindung, und diese Schaltflächen bleiben ohne Netz gesperrt.',
+    },
+  },
+  {
+    id: 'W8.3', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Aufträge · Einsatzberichte', updated: '2026-10-09',
+    q: { en: 'Can I change a signed visit report?', de: 'Kann ich einen unterschriebenen Einsatzbericht ändern?' },
+    a: {
+      en: 'No. A signed report is locked: text, photos, date and signature stay as they were signed, for the technician and for you. The same applies to a report the technician closed without a signature. The only thing you can still add is the internal note, which the customer never sees. If something was wrong, the technician writes a new report. An order with reports cannot be deleted, and you cannot add reports to an order that is cancelled or already invoiced.',
+      de: 'Nein. Ein unterschriebener Bericht ist gesperrt: Text, Fotos, Datum und Unterschrift bleiben so, wie sie unterschrieben wurden, für den Monteur und für dich. Dasselbe gilt für einen Bericht, den der Monteur ohne Unterschrift abgeschlossen hat. Nur die interne Notiz kannst du weiter ergänzen, der Kunde sieht sie nie. Stimmte etwas nicht, schreibt der Monteur einen neuen Bericht. Einen Auftrag mit Berichten kannst du nicht löschen, und zu einem stornierten oder bereits abgerechneten Auftrag lassen sich keine Berichte mehr anlegen.',
+    },
+  },
 ] as const;
