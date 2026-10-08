@@ -88,8 +88,8 @@ describe("PaymentsCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Zahlung erfassen" }));
     expect(await screen.findByRole("textbox", { name: /Betrag/ })).toHaveValue("690,50");
     expect(screen.getByRole("button", { name: /Buchungsdatum/ })).toHaveTextContent("09/10/2026");
-    expect(screen.getAllByRole("img", { name: /Heute\. Du kannst/ })).toHaveLength(1);
-    expect(screen.getAllByRole("img", { name: /Der offene Betrag/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Heute\. Du kannst/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Der offene Betrag/ })).toHaveLength(1);
   });
 
   const openPayment = async (amount: string) => {
@@ -149,7 +149,7 @@ describe("PaymentsCard", () => {
     render();
     fireEvent.click(screen.getByRole("button", { name: "Ausbuchen" }));
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getAllByRole("img", { name: /Heute\. Du kannst/ })).toHaveLength(1);
+    expect(within(dialog).getAllByRole("button", { name: /Heute\. Du kannst/ })).toHaveLength(1);
   });
 
   it("replaces the amount preset with the refetched open amount after a stale error, keeping the note", async () => {

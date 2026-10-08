@@ -46,8 +46,8 @@ describe("CompanyTab", () => {
     seed({ data: null, error: null });
     renderTab();
     await screen.findByLabelText("Firmenname");
-    expect(screen.getByRole("img", { name: /^Vorgabe 14 Tage\. Gilt für jede neue Rechnung/ })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^Vorgabe 30 Tage\. Gilt für jedes neue Angebot/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Vorgabe 14 Tage\. Gilt für jede neue Rechnung/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Vorgabe 30 Tage\. Gilt für jedes neue Angebot/ })).toBeInTheDocument();
   });
 
   it("shows the stored profile", async () => {
@@ -153,9 +153,9 @@ describe("CompanyTab", () => {
       expect(screen.getByLabelText("2. und letzte Mahnung nach (Tage)")).toHaveValue("14");
       expect(screen.getByLabelText("Zahlungsfrist in Mahnungen (Tage)")).toHaveValue("7");
       expect(screen.getByLabelText("Text für Zahlungserinnerung (optional)")).toHaveAttribute("placeholder", expect.stringContaining("sicher ist Ihnen im Alltag entgangen"));
-      expect(screen.getAllByRole("img", { name: "Leer lassen für den Standardtext." })).toHaveLength(3);
-      expect(screen.getByRole("img", { name: "Vorgabe 7 Tage nach Fälligkeit der Rechnung. Du kannst den Wert hier ändern." })).toBeInTheDocument();
-      expect(screen.getByRole("img", { name: "Vorgabe 7 Tage. So lange hat der Kunde nach einer Mahnung Zeit zu zahlen. Du kannst den Wert hier ändern." })).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Leer lassen für den Standardtext." })).toHaveLength(3);
+      expect(screen.getByRole("button", { name: "Vorgabe 7 Tage nach Fälligkeit der Rechnung. Du kannst den Wert hier ändern." })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Vorgabe 7 Tage. So lange hat der Kunde nach einer Mahnung Zeit zu zahlen. Du kannst den Wert hier ändern." })).toBeInTheDocument();
     });
 
     it("saves the four day fields as numbers and a blank text as null", async () => {

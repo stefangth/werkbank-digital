@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NumberRange } from "../data/numberRanges";
 import { formatNumber, NUMBER_RANGE_KEYS, type NumberRangeKey } from "../data/numberRanges";
-import { DefaultHint } from "./DefaultHint";
+import { HintedLabel, hintId } from "./DefaultHint";
 import { useInvoiceRangeLocked, useNumberRange, useSaveNumberRange } from "../hooks/useNumberRanges";
 
 /** The start value the database applies to a range without a row (numberRanges.ts, werkbank.next_number). */
@@ -73,12 +73,12 @@ function RangeForm({ rangeKey, range, locked }: { rangeKey: NumberRangeKey; rang
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`numbering-next-${rangeKey}`} className="inline-flex items-center gap-1.5">
+          <HintedLabel htmlFor={`numbering-next-${rangeKey}`} hint={t("hints.numberingStart", { start: DEFAULT_START[rangeKey] })}>
             {t("numbering.nextValue")}
-            <DefaultHint text={t("hints.numberingStart", { start: DEFAULT_START[rangeKey] })} />
-          </Label>
+          </HintedLabel>
           <Input
             id={`numbering-next-${rangeKey}`}
+            aria-describedby={hintId(`numbering-next-${rangeKey}`)}
             inputMode="numeric"
             autoComplete="off"
             value={nextText}

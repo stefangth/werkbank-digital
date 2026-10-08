@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateDMY } from "@/lib/dates";
 import type { Quote, QuotePatch } from "../data/quotes";
 import { DatePopover } from "./DatePopover";
+import { hintId } from "./DefaultHint";
 import { DocumentHeaderFields, Fact, FormField } from "./DocumentHeaderFields";
 
 type TextField = "intro_text" | "closing_text" | "payment_terms_text";
@@ -60,6 +61,7 @@ export function QuoteHeaderForm({
   };
   const textProps = (field: TextField) => ({
     id: `quote-${field}`,
+    "aria-describedby": hintId(`quote-${field}`),
     value: text[field],
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => setText((s) => ({ ...s, [field]: e.target.value })),
     onBlur: () => saveText(field),
@@ -76,7 +78,7 @@ export function QuoteHeaderForm({
         afterLocation={
           <FormField id="quote-valid-until" label={t("quotes.header.validUntil")} hint={t("hints.quoteValidUntil")}>
             <DatePopover value={quote.valid_until} onSelect={(validUntil) => onPatch({ valid_until: validUntil })}>
-              <Button id="quote-valid-until" variant="secondary" className="w-full justify-start gap-2">
+              <Button id="quote-valid-until" variant="secondary" className="w-full justify-start gap-2" aria-describedby={hintId("quote-valid-until")}>
                 <CalendarDays className="h-4 w-4" aria-hidden />
                 <Metric size="body">{formatDateDMY(quote.valid_until)}</Metric>
               </Button>

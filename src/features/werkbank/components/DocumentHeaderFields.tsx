@@ -6,7 +6,7 @@ import { Metric } from "@/components/ui/metric";
 import type { Quote } from "../data/quotes";
 import { toNumber } from "../schemas/catalogItem";
 import { ContactSelect } from "./ContactSelect";
-import { DefaultHint } from "./DefaultHint";
+import { HintedLabel } from "./DefaultHint";
 import { CustomerPicker } from "./CustomerPicker";
 import { PropertyPicker } from "./PropertyPicker";
 
@@ -27,18 +27,11 @@ export function Fact({ label, children }: { label: string; children: React.React
   );
 }
 
+/** A label and its control. With a hint the control should point to it: `aria-describedby={hintId(id)}`. */
 export function FormField({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      {hint ? (
-        // The hint sits beside the label, not in it, so it stays out of the control's accessible name.
-        <div className="flex items-center gap-1.5">
-          <Label htmlFor={id}>{label}</Label>
-          <DefaultHint text={hint} />
-        </div>
-      ) : (
-        <Label htmlFor={id}>{label}</Label>
-      )}
+      {hint ? <HintedLabel htmlFor={id} hint={hint}>{label}</HintedLabel> : <Label htmlFor={id}>{label}</Label>}
       {children}
     </div>
   );

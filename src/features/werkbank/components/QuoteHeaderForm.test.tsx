@@ -27,7 +27,7 @@ describe("QuoteHeaderForm hints", () => {
 
   it("explains every preset field of a draft", () => {
     renderWithProviders(<QuoteHeaderForm quote={quote as never} readOnly={false} names={{ customer: null, property: null }} onPatch={vi.fn()} />);
-    expect(screen.getByRole("img", { name: /^Heute plus die Gültigkeit aus Einstellungen, Firma/ })).toBeInTheDocument();
-    expect(screen.getAllByRole("img", { name: /^Kommt aus Einstellungen, Firma, sofern dort ein Text steht\. Du kannst ihn hier für dieses Angebot ändern/ })).toHaveLength(3);
+    expect(screen.getByRole("button", { name: /^Heute plus die Gültigkeit aus Einstellungen, Firma/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^Kommt aus Einstellungen, Firma, sofern dort ein Text steht\. Du kannst ihn hier für dieses Angebot ändern/ })).toHaveLength(3);
   });
 });

@@ -10,7 +10,7 @@ import { Metric } from "@/components/ui/metric";
 import { berlinDateKey, formatDateDMY } from "@/lib/dates";
 import { useSetDunningHold } from "../hooks/useOpenItems";
 import { DatePopover } from "./DatePopover";
-import { DefaultHint } from "./DefaultHint";
+import { HintedLabel, hintId } from "./DefaultHint";
 
 /** Pauses dunning for one invoice: a reason and an optional last day of the pause. Without a date
  *  the hold lasts until it is lifted. The hook toasts a database error. */
@@ -44,13 +44,10 @@ export function DunningHoldDialog({ invoiceId, onOpenChange }: { invoiceId: stri
             <Input id="hold-reason" autoComplete="off" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="hold-until" className="flex items-center gap-1.5">
-              {t("dunning.hold.until")}
-              <DefaultHint text={t("dunning.hold.hint")} />
-            </Label>
+            <HintedLabel htmlFor="hold-until" hint={t("dunning.hold.hint")}>{t("dunning.hold.until")}</HintedLabel>
             <div className="flex gap-2">
               <DatePopover value={until} minDate={today} onSelect={setUntil}>
-                <Button id="hold-until" type="button" variant="secondary" className="flex-1 justify-start gap-2" aria-label={t("dunning.hold.until")}>
+                <Button id="hold-until" type="button" variant="secondary" className="flex-1 justify-start gap-2" aria-label={t("dunning.hold.until")} aria-describedby={hintId("hold-until")}>
                   <CalendarDays className="h-4 w-4" aria-hidden />
                   {until ? <Metric size="body">{formatDateDMY(until)}</Metric> : t("dunning.hold.noDate")}
                 </Button>

@@ -62,7 +62,7 @@ describe("SendQuoteDialog", () => {
 
   it("explains the prefilled recipient", () => {
     renderDialog();
-    expect(screen.getByRole("img", { name: /^Vorgabe: die E-Mail des Kontakts, sonst die des Kunden/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Vorgabe: die E-Mail des Kontakts, sonst die des Kunden/ })).toBeInTheDocument();
   });
 
   it("prefills the contact email", () => {

@@ -69,8 +69,8 @@ describe("NumberingTab", () => {
     seed({ data: null, error: null });
     renderTab();
     await screen.findByText("Nächste Kundennummer: K-10001");
-    expect(screen.getAllByRole("img", { name: /^Vorgabe 10001\./ })).toHaveLength(1);
-    expect(screen.getAllByRole("img", { name: /^Vorgabe 1\./ })).toHaveLength(3);
+    expect(screen.getAllByRole("button", { name: /^Vorgabe 10001\./ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^Vorgabe 1\./ })).toHaveLength(3);
   });
 
   it("shows the stored range of each key", async () => {

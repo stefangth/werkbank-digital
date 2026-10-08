@@ -15,7 +15,7 @@ import { useCompanyProfile, useSaveCompanyProfile } from "../hooks/useCompanyPro
 import { DEFAULT_STAGE_TEXTS } from "../lib/dunningDefaults";
 import { stageKey } from "../lib/stageKey";
 import { companyProfileSchema, toCompanyProfileRow, type CompanyProfileForm } from "../schemas/companyProfile";
-import { DefaultHint } from "./DefaultHint";
+import { FormHintedLabel } from "./DefaultHint";
 import { CountryField } from "./CountryField";
 import { LogoUpload } from "./LogoUpload";
 
@@ -117,10 +117,7 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className={hintKey ? "inline-flex items-center gap-1.5" : undefined}>
-            {t(labelKey)}
-            {hintKey && <DefaultHint text={t(hintKey)} />}
-          </FormLabel>
+          {hintKey ? <FormHintedLabel hint={t(hintKey)}>{t(labelKey)}</FormHintedLabel> : <FormLabel>{t(labelKey)}</FormLabel>}
           <FormControl>
             <Input autoComplete="off" {...extra} {...field} value={field.value ?? ""} />
           </FormControl>
@@ -153,10 +150,7 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="inline-flex items-center gap-1.5">
-            {label}
-            <DefaultHint text={t(hintKey)} />
-          </FormLabel>
+          <FormHintedLabel hint={t(hintKey)}>{label}</FormHintedLabel>
           <FormControl>
             <Input autoComplete="off" inputMode="numeric" {...field} />
           </FormControl>
@@ -255,10 +249,9 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
               name={textField}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="inline-flex items-center gap-1.5">
+                  <FormHintedLabel hint={t("company.dunning.hint.text")}>
                     {t("company.dunning.textLabel", { stage: t(stageKey(stage)) })}
-                    <DefaultHint text={t("company.dunning.hint.text")} />
-                  </FormLabel>
+                  </FormHintedLabel>
                   <FormControl>
                     <Textarea rows={4} placeholder={DEFAULT_STAGE_TEXTS[stage]} {...field} />
                   </FormControl>

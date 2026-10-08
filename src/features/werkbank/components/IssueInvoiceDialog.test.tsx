@@ -75,7 +75,7 @@ describe("IssueInvoiceDialog", () => {
 
   it("explains the prefilled recipient", () => {
     renderDialog();
-    expect(screen.getByRole("img", { name: /^Vorgabe: die E-Mail für Rechnungen beim Kunden/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Vorgabe: die E-Mail für Rechnungen beim Kunden/ })).toBeInTheDocument();
   });
 
   it("cannot be dismissed while an issue call is running", () => {

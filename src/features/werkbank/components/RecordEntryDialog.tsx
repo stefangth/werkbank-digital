@@ -17,7 +17,7 @@ import { mapDbError } from "../lib/dbErrors";
 import { formatEuro, parseEuroInput } from "../lib/money";
 import { recordEntrySchema, WRITE_OFF_REASONS, type RecordEntryForm, type RecordEntryMode } from "../schemas/payment";
 import { DatePopover } from "./DatePopover";
-import { DefaultHint } from "./DefaultHint";
+import { HintedLabel, hintId } from "./DefaultHint";
 
 const asInput = (n: number) => n.toFixed(2).replace(".", ",");
 
@@ -84,12 +84,9 @@ export function RecordEntryDialog({
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4" noValidate>
           <div className="space-y-2">
-            <Label htmlFor="entry-date" className="flex items-center gap-1.5">
-              {t("payments.form.date")}
-              <DefaultHint text={t("payments.hints.date")} />
-            </Label>
+            <HintedLabel htmlFor="entry-date" hint={t("payments.hints.date")}>{t("payments.form.date")}</HintedLabel>
             <DatePopover value={bookedOn} onSelect={(d) => setValue("bookedOn", d, { shouldValidate: true })}>
-              <Button id="entry-date" type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("payments.form.date")}>
+              <Button id="entry-date" type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("payments.form.date")} aria-describedby={hintId("entry-date")}>
                 <CalendarDays className="h-4 w-4" aria-hidden />
                 {bookedOn ? <Metric size="body">{formatDateDMY(bookedOn)}</Metric> : t("payments.form.pickDate")}
               </Button>
@@ -117,11 +114,10 @@ export function RecordEntryDialog({
             </>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="entry-amount" className="flex items-center gap-1.5">
+              <HintedLabel htmlFor="entry-amount" hint={t(mode === "refund" ? "payments.hints.refund" : "payments.hints.amount")}>
                 {t("payments.form.amount")}
-                <DefaultHint text={t(mode === "refund" ? "payments.hints.refund" : "payments.hints.amount")} />
-              </Label>
-              <Input id="entry-amount" inputMode="decimal" autoComplete="off" {...register("amount")} />
+              </HintedLabel>
+              <Input id="entry-amount" aria-describedby={hintId("entry-amount")} inputMode="decimal" autoComplete="off" {...register("amount")} />
               {errors.amount && <p className="m-0 text-sm text-destructive">{errors.amount.message}</p>}
               {overOpen && <Alert>{t("payments.warnings.overOpen")}</Alert>}
             </div>

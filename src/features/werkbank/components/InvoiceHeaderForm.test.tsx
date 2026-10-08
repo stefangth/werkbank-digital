@@ -28,8 +28,8 @@ describe("InvoiceHeaderForm hints", () => {
 
   it("explains every preset field of a draft", () => {
     renderWithProviders(<InvoiceHeaderForm invoice={invoice as never} readOnly={false} names={{ customer: null, property: null }} onPatch={vi.fn()} />);
-    expect(screen.getByRole("img", { name: /^Vorgabe 14 Tage\. Kommt aus Einstellungen, Firma/ })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^Vorgabe ist der Tag, an dem der Auftrag abgeschlossen wurde/ })).toBeInTheDocument();
-    expect(screen.getAllByRole("img", { name: /^Kommt aus Einstellungen, Firma, sofern dort ein Text steht\. Du kannst ihn hier für diese Rechnung ändern/ })).toHaveLength(3);
+    expect(screen.getByRole("button", { name: /^Vorgabe 14 Tage\. Kommt aus Einstellungen, Firma/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Vorgabe ist der Tag, an dem der Auftrag abgeschlossen wurde/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^Kommt aus Einstellungen, Firma, sofern dort ein Text steht\. Du kannst ihn hier für diese Rechnung ändern/ })).toHaveLength(3);
   });
 });

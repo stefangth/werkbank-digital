@@ -18,7 +18,7 @@ import { useQuoteActions } from "../hooks/useQuoteActions";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { quotePreflight, type QuoteBlocker } from "../lib/quotePreflight";
 import { splitAddresses } from "../lib/addresses";
-import { DefaultHint } from "./DefaultHint";
+import { HintedLabel, hintId } from "./DefaultHint";
 
 type SendableQuote = Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until">;
 
@@ -111,11 +111,8 @@ export function SendQuoteDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="send-quote-to" className="inline-flex items-center gap-1.5">
-              {t("quotes.send.to")}
-              <DefaultHint text={t("hints.quoteRecipient")} />
-            </Label>
-            <Input id="send-quote-to" type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
+            <HintedLabel htmlFor="send-quote-to" hint={t("hints.quoteRecipient")}>{t("quotes.send.to")}</HintedLabel>
+            <Input id="send-quote-to" aria-describedby={hintId("send-quote-to")} type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="send-quote-cc">{t("quotes.send.cc")}</Label>
