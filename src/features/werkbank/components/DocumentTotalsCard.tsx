@@ -27,9 +27,10 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 
 /** Net, discount (only above zero), one VAT row per rate, gross; for private customers also the
  *  labour share of the gross amount (§35a EStG). */
-export function DocumentTotalsCard({ totals, isPrivateCustomer }: { totals: DocumentTotals | null; isPrivateCustomer: boolean }) {
+export function DocumentTotalsCard({ totals, isPrivateCustomer, negate }: { totals: DocumentTotals | null; isPrivateCustomer: boolean; negate?: boolean }) {
   const { t, i18n } = useTranslation("werkbank");
-  const money = (n: number | null | undefined) => formatEuro(n ?? 0, i18n.language);
+  // `negate` is display only: a cancellation document stores positive amounts but reverses the invoice.
+  const money = (n: number | null | undefined) => formatEuro(negate && n ? -Math.abs(n) : n ?? 0, i18n.language);
   const discount = totals?.discount_total ?? 0;
 
   return (
@@ -37,7 +38,7 @@ export function DocumentTotalsCard({ totals, isPrivateCustomer }: { totals: Docu
       <CardHeader><Eyebrow>{t("totals.title")}</Eyebrow></CardHeader>
       <CardContent className="space-y-1 text-control">
         <Row label={t("totals.net")} value={money(totals?.net_total)} />
-        {discount > 0 && <Row label={t("totals.discount")} value={`-${money(discount)}`} />}
+        {discount > 0 && <Row label={t("totals.discount")} value={negate ? formatEuro(discount, i18n.language) : `-${money(discount)}`} />}
         {vatRows(totals?.vat_breakdown).map((r) => (
           <Row key={r.rate} label={t("totals.vat", { rate: r.rate })} value={money(r.vat)} />
         ))}

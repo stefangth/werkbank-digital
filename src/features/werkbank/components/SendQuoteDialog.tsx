@@ -17,20 +17,9 @@ import { useDocumentItems } from "../hooks/useDocumentItems";
 import { useQuoteActions } from "../hooks/useQuoteActions";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { quotePreflight, type QuoteBlocker } from "../lib/quotePreflight";
+import { splitAddresses } from "../lib/addresses";
 
 type SendableQuote = Pick<Quote, "id" | "customer_id" | "property_id" | "contact_id" | "status" | "valid_until">;
-
-/** Addresses separated by comma, semicolon or whitespace; an address typed twice is kept once
- *  (compared case-insensitively). */
-const splitAddresses = (value: string): string[] => {
-  const seen = new Set<string>();
-  return value.split(/[,;\s]+/).filter((a) => {
-    const key = a.toLowerCase();
-    if (!a || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-};
 
 /** Send a draft, or (for a quote that is already sent) mail it again with a new link. The
  *  recipient is prefilled with the contact's email, else the customer's. Sending stays disabled

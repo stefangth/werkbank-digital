@@ -6,7 +6,7 @@ import { anOrganization } from "@/test/fixtures";
 import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
-const { state, mut, refetch, route, navigate } = vi.hoisted(() => {
+const { state, mut, refetch, route, navigate, inv } = vi.hoisted(() => {
   const m = () => ({ mutate: vi.fn(), isPending: false });
   return {
     state: { order: null as unknown, list: [] as unknown[], quote: null as unknown, orderItems: [] as unknown[], quoteItems: [] as unknown[] },
@@ -14,6 +14,7 @@ const { state, mut, refetch, route, navigate } = vi.hoisted(() => {
     refetch: vi.fn(),
     route: { id: "o1" },
     navigate: vi.fn(),
+    inv: { loading: false, active: null as { id: string; invoice_no: string | null } | null, fromOrder: { mutate: vi.fn(), isPending: false } },
   };
 });
 vi.mock("react-router-dom", async (orig) => ({
@@ -25,6 +26,10 @@ vi.mock("../hooks/useOrders", () => ({
   useOrder: () => ({ data: state.order, isLoading: false, isError: false, refetch }),
   useOrderList: () => ({ data: state.list }),
   useOrderMutations: () => mut,
+}));
+vi.mock("../hooks/useInvoices", () => ({
+  useActiveInvoiceForOrder: () => ({ data: inv.active, isLoading: inv.loading }),
+  useInvoiceMutations: () => ({ fromOrder: inv.fromOrder }),
 }));
 vi.mock("../hooks/useQuotes", () => ({ useQuote: (id?: string) => ({ data: id ? state.quote : undefined }) }));
 vi.mock("../hooks/useDocumentItems", () => ({
@@ -66,6 +71,8 @@ describe("OrderPage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     route.id = "o1";
+    inv.active = null;
+    inv.loading = false;
     state.order = order();
     state.list = [{ id: "o1", customer_name: "Muster HV", property_name: null, technician_names: ["Anna Berg"] }];
     state.quote = null;
@@ -134,6 +141,56 @@ describe("OrderPage", () => {
     for (const l of labels) expect(await screen.findByRole("button", { name: l })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: click }));
     expect(mut.setStatus.mutate).toHaveBeenCalledWith({ id: "o1", status: target });
+  });
+
+  it("creates an invoice from a done order and opens it", async () => {
+    state.order = order({ status: "done" });
+    inv.fromOrder.mutate.mockImplementation((_id: string, o: { onSuccess: (id: string) => void }) => o.onSuccess("inv1"));
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Rechnung erstellen" }));
+    expect(inv.fromOrder.mutate).toHaveBeenCalledWith("o1", expect.anything());
+    expect(navigate).toHaveBeenCalledWith("/invoices/inv1");
+  });
+
+  it("links the draft instead of offering a second invoice on a done order", async () => {
+    state.order = order({ status: "done" });
+    inv.active = { id: "inv1", invoice_no: "RE-0001" };
+    render();
+    expect(await screen.findByRole("link", { name: "Rechnungsentwurf öffnen" })).toHaveAttribute("href", "/invoices/inv1");
+    expect(screen.queryByRole("button", { name: "Rechnung erstellen" })).not.toBeInTheDocument();
+  });
+
+  it("asks before reopening a done order with an invoice draft, which keeps its items and dates", async () => {
+    state.order = order({ status: "done" });
+    inv.active = { id: "inv1", invoice_no: null };
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Wieder öffnen" }));
+    expect(mut.setStatus.mutate).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText(/behält seine jetzigen Positionen und Daten/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
+    expect(mut.setStatus.mutate).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Wieder öffnen" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Wieder öffnen" }));
+    expect(mut.setStatus.mutate).toHaveBeenCalledWith({ id: "o1", status: "in_progress" });
+  });
+
+  it("disables Rechnung erstellen while the invoice lookup loads", async () => {
+    state.order = order({ status: "done" });
+    inv.loading = true;
+    render();
+    expect(await screen.findByRole("button", { name: "Rechnung erstellen" })).toBeDisabled();
+  });
+
+  it("shows an invoiced order read only with a link to its invoice and no actions", async () => {
+    state.order = order({ status: "invoiced" });
+    inv.active = { id: "inv1", invoice_no: "RE-0001" };
+    render();
+    expect(await screen.findByTestId("items")).toHaveAttribute("data-readonly", "true");
+    expect(screen.getByText("Abgerechnet")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /RE-0001/ })).toHaveAttribute("href", "/invoices/inv1");
+    expect(screen.queryByRole("textbox", { name: "Betreff" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Beginnen|Erledigt|Wieder öffnen|Stornieren|Rechnung erstellen/ })).not.toBeInTheDocument();
   });
 
   it("cancels only after confirming", async () => {

@@ -14,3 +14,25 @@ export function showInTab(tab: Window | null, url: string, onBlocked: (url: stri
   if (!tab) onBlocked(url);
   else if (!tab.closed) tab.location.href = url;
 }
+
+/** Blob URLs handed out by pdfBlobUrl; one pagehide listener frees them all. They stay alive until
+ *  then because a still-open preview tab may need its blob again (download, reload). */
+const blobUrls = new Set<string>();
+let freeOnPagehide = false;
+
+/** A blob URL for the base64 bytes of a PDF, to show in a pending tab. The URL is freed when the
+ *  page unloads. */
+export function pdfBlobUrl(base64: string): string {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  blobUrls.add(url);
+  if (!freeOnPagehide) {
+    freeOnPagehide = true;
+    window.addEventListener("pagehide", () => {
+      for (const u of blobUrls) URL.revokeObjectURL(u);
+      blobUrls.clear();
+      freeOnPagehide = false;
+    }, { once: true });
+  }
+  return url;
+}

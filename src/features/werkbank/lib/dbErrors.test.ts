@@ -61,6 +61,7 @@ describe("mapDbError quote and order errors", () => {
     [{ code: "22023", message: "order_not_done" }, "errors.orderNotDone"],
     [{ code: "55000", message: "number_range_locked" }, "errors.numberRangeLocked"],
     [{ code: "23505", message: 'violates unique constraint "invoices_one_active_per_order"' }, "errors.activeInvoiceExists"],
+    [{ code: "23505", message: 'violates unique constraint "invoices_cancels_invoice_id_key"' }, "errors.cancellationExists"],
     [{ code: "22023", message: "invalid_transition" }, "errors.invalidTransition"],
   ])("maps the invoice error %j", (err, key) => {
     expect(mapDbError(err)).toBe(key);

@@ -5,7 +5,8 @@
     "technicians": "Technicians",
     "properties": "Properties",
     "quotes": "Quotes",
-    "orders": "Orders"
+    "orders": "Orders",
+    "invoices": "Invoices"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -16,7 +17,8 @@
       "technicians": "Add technicians",
       "catalog": "Add or import services",
       "customers": "Add or import customers",
-      "loadFailed": "Could not load your progress."
+      "loadFailed": "Could not load your progress.",
+      "invoice": "Issue your first invoice"
     },
     "tiles": {
       "acceptedNoOrder": "Accepted, no order yet",
@@ -108,7 +110,8 @@
     "orderNotDone": "The order must be done before it can be invoiced.",
     "numberRangeLocked": "This number range cannot be changed anymore.",
     "activeInvoiceExists": "There is already an open invoice for this order.",
-    "notAllowedHere": "You cannot change that here."
+    "notAllowedHere": "You cannot change that here.",
+    "cancellationExists": "This invoice already has a cancellation invoice."
   },
   "units": {
     "HUR": "h",
@@ -181,7 +184,8 @@
     "headings": {
       "customer": "Customer numbers",
       "quote": "Quote numbers",
-      "order": "Order numbers"
+      "order": "Order numbers",
+      "invoice": "Invoice numbers"
     },
     "prefix": "Prefix",
     "prefixHint": "At most 10 characters, for example K-.",
@@ -189,15 +193,18 @@
     "preview": {
       "customer": "Next customer number: {{number}}",
       "quote": "Next quote number: {{number}}",
-      "order": "Next order number: {{number}}"
+      "order": "Next order number: {{number}}",
+      "invoice": "Next invoice number: {{number}}"
     },
     "save": "Save",
     "saved": "Number range saved",
     "loadFailed": "The number ranges could not be loaded. Please try again.",
     "errors": {
       "prefixTooLong": "The prefix can be at most 10 characters long",
-      "nextValue": "Enter a whole number of 1 or more"
-    }
+      "nextValue": "Enter a whole number of 1 or more",
+      "raiseOnly": "The start value can only be raised."
+    },
+    "locked": "Prefix and start are locked because invoices have been issued. They can no longer be changed."
   },
   "company": {
     "title": "Company data",
@@ -207,7 +214,8 @@
       "contact": "Contact",
       "legal": "Tax and register",
       "bank": "Bank details",
-      "texts": "Quote defaults"
+      "texts": "Quote defaults",
+      "invoiceTexts": "Invoice defaults"
     },
     "fields": {
       "companyName": "Company name",
@@ -229,7 +237,10 @@
       "quoteIntro": "Intro text for quotes (optional)",
       "quoteClosing": "Closing text for quotes (optional)",
       "paymentTerms": "Payment terms text (optional)",
-      "validity": "Quote valid for (days)"
+      "validity": "Quote valid for (days)",
+      "invoiceIntro": "Intro text for invoices (optional)",
+      "invoiceClosing": "Closing text for invoices (optional)",
+      "paymentDueDays": "Payment term (days)"
     },
     "taxHint": "Enter a tax number, a VAT ID, or both.",
     "logo": {
@@ -250,7 +261,8 @@
       "companyName": "Enter the company name",
       "vatId": "Enter a valid VAT ID, for example DE123456789",
       "iban": "Enter a valid IBAN, for example DE89 3704 0044 0532 0130 00",
-      "validity": "Enter whole days from 1 to 365"
+      "validity": "Enter whole days from 1 to 365",
+      "paymentDueDays": "Enter whole days from 0 to 365"
     }
   },
   "customers": {
@@ -732,12 +744,15 @@
       "open": "Open",
       "in_progress": "In progress",
       "done": "Done",
+      "invoiced": "Invoiced",
       "cancelled": "Cancelled"
     },
     "action": {
       "start": "Start",
       "complete": "Done",
       "reopen": "Reopen",
+      "createInvoice": "Create invoice",
+      "openInvoiceDraft": "Open invoice draft",
       "cancel": "Cancel order"
     },
     "noMatches": "No order matches your filters.",
@@ -764,6 +779,7 @@
     "page": {
       "loadFailed": "The order could not be loaded.",
       "back": "All orders",
+      "invoice": "Invoice",
       "fromQuote": "From quote",
       "delete": "Delete order",
       "deleteTitle": "Delete this order?",
@@ -799,6 +815,12 @@
       "body": "Order {{number}} is cancelled and locked. This cannot be undone.",
       "keep": "Keep order",
       "confirm": "Cancel order"
+    },
+    "reopen": {
+      "title": "Reopen this order?",
+      "body": "This order has a draft invoice. The draft keeps its current items and dates. It does not pick up changes to the order.",
+      "keep": "Keep it done",
+      "confirm": "Reopen"
     }
   },
   "publicQuote": {
@@ -901,6 +923,159 @@
       "status": "Status",
       "gross": "Gross"
     },
-    "loadFailed": "The quotes and orders could not be loaded."
+    "loadFailed": "The quotes and orders could not be loaded.",
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices yet.",
+      "add": "Create invoice"
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "sub": "Draft, issue and track invoices and cancellations.",
+    "add": "Create invoice",
+    "loadFailed": "The invoices could not be loaded.",
+    "searchLabel": "Search invoices",
+    "searchPlaceholder": "Number, customer, subject",
+    "filter": {
+      "all": "All",
+      "draft": "Drafts",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "type": {
+      "cancellation": "Cancellation"
+    },
+    "draftNumber": "Draft",
+    "noMatches": "No invoice matches your filters.",
+    "noMatchesReason": "Try another filter or search term.",
+    "empty": {
+      "title": "No invoices yet",
+      "body": "Create an invoice from a finished order or start a free one.",
+      "action": "Create first invoice"
+    },
+    "columns": {
+      "number": "No.",
+      "customer": "Customer / property",
+      "subject": "Subject",
+      "issueDate": "Invoice date",
+      "dueDate": "Due on",
+      "gross": "Gross",
+      "status": "Status"
+    },
+    "notice": {
+      "doneNotInvoiced": "Done, not invoiced yet",
+      "show": "Show orders"
+    },
+    "new": {
+      "title": "New invoice",
+      "customer": "Customer",
+      "property": "Property (optional)",
+      "create": "Create invoice"
+    },
+    "page": {
+      "loadFailed": "The invoice could not be loaded.",
+      "back": "All invoices",
+      "notFound": {
+        "title": "Invoice not found",
+        "reason": "It may have been deleted.",
+        "back": "Back to invoices"
+      },
+      "cancellationTitle": "Cancellation",
+      "cancels": "Cancels invoice {{number}}",
+      "cancellationLocked": "Customer, subject, location, discount and items come from the original invoice and cannot be changed.",
+      "preview": "Preview",
+      "delete": "Delete",
+      "issue": "Issue",
+      "deleteTitle": "Delete this draft?",
+      "deleteBody": "The draft and its items are removed for good.",
+      "pdfFailed": "The PDF could not be opened.",
+      "pdfBlocked": "Your browser blocked the new tab.",
+      "pdfOpen": "Open PDF",
+      "pdf": "PDF",
+      "send": "Send",
+      "resend": "Send again",
+      "cancel": "Cancel invoice",
+      "copy": "Copy",
+      "correct": "Create corrected invoice",
+      "cancelTitle": "Cancel this invoice?",
+      "cancelBody": "A cancellation invoice is created as a draft. You have to finalise it for the cancellation to take effect.",
+      "cancelConfirm": "Create cancellation",
+      "cancelledBanner": "This invoice was cancelled by",
+      "pdfPending": "The PDF is being created",
+      "pdfPendingHint": "The invoice is issued, but its PDF is not ready yet.",
+      "orderNotDone": "The order is not done. Complete it before you issue the invoice.",
+      "pdfRetry": "Try again",
+      "pdfRetryFailed": "The PDF could not be created yet. Try again in a moment.",
+      "pdfRetryDone": "The PDF is ready.",
+      "openCancellation": "Open cancellation"
+    },
+    "send": {
+      "errors": {
+        "forbidden": "You are not allowed to do this.",
+        "notFound": "The invoice was not found.",
+        "invalidState": "This invoice is in a state that does not allow this.",
+        "invalidRecipient": "Check the email addresses.",
+        "tooManyRecipients": "There are too many recipients.",
+        "pdfMissing": "The PDF is missing. Issue the invoice again.",
+        "preflight": "The invoice is not ready yet. Complete the missing details first.",
+        "sendFailed": "The email could not be sent to everyone. Sending again only reaches those who have not received it.",
+        "generic": "Something went wrong. Please try again."
+      },
+      "issueTitle": "Issue invoice",
+      "issueHint": "The invoice gets its number, the PDF and the e-invoice. You can send it right away or later.",
+      "warning": "After this, the invoice can no longer be changed.",
+      "sendTitle": "Send invoice",
+      "sendHint": "The customer gets the stored PDF by email.",
+      "to": "To",
+      "cc": "Copy (CC)",
+      "message": "Message",
+      "defaultMessage": "Hello,\n\nplease find our invoice attached. Thank you for your order.\n\nKind regards",
+      "defaultMessageCancellation": "Hello,\n\nplease find our cancellation invoice attached.\n\nKind regards",
+      "issueOnly": "Issue only",
+      "issueAndSend": "Issue and send",
+      "send": "Send",
+      "issued": "Invoice {{number}} issued.",
+      "issuedAndSent": "Invoice {{number}} issued and sent.",
+      "issuedSendFailed": "Issued, sending failed. Sending again only reaches those who have not received it.",
+      "issuedRenderFailed": "Issued. The PDF is not ready yet.",
+      "sent": "The invoice was sent.",
+      "emailFailed": "The email could not be sent.",
+      "profileLoad": "Your company details could not be loaded. Reload the page.",
+      "blockers": {
+        "no_items": "The invoice has no item yet.",
+        "no_service_date": "Enter a service date.",
+        "profile_incomplete": "Your company details are incomplete. Add name, address, email, a tax number or VAT id and the IBAN in the settings.",
+        "no_buyer_address": "The customer's billing address is incomplete. Add street, postal code and city.",
+        "no_recipient": "Add at least one recipient."
+      },
+      "resendTitle": "Send invoice again",
+      "resend": "Send again",
+      "partyLoad": "The customer or property could not be loaded. Reload the page."
+    },
+    "header": {
+      "serviceFrom": "Service date from",
+      "serviceTo": "Service date to",
+      "serviceToClear": "Remove service date to",
+      "servicePeriod": "Service date",
+      "servicePeriodRange": "{{from}} to {{to}}",
+      "paymentDueDays": "Payment term in days",
+      "paymentDueDaysValue_one": "{{count}} day",
+      "paymentDueDaysValue_other": "{{count}} days",
+      "issueDate": "Invoice date",
+      "dueDate": "Due on"
+    },
+    "history": {
+      "title": "History",
+      "issued": "Issued",
+      "sent": "Sent",
+      "sentTo": "to {{recipients}}",
+      "cancelledBy": "Cancelled by"
+    }
   }
 }

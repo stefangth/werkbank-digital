@@ -3,10 +3,10 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Client = SupabaseClient<Database>;
 
-export type NumberRangeKey = "customer" | "quote" | "order";
+export type NumberRangeKey = "customer" | "quote" | "order" | "invoice";
 
 /** Settings tab order. */
-export const NUMBER_RANGE_KEYS: readonly NumberRangeKey[] = ["customer", "quote", "order"];
+export const NUMBER_RANGE_KEYS: readonly NumberRangeKey[] = ["customer", "quote", "order", "invoice"];
 export type NumberRange = { prefix: string; next_value: number; padding: number };
 
 /** What the database applies for a key without a row (werkbank.next_number creates it on first use). */
@@ -14,6 +14,7 @@ const DEFAULTS: Record<NumberRangeKey, NumberRange> = {
   customer: { prefix: "K-", next_value: 10001, padding: 0 },
   quote: { prefix: "A-", next_value: 1, padding: 4 },
   order: { prefix: "AU-", next_value: 1, padding: 4 },
+  invoice: { prefix: "RE-", next_value: 1, padding: 4 },
 };
 
 /** Mirrors the SQL `prefix || lpad(v::text, greatest(padding, length(v::text)), '0')`:
@@ -49,4 +50,12 @@ export async function saveNumberRange(client: Client, orgId: string, key: Number
   if (insertError) throw insertError;
   const { error } = await client.schema("werkbank").from("number_ranges").update({ prefix: values.prefix, padding: values.padding }).eq("org_id", orgId).eq("key", key);
   if (error) throw error;
+}
+
+/** Whether the org has an invoice that left draft. From then on the database locks prefix, padding and
+ *  start of the `invoice` range (number_range_locked), so the settings tab disables those inputs. */
+export async function fetchHasIssuedInvoice(client: Client, orgId: string): Promise<boolean> {
+  const { count, error } = await client.schema("werkbank").from("invoices").select("id", { count: "exact", head: true }).eq("org_id", orgId).neq("status", "draft");
+  if (error) throw error;
+  return (count ?? 0) > 0;
 }

@@ -79,6 +79,12 @@ describe("OrdersPage", () => {
     expect(numbersShown()).toEqual(["AU-0003", "AU-0005"]);
   });
 
+  it("offers the invoiced status in the filter", async () => {
+    render();
+    fireEvent.click(await screen.findByRole("combobox", { name: "Status" }));
+    expect(await screen.findByRole("option", { name: "Abgerechnet" })).toBeInTheDocument();
+  });
+
   it("filters by technician", async () => {
     render();
     fireEvent.click(await screen.findByRole("combobox", { name: "Monteur" }));
@@ -129,6 +135,20 @@ describe("OrdersPage", () => {
     state.error = true;
     render();
     expect(await screen.findByText("Die Aufträge konnten nicht geladen werden.")).toBeInTheDocument();
+  });
+
+  it("opens pre-filtered by status from ?status=done", async () => {
+    state.search = "?status=done";
+    render();
+    await screen.findByText("AU-0003");
+    expect(numbersShown()).toEqual(["AU-0003", "AU-0005"]);
+  });
+
+  it("ignores an unknown ?status=", async () => {
+    state.search = "?status=bogus";
+    render();
+    await screen.findByText("AU-0003");
+    expect(numbersShown()).toHaveLength(5);
   });
 
   it("opens pre-filtered from the dashboard link: orders without a date", async () => {

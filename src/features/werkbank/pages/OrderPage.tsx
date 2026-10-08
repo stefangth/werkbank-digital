@@ -22,12 +22,13 @@ import type { OrderPatch } from "../data/orders";
 import { useCustomer } from "../hooks/useCustomers";
 import { useDocumentItems } from "../hooks/useDocumentItems";
 import { useOrder, useOrderList, useOrderMutations } from "../hooks/useOrders";
+import { useActiveInvoiceForOrder, useInvoiceMutations } from "../hooks/useInvoices";
 import { useQuote } from "../hooks/useQuotes";
 import { mapDbError } from "../lib/dbErrors";
 import { ORDER_ACTION_TARGET, ORDER_STATUS_TONES, nextOrderActions, type OrderAction, type OrderStatus } from "../lib/orderStatus";
 import { diffAgainstQuote } from "../lib/quoteDiff";
 import { formatQuoteNumber } from "../lib/quoteNumber";
-import { ORDERS_PATH, quotePath } from "../paths";
+import { ORDERS_PATH, invoicePath, quotePath } from "../paths";
 
 const ACTION_VARIANT = { start: "default", complete: "default", reopen: "secondary", cancel: "destructive" } as const;
 
@@ -44,12 +45,15 @@ export function OrderPage() {
   const { data: quote } = useQuote(order?.quote_id ?? undefined);
   const { data: quoteItems } = useDocumentItems(order?.quote_id ? { quoteId: order.quote_id } : undefined);
   const { data: orderItems } = useDocumentItems(order ? { orderId: order.id } : undefined);
+  const { data: activeInvoice, isLoading: invoiceLoading } = useActiveInvoiceForOrder(order?.status === "invoiced" || order?.status === "done" ? order.id : undefined);
+  const { fromOrder } = useInvoiceMutations();
   const { update, setStatus, setTechnicians, remove } = useOrderMutations();
   // Keyed by the order id and the status it was set at: the route reuses this component, so a
   // lock must not carry over to the next order, and it ends as soon as the status changes
   // (e.g. the user reopens the order the lock was reported for).
   const [lockedAt, setLockedAt] = useState<{ id: string; status: string } | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingReopen, setConfirmingReopen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const diff = useMemo(
@@ -77,7 +81,7 @@ export function OrderPage() {
 
   const status = order.status as OrderStatus;
   const locked = lockedAt?.id === order.id && lockedAt.status === order.status;
-  const readOnly = locked || status === "done" || status === "cancelled";
+  const readOnly = locked || status === "done" || status === "invoiced" || status === "cancelled";
   const listRow = list?.find((o) => o.id === order.id);
 
   // A save that hits an order closed meanwhile: fetch the real state, so the page turns read only.
@@ -89,6 +93,14 @@ export function OrderPage() {
   const save = (patch: OrderPatch | SchedulePatch) => update.mutate({ id: order.id, patch }, lockOnClosed);
   const saveTechnicians = (artistIds: string[]) => setTechnicians.mutate({ orderId: order.id, artistIds }, lockOnClosed);
   const runAction = (action: OrderAction) => setStatus.mutate({ id: order.id, status: ORDER_ACTION_TARGET[action] });
+  // R28: a draft invoice keeps the items and dates it copied, so reopening asks first.
+  // On a done order the active invoice is always a draft (issuing sets the order to invoiced).
+  const hasInvoiceDraft = status === "done" && !!activeInvoice;
+  const onAction = (action: OrderAction) => {
+    if (action === "cancel") setConfirmingCancel(true);
+    else if (action === "reopen" && hasInvoiceDraft) setConfirmingReopen(true);
+    else runAction(action);
+  };
 
   return (
     <div className="space-y-6">
@@ -101,10 +113,20 @@ export function OrderPage() {
         actions={
           <>
             {nextOrderActions(status).map((action) => (
-              <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => (action === "cancel" ? setConfirmingCancel(true) : runAction(action))}>
+              <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => onAction(action)}>
                 {t(`orders.action.${action}`)}
               </Button>
             ))}
+            {status === "done" && !locked && activeInvoice && (
+              <Button variant="secondary" asChild>
+                <Link to={invoicePath(activeInvoice.id)}>{t("orders.action.openInvoiceDraft")}</Link>
+              </Button>
+            )}
+            {status === "done" && !locked && !activeInvoice && (
+              <Button disabled={invoiceLoading || fromOrder.isPending} onClick={() => fromOrder.mutate(order.id, { onSuccess: (invoiceId) => navigate(invoicePath(invoiceId)) })}>
+                {t("orders.action.createInvoice")}
+              </Button>
+            )}
             {status === "open" && !locked && (
               <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>
                 {t("orders.page.delete")}
@@ -116,6 +138,14 @@ export function OrderPage() {
       <div className="flex flex-wrap items-center gap-3">
         <Token className="text-lg">{order.order_no}</Token>
         <StatusPill tone={ORDER_STATUS_TONES[status]}>{t(`orders.status.${status}`)}</StatusPill>
+        {status === "invoiced" && activeInvoice && (
+          <span className="text-sm">
+            {t("orders.page.invoice")}{" "}
+            <Link to={invoicePath(activeInvoice.id)} className="font-medium text-accent-text hover:underline">
+              <Token>{activeInvoice.invoice_no}</Token>
+            </Link>
+          </span>
+        )}
         {order.quote_id && quote && (
           <span className="text-sm">
             {t("orders.page.fromQuote")}{" "}
@@ -188,6 +218,21 @@ export function OrderPage() {
               onClick={() => { setConfirmingCancel(false); runAction("cancel"); }}
             >
               {t("orders.cancel.confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmingReopen} onOpenChange={setConfirmingReopen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("orders.reopen.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("orders.reopen.body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("orders.reopen.keep")}</AlertDialogCancel>
+            <Button disabled={setStatus.isPending} onClick={() => { setConfirmingReopen(false); runAction("reopen"); }}>
+              {t("orders.reopen.confirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

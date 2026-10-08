@@ -854,4 +854,60 @@ export const HELP_ITEMS: readonly HelpItem[] = [
       de: 'Die Firmendaten sind der Absender auf deinen Angeboten: Firmenname, Adresse, E-Mail und entweder eine Steuernummer oder eine USt-IdNr. brauchst du, bevor ein Angebot gesendet werden kann. Telefon, Webseite, Registerangaben und Bankverbindung sind optional. Außerdem legst du Einleitung, Schlusstext, Zahlungsbedingungen und die Gültigkeit in Tagen fest. Lade dein Logo als PNG oder JPEG mit höchstens 1 MB hoch, es erscheint auf dem PDF. Bearbeiten dürfen die Firmendaten nur Admins, und der Schritt Firmendaten ausfüllen auf dem Dashboard wird nur Admins angezeigt.',
     },
   },
+  {
+    id: 'W6.1', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen', updated: '2026-10-08',
+    q: { en: 'How do I create an invoice from a finished order?', de: 'Wie erstelle ich eine Rechnung aus einem erledigten Auftrag?' },
+    a: {
+      en: 'Open an order that is set to Done and choose Create invoice. The invoice starts as a draft with the positions, the customer and the property of the order, and each order can have only one active invoice. In the draft you set the service date or a service period and the payment term, and you can change the positions and the texts. The intro and closing text come from your company data. Nothing is final while the invoice is a draft, and you can delete it.',
+      de: 'Öffne einen Auftrag, der auf Erledigt steht, und wähl Rechnung erstellen. Die Rechnung beginnt als Entwurf mit den Positionen, dem Kunden und der Liegenschaft des Auftrags, und zu jedem Auftrag gibt es nur eine aktive Rechnung. Im Entwurf legst du das Leistungsdatum oder einen Leistungszeitraum und das Zahlungsziel fest und kannst Positionen und Texte ändern. Einleitung und Schlusstext kommen aus deinen Firmendaten. Solange die Rechnung ein Entwurf ist, ist nichts endgültig, und du kannst sie löschen.',
+    },
+  },
+  {
+    id: 'W6.2', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Ohne Auftrag', updated: '2026-10-08',
+    q: { en: 'Can I write an invoice without an order?', de: 'Kann ich eine Rechnung ohne Auftrag schreiben?' },
+    a: {
+      en: 'Yes. On the Invoices page choose Create invoice, pick the customer and optionally the property, and add the positions yourself. Use this for work that never went through a quote or an order. An invoice without an order does not change any order status.',
+      de: 'Ja. Wähl auf der Seite Rechnungen Rechnung anlegen, such den Kunden und auf Wunsch die Liegenschaft aus und erfasse die Positionen selbst. Das ist für Arbeit gedacht, die weder ein Angebot noch einen Auftrag hatte. Eine Rechnung ohne Auftrag ändert keinen Auftragsstatus.',
+    },
+  },
+  {
+    id: 'W6.3', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Abschließen', updated: '2026-10-08',
+    q: { en: 'What happens when I issue an invoice?', de: 'Was passiert, wenn ich eine Rechnung abschließe?' },
+    a: {
+      en: 'Issuing gives the invoice the next gapless number, for example RE-0001, and sets the issue date to today. From then on the invoice is locked: positions, amounts, texts and dates can no longer be changed, so that it stays traceable and unchanged as the tax rules require. You can issue only, or issue and send in one step. Before that, the invoice needs at least one position, a service date, a complete company profile with an IBAN, and a buyer address. If something is missing, the dialog tells you what. The order then shows as Invoiced.',
+      de: 'Mit Abschließen bekommt die Rechnung die nächste lückenlose Nummer, zum Beispiel RE-0001, und das Rechnungsdatum ist heute. Danach ist die Rechnung gesperrt: Positionen, Beträge, Texte und Daten lassen sich nicht mehr ändern, damit sie nachvollziehbar und unverändert bleibt, wie es die Steuervorschriften verlangen. Du kannst nur abschließen oder abschließen und gleich senden. Vorher braucht die Rechnung mindestens eine Position, ein Leistungsdatum, vollständige Firmendaten mit IBAN und eine Anschrift des Kunden. Fehlt etwas, sagt dir der Dialog was. Der Auftrag steht danach auf Abgerechnet.',
+    },
+  },
+  {
+    id: 'W6.4', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · E-Rechnung', updated: '2026-10-08',
+    q: { en: 'What is the e-invoice, and how does the customer get it?', de: 'Was ist die E-Rechnung, und wie bekommt sie der Kunde?' },
+    a: {
+      en: 'An issued invoice is a ZUGFeRD PDF (EN 16931): it looks like a normal PDF and carries the invoice data as a machine-readable file inside, so your customer can open it and their accounting software can read it. Choose Send to email it to one or more recipients, with the PDF as the attachment and your company email as the reply address. The stored file is sent as it is and never created again. You can download the same file at any time.',
+      de: 'Eine abgeschlossene Rechnung ist ein ZUGFeRD-PDF (EN 16931): Es sieht aus wie ein normales PDF und trägt die Rechnungsdaten als maschinenlesbare Datei in sich, sodass dein Kunde es öffnen kann und seine Buchhaltungssoftware es lesen kann. Mit Senden schickst du es per E-Mail an einen oder mehrere Empfänger, mit dem PDF im Anhang und deiner Firmen-E-Mail als Antwortadresse. Gesendet wird die gespeicherte Datei, sie wird nicht noch einmal erzeugt. Dieselbe Datei kannst du jederzeit herunterladen.',
+    },
+  },
+  {
+    id: 'W6.5', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Rechnungen · Stornieren', updated: '2026-10-08',
+    q: { en: 'How do I cancel an invoice or correct a mistake?', de: 'Wie storniere ich eine Rechnung oder korrigiere einen Fehler?' },
+    a: {
+      en: 'An issued invoice is never edited. Choose Cancel invoice: you get a cancellation invoice as a draft, which reverses the amounts. Once you issue it, for example as RE-0002, the cancellation counts, the original is marked as cancelled and the order goes back to Done. To correct a mistake, choose Create corrected invoice on the cancelled invoice. It opens a new draft with the same positions that you can change and issue, for example as RE-0003.',
+      de: 'Eine abgeschlossene Rechnung wird nie bearbeitet. Wähl an der Rechnung Stornieren: Du bekommst eine Stornorechnung als Entwurf, die die Beträge umkehrt. Sobald du sie abschließt, zum Beispiel als RE-0002, gilt die Stornierung, das Original steht auf Storniert, und der Auftrag steht wieder auf Erledigt. Für eine Korrektur wählst du an der stornierten Rechnung Korrigierte Rechnung anlegen. Das öffnet einen neuen Entwurf mit denselben Positionen, den du ändern und abschließen kannst, zum Beispiel als RE-0003.',
+    },
+  },
+  {
+    id: 'W6.6', role: 'admin', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Einstellungen · Rechnungen', updated: '2026-10-08',
+    q: { en: 'Where do I set the invoice defaults and the number range?', de: 'Wo stelle ich die Rechnungsvorgaben und den Nummernkreis ein?' },
+    a: {
+      en: 'In the company data you set the default payment term in days and the intro and closing text for new invoices, and you add your IBAN, which every invoice needs. In Settings under Numbering you set the prefix and the start of the invoice number range. The start can only be raised, never lowered. After the first invoice has been issued, the prefix and the start are both locked. Invoices and cancellation invoices share one range. Only admins can change these settings.',
+      de: 'In den Firmendaten legst du das Standard-Zahlungsziel in Tagen sowie Einleitung und Schlusstext für neue Rechnungen fest und trägst deine IBAN ein, die jede Rechnung braucht. In den Einstellungen unter Nummernkreise legst du Präfix und Start des Rechnungsnummernkreises fest. Der Start lässt sich nur erhöhen, nie senken. Sobald die erste Rechnung abgeschlossen wurde, sind Präfix und Start gesperrt. Rechnungen und Stornorechnungen teilen sich einen Nummernkreis. Diese Einstellungen dürfen nur Admins ändern.',
+    },
+  },
+  {
+    id: 'W6.7', role: 'producer', stage: 4, status: 'new', kinds: ['handwerk'], surface: 'Kunden und Liegenschaften · Rechnungen', updated: '2026-10-08',
+    q: { en: 'Where do I find the invoices of a customer or a property?', de: 'Wo finde ich die Rechnungen eines Kunden oder einer Liegenschaft?' },
+    a: {
+      en: 'Open the customer or the property: the Invoices section lists all its invoices with number, status and amount, and a click opens the invoice. The same invoices appear on the Invoices page, where you can filter by status. The setup list on the dashboard has a step for the first invoice that shows what is still missing, such as the IBAN.',
+      de: 'Öffne den Kunden oder die Liegenschaft: Der Abschnitt Rechnungen listet alle zugehörigen Rechnungen mit Nummer, Status und Betrag, und ein Klick öffnet die Rechnung. Dieselben Rechnungen siehst du auf der Seite Rechnungen, wo du nach Status filtern kannst. Die Startliste auf dem Dashboard hat einen Schritt für die erste Rechnung, der zeigt, was noch fehlt, etwa die IBAN.',
+    },
+  },
 ] as const;

@@ -5,7 +5,8 @@
     "technicians": "Monteure",
     "properties": "Liegenschaften",
     "quotes": "Angebote",
-    "orders": "Aufträge"
+    "orders": "Aufträge",
+    "invoices": "Rechnungen"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -16,7 +17,8 @@
       "technicians": "Monteure anlegen",
       "catalog": "Leistungen anlegen oder importieren",
       "customers": "Kunden anlegen oder importieren",
-      "loadFailed": "Der Stand konnte nicht geladen werden."
+      "loadFailed": "Der Stand konnte nicht geladen werden.",
+      "invoice": "Erste Rechnung ausstellen"
     },
     "tiles": {
       "acceptedNoOrder": "Angenommen, ohne Auftrag",
@@ -108,7 +110,8 @@
     "orderNotDone": "Der Auftrag muss erledigt sein, bevor er abgerechnet werden kann.",
     "numberRangeLocked": "Dieser Nummernkreis kann nicht mehr geändert werden.",
     "activeInvoiceExists": "Zu diesem Auftrag gibt es schon eine offene Rechnung.",
-    "notAllowedHere": "Das kannst du hier nicht ändern."
+    "notAllowedHere": "Das kannst du hier nicht ändern.",
+    "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung."
   },
   "units": {
     "HUR": "Std",
@@ -181,7 +184,8 @@
     "headings": {
       "customer": "Kundennummern",
       "quote": "Angebotsnummern",
-      "order": "Auftragsnummern"
+      "order": "Auftragsnummern",
+      "invoice": "Rechnungsnummern"
     },
     "prefix": "Präfix",
     "prefixHint": "Höchstens 10 Zeichen, zum Beispiel K-.",
@@ -189,15 +193,18 @@
     "preview": {
       "customer": "Nächste Kundennummer: {{number}}",
       "quote": "Nächste Angebotsnummer: {{number}}",
-      "order": "Nächste Auftragsnummer: {{number}}"
+      "order": "Nächste Auftragsnummer: {{number}}",
+      "invoice": "Nächste Rechnungsnummer: {{number}}"
     },
     "save": "Speichern",
     "saved": "Nummernkreis gespeichert",
     "loadFailed": "Die Nummernkreise konnten nicht geladen werden. Versuche es bitte noch einmal.",
     "errors": {
       "prefixTooLong": "Das Präfix darf höchstens 10 Zeichen lang sein",
-      "nextValue": "Gib eine ganze Zahl ab 1 ein"
-    }
+      "nextValue": "Gib eine ganze Zahl ab 1 ein",
+      "raiseOnly": "Der Startwert kann nur erhöht werden."
+    },
+    "locked": "Präfix und Start sind gesperrt, weil bereits Rechnungen ausgestellt wurden. Sie können nicht mehr geändert werden."
   },
   "company": {
     "title": "Firmendaten",
@@ -207,7 +214,8 @@
       "contact": "Kontakt",
       "legal": "Steuer und Register",
       "bank": "Bankverbindung",
-      "texts": "Standards für Angebote"
+      "texts": "Standards für Angebote",
+      "invoiceTexts": "Rechnungsvorgaben"
     },
     "fields": {
       "companyName": "Firmenname",
@@ -229,7 +237,10 @@
       "quoteIntro": "Einleitungstext für Angebote (optional)",
       "quoteClosing": "Schlusstext für Angebote (optional)",
       "paymentTerms": "Zahlungsbedingungen (optional)",
-      "validity": "Angebot gültig für (Tage)"
+      "validity": "Angebot gültig für (Tage)",
+      "invoiceIntro": "Einleitungstext für Rechnungen (optional)",
+      "invoiceClosing": "Schlusstext für Rechnungen (optional)",
+      "paymentDueDays": "Zahlungsziel (Tage)"
     },
     "taxHint": "Trag eine Steuernummer, eine USt-IdNr. oder beides ein.",
     "logo": {
@@ -250,7 +261,8 @@
       "companyName": "Gib den Firmennamen ein",
       "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
       "iban": "Gib eine gültige IBAN ein, zum Beispiel DE89 3704 0044 0532 0130 00",
-      "validity": "Gib ganze Tage von 1 bis 365 ein"
+      "validity": "Gib ganze Tage von 1 bis 365 ein",
+      "paymentDueDays": "Gib ganze Tage von 0 bis 365 ein"
     }
   },
   "customers": {
@@ -732,12 +744,15 @@
       "open": "Offen",
       "in_progress": "In Arbeit",
       "done": "Erledigt",
+      "invoiced": "Abgerechnet",
       "cancelled": "Storniert"
     },
     "action": {
       "start": "Beginnen",
       "complete": "Erledigt",
       "reopen": "Wieder öffnen",
+      "createInvoice": "Rechnung erstellen",
+      "openInvoiceDraft": "Rechnungsentwurf öffnen",
       "cancel": "Stornieren"
     },
     "noMatches": "Kein Auftrag passt zu deinen Filtern.",
@@ -764,6 +779,7 @@
     "page": {
       "loadFailed": "Der Auftrag konnte nicht geladen werden.",
       "back": "Alle Aufträge",
+      "invoice": "Rechnung",
       "fromQuote": "Aus Angebot",
       "delete": "Auftrag löschen",
       "deleteTitle": "Diesen Auftrag löschen?",
@@ -799,6 +815,12 @@
       "body": "Der Auftrag {{number}} wird storniert und gesperrt. Das lässt sich nicht rückgängig machen.",
       "keep": "Auftrag behalten",
       "confirm": "Stornieren"
+    },
+    "reopen": {
+      "title": "Auftrag wieder öffnen?",
+      "body": "Zu diesem Auftrag gibt es einen Rechnungsentwurf. Der Entwurf behält seine jetzigen Positionen und Daten. Änderungen am Auftrag übernimmt er nicht.",
+      "keep": "Abbrechen",
+      "confirm": "Wieder öffnen"
     }
   },
   "publicQuote": {
@@ -901,6 +923,159 @@
       "status": "Status",
       "gross": "Brutto"
     },
-    "loadFailed": "Die Angebote und Aufträge konnten nicht geladen werden."
+    "loadFailed": "Die Angebote und Aufträge konnten nicht geladen werden.",
+    "invoices": {
+      "title": "Rechnungen",
+      "empty": "Noch keine Rechnungen.",
+      "add": "Rechnung anlegen"
+    }
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "sub": "Rechnungen und Stornorechnungen entwerfen, ausstellen und verfolgen.",
+    "add": "Rechnung anlegen",
+    "loadFailed": "Die Rechnungen konnten nicht geladen werden.",
+    "searchLabel": "Rechnungen durchsuchen",
+    "searchPlaceholder": "Nummer, Kunde, Betreff",
+    "filter": {
+      "all": "Alle",
+      "draft": "Entwürfe",
+      "issued": "Ausgestellt",
+      "cancelled": "Storniert"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "issued": "Ausgestellt",
+      "cancelled": "Storniert"
+    },
+    "type": {
+      "cancellation": "Storno"
+    },
+    "draftNumber": "Entwurf",
+    "noMatches": "Keine Rechnung passt zu deinen Filtern.",
+    "noMatchesReason": "Probiere einen anderen Filter oder Suchbegriff.",
+    "empty": {
+      "title": "Noch keine Rechnungen",
+      "body": "Lege eine Rechnung aus einem erledigten Auftrag an oder starte eine freie.",
+      "action": "Erste Rechnung anlegen"
+    },
+    "columns": {
+      "number": "Nr.",
+      "customer": "Kunde / Objekt",
+      "subject": "Betreff",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fällig am",
+      "gross": "Brutto",
+      "status": "Status"
+    },
+    "notice": {
+      "doneNotInvoiced": "Erledigt, noch nicht abgerechnet",
+      "show": "Aufträge anzeigen"
+    },
+    "new": {
+      "title": "Neue Rechnung",
+      "customer": "Kunde",
+      "property": "Objekt (optional)",
+      "create": "Rechnung anlegen"
+    },
+    "page": {
+      "loadFailed": "Die Rechnung konnte nicht geladen werden.",
+      "back": "Alle Rechnungen",
+      "notFound": {
+        "title": "Rechnung nicht gefunden",
+        "reason": "Sie wurde vielleicht gelöscht.",
+        "back": "Zurück zu den Rechnungen"
+      },
+      "cancellationTitle": "Stornorechnung",
+      "cancels": "Storniert Rechnung {{number}}",
+      "cancellationLocked": "Kunde, Betreff, Ort, Rabatt und Positionen kommen aus der Originalrechnung und lassen sich nicht ändern.",
+      "preview": "Vorschau",
+      "delete": "Löschen",
+      "issue": "Abschließen",
+      "deleteTitle": "Diesen Entwurf löschen?",
+      "deleteBody": "Der Entwurf und seine Positionen werden endgültig entfernt.",
+      "pdfFailed": "Das PDF konnte nicht geöffnet werden.",
+      "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
+      "pdfOpen": "PDF öffnen",
+      "pdf": "PDF",
+      "send": "Senden",
+      "resend": "Erneut senden",
+      "cancel": "Stornieren",
+      "copy": "Kopieren",
+      "correct": "Korrigierte Rechnung anlegen",
+      "cancelTitle": "Diese Rechnung stornieren?",
+      "cancelBody": "Es wird eine Stornorechnung als Entwurf angelegt. Du musst sie abschließen, damit die Stornierung gilt.",
+      "cancelConfirm": "Stornorechnung anlegen",
+      "cancelledBanner": "Diese Rechnung wurde storniert durch",
+      "pdfPending": "PDF wird erzeugt",
+      "pdfPendingHint": "Die Rechnung ist abgeschlossen, das PDF ist aber noch nicht fertig.",
+      "orderNotDone": "Der Auftrag ist nicht erledigt. Schließe ihn ab, bevor Du die Rechnung abschließt.",
+      "pdfRetry": "Erneut versuchen",
+      "pdfRetryFailed": "Das PDF konnte noch nicht erzeugt werden. Versuche es gleich noch einmal.",
+      "pdfRetryDone": "Das PDF ist fertig.",
+      "openCancellation": "Stornorechnung öffnen"
+    },
+    "send": {
+      "errors": {
+        "forbidden": "Dafür fehlt dir die Berechtigung.",
+        "notFound": "Die Rechnung wurde nicht gefunden.",
+        "invalidState": "Die Rechnung ist in einem Zustand, in dem das nicht geht.",
+        "invalidRecipient": "Prüfe die E-Mail-Adressen.",
+        "tooManyRecipients": "Es sind zu viele Empfänger.",
+        "pdfMissing": "Das PDF fehlt. Stelle die Rechnung erneut aus.",
+        "preflight": "Die Rechnung ist noch nicht bereit. Ergänze zuerst die fehlenden Angaben.",
+        "sendFailed": "Die E-Mail konnte nicht an alle gesendet werden. Erneut senden erreicht nur, wer sie noch nicht hat.",
+        "generic": "Etwas ist schiefgegangen. Bitte versuche es erneut."
+      },
+      "issueTitle": "Rechnung abschließen",
+      "issueHint": "Die Rechnung bekommt ihre Nummer, das PDF und die E-Rechnung. Du kannst sie gleich oder später senden.",
+      "warning": "Danach ist die Rechnung nicht mehr änderbar.",
+      "sendTitle": "Rechnung senden",
+      "sendHint": "Der Kunde bekommt das gespeicherte PDF per E-Mail.",
+      "to": "An",
+      "cc": "Kopie (CC)",
+      "message": "Nachricht",
+      "defaultMessage": "Guten Tag,\n\nanbei unsere Rechnung. Vielen Dank für den Auftrag.\n\nFreundliche Grüße",
+      "defaultMessageCancellation": "Guten Tag,\n\nanbei unsere Stornorechnung.\n\nFreundliche Grüße",
+      "issueOnly": "Nur abschließen",
+      "issueAndSend": "Abschließen und senden",
+      "send": "Senden",
+      "issued": "Rechnung {{number}} abgeschlossen.",
+      "issuedAndSent": "Rechnung {{number}} abgeschlossen und gesendet.",
+      "issuedSendFailed": "Abgeschlossen, Versand fehlgeschlagen. Erneut senden erreicht nur, wer die Mail noch nicht hat.",
+      "issuedRenderFailed": "Abgeschlossen. Das PDF ist noch nicht fertig.",
+      "sent": "Die Rechnung wurde gesendet.",
+      "emailFailed": "Die E-Mail konnte nicht gesendet werden.",
+      "profileLoad": "Deine Firmendaten konnten nicht geladen werden. Lade die Seite neu.",
+      "blockers": {
+        "no_items": "Die Rechnung hat noch keine Position.",
+        "no_service_date": "Trage ein Leistungsdatum ein.",
+        "profile_incomplete": "Deine Firmendaten sind unvollständig. Ergänze in den Einstellungen Name, Adresse, E-Mail, Steuernummer oder USt-IdNr. und IBAN.",
+        "no_buyer_address": "Die Rechnungsanschrift des Kunden ist unvollständig. Ergänze Straße, PLZ und Ort.",
+        "no_recipient": "Trage mindestens einen Empfänger ein."
+      },
+      "resendTitle": "Rechnung erneut senden",
+      "resend": "Erneut senden",
+      "partyLoad": "Kunde oder Objekt konnten nicht geladen werden. Lade die Seite neu."
+    },
+    "header": {
+      "serviceFrom": "Leistungsdatum von",
+      "serviceTo": "Leistungsdatum bis",
+      "serviceToClear": "Leistungsdatum bis entfernen",
+      "servicePeriod": "Leistungsdatum",
+      "servicePeriodRange": "{{from}} bis {{to}}",
+      "paymentDueDays": "Zahlungsziel in Tagen",
+      "paymentDueDaysValue_one": "{{count}} Tag",
+      "paymentDueDaysValue_other": "{{count}} Tage",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fällig am"
+    },
+    "history": {
+      "title": "Verlauf",
+      "issued": "Abgeschlossen",
+      "sent": "Versendet",
+      "sentTo": "an {{recipients}}",
+      "cancelledBy": "Storniert durch"
+    }
   }
 }

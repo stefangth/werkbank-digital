@@ -93,12 +93,20 @@ export function OrdersPage() {
   const { data: orders, isLoading, isError } = useOrderList();
   const { data: technicians } = useTechnicians(orgId);
 
-  const [status, setStatus] = useState(ALL);
+  // Links from the dashboard and the invoices page open with ?status=done; an unknown status is ignored.
+  const [params] = useSearchParams();
+  const urlStatus = params.get("status");
+  const statusFromUrl = urlStatus && (ORDER_STATUSES as readonly string[]).includes(urlStatus) ? urlStatus : ALL;
+  const [status, setStatus] = useState(statusFromUrl);
+  const [appliedStatus, setAppliedStatus] = useState(statusFromUrl);
+  if (statusFromUrl !== appliedStatus) {
+    setAppliedStatus(statusFromUrl);
+    setStatus(statusFromUrl);
+  }
   const [technician, setTechnician] = useState(ALL);
   const [from, setFrom] = useState<string | null>(null);
   const [to, setTo] = useState<string | null>(null);
   // The dashboard links here with ?unscheduled=1.
-  const [params] = useSearchParams();
   const urlUnscheduled = params.get("unscheduled") === "1";
   const [unscheduled, setUnscheduled] = useState(urlUnscheduled);
   // The page stays mounted when another dashboard link changes the params: apply them again

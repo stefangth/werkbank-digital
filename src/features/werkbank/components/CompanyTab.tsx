@@ -38,6 +38,9 @@ const EMPTY: CompanyProfileForm = {
   quote_closing: "",
   payment_terms_text: "",
   quote_validity_days: "30",
+  invoice_intro: "",
+  invoice_closing: "",
+  payment_due_days: "14",
 };
 
 function toFormValues(p: CompanyProfile | null): CompanyProfileForm {
@@ -64,6 +67,9 @@ function toFormValues(p: CompanyProfile | null): CompanyProfileForm {
     quote_closing: p.quote_closing ?? "",
     payment_terms_text: p.payment_terms_text ?? "",
     quote_validity_days: String(p.quote_validity_days),
+    invoice_intro: p.invoice_intro ?? "",
+    invoice_closing: p.invoice_closing ?? "",
+    payment_due_days: String(p.payment_due_days),
   };
 }
 
@@ -96,7 +102,7 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
     />
   );
 
-  const area = (name: "quote_intro" | "quote_closing" | "payment_terms_text", labelKey: string) => (
+  const area = (name: "quote_intro" | "quote_closing" | "payment_terms_text" | "invoice_intro" | "invoice_closing", labelKey: string) => (
     <FormField
       control={form.control}
       name={name}
@@ -178,6 +184,13 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
           {area("quote_closing", "company.fields.quoteClosing")}
           {area("payment_terms_text", "company.fields.paymentTerms")}
           <div className="sm:max-w-48">{text("quote_validity_days", "company.fields.validity", { inputMode: "numeric" })}</div>
+        </section>
+
+        <section className="space-y-4">
+          <Eyebrow>{t("company.sections.invoiceTexts")}</Eyebrow>
+          {area("invoice_intro", "company.fields.invoiceIntro")}
+          {area("invoice_closing", "company.fields.invoiceClosing")}
+          <div className="sm:max-w-48">{text("payment_due_days", "company.fields.paymentDueDays", { inputMode: "numeric" })}</div>
         </section>
 
         <Button type="submit" disabled={save.isPending || logoUploading}>{t("common.save")}</Button>

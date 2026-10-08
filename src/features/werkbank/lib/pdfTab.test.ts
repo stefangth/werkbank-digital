@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { openPendingTab, showInTab } from "./pdfTab";
+import { openPendingTab, pdfBlobUrl, showInTab } from "./pdfTab";
 
 describe("showInTab", () => {
   it("points the pending tab at the url", () => {
@@ -35,5 +35,27 @@ describe("openPendingTab", () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     expect(openPendingTab()).toBeNull();
     open.mockRestore();
+  });
+});
+
+describe("pdfBlobUrl", () => {
+  it("shares one pagehide listener and frees every preview url on unload", () => {
+    // jsdom has no object URLs, so the test provides them.
+    let n = 0;
+    const create = vi.fn(() => `blob:${++n}`);
+    const revoke = vi.fn();
+    Object.assign(URL, { createObjectURL: create, revokeObjectURL: revoke });
+    const listen = vi.spyOn(window, "addEventListener");
+    try {
+      expect(pdfBlobUrl(btoa("%PDF-1"))).toBe("blob:1");
+      expect(pdfBlobUrl(btoa("%PDF-2"))).toBe("blob:2");
+      expect(listen.mock.calls.filter(([type]) => type === "pagehide")).toHaveLength(1);
+      window.dispatchEvent(new Event("pagehide"));
+      expect(revoke.mock.calls.map(([u]) => u)).toEqual(["blob:1", "blob:2"]);
+    } finally {
+      Reflect.deleteProperty(URL, "createObjectURL");
+      Reflect.deleteProperty(URL, "revokeObjectURL");
+      listen.mockRestore();
+    }
   });
 });
