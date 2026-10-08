@@ -288,8 +288,7 @@ async function issueInvoice(
   const { error: updErr } = await deps.admin.schema("werkbank").from("invoices")
     .update({ pdf_path: path, pdf_sha256: await sha256Hex(bytes) })
     // Once: a concurrent resume that stamped first leaves zero rows here, which is fine (same file).
-    .eq("id", invoice.id).eq("org_id", invoice.org_id).is("pdf_path", null)
-    .select("id").maybeSingle();
+    .eq("id", invoice.id).eq("org_id", invoice.org_id).is("pdf_path", null);
   if (updErr) {
     console.error("werkbank-invoices: stamping the file failed", { invoiceId: invoice.id, error: updErr });
     return afterIssue("update_failed");
@@ -297,7 +296,7 @@ async function issueInvoice(
   if (!sendInput) return json({ ok: true, invoice_no: invoice.invoice_no });
 
   // The bytes just stored (or found stored) are the attachment: no second read, no second render.
-  const sent = await emailInvoice(deps, { ...invoice, pdf_path: path }, sendInput, bytes);
+  const sent = await emailInvoice(deps, { ...invoice, pdf_path: path }, sendInput, bytes, lines);
   if (sent !== "sent") return sendFailure(sent, true);
   return json({ ok: true, invoice_no: invoice.invoice_no, email_sent: true });
 }
@@ -357,9 +356,11 @@ async function emailInvoice(
   invoice: InvoiceRow,
   input: SendInput,
   bytes: Uint8Array | null,
+  loaded: LoadedLines | null = null,
 ): Promise<"sent" | "load_failed" | "send_failed"> {
   const seller = invoice.seller_snapshot as unknown as SellerSnapshot | null;
-  const lines = await loadLines(deps, invoice);
+  // The issue path passes the lines it just loaded; a plain send reads them.
+  const lines = loaded ?? await loadLines(deps, invoice);
   if (!seller || !lines || !invoice.pdf_path) return "load_failed";
   let file = bytes;
   if (!file) {
