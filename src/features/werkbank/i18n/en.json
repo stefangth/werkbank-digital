@@ -140,7 +140,6 @@
       "note": "Note (optional)",
       "noteRequired": "Note",
       "reason": "Reason",
-      "reasonLabel": "Reason",
       "target": "Move to",
       "none": "There is no other issued invoice for this customer."
     },

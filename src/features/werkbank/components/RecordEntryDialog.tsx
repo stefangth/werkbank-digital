@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -49,6 +49,11 @@ export function RecordEntryDialog({
   const typed = parseEuroInput(watch("amount"));
   const overOpen = mode === "payment" && typed !== null && Math.round(typed * 100) > Math.round(open * 100);
 
+  // After a stale error the refetched open amount (or credit) replaces the old preset; date and note stay.
+  useEffect(() => {
+    if (stale) setValue("amount", asInput(preset));
+  }, [stale, preset, setValue]);
+
   const submit = form.handleSubmit(async (v) => {
     setStale(false);
     try {
@@ -81,7 +86,7 @@ export function RecordEntryDialog({
           <div className="space-y-2">
             <Label htmlFor="entry-date" className="flex items-center gap-1.5">
               {t("payments.form.date")}
-              {mode !== "write_off" && <DefaultHint text={t("payments.hints.date")} />}
+              <DefaultHint text={t("payments.hints.date")} />
             </Label>
             <DatePopover value={bookedOn} onSelect={(d) => setValue("bookedOn", d, { shouldValidate: true })}>
               <Button id="entry-date" type="button" variant="secondary" className="w-full justify-start gap-2" aria-label={t("payments.form.date")}>

@@ -145,6 +145,28 @@ describe("PaymentsCard", () => {
     expect(refetchBalance).toHaveBeenCalled();
   });
 
+  it("shows the date hint in the write-off dialog", async () => {
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Ausbuchen" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getAllByRole("img", { name: /Heute\. Du kannst/ })).toHaveLength(1);
+  });
+
+  it("replaces the amount preset with the refetched open amount after a stale error, keeping the note", async () => {
+    record.mutateAsync.mockRejectedValue(new WerkbankDataError("P0001", "open_amount_changed"));
+    refetchBalance.mockImplementation(() => { st.balance = balance({ open_amount: 300 }); });
+    const view = render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlung erfassen" }));
+    fireEvent.change(await screen.findByRole("textbox", { name: /Betrag/ }), { target: { value: "100" } });
+    fireEvent.change(screen.getByRole("textbox", { name: /Notiz/ }), { target: { value: "Bar" } });
+    submit();
+    await screen.findByText(/offene Betrag hat sich zwischenzeitlich geändert/);
+    // The refetched balance arrives and re-renders the card (the real query does this itself).
+    view.rerender(<PaymentsCard invoiceId="i1" customerId="c1" status="issued" />);
+    await waitFor(() => expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("300,00"));
+    expect(screen.getByRole("textbox", { name: /Notiz/ })).toHaveValue("Bar");
+  });
+
   it("limits a refund to the credit", async () => {
     st.balance = balance({ open_amount: -110, payment_state: "overpaid" });
     render();

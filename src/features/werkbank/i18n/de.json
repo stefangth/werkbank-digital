@@ -140,7 +140,6 @@
       "note": "Notiz (optional)",
       "noteRequired": "Notiz",
       "reason": "Grund",
-      "reasonLabel": "Grund",
       "target": "Umbuchen auf",
       "none": "Es gibt keine andere abgeschlossene Rechnung für diesen Kunden."
     },
