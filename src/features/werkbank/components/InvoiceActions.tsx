@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,14 @@ type ActionInvoice = IssuableInvoice & Pick<Invoice, "status" | "pdf_path" | "se
 /** The buttons of an issued or cancelled invoice: the stored PDF, send (again), cancel with a
  *  confirmation, and copy (a cancelled original offers the corrected invoice instead). Cancel and
  *  copy navigate to the draft they create. A cancellation document can only be sent and downloaded. */
-export function InvoiceActions({ invoice, onStateChanged }: { invoice: ActionInvoice; onStateChanged?: () => void }) {
+export function InvoiceActions({
+  invoice, cancelledBy, onStateChanged,
+}: {
+  invoice: ActionInvoice;
+  /** The cancellation document of this invoice, if one exists (draft or issued). */
+  cancelledBy?: { id: string; invoice_no: string | null } | null;
+  onStateChanged?: () => void;
+}) {
   const { t } = useTranslation("werkbank");
   const navigate = useNavigate();
   const download = useInvoiceDownload();
@@ -59,7 +66,11 @@ export function InvoiceActions({ invoice, onStateChanged }: { invoice: ActionInv
       {issued && isInvoice && (
         <>
           <Button variant="secondary" onClick={() => copy.mutate(invoice.id, goToDraft)} disabled={copy.isPending}>{t("invoices.page.copy")}</Button>
-          <Button variant="destructive" onClick={() => setConfirmingCancel(true)}>{t("invoices.page.cancel")}</Button>
+          {cancelledBy ? (
+            <Button asChild variant="secondary"><Link to={invoicePath(cancelledBy.id)}>{t("invoices.page.openCancellation")}</Link></Button>
+          ) : (
+            <Button variant="destructive" onClick={() => setConfirmingCancel(true)}>{t("invoices.page.cancel")}</Button>
+          )}
         </>
       )}
       {invoice.status === "cancelled" && isInvoice && (

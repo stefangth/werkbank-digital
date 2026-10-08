@@ -13,6 +13,7 @@ export type DbErrorKey =
   | "errors.orderNotDone"
   | "errors.numberRangeLocked"
   | "errors.activeInvoiceExists"
+  | "errors.cancellationExists"
   | "errors.notAllowedHere"
   | "errors.generic";
 
@@ -37,6 +38,7 @@ export function mapDbError(error: unknown): DbErrorKey {
     if (text.includes("catalog_items_item_no_unique")) return "errors.itemNoTaken";
     if (text.includes("orders_quote_id_key")) return "errors.orderExists";
     if (text.includes("invoices_one_active_per_order")) return "errors.activeInvoiceExists";
+    if (text.includes("invoices_cancels_invoice_id_key")) return "errors.cancellationExists";
     return "errors.generic";
   }
   // The database raises these with a fixed message (and an errcode that is not unique to them).

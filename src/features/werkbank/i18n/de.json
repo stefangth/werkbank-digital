@@ -109,7 +109,8 @@
     "orderNotDone": "Der Auftrag muss erledigt sein, bevor er abgerechnet werden kann.",
     "numberRangeLocked": "Dieser Nummernkreis kann nicht mehr geändert werden.",
     "activeInvoiceExists": "Zu diesem Auftrag gibt es schon eine offene Rechnung.",
-    "notAllowedHere": "Das kannst du hier nicht ändern."
+    "notAllowedHere": "Das kannst du hier nicht ändern.",
+    "cancellationExists": "Zu dieser Rechnung gibt es schon eine Stornorechnung."
   },
   "units": {
     "HUR": "Std",
@@ -986,7 +987,8 @@
       "pdfPendingHint": "Die Rechnung ist abgeschlossen, das PDF ist aber noch nicht fertig.",
       "pdfRetry": "Erneut versuchen",
       "pdfRetryFailed": "Das PDF konnte noch nicht erzeugt werden. Versuche es gleich noch einmal.",
-      "pdfRetryDone": "Das PDF ist fertig."
+      "pdfRetryDone": "Das PDF ist fertig.",
+      "openCancellation": "Stornorechnung öffnen"
     },
     "send": {
       "errors": {

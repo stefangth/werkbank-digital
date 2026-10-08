@@ -42,7 +42,7 @@ export function InvoiceHistory({
             <StatusPill tone="neutral">{t("invoices.status.cancelled")}</StatusPill>
             <span className="text-muted-foreground">{t("invoices.history.cancelledBy")}</span>
             <Link to={invoicePath(cancelledBy.id)} className="font-medium text-accent-text hover:underline">
-              <Token>{cancelledBy.invoice_no}</Token>
+              <Token>{cancelledBy.invoice_no ?? t("invoices.draftNumber")}</Token>
             </Link>
           </li>
         )}

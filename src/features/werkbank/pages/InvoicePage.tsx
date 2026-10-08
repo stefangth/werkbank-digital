@@ -120,7 +120,7 @@ export function InvoicePage() {
         title={isCancellation ? t("invoices.page.cancellationTitle") : invoice.subject ?? invoice.invoice_no ?? t("invoices.draftNumber")}
         actions={
           !isDraft ? (
-            <InvoiceActions invoice={invoice} onStateChanged={() => void refetch()} />
+            <InvoiceActions invoice={invoice} cancelledBy={cancelledBy} onStateChanged={() => void refetch()} />
           ) : editable && (
             <>
               <Button variant="secondary" disabled={preview.isPending} onClick={() => void showPreview()}>
@@ -150,7 +150,7 @@ export function InvoicePage() {
         <Alert>
           {t("invoices.page.cancelledBanner")}{" "}
           <Link to={invoicePath(cancelledBy.id)} className="font-medium text-accent-text hover:underline">
-            <Token>{cancelledBy.invoice_no}</Token>
+            <Token>{cancelledBy.invoice_no ?? t("invoices.draftNumber")}</Token>
           </Link>
         </Alert>
       )}

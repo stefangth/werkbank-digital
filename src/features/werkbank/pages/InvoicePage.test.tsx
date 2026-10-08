@@ -322,4 +322,22 @@ describe("InvoicePage", () => {
     render();
     expect(await screen.findByRole("button", { name: "Abschließen" })).toBeDisabled();
   });
+
+  it("hides Stornieren and links the existing cancellation draft", async () => {
+    state.invoice = issued();
+    state.cancelledBy = { id: "c7", invoice_no: null };
+    render();
+    const link = await screen.findByRole("link", { name: "Stornorechnung öffnen" });
+    expect(link).toHaveAttribute("href", invoicePath("c7"));
+    expect(screen.queryByRole("button", { name: "Stornieren" })).not.toBeInTheDocument();
+    const history = screen.getByRole("region", { name: "Verlauf" });
+    expect(within(history).getByText("Entwurf")).toBeInTheDocument();
+  });
+
+  it("labels a cancellation draft in the cancelled banner", async () => {
+    state.invoice = issued({ status: "cancelled" });
+    state.cancelledBy = { id: "c7", invoice_no: null };
+    render();
+    expect(await screen.findByText(/Diese Rechnung wurde storniert durch/)).toHaveTextContent("Entwurf");
+  });
 });

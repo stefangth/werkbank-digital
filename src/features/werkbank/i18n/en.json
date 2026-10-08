@@ -109,7 +109,8 @@
     "orderNotDone": "The order must be done before it can be invoiced.",
     "numberRangeLocked": "This number range cannot be changed anymore.",
     "activeInvoiceExists": "There is already an open invoice for this order.",
-    "notAllowedHere": "You cannot change that here."
+    "notAllowedHere": "You cannot change that here.",
+    "cancellationExists": "This invoice already has a cancellation invoice."
   },
   "units": {
     "HUR": "h",
@@ -986,7 +987,8 @@
       "pdfPendingHint": "The invoice is issued, but its PDF is not ready yet.",
       "pdfRetry": "Try again",
       "pdfRetryFailed": "The PDF could not be created yet. Try again in a moment.",
-      "pdfRetryDone": "The PDF is ready."
+      "pdfRetryDone": "The PDF is ready.",
+      "openCancellation": "Open cancellation"
     },
     "send": {
       "errors": {
