@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Metric } from "@/components/ui/metric";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
+import { Token } from "@/components/ui/token";
 import { formatDateDMY } from "@/lib/dates";
 import type { InvoiceEntry } from "../data/invoiceEntries";
-import { useInvoiceBalance, useInvoiceEntries } from "../hooks/useOpenItems";
+import { useInvoiceBalance, useInvoiceEntries, useTransferDestinations } from "../hooks/useOpenItems";
 import { formatEuro } from "../lib/money";
 import { paymentStatus } from "../lib/paymentStatus";
+import { invoicePath } from "../paths";
 import type { RecordEntryMode } from "../schemas/payment";
 import { RecordEntryDialog } from "./RecordEntryDialog";
 import { ReverseEntryDialog } from "./ReverseEntryDialog";
@@ -26,6 +29,8 @@ export function PaymentsCard({ invoiceId, customerId, status }: { invoiceId: str
   const entriesQuery = useInvoiceEntries(invoiceId);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const balance = balanceQuery.data;
+  const entries = entriesQuery.data ?? [];
+  const destinations = useTransferDestinations(entries.filter((e) => e.reversed_at && e.kind === "payment").map((e) => e.id)).data;
 
   if (balanceQuery.isLoading || entriesQuery.isLoading) return <Skeleton className="h-32 w-full" />;
   if (balanceQuery.isError || entriesQuery.isError) return <Alert variant="destructive">{t("payments.loadFailed")}</Alert>;
@@ -36,6 +41,11 @@ export function PaymentsCard({ invoiceId, customerId, status }: { invoiceId: str
   const credit = open < 0;
   const issued = status === "issued";
   const pill = paymentStatus(balance);
+  // The payment the credit notice moves: the largest one that fits into the credit (the database
+  // refuses more, transfer_exceeds_credit), so a partly refunded payment is not offered.
+  const movable = entries
+    .filter((e) => e.kind === "payment" && !e.reversed_at && Math.round(e.amount * 100) <= Math.round(-open * 100))
+    .sort((a, b) => b.amount - a.amount)[0];
   const close = (next: boolean) => { if (!next) setDialog(null); };
   const stat = (label: string, value: number | null) => (
     <div>
@@ -61,12 +71,24 @@ export function PaymentsCard({ invoiceId, customerId, status }: { invoiceId: str
         {stat(t("payments.writtenOff"), balance.written_off)}
         {stat(t(credit ? "payments.credit" : "payments.open"), Math.abs(open))}
       </div>
-      {!issued && credit && <Alert>{t("payments.cancelledCredit")}</Alert>}
+      {!issued && credit && (
+        <Alert className="flex flex-wrap items-center gap-3">
+          <span>
+            {t("payments.credit")} <Metric size="body">{money(-open)}</Metric>.{" "}
+            {movable ? t("payments.cancelledCreditMove") : t("payments.cancelledCredit")}
+          </span>
+          {movable && (
+            <Button variant="secondary" className="ml-auto" onClick={() => setDialog({ type: "transfer", entryId: movable.id })}>
+              {t("payments.transfer")}
+            </Button>
+          )}
+        </Alert>
+      )}
 
-      {entriesQuery.data?.length ? (
+      {entries.length ? (
         <ul className="m-0 list-none divide-y divide-border rounded-card border border-border p-0">
-          {entriesQuery.data.map((e) => (
-            <EntryRow key={e.id} entry={e} money={money}
+          {entries.map((e) => (
+            <EntryRow key={e.id} entry={e} money={money} movedTo={destinations?.get(e.id)}
               onReverse={() => setDialog({ type: "reverse", entryId: e.id })}
               onTransfer={() => setDialog({ type: "transfer", entryId: e.id })} />
           ))}
@@ -82,8 +104,9 @@ export function PaymentsCard({ invoiceId, customerId, status }: { invoiceId: str
   );
 }
 
-function EntryRow({ entry: e, money, onReverse, onTransfer }: {
-  entry: InvoiceEntry; money: (n: number) => string; onReverse: () => void; onTransfer: () => void;
+function EntryRow({ entry: e, money, movedTo, onReverse, onTransfer }: {
+  entry: InvoiceEntry; money: (n: number) => string; movedTo?: { invoiceId: string; invoiceNo: string | null };
+  onReverse: () => void; onTransfer: () => void;
 }) {
   const { t } = useTranslation("werkbank");
   const reversed = !!e.reversed_at;
@@ -98,6 +121,12 @@ function EntryRow({ entry: e, money, onReverse, onTransfer }: {
       </span>
       {e.transferred_from && <span className="text-muted-foreground">{t("payments.movedHere")}</span>}
       {reversed && <span className="text-muted-foreground">{t("payments.reversedNote", { reason: e.reversal_reason ?? "" })}</span>}
+      {movedTo && (
+        <span className="text-muted-foreground">
+          {t("payments.movedTo")}{" "}
+          <Link to={invoicePath(movedTo.invoiceId)} className="underline"><Token>{movedTo.invoiceNo ?? movedTo.invoiceId}</Token></Link>
+        </span>
+      )}
       {!reversed && (
         <span className="ml-auto flex gap-2">
           {e.kind === "payment" && <Button variant="secondary" onClick={onTransfer}>{t("payments.transfer")}</Button>}

@@ -42,6 +42,7 @@ export function OpenItemsPage() {
   const [view, setView] = useState<View>("open");
   const [search, setSearch] = useState("");
   const term = useDebouncedValue(search, SEARCH_DEBOUNCE_MS).trim();
+  // Cleared on every search change: the bulk run must never mail a selected row the search hides.
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulk, setBulk] = useState(false);
 
@@ -95,7 +96,7 @@ export function OpenItemsPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <SegmentedControl<View> value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t(`openItems.view.${v}`) }))} />
                 <Input type="search" className="w-72" aria-label={t("openItems.searchLabel")} placeholder={t("openItems.searchPlaceholder")}
-                  value={search} onChange={(e) => setSearch(e.target.value)} />
+                  value={search} onChange={(e) => { setSearch(e.target.value); setSelected(new Set()); }} />
                 {view === "due" && (
                   <Button className="ml-auto" disabled={chosen.length === 0} onClick={() => setBulk(true)}>{t("openItems.due.bulk")}</Button>
                 )}

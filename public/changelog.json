@@ -8,7 +8,7 @@
       "new": [
         {
           "title": "Offene Posten",
-          "description": "Eine neue Seite zeigt alle Rechnungen, bei denen noch etwas offen ist, mit Zahlstatus und Überfälligkeit. Auch bei Kunden, in den Einstellungen und auf dem Dashboard siehst du, was noch aussteht."
+          "description": "Eine neue Seite zeigt alle Rechnungen, bei denen noch etwas offen ist, mit Zahlstatus und Überfälligkeit. Auch bei Kunden und auf dem Dashboard siehst du, was noch aussteht. In den Einstellungen legst du Wartezeiten und Texte für Mahnungen fest."
         },
         {
           "title": "Zahlungen erfassen",

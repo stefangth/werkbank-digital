@@ -115,6 +115,21 @@ describe("OpenItemsPage", () => {
     expect(await screen.findByRole("dialog")).toHaveTextContent("1 Mahnung wird versendet");
   });
 
+  it("clears the selection when the search changes, so no hidden row is mailed", async () => {
+    st.due = [due("a", "RE-1"), due("b", "RE-2", { customer_name: "Andere GmbH" })];
+    render();
+    fireEvent.click(await screen.findByRole("tab", { name: /Mahnfällig/ }));
+    fireEvent.click(within(body()[0]).getByRole("checkbox"));
+    fireEvent.click(within(body()[1]).getByRole("checkbox"));
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Andere" } });
+    await vi.waitFor(() => expect(body()).toHaveLength(1));
+    expect(within(body()[0]).getByRole("checkbox")).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Ausgewählte mahnen" })).toBeDisabled();
+    fireEvent.click(within(body()[0]).getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte mahnen" }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("1 Mahnung wird versendet");
+  });
+
   it("creates a print-only notice for a row without address", async () => {
     st.due = [due("b", "RE-2", { customer_invoice_email: null })];
     issue.mutateAsync.mockResolvedValue({ noticeId: "n", stage: 1 });

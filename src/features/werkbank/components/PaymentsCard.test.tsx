@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from "vitest";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { renderWithProviders } from "@/test/renderWithProviders";
 import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 import { WerkbankDataError } from "../lib/dbErrors";
 
 const { st, record, reverse, transfer, refetchBalance } = vi.hoisted(() => ({
-  st: { balance: null as unknown, entries: [] as unknown[], targets: [] as unknown[] },
+  st: { balance: null as unknown, entries: [] as unknown[], targets: [] as unknown[], destinations: new Map() as Map<string, unknown> },
   record: { mutateAsync: vi.fn(), isPending: false },
   reverse: { mutateAsync: vi.fn(), isPending: false },
   transfer: { mutateAsync: vi.fn(), isPending: false },
@@ -20,6 +21,7 @@ vi.mock("../hooks/useOpenItems", () => ({
   useReverseEntry: () => reverse,
   useTransferEntry: () => transfer,
   useTransferTargets: () => ({ data: st.targets }),
+  useTransferDestinations: () => ({ data: st.destinations }),
 }));
 
 import { PaymentsCard } from "./PaymentsCard";
@@ -38,6 +40,7 @@ describe("PaymentsCard", () => {
     st.balance = balance();
     st.entries = [entry()];
     st.targets = [];
+    st.destinations = new Map();
     record.mutateAsync.mockResolvedValue("new");
     reverse.mutateAsync.mockResolvedValue(undefined);
     transfer.mutateAsync.mockResolvedValue("new");
@@ -50,7 +53,7 @@ describe("PaymentsCard", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
-  const render = (status = "issued") => renderWithProviders(<PaymentsCard invoiceId="i1" customerId="c1" status={status} />);
+  const render = (status = "issued") => renderWithProviders(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status={status} /></MemoryRouter>);
 
   it("shows claim, paid, written off and open for a partly paid invoice", () => {
     render();
@@ -162,9 +165,26 @@ describe("PaymentsCard", () => {
     submit();
     await screen.findByText(/offene Betrag hat sich zwischenzeitlich geändert/);
     // The refetched balance arrives and re-renders the card (the real query does this itself).
-    view.rerender(<PaymentsCard invoiceId="i1" customerId="c1" status="issued" />);
+    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
     await waitFor(() => expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("300,00"));
     expect(screen.getByRole("textbox", { name: /Notiz/ })).toHaveValue("Bar");
+  });
+
+  it("syncs the amount once per stale error, so a later balance change keeps a typed amount", async () => {
+    record.mutateAsync.mockRejectedValue(new WerkbankDataError("P0001", "open_amount_changed"));
+    refetchBalance.mockImplementation(() => { st.balance = balance({ open_amount: 300 }); });
+    const view = render();
+    fireEvent.click(screen.getByRole("button", { name: "Zahlung erfassen" }));
+    fireEvent.change(await screen.findByRole("textbox", { name: /Betrag/ }), { target: { value: "100" } });
+    submit();
+    await screen.findByText(/offene Betrag hat sich zwischenzeitlich geändert/);
+    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("300,00"));
+    fireEvent.change(screen.getByRole("textbox", { name: /Betrag/ }), { target: { value: "250" } });
+    st.balance = balance({ open_amount: 200 });
+    view.rerender(<MemoryRouter><PaymentsCard invoiceId="i1" customerId="c1" status="issued" /></MemoryRouter>);
+    await act(async () => {});
+    expect(screen.getByRole("textbox", { name: /Betrag/ })).toHaveValue("250");
   });
 
   it("limits a refund to the credit", async () => {
@@ -201,10 +221,34 @@ describe("PaymentsCard", () => {
     await waitFor(() => expect(reverse.mutateAsync).toHaveBeenCalledWith({ entryId: "e1", reason: "Doppelt" }));
   });
 
-  it("shows the transfer notice on a cancelled invoice with credit and no new payment", () => {
-    st.balance = balance({ open_amount: -500, payment_state: "overpaid" });
+  it("names the credit of a cancelled invoice and opens the transfer dialog for its payment", async () => {
+    st.balance = balance({ claim: 0, paid: 500, open_amount: -500, payment_state: "overpaid" });
+    st.targets = [{ id: "i2", invoice_no: "RE-2", gross_total: 100 }];
     render("cancelled");
-    expect(screen.getByText(/Diese Rechnung ist storniert und hat ein Guthaben/)).toBeInTheDocument();
+    const notice = screen.getByText(/Zahlung auf die korrigierte Rechnung umbuchen/).closest("[role=alert]") as HTMLElement;
+    expect(notice.textContent?.replace(/\s/g, " ")).toMatch(/^Guthaben 500,00 €\. Zahlung auf die korrigierte Rechnung umbuchen\?/);
     expect(screen.queryByRole("button", { name: "Zahlung erfassen" })).not.toBeInTheDocument();
+    fireEvent.click(within(notice).getByRole("button", { name: "Umbuchen" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("radio"));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: /Grund/ }), { target: { value: "Korrektur" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Zahlung umbuchen" }));
+    await waitFor(() => expect(transfer.mutateAsync).toHaveBeenCalledWith({ entryId: "e1", targetInvoiceId: "i2", reason: "Korrektur" }));
+  });
+
+  it("offers no transfer from the notice when no payment fits into the credit", () => {
+    st.balance = balance({ claim: 0, paid: 200, open_amount: -200, payment_state: "overpaid" });
+    st.entries = [entry({ amount: 500 }), entry({ id: "e2", kind: "refund", amount: 300 })];
+    render("cancelled");
+    const notice = screen.getByText(/Guthaben/, { selector: "[role=alert] *" }).closest("[role=alert]") as HTMLElement;
+    expect(within(notice).queryByRole("button", { name: "Umbuchen" })).not.toBeInTheDocument();
+  });
+
+  it("links a transferred entry to the invoice it moved to", () => {
+    st.entries = [entry({ reversed_at: "2026-10-02T10:00:00Z", reversal_reason: "Korrektur" })];
+    st.destinations = new Map([["e1", { invoiceId: "i2", invoiceNo: "RE-0002" }]]);
+    render("cancelled");
+    const link = screen.getByRole("link", { name: /RE-0002/ });
+    expect(link).toHaveAttribute("href", "/invoices/i2");
   });
 });

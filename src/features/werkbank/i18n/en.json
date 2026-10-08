@@ -213,7 +213,7 @@
     "movedHere": "Moved here from another invoice",
     "reverse": "Reverse",
     "transfer": "Move",
-    "cancelledCredit": "This invoice is cancelled and holds a credit. Move the payments to another invoice of this customer or refund the credit.",
+    "cancelledCredit": "Refund it or reverse the refund first, then move the payment.",
     "form": {
       "date": "Booking date",
       "pickDate": "Pick a date",
@@ -274,7 +274,9 @@
       "reversalReason": "Enter a reason.",
       "target": "Choose an invoice.",
       "transferReason": "Enter a reason."
-    }
+    },
+    "cancelledCreditMove": "Move the payment to the corrected invoice?",
+    "movedTo": "Moved to"
   },
   "dunning": {
     "title": "Dunning",

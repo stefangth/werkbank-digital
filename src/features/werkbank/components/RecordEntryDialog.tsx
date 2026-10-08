@@ -37,6 +37,8 @@ export function RecordEntryDialog({
   const { t, i18n } = useTranslation("werkbank");
   const record = useRecordEntry();
   const [stale, setStale] = useState(false);
+  // The preset when the stale error came; null once the refetched amount was put in (once per error).
+  const [syncFrom, setSyncFrom] = useState<number | null>(null);
   const open = Math.max(openAmount, 0);
   const credit = Math.max(-openAmount, 0);
   const preset = mode === "refund" ? credit : open;
@@ -50,10 +52,14 @@ export function RecordEntryDialog({
   const typed = parseEuroInput(watch("amount"));
   const overOpen = mode === "payment" && typed !== null && Math.round(typed * 100) > Math.round(open * 100);
 
-  // After a stale error the refetched open amount (or credit) replaces the old preset; date and note stay.
+  // After a stale error the refetched open amount (or credit) replaces the old preset once; date and
+  // note stay, and a later balance change does not overwrite what was typed since.
   useEffect(() => {
-    if (stale) setValue("amount", asInput(preset));
-  }, [stale, preset, setValue]);
+    if (syncFrom !== null && preset !== syncFrom) {
+      setValue("amount", asInput(preset));
+      setSyncFrom(null);
+    }
+  }, [syncFrom, preset, setValue]);
 
   const submit = form.handleSubmit(async (v) => {
     setStale(false);
@@ -70,6 +76,7 @@ export function RecordEntryDialog({
       // The hook already toasted; the stale amount also needs the page to show the new one.
       if (mapDbError(e) === "errors.openAmountChanged") {
         setStale(true);
+        setSyncFrom(preset);
         onStale();
       }
     }

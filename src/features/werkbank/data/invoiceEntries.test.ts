@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import {
-  fetchBalanceMap, fetchCustomerCredit, fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, fetchTransferTargets,
+  fetchBalanceMap, fetchCustomerCredit, fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, fetchTransferDestinations, fetchTransferTargets,
   recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
 } from "./invoiceEntries";
 
@@ -109,5 +109,24 @@ describe("fetchBalanceMap", () => {
     const error = { code: "42501" };
     const fake = createFakeSupabase({ [T("invoice_balances")]: { data: null, error } });
     await expect(fetchBalanceMap(asClient(fake), "org-1")).rejects.toBe(error);
+  });
+});
+
+describe("fetchTransferDestinations", () => {
+  it("maps each transferred entry to the invoice its copy was booked on", async () => {
+    const fake = createFakeSupabase({
+      [T("invoice_entries")]: { data: [{ transferred_from: "e1", invoice_id: "i2" }], error: null },
+      [T("invoices")]: { data: [{ id: "i2", invoice_no: "RE-0002" }], error: null },
+    });
+    const map = await fetchTransferDestinations(asClient(fake), "o1", ["e1", "e9"]);
+    expect([...map]).toEqual([["e1", { invoiceId: "i2", invoiceNo: "RE-0002" }]]);
+    expect(fake.calls).toContainEqual({ table: T("invoice_entries"), method: "in", args: ["transferred_from", ["e1", "e9"]] });
+    expect(fake.calls).toContainEqual({ table: T("invoices"), method: "in", args: ["id", ["i2"]] });
+    expect(fake.calls).toContainEqual({ table: T("invoices"), method: "eq", args: ["org_id", "o1"] });
+  });
+  it("asks nothing without entries", async () => {
+    const fake = createFakeSupabase({});
+    expect((await fetchTransferDestinations(asClient(fake), "o1", [])).size).toBe(0);
+    expect(fake.calls).toEqual([]);
   });
 });

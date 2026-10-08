@@ -213,7 +213,7 @@
     "movedHere": "Von einer anderen Rechnung umgebucht",
     "reverse": "Stornieren",
     "transfer": "Umbuchen",
-    "cancelledCredit": "Diese Rechnung ist storniert und hat ein Guthaben. Buche die Zahlungen auf eine andere Rechnung dieses Kunden um oder zahle das Guthaben aus.",
+    "cancelledCredit": "Zahle es aus oder storniere zuerst die Erstattung, dann kannst Du die Zahlung umbuchen.",
     "form": {
       "date": "Buchungsdatum",
       "pickDate": "Datum wählen",
@@ -274,7 +274,9 @@
       "reversalReason": "Gib einen Grund ein.",
       "target": "Wähle eine Rechnung.",
       "transferReason": "Gib einen Grund ein."
-    }
+    },
+    "cancelledCreditMove": "Zahlung auf die korrigierte Rechnung umbuchen?",
+    "movedTo": "Umgebucht auf"
   },
   "dunning": {
     "title": "Mahnungen",

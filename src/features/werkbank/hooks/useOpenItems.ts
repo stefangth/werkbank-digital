@@ -5,11 +5,12 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { clearDunningHold, fetchDunningDue, fetchDunningHold, fetchDunningNotices, setDunningHold } from "../data/dunning";
 import {
-  fetchBalanceMap, fetchInvoiceBalance, fetchInvoiceEntries, fetchCustomerCredit, fetchOpenItems, fetchTransferTargets, recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
+  fetchBalanceMap, fetchInvoiceBalance, fetchInvoiceEntries, fetchCustomerCredit, fetchOpenItems, fetchTransferDestinations, fetchTransferTargets, recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
   type EntryKind, type WriteOffReason,
 } from "../data/invoiceEntries";
 import { mapDbError } from "../lib/dbErrors";
 import { INVOICES_KEY } from "./useInvoices";
+import { START_LIST_KEY } from "./useStartList";
 
 export const OPEN_ITEMS_KEY = ["werkbank", "open-items"] as const;
 
@@ -44,7 +45,8 @@ function useLedgerMutation<V, R>(mutationFn: (vars: V) => Promise<R>) {
   return useMutation({
     mutationFn,
     onError: (e) => toast.error(t(mapDbError(e))),
-    onSettled: () => Promise.all([OPEN_ITEMS_KEY, INVOICES_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
+    // The start list counts recorded payments ("Erste Zahlung erfassen").
+    onSettled: () => Promise.all([OPEN_ITEMS_KEY, INVOICES_KEY, START_LIST_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
   });
 }
 
@@ -59,6 +61,10 @@ export const useTransferEntry = () =>
 export const useSetDunningHold = () =>
   useLedgerMutation((v: { invoiceId: string; reason: string; until: string | null }) => setDunningHold(supabase, v.invoiceId, v.reason, v.until));
 export const useClearDunningHold = () => useLedgerMutation((invoiceId: string) => clearDunningHold(supabase, invoiceId));
+
+/** For the reversed entries of a ledger: the invoice each one was moved to (transfers only). */
+export const useTransferDestinations = (entryIds: string[]) =>
+  useOrgQuery(["transfer-destinations", entryIds], entryIds.length > 0, (o) => fetchTransferDestinations(supabase, o, entryIds));
 
 /** Issued invoices of the customer a payment can move to; only asked for while the dialog is open. */
 export const useTransferTargets = (customerId: string | undefined, excludeInvoiceId: string, enabled: boolean) =>

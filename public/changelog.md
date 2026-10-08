@@ -7,7 +7,7 @@ Was neu ist, neueste Einträge zuerst.
 *Offene Posten und Mahnungen*
 
 ### New
-- **Offene Posten** — Eine neue Seite zeigt alle Rechnungen, bei denen noch etwas offen ist, mit Zahlstatus und Überfälligkeit. Auch bei Kunden, in den Einstellungen und auf dem Dashboard siehst du, was noch aussteht.
+- **Offene Posten** — Eine neue Seite zeigt alle Rechnungen, bei denen noch etwas offen ist, mit Zahlstatus und Überfälligkeit. Auch bei Kunden und auf dem Dashboard siehst du, was noch aussteht. In den Einstellungen legst du Wartezeiten und Texte für Mahnungen fest.
 - **Zahlungen erfassen** — Buche Zahlungen und Teilzahlungen auf eine Rechnung, buche einen Rest mit Grund aus oder zahle ein Guthaben aus. Falsche Buchungen stornierst du, sie bleiben sichtbar.
 - **Umbuchen** — Buche eine Zahlung auf eine andere Rechnung desselben Kunden um, etwa nach einer Stornierung.
 - **Mahnungen** — Erstelle Zahlungserinnerung, 1. Mahnung und 2. und letzte Mahnung als PDF mit fester Zahlungsfrist und schicke sie per E-Mail oder druck sie für den Postversand.

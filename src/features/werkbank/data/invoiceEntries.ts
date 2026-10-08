@@ -69,6 +69,28 @@ export async function fetchCustomerCredit(client: Client, orgId: string): Promis
   return cents / 100;
 }
 
+/** Where reversed entries were moved to: entry id to the invoice its transferred copy was booked on. */
+export async function fetchTransferDestinations(
+  client: Client,
+  orgId: string,
+  entryIds: string[],
+): Promise<Map<string, { invoiceId: string; invoiceNo: string | null }>> {
+  const map = new Map<string, { invoiceId: string; invoiceNo: string | null }>();
+  if (entryIds.length === 0) return map;
+  const w = client.schema("werkbank");
+  const { data: copies, error } = await w.from("invoice_entries").select("transferred_from, invoice_id")
+    .eq("org_id", orgId).in("transferred_from", entryIds);
+  if (error) throw error;
+  const rows = (copies ?? []) as { transferred_from: string | null; invoice_id: string }[];
+  if (rows.length === 0) return map;
+  const { data: invoices, error: invErr } = await w.from("invoices").select("id, invoice_no")
+    .eq("org_id", orgId).in("id", [...new Set(rows.map((r) => r.invoice_id))]);
+  if (invErr) throw invErr;
+  const numbers = new Map((invoices ?? []).map((i) => [i.id, i.invoice_no]));
+  for (const r of rows) if (r.transferred_from) map.set(r.transferred_from, { invoiceId: r.invoice_id, invoiceNo: numbers.get(r.invoice_id) ?? null });
+  return map;
+}
+
 /** Books a payment, refund or write-off; returns the entry id. The database checks everything. */
 export async function recordInvoiceEntry(
   client: Client,

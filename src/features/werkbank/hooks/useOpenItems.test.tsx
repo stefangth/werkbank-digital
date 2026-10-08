@@ -61,13 +61,14 @@ describe("open items mutations", () => {
     ["set hold", "rpc:werkbank.set_dunning_hold", () => useSetDunningHold(), { invoiceId: "i1", reason: "x", until: null }],
     ["clear hold", "rpc:werkbank.clear_dunning_hold", () => useClearDunningHold(), "i1"],
   ];
-  it.each(cases)("%s invalidates open items and invoices", async (_n, rpc, hook, vars) => {
+  it.each(cases)("%s invalidates open items, invoices and the start list", async (_n, rpc, hook, vars) => {
     Object.assign(client, createFakeSupabase({ [rpc]: { data: "id", error: null } }));
     const { result, queryClient } = renderHookWithProviders(hook as () => { mutateAsync: (v: unknown) => Promise<unknown> }, { authOverrides });
     const spy = vi.spyOn(queryClient, "invalidateQueries");
     await act(async () => { await result.current.mutateAsync(vars); });
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "open-items"] });
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "invoices"] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "startList"] });
   });
 
   it("dunning issue and send invalidate even after a failure", async () => {
