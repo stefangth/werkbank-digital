@@ -25,3 +25,7 @@ export function checkRecipients(to: string[], cc: string[]): { to: string[]; cc:
   if (uniqueTo.length + uniqueCc.length > MAX_RECIPIENTS) return { error: "too_many_recipients" };
   return { to: uniqueTo, cc: uniqueCc };
 }
+
+/** The trimmed, non-empty strings of a request's address list; anything else is an empty list. */
+export const parseAddresses = (v: unknown): string[] =>
+  Array.isArray(v) ? v.map((a) => (typeof a === "string" ? a.trim() : "")).filter(Boolean) : [];

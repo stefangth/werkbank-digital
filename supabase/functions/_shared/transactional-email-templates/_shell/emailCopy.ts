@@ -26,6 +26,7 @@ export const EMAIL_TEMPLATE_KEYS = [
   "quote-decided",
   "quote-decision-confirmation",
   "invoice-sent",
+  "dunning-sent",
 ] as const;
 
 export type EmailTemplateKey = typeof EMAIL_TEMPLATE_KEYS[number];
@@ -386,6 +387,16 @@ export const EMAIL_COPY_DEFAULTS = {
   "invoice-sent.previewText": "Invoice {{invoiceNo}} from {{companyName}}",
   "invoice-sent.previewTextCancellation": "Cancellation invoice {{invoiceNo}} from {{companyName}}",
   "invoice-sent.companyFallback": "Your contractor",
+  "dunning-sent.subject": "{{stageTitle}} for invoice {{invoiceNo}}",
+  "dunning-sent.heading": "{{stageTitle}}",
+  "dunning-sent.greeting": "Hello,",
+  "dunning-sent.intro": "{{companyName}} is sending you the notice \"{{stageTitle}}\" for invoice {{invoiceNo}}. You will find the notice and the invoice attached as PDF.",
+  "dunning-sent.invoiceLabel": "Invoice:",
+  "dunning-sent.amountLabel": "Open amount:",
+  "dunning-sent.deadlineLabel": "Please pay by:",
+  "dunning-sent.footer": "Questions? Simply reply to this email.",
+  "dunning-sent.previewText": "{{stageTitle}} for invoice {{invoiceNo}} from {{companyName}}",
+  "dunning-sent.companyFallback": "Your contractor",
 
   "quote-decided.subjectAccepted": "Quote {{quoteNo}} was accepted",
   "quote-decided.subjectRejected": "Quote {{quoteNo}} was declined",
@@ -666,6 +677,16 @@ export const EMAIL_COPY_DE: EmailCopy = {
   "invoice-sent.previewText": "Rechnung {{invoiceNo}} von {{companyName}}",
   "invoice-sent.previewTextCancellation": "Stornorechnung {{invoiceNo}} von {{companyName}}",
   "invoice-sent.companyFallback": "Ihr Betrieb",
+  "dunning-sent.subject": "{{stageTitle}} zu Rechnung {{invoiceNo}}",
+  "dunning-sent.heading": "{{stageTitle}}",
+  "dunning-sent.greeting": "Guten Tag,",
+  "dunning-sent.intro": "{{companyName}} sendet Ihnen das Schreiben \"{{stageTitle}}\" zur Rechnung {{invoiceNo}}. Das Schreiben und die Rechnung finden Sie als PDF im Anhang.",
+  "dunning-sent.invoiceLabel": "Rechnung:",
+  "dunning-sent.amountLabel": "Offener Betrag:",
+  "dunning-sent.deadlineLabel": "Bitte zahlen bis:",
+  "dunning-sent.footer": "Bei Fragen antworten Sie einfach auf diese E-Mail.",
+  "dunning-sent.previewText": "{{stageTitle}} zu Rechnung {{invoiceNo}} von {{companyName}}",
+  "dunning-sent.companyFallback": "Ihr Betrieb",
 
   "quote-decided.subjectAccepted": "Angebot {{quoteNo}} wurde angenommen",
   "quote-decided.subjectRejected": "Angebot {{quoteNo}} wurde abgelehnt",

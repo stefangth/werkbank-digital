@@ -51,7 +51,7 @@ import {
 import { renderInvoicePdf } from "../_shared/werkbank/einvoice/invoiceDocument.tsx";
 import { renderEInvoice } from "../_shared/werkbank/einvoice/renderEInvoice.ts";
 import { type InvoiceBlocker, invoicePreflight } from "../_shared/werkbank/invoicePreflight.ts";
-import { checkRecipients, MAX_MESSAGE_CHARS } from "../_shared/werkbank/recipients.ts";
+import { checkRecipients, MAX_MESSAGE_CHARS, parseAddresses } from "../_shared/werkbank/recipients.ts";
 import { formatDateDe } from "../_shared/werkbank/pdf/quoteData.ts";
 
 export interface InvoiceRenderers {
@@ -309,9 +309,6 @@ interface SendInput {
   message: string;
 }
 
-const addresses = (v: unknown): string[] =>
-  Array.isArray(v) ? v.map((a) => (typeof a === "string" ? a.trim() : "")).filter(Boolean) : [];
-
 /**
  * { to, cc, message } from a send body; a missing recipient is the no_recipient preflight failure,
  * a malformed address 422 invalid_recipient, more than MAX_RECIPIENTS 422 too_many_recipients
@@ -320,11 +317,11 @@ const addresses = (v: unknown): string[] =>
  */
 function parseSend(raw: unknown): SendInput | Response {
   const b = isRecord(raw) ? raw : {};
-  const to = addresses(b.to);
+  const to = parseAddresses(b.to);
   if (invoicePreflight({ profile: null, itemCount: 0, serviceDateFrom: null, buyer: null, recipients: to }).includes("no_recipient")) {
     return json({ error: "preflight_failed", blockers: ["no_recipient"] }, 422);
   }
-  const checked = checkRecipients(to, addresses(b.cc));
+  const checked = checkRecipients(to, parseAddresses(b.cc));
   if ("error" in checked) return json({ error: checked.error }, 422);
   const message = typeof b.message === "string" ? b.message : "";
   if (message.length > MAX_MESSAGE_CHARS) return json({ error: "bad_request" }, 422);

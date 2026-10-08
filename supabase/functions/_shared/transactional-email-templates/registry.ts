@@ -44,11 +44,12 @@ import { template as accountEmailChanged } from './account-email-changed.tsx'
 import { template as magicLink } from './magic-link.tsx'
 import { template as airtableSyncHeld } from './airtable-sync-held.tsx'
 // Quote emails of the Werkbank module (ADR 0013 allow-list entry in scripts/moduleIsolation.test.ts).
-// Removing the module removes these four imports and their TEMPLATES and SUBJECT_RESOLVERS entries.
+// Removing the module removes these five imports and their TEMPLATES and SUBJECT_RESOLVERS entries.
 import { template as quoteSent } from '../werkbank/emails/quote-sent.tsx'
 import { template as quoteDecided } from '../werkbank/emails/quote-decided.tsx'
 import { template as quoteDecisionConfirmation } from '../werkbank/emails/quote-decision-confirmation.tsx'
 import { template as invoiceSent } from '../werkbank/emails/invoice-sent.tsx'
+import { template as dunningSent } from '../werkbank/emails/dunning-sent.tsx'
 
 type RegisteredTemplateEntry = TemplateEntry & { family: EmailFamily }
 
@@ -70,6 +71,7 @@ export const TEMPLATES: Record<string, RegisteredTemplateEntry> = {
   'quote-decided': { ...quoteDecided, family: 'pine' },
   'quote-decision-confirmation': { ...quoteDecisionConfirmation, family: 'pine' },
   'invoice-sent': { ...invoiceSent, family: 'pine' },
+  'dunning-sent': { ...dunningSent, family: 'pine' },
 }
 
 export interface TemplatePresentation {
@@ -185,6 +187,11 @@ const SUBJECT_RESOLVERS = {
       companyName: String(data.companyName || copy['invoice-sent.companyFallback']),
     },
   ),
+  'dunning-sent': (data, copy) => applyEmailTokens(copy['dunning-sent.subject'], {
+    stageTitle: String(data.stageTitle || ''),
+    invoiceNo: String(data.invoiceNo || ''),
+    companyName: String(data.companyName || copy['dunning-sent.companyFallback']),
+  }),
   'quote-decided': (data, copy) => applyEmailTokens(
     data.decision === 'rejected' ? copy['quote-decided.subjectRejected'] : copy['quote-decided.subjectAccepted'],
     { quoteNo: String(data.quote_no || '') },

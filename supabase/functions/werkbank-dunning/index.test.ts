@@ -1,4 +1,4 @@
-// werkbank-dunning (R5): preview, issue (incl. resume) and download-url.
+// werkbank-dunning (R5, R6): preview, issue (incl. resume), send and download-url.
 import { assert, assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   asTypedClient,
@@ -11,11 +11,13 @@ import {
 } from "../_shared/testing.ts";
 import type { DunningData } from "../_shared/werkbank/pdf/dunningData.ts";
 import { sha256Hex } from "../_shared/werkbank/quoteToken.ts";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { handle } from "./index.ts";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const OTHER_ORG = "22222222-2222-4222-8222-222222222222";
 const INV = "33333333-3333-4333-8333-333333333333";
+const CUST = "44444444-4444-4444-8444-444444444444";
 const NOTICE = "55555555-5555-4555-8555-555555555555";
 const PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PATH = `${ORG}/dunning/${NOTICE}.pdf`;
@@ -36,7 +38,7 @@ const buyerSnapshot = {
 const invoice = {
   id: INV, org_id: ORG, type: "invoice", invoice_no: "RE-0007", status: "issued", issue_date: "2026-09-01",
   due_date: "2026-09-15", seller_snapshot: sellerSnapshot, buyer_snapshot: buyerSnapshot,
-  pdf_path: `${ORG}/invoices/${INV}.pdf`,
+  pdf_path: `${ORG}/invoices/${INV}.pdf`, customer_id: CUST, contact_id: null, sent_at: null, sent_to: null,
 };
 const balance = {
   invoice_id: INV, org_id: ORG, claim: 119, paid: 19, open_amount: 100, written_off: 0, property_name: "Haus A",
@@ -52,6 +54,8 @@ interface Setup {
   notices?: Record<string, unknown>[];
   orgKind?: string;
   rpc?: { data?: unknown; error?: unknown };
+  customer?: Record<string, unknown> | null;
+  contact?: Record<string, unknown> | null;
   opts?: FakeDepsOptions;
 }
 
@@ -62,6 +66,8 @@ function setup(s: Setup = {}) {
     "werkbank.invoices": [{ when: { id: INV, org_id: ORG }, data: s.invoice === undefined ? invoice : s.invoice }],
     "werkbank.invoice_balances": { data: balance, error: null },
     "werkbank.company_profiles": { data: profile, error: null },
+    "werkbank.customers": { data: s.customer === undefined ? { invoice_email: "kunde@example.com", email: null } : s.customer, error: null },
+    "werkbank.contacts": { data: s.contact ?? null, error: null },
     "werkbank.dunning_notices": [
       { when: { id: NOTICE, org_id: ORG }, data: (s.notices ?? [])[0] ?? null },
       { when: { __write: true }, data: { id: NOTICE } },
@@ -260,11 +266,218 @@ Deno.test("the file already stored: its bytes are stamped, nothing is removed", 
   assertEquals(t.calls.filter((c) => c.method === "remove"), []);
 });
 
-Deno.test("print delivery never sends an email", async () => {
+Deno.test("print delivery never sends an email, even with a send field", async () => {
+  for (const send of [undefined, {}, { to: ["kunde@example.com"] }, true]) {
+    const t = setup();
+    const res = await handle(request({ ...issueBody, delivery: "print", ...(send === undefined ? {} : { send }) }), t.deps, t.render);
+    assertEquals(res.status, 200);
+    assertEquals(await res.json(), { notice_id: NOTICE, stage: 1 });
+    assertEquals(emails(t), []);
+    assertEquals(t.invokeCalls.length, 0);
+    assertEquals(t.calls.filter((c) => c.method === "download"), []);
+  }
+});
+
+Deno.test("issue without a send field stores the notice and emails nothing", async () => {
   const t = setup();
-  const res = await handle(request({ ...issueBody, delivery: "print" }), t.deps, t.render);
+  const res = await handle(request(issueBody), t.deps, t.render);
   assertEquals(res.status, 200);
   assertEquals(t.invokeCalls.length, 0);
+});
+
+// ── send ─────────────────────────────────────────────────────────────────────
+
+const STORED = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x41]);
+const stored = { storageDownloadResult: { data: new Blob([STORED]), error: null } };
+interface SentEmail {
+  template_name: string;
+  recipient_email: string;
+  reply_to?: string;
+  locale?: string;
+  org_id?: string;
+  idempotency_key?: string;
+  templateData: Record<string, string>;
+  attachments: Array<{ filename: string; content_base64: string }>;
+}
+const emails = (t: { invokeCalls: Array<{ name: string; body: unknown }> }) =>
+  t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => c.body as SentEmail);
+const sendBody = { action: "send", org_id: ORG, notice_id: NOTICE };
+const filed = (over: Record<string, unknown> = {}) => noticeRow({ pdf_path: PATH, pdf_sha256: "ab", ...over });
+
+Deno.test("send with an explicit to attaches the stored notice and the stored invoice, never renders", async () => {
+  const t = setup({ notices: [filed({ stage: 2 })], opts: stored });
+  const res = await handle(request({ ...sendBody, to: ["Chef@Example.com"], cc: ["buchhaltung@example.com"], message: "Bitte zahlen." }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { ok: true, email_sent: true });
+  assertEquals(t.rendered.length, 0);
+  assertEquals(t.calls.filter((c) => c.method === "upload"), []);
+  assertEquals(
+    t.calls.filter((c) => c.method === "download").map((c) => c.args[0]),
+    [PATH, `${ORG}/invoices/${INV}.pdf`],
+  );
+
+  const sent = emails(t);
+  assertEquals(sent.map((m) => m.recipient_email), ["Chef@Example.com", "buchhaltung@example.com"]);
+  for (const m of sent) {
+    assertEquals(m.template_name, "dunning-sent");
+    assertEquals(m.reply_to, "buero@muster.de");
+    assertEquals(m.locale, "de");
+    assertEquals(m.org_id, ORG);
+    assertEquals(m.attachments.map((a) => a.filename), ["Mahnung-RE-0007-2.pdf", "Rechnung-RE-0007.pdf"]);
+    assertEquals(m.attachments[0].content_base64, encodeBase64(STORED));
+    assertEquals(m.attachments[1].content_base64, encodeBase64(STORED));
+    assertEquals(m.templateData, {
+      companyName: "Muster Sanitär",
+      stageTitle: "1. Mahnung",
+      invoiceNo: "RE-0007",
+      openAmount: "100,00\u00a0\u20ac",
+      paymentDeadline: "15.10.2026",
+      message: "Bitte zahlen.",
+    });
+  }
+  const update = t.calls.find((c) => c.table === "werkbank.dunning_notices" && c.method === "update");
+  assertExists(update);
+  const patch = update.args[0] as Record<string, unknown>;
+  assertEquals(Object.keys(patch).sort(), ["sent_at", "sent_to"]);
+  assertEquals(patch.sent_to, ["Chef@Example.com", "buchhaltung@example.com"]);
+});
+
+Deno.test("send without to uses the customer's invoice email", async () => {
+  const t = setup({
+    notices: [filed()],
+    customer: { invoice_email: "re@example.com", email: "info@example.com" },
+    contact: { email: "kontakt@example.com" },
+    opts: stored,
+  });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(emails(t).map((m) => m.recipient_email), ["re@example.com"]);
+});
+
+Deno.test("send without to falls back to the contact, then the customer's general address", async () => {
+  const a = setup({
+    notices: [filed()],
+    customer: { invoice_email: null, email: "info@example.com" },
+    contact: { email: "kontakt@example.com" },
+    invoice: { ...invoice, contact_id: "66666666-6666-4666-8666-666666666666" },
+    opts: stored,
+  });
+  await handle(request(sendBody), a.deps, a.render);
+  assertEquals(emails(a).map((m) => m.recipient_email), ["kontakt@example.com"]);
+
+  const b = setup({ notices: [filed()], customer: { invoice_email: null, email: "info@example.com" }, opts: stored });
+  await handle(request(sendBody), b.deps, b.render);
+  assertEquals(emails(b).map((m) => m.recipient_email), ["info@example.com"]);
+});
+
+Deno.test("send without any address is 409 no_recipient and emails nothing", async () => {
+  const t = setup({ notices: [filed()], customer: { invoice_email: null, email: null }, opts: stored });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "no_recipient" });
+  assertEquals(emails(t), []);
+  assertEquals(t.calls.filter((c) => c.method === "update"), []);
+});
+
+Deno.test("send with a malformed address is 422 invalid_recipient", async () => {
+  const t = setup({ notices: [filed()], opts: stored });
+  const res = await handle(request({ ...sendBody, to: ["kein-mail"] }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(await res.json(), { error: "invalid_recipient" });
+  assertEquals(emails(t), []);
+});
+
+Deno.test("send of a notice without a stored file is 409 pdf_missing", async () => {
+  const t = setup({ notices: [noticeRow()], opts: stored });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "pdf_missing" });
+  assertEquals(emails(t), []);
+});
+
+Deno.test("send of an unknown notice is 404", async () => {
+  const t = setup({ opts: stored });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 404);
+});
+
+Deno.test("send without the invoice file is 409 invoice_file_missing and emails nothing", async () => {
+  const t = setup({ notices: [filed()], invoice: { ...invoice, pdf_path: null }, opts: stored });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "invoice_file_missing" });
+  assertEquals(emails(t), []);
+  assertEquals(t.calls.filter((c) => c.method === "update"), []);
+});
+
+Deno.test("a failed email is 502 send_failed with issued and leaves sent_at unchanged", async () => {
+  const t = setup({ notices: [filed()], opts: { ...stored, emailResult: { data: null, error: { message: "resend down" } } } });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 502);
+  assertEquals(await res.json(), { error: "send_failed", issued: true });
+  assertEquals(t.calls.filter((c) => c.table === "werkbank.dunning_notices" && c.method === "update"), []);
+});
+
+Deno.test("a message over 5000 characters is bad_request and emails nothing", async () => {
+  const t = setup({ notices: [filed()], opts: stored });
+  const res = await handle(request({ ...sendBody, message: "x".repeat(5001) }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(emails(t), []);
+});
+
+Deno.test("send needs a notice_id", async () => {
+  const t = setup({ opts: stored });
+  const res = await handle(request({ action: "send", org_id: ORG }), t.deps, t.render);
+  assertEquals(res.status, 400);
+});
+
+Deno.test("issue with send: {} stores the notice, then emails it using the issue's own bytes", async () => {
+  const t = setup({ opts: stored });
+  const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { notice_id: NOTICE, stage: 1, email_sent: true });
+  const sequence = t.calls.filter((c) =>
+    c.method === "upload" || (c.table === "werkbank.dunning_notices" && c.method === "update")
+  ).map((c) => c.method);
+  assertEquals(sequence, ["upload", "update", "update"], "file, stamp, then sent_at");
+  const sent = emails(t);
+  assertEquals(sent.length, 1);
+  assertEquals(sent[0].recipient_email, "kunde@example.com");
+  assertEquals(sent[0].attachments[0].filename, "Mahnung-RE-0007-1.pdf");
+  assertEquals(sent[0].attachments[0].content_base64, encodeBase64(PDF));
+  assertEquals(sent[0].attachments[1].content_base64, encodeBase64(STORED));
+});
+
+Deno.test("issue with send and no recipient is 409 before any write", async () => {
+  const t = setup({ customer: { invoice_email: null, email: null } });
+  const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "no_recipient" });
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
+Deno.test("issue with send and a missing invoice file is 409 before any write", async () => {
+  const t = setup({ invoice: { ...invoice, pdf_path: null } });
+  const res = await handle(request({ ...issueBody, send: {} }), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "invoice_file_missing" });
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
+Deno.test("issue with send and a failing email keeps the stored notice: 502 issued", async () => {
+  const t = setup({ opts: { ...stored, emailResult: { data: null, error: { message: "down" } } } });
+  const res = await handle(request({ ...issueBody, send: { to: ["a@example.com"] } }), t.deps, t.render);
+  assertEquals(res.status, 502);
+  assertEquals(await res.json(), { error: "send_failed", issued: true });
+  assert(t.calls.some((c) => c.method === "upload"));
+  assertEquals(t.calls.filter((c) => c.table === "werkbank.dunning_notices" && c.method === "update").length, 1, "only the file stamp");
+});
+
+Deno.test("issue with a malformed send field is 400", async () => {
+  const t = setup();
+  const res = await handle(request({ ...issueBody, send: "yes" }), t.deps, t.render);
+  assertEquals(res.status, 400);
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
 });
 
 // ── download-url ─────────────────────────────────────────────────────────────

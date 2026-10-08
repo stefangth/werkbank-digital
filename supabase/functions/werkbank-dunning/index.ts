@@ -3,8 +3,8 @@
 // All actions: admin or producer of the org (requireOrgRole), handwerk orgs only.
 //   preview      { org_id, invoice_id, payment_deadline? }                    -> application/pdf (watermark, persists nothing)
 //   issue        { org_id, invoice_id, delivery, payment_deadline? }          -> { notice_id, stage }
+//   send         { org_id, notice_id, to?, cc?, message? }                    -> { ok: true, email_sent: true }
 //   download-url { org_id, notice_id }                                        -> { url }  (60 s)
-// (`send` follows in the next task.)
 //
 // payment_deadline is optional: the default is Berlin today plus the profile's dunning_deadline_days.
 //
@@ -15,11 +15,20 @@
 //   * Resume: a notice of this invoice without pdf_path skips the RPC and is rendered and stored.
 //     If the upload finds the file already stored, the stored bytes are stamped. Nothing is removed.
 //   * Every failure after the RPC committed answers 500 with issued: true (the UI offers the retry).
+//   * `send` (R6) emails the STORED notice and the STORED invoice file (downloaded, never rendered) as the
+//     two attachments of a dunning-sent message per recipient (to, then cc), reply_to = the profile email,
+//     then stamps sent_at and sent_to (service role: lock_dunning_notice). Without `to` the recipient is
+//     defaultRecipient(customer, contact) of the invoice; none is 409 no_recipient. issue with
+//     `send: { to?, cc?, message? }` (or `send: true`) and delivery "email" runs it after the file is
+//     stored; recipients and the invoice file are checked BEFORE the RPC, so a notice is never issued
+//     for a send that cannot go out. A failed email answers 502 { error: "send_failed", issued: true }
+//     (the notice stays stored; the UI offers send). delivery "print" ignores `send` and never emails.
 //
 // verify_jwt = true in config.toml: there are no public actions here.
 // DI: exports handle(req, deps, render); Deno.serve wiring at the bottom.
 
-import { type Deps, realDeps } from "../_shared/deps.ts";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { type Deps, emailWasSent, realDeps } from "../_shared/deps.ts";
 import { corsHeaders, json, preflight } from "../_shared/http.ts";
 import { requireOrgRole } from "../_shared/auth.ts";
 import { resolveOrgKind } from "../_shared/orgKind.ts";
@@ -29,7 +38,10 @@ import { DOCUMENTS_BUCKET, isAlreadyExists, logoDataUrl } from "../_shared/werkb
 import type { CompanyProfileRow, InvoiceRow, SellerSnapshot } from "../_shared/werkbank/einvoice/invoiceData.ts";
 import { buildDunningData, type DunningData, type DunningNoticeRow } from "../_shared/werkbank/pdf/dunningData.ts";
 import { renderDunningPdf } from "../_shared/werkbank/pdf/dunningDocument.tsx";
-import type { DunningBlocker } from "../_shared/werkbank/dunningDefaults.ts";
+import { DUNNING_STAGE_TITLES, type DunningBlocker } from "../_shared/werkbank/dunningDefaults.ts";
+import { defaultRecipient } from "../_shared/werkbank/defaultRecipient.ts";
+import { checkRecipients, MAX_MESSAGE_CHARS, parseAddresses } from "../_shared/werkbank/recipients.ts";
+import { formatDateDe } from "../_shared/werkbank/pdf/quoteData.ts";
 
 export interface DunningRenderers {
   pdf: (data: DunningData, logoDataUrl?: string) => Promise<Uint8Array>;
@@ -46,7 +58,7 @@ const BLOCKERS: readonly DunningBlocker[] = [
 ];
 
 type Body = Record<string, unknown>;
-type Action = "preview" | "issue" | "download-url";
+type Action = "preview" | "issue" | "send" | "download-url";
 
 const isRecord = (v: unknown): v is Body => typeof v === "object" && v !== null && !Array.isArray(v);
 const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !== "" ? v.trim() : null);
@@ -72,14 +84,15 @@ export async function handle(
   const body = await req.json().catch(() => null);
   if (!isRecord(body) || typeof body.action !== "string") return json({ error: "bad_request" }, 400);
   const action = body.action;
-  if (action !== "preview" && action !== "issue" && action !== "download-url") {
+  if (action !== "preview" && action !== "issue" && action !== "send" && action !== "download-url") {
     return json({ error: "unknown_action" }, 400);
   }
 
   const orgId = str(body.org_id);
   const invoiceId = str(body.invoice_id);
   const noticeId = str(body.notice_id);
-  if (!orgId || (action === "download-url" ? !noticeId : !invoiceId)) return json({ error: "bad_request" }, 400);
+  const byNotice = action === "download-url" || action === "send";
+  if (!orgId || (byNotice ? !noticeId : !invoiceId)) return json({ error: "bad_request" }, 400);
 
   // Validated before any write; absent means the profile default.
   let deadline: string | null = null;
@@ -91,6 +104,13 @@ export async function handle(
   if (action === "issue") {
     if (body.delivery !== "email" && body.delivery !== "print") return json({ error: "bad_request" }, 400);
     delivery = body.delivery;
+  }
+  // Validated before any write. Print never emails, so its `send` field is not even read.
+  let sendInput: SendInput | null = null;
+  if (action === "send" || (action === "issue" && delivery === "email")) {
+    const parsed = parseSend(action === "send" ? body : body.send);
+    if (parsed instanceof Response) return parsed;
+    sendInput = parsed;
   }
 
   const gate = await requireOrgRole(deps, req, orgId, ["admin", "producer"]);
@@ -104,6 +124,8 @@ export async function handle(
   switch (action as Action) {
     case "download-url":
       return downloadUrl(deps, orgId, noticeId!);
+    case "send":
+      return sendNotice(deps, orgId, noticeId!, sendInput!);
     case "preview":
     case "issue": {
       const invoice = await loadInvoice(deps, orgId, invoiceId!);
@@ -111,7 +133,7 @@ export async function handle(
       if (!invoice) return json({ error: "not_found" }, 404);
       return action === "preview"
         ? previewNotice(deps, render, invoice, deadline)
-        : issueNotice(req, deps, render, invoice, delivery, deadline);
+        : issueNotice(req, deps, render, invoice, delivery, deadline, sendInput);
     }
   }
 }
@@ -207,9 +229,18 @@ async function issueNotice(
   invoice: InvoiceRow,
   delivery: "email" | "print",
   deadline: string | null,
+  sendInput: SendInput | null,
 ): Promise<Response> {
   const ctx = await loadContext(deps, invoice);
   if (typeof ctx === "string") return contextError(ctx);
+
+  // A requested send is checked before the RPC draws a stage: no notice for a send that cannot go out.
+  let target: Recipients | null = null;
+  if (sendInput) {
+    const prepared = await prepareSend(deps, invoice, sendInput);
+    if (prepared instanceof Response) return prepared;
+    target = prepared;
+  }
 
   // Resume: a notice without a file is stored as it is, the RPC is not called again.
   let notice = ctx.notices.find((n) => !n.pdf_path) ?? null;
@@ -270,7 +301,179 @@ async function issueNotice(
     console.error("werkbank-dunning: stamping the file failed", { noticeId: notice.id, error: updErr });
     return afterIssue("render_failed");
   }
-  return json({ notice_id: notice.id, stage: notice.stage });
+  if (!target || !sendInput) return json({ notice_id: notice.id, stage: notice.stage });
+
+  const sent = await emailNotice(deps, { ...notice, pdf_path: path }, invoice, target, sendInput.message, ctx.profile.email, bytes);
+  if (sent !== "sent") return sendFailure(sent);
+  return json({ notice_id: notice.id, stage: notice.stage, email_sent: true });
+}
+
+// ── send ─────────────────────────────────────────────────────────────────────
+
+interface SendInput {
+  /** Empty: the invoice's default recipient. */
+  to: string[];
+  cc: string[];
+  message: string;
+}
+interface Recipients {
+  to: string[];
+  cc: string[];
+}
+
+/**
+ * { to, cc, message } from a send body. null (no `send` on an issue) or false means: do not send;
+ * true means defaults. A malformed address is 422 invalid_recipient, more than MAX_RECIPIENTS 422
+ * too_many_recipients, an over-long message 422 bad_request (the codes werkbank-invoices uses).
+ */
+function parseSend(raw: unknown): SendInput | null | Response {
+  if (raw === undefined || raw === null || raw === false) return null;
+  const b = raw === true ? {} : isRecord(raw) ? raw : null;
+  if (!b) return json({ error: "bad_request" }, 400);
+  const message = typeof b.message === "string" ? b.message : "";
+  if (message.length > MAX_MESSAGE_CHARS) return json({ error: "bad_request" }, 422);
+  const to = parseAddresses(b.to);
+  const cc = parseAddresses(b.cc);
+  // Explicit addresses are validated now; the default recipient is validated once it is known.
+  const checked = checkRecipients(to, cc);
+  if ("error" in checked) return json({ error: checked.error }, 422);
+  return { ...checked, message };
+}
+
+/** The recipients (explicit, else the invoice's default) and the check that the invoice file exists. */
+async function prepareSend(deps: Deps, invoice: InvoiceRow, input: SendInput): Promise<Recipients | Response> {
+  if (!invoice.pdf_path) return json({ error: "invoice_file_missing" }, 409);
+  let to = input.to;
+  if (to.length === 0) {
+    const w = deps.admin.schema("werkbank");
+    const [customer, contact] = await Promise.all([
+      invoice.customer_id
+        ? w.from("customers").select("invoice_email, email").eq("id", invoice.customer_id).eq("org_id", invoice.org_id).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      invoice.contact_id
+        ? w.from("contacts").select("email").eq("id", invoice.contact_id).eq("org_id", invoice.org_id).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+    if (customer.error || contact.error) return json({ error: "load_failed" }, 500);
+    const fallback = defaultRecipient(
+      customer.data as { invoice_email?: string | null; email?: string | null } | null,
+      contact.data as { email?: string | null } | null,
+    );
+    if (!fallback) return json({ error: "no_recipient" }, 409);
+    to = [fallback];
+  }
+  const checked = checkRecipients(to, input.cc);
+  if ("error" in checked) return json({ error: checked.error }, 422);
+  return checked;
+}
+
+function sendFailure(error: "load_failed" | "send_failed"): Response {
+  return error === "send_failed" ? json({ error, issued: true }, 502) : json({ error, issued: true }, 500);
+}
+
+/** The send action: only a notice whose file is stored, for an invoice whose file is stored. */
+async function sendNotice(deps: Deps, orgId: string, noticeId: string, input: SendInput): Promise<Response> {
+  const w = deps.admin.schema("werkbank");
+  const { data, error } = await w.from("dunning_notices").select("*").eq("id", noticeId).eq("org_id", orgId).maybeSingle();
+  if (error) return json({ error: "load_failed" }, 500);
+  if (!data) return json({ error: "not_found" }, 404);
+  const notice = data as unknown as DunningNoticeRow;
+  if (!notice.pdf_path) return json({ error: "pdf_missing" }, 409);
+
+  const invoice = await loadInvoice(deps, orgId, notice.invoice_id);
+  if (invoice === "error") return json({ error: "load_failed" }, 500);
+  if (!invoice) return json({ error: "not_found" }, 404);
+  const target = await prepareSend(deps, invoice, input);
+  if (target instanceof Response) return target;
+
+  const profile = await w.from("company_profiles").select("email").eq("org_id", orgId).maybeSingle();
+  if (profile.error) return json({ error: "load_failed" }, 500);
+  const replyTo = (profile.data as { email?: string | null } | null)?.email;
+
+  const sent = await emailNotice(deps, notice, invoice, target, input.message, replyTo, null);
+  if (sent !== "sent") return sendFailure(sent);
+  return json({ ok: true, email_sent: true });
+}
+
+const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
+async function readStored(deps: Deps, path: string, what: string, id: string): Promise<Uint8Array | null> {
+  const { data, error } = await deps.admin.storage.from(DOCUMENTS_BUCKET).download(path);
+  if (error || !data) {
+    console.error(`werkbank-dunning: reading the stored ${what} failed`, { id, error });
+    return null;
+  }
+  return new Uint8Array(await (data as Blob).arrayBuffer());
+}
+
+/** Reduces the admin-editable invoice number to characters that are safe in an attachment name. */
+const safeName = (s: string) => String(s).replace(/[^A-Za-z0-9._-]/g, "_");
+
+/**
+ * Emails the stored notice and the stored invoice, one message per recipient (to, then cc), and
+ * stamps sent_at/sent_to when every message went out. `bytes` null means: download the stored notice.
+ */
+async function emailNotice(
+  deps: Deps,
+  notice: DunningNoticeRow,
+  invoice: InvoiceRow,
+  target: Recipients,
+  message: string,
+  replyTo: string | null | undefined,
+  bytes: Uint8Array | null,
+): Promise<"sent" | "load_failed" | "send_failed"> {
+  const seller = invoice.seller_snapshot as unknown as SellerSnapshot | null;
+  const invoiceNo = invoice.invoice_no;
+  if (!seller || !invoiceNo || !notice.pdf_path || !invoice.pdf_path) return "load_failed";
+  const noticeFile = bytes ?? await readStored(deps, notice.pdf_path, "notice", notice.id);
+  const invoiceFile = await readStored(deps, invoice.pdf_path, "invoice", invoice.id);
+  if (!noticeFile || !invoiceFile) return "load_failed";
+
+  const no = safeName(invoiceNo);
+  const attachments = [
+    { filename: `Mahnung-${no}-${notice.stage}.pdf`, content_base64: encodeBase64(noticeFile) },
+    { filename: `Rechnung-${no}.pdf`, content_base64: encodeBase64(invoiceFile) },
+  ];
+  const stage = notice.stage as 1 | 2 | 3;
+  const recipients = [...target.to, ...target.cc];
+  const reply = replyTo?.trim();
+  // Keyed on the last completed send and the text, not the clock: a retry after a partial failure
+  // (sent_at unchanged, same text) repeats the keys, so the provider drops the messages that already
+  // went out, while a changed text or a deliberate resend after a success (new sent_at) gets fresh keys.
+  const sendRound = `${notice.sent_at ?? "first"}-${(await sha256Hex(message)).slice(0, 16)}`;
+  for (const recipient of recipients) {
+    const result = await deps.sendEmail({
+      template_name: "dunning-sent",
+      recipient_email: recipient,
+      org_id: notice.org_id,
+      locale: "de",
+      ...(reply ? { reply_to: reply } : {}),
+      templateData: {
+        companyName: seller.company_name,
+        stageTitle: DUNNING_STAGE_TITLES[stage],
+        invoiceNo,
+        openAmount: eur(Number(notice.open_amount ?? 0)),
+        paymentDeadline: formatDateDe(notice.payment_deadline),
+        message,
+      },
+      attachments,
+      idempotency_key: `dunning-sent-${notice.id}-${sendRound}-${recipient.toLowerCase()}`,
+    });
+    if (!emailWasSent(result)) {
+      console.warn("werkbank-dunning: dunning email not delivered", {
+        noticeId: notice.id,
+        error: result.error ?? (result.data as { reason?: unknown } | null)?.reason,
+      });
+      return "send_failed";
+    }
+  }
+
+  const { error } = await deps.admin.schema("werkbank").from("dunning_notices")
+    .update({ sent_at: deps.now().toISOString(), sent_to: recipients })
+    .eq("id", notice.id).eq("org_id", notice.org_id);
+  // The email is out: a failed stamp must not turn into a resend, so it is logged, not surfaced.
+  if (error) console.error("werkbank-dunning: stamping sent_at failed", { noticeId: notice.id, error });
+  return "sent";
 }
 
 // ── download-url ─────────────────────────────────────────────────────────────
