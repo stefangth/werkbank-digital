@@ -53,6 +53,7 @@ export function OrderPage() {
   // (e.g. the user reopens the order the lock was reported for).
   const [lockedAt, setLockedAt] = useState<{ id: string; status: string } | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingReopen, setConfirmingReopen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const diff = useMemo(
@@ -92,6 +93,14 @@ export function OrderPage() {
   const save = (patch: OrderPatch | SchedulePatch) => update.mutate({ id: order.id, patch }, lockOnClosed);
   const saveTechnicians = (artistIds: string[]) => setTechnicians.mutate({ orderId: order.id, artistIds }, lockOnClosed);
   const runAction = (action: OrderAction) => setStatus.mutate({ id: order.id, status: ORDER_ACTION_TARGET[action] });
+  // R28: a draft invoice keeps the items and dates it copied, so reopening asks first.
+  // On a done order the active invoice is always a draft (issuing sets the order to invoiced).
+  const hasInvoiceDraft = status === "done" && !!activeInvoice;
+  const onAction = (action: OrderAction) => {
+    if (action === "cancel") setConfirmingCancel(true);
+    else if (action === "reopen" && hasInvoiceDraft) setConfirmingReopen(true);
+    else runAction(action);
+  };
 
   return (
     <div className="space-y-6">
@@ -104,7 +113,7 @@ export function OrderPage() {
         actions={
           <>
             {nextOrderActions(status).map((action) => (
-              <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => (action === "cancel" ? setConfirmingCancel(true) : runAction(action))}>
+              <Button key={action} variant={ACTION_VARIANT[action]} disabled={setStatus.isPending} onClick={() => onAction(action)}>
                 {t(`orders.action.${action}`)}
               </Button>
             ))}
@@ -209,6 +218,21 @@ export function OrderPage() {
               onClick={() => { setConfirmingCancel(false); runAction("cancel"); }}
             >
               {t("orders.cancel.confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmingReopen} onOpenChange={setConfirmingReopen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("orders.reopen.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("orders.reopen.body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("orders.reopen.keep")}</AlertDialogCancel>
+            <Button disabled={setStatus.isPending} onClick={() => { setConfirmingReopen(false); runAction("reopen"); }}>
+              {t("orders.reopen.confirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

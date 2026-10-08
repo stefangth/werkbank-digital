@@ -14,7 +14,7 @@ const { state, mut, refetch, route, navigate, inv } = vi.hoisted(() => {
     refetch: vi.fn(),
     route: { id: "o1" },
     navigate: vi.fn(),
-    inv: { loading: false, active: null as { id: string; invoice_no: string } | null, fromOrder: { mutate: vi.fn(), isPending: false } },
+    inv: { loading: false, active: null as { id: string; invoice_no: string | null } | null, fromOrder: { mutate: vi.fn(), isPending: false } },
   };
 });
 vi.mock("react-router-dom", async (orig) => ({
@@ -158,6 +158,21 @@ describe("OrderPage", () => {
     render();
     expect(await screen.findByRole("link", { name: "Rechnungsentwurf öffnen" })).toHaveAttribute("href", "/invoices/inv1");
     expect(screen.queryByRole("button", { name: "Rechnung erstellen" })).not.toBeInTheDocument();
+  });
+
+  it("asks before reopening a done order with an invoice draft, which keeps its items and dates", async () => {
+    state.order = order({ status: "done" });
+    inv.active = { id: "inv1", invoice_no: null };
+    render();
+    fireEvent.click(await screen.findByRole("button", { name: "Wieder öffnen" }));
+    expect(mut.setStatus.mutate).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText(/behält seine jetzigen Positionen und Daten/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
+    expect(mut.setStatus.mutate).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Wieder öffnen" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Wieder öffnen" }));
+    expect(mut.setStatus.mutate).toHaveBeenCalledWith({ id: "o1", status: "in_progress" });
   });
 
   it("disables Rechnung erstellen while the invoice lookup loads", async () => {

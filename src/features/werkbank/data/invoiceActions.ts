@@ -9,9 +9,15 @@ export type InvoiceSendBody = { to: string[]; cc: string[]; message: string };
 
 /** A failed werkbank-invoices call: the edge function's `{ error: code }` plus the blockers of a
  *  `preflight_failed`, and `issued` when the invoice was already issued before the failure
- *  (`render_failed`, `send_failed`), so the caller can say "issued, but ...". */
+ *  (`render_failed`, `send_failed`), so the caller can say "issued, but ...". `reason` is the
+ *  finalize reason of an `invalid_state` (`invalid_transition`, `order_not_done`). */
 export class InvoiceActionError extends Error {
-  constructor(readonly code: string, readonly blockers: InvoiceBlocker[] = [], readonly issued = false) {
+  constructor(
+    readonly code: string,
+    readonly blockers: InvoiceBlocker[] = [],
+    readonly issued = false,
+    readonly reason?: string,
+  ) {
     super(code);
     this.name = "InvoiceActionError";
   }
@@ -19,7 +25,8 @@ export class InvoiceActionError extends Error {
 
 /** The i18n key (werkbank namespace) for an edge error code. Technical failures share one
  *  retry message; blockers are listed separately by the caller. */
-export function invoiceActionErrorKey(code: string): string {
+export function invoiceActionErrorKey(code: string, reason?: string): string {
+  if (code === "invalid_state" && reason === "order_not_done") return "errors.orderNotDone";
   switch (code) {
     case "forbidden":
     case "unauthorized":
@@ -50,9 +57,14 @@ async function readError(error: unknown): Promise<InvoiceActionError> {
   const res = edgeResponseContext(error);
   if (!res) return new InvoiceActionError("unknown");
   try {
-    const body = (await res.clone().json()) as { error?: unknown; blockers?: unknown; issued?: unknown };
+    const body = (await res.clone().json()) as { error?: unknown; blockers?: unknown; issued?: unknown; reason?: unknown };
     const code = typeof body.error === "string" ? body.error : "unknown";
-    return new InvoiceActionError(code, Array.isArray(body.blockers) ? (body.blockers as InvoiceBlocker[]) : [], body.issued === true);
+    return new InvoiceActionError(
+      code,
+      Array.isArray(body.blockers) ? (body.blockers as InvoiceBlocker[]) : [],
+      body.issued === true,
+      typeof body.reason === "string" ? body.reason : undefined,
+    );
   } catch {
     return new InvoiceActionError("unknown");
   }

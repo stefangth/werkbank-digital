@@ -812,6 +812,12 @@
       "body": "Order {{number}} is cancelled and locked. This cannot be undone.",
       "keep": "Keep order",
       "confirm": "Cancel order"
+    },
+    "reopen": {
+      "title": "Reopen this order?",
+      "body": "This order has a draft invoice. The draft keeps its current items and dates. It does not pick up changes to the order.",
+      "keep": "Keep it done",
+      "confirm": "Reopen"
     }
   },
   "publicQuote": {
@@ -1000,6 +1006,7 @@
       "cancelledBanner": "This invoice was cancelled by",
       "pdfPending": "The PDF is being created",
       "pdfPendingHint": "The invoice is issued, but its PDF is not ready yet.",
+      "orderNotDone": "The order is not done. Complete it before you issue the invoice.",
       "pdfRetry": "Try again",
       "pdfRetryFailed": "The PDF could not be created yet. Try again in a moment.",
       "pdfRetryDone": "The PDF is ready.",

@@ -68,7 +68,8 @@ export function InvoiceActions({
           <Button variant="secondary" onClick={() => copy.mutate(invoice.id, goToDraft)} disabled={copy.isPending}>{t("invoices.page.copy")}</Button>
           {cancelledBy ? (
             <Button asChild variant="secondary"><Link to={invoicePath(cancelledBy.id)}>{t("invoices.page.openCancellation")}</Link></Button>
-          ) : (
+          ) : hasPdf && (
+            // Without its stored file the invoice cannot be cancelled yet: the retry comes first.
             <Button variant="destructive" onClick={() => setConfirmingCancel(true)}>{t("invoices.page.cancel")}</Button>
           )}
         </>

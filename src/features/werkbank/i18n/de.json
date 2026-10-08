@@ -812,6 +812,12 @@
       "body": "Der Auftrag {{number}} wird storniert und gesperrt. Das lässt sich nicht rückgängig machen.",
       "keep": "Auftrag behalten",
       "confirm": "Stornieren"
+    },
+    "reopen": {
+      "title": "Auftrag wieder öffnen?",
+      "body": "Zu diesem Auftrag gibt es einen Rechnungsentwurf. Der Entwurf behält seine jetzigen Positionen und Daten. Änderungen am Auftrag übernimmt er nicht.",
+      "keep": "Abbrechen",
+      "confirm": "Wieder öffnen"
     }
   },
   "publicQuote": {
@@ -1000,6 +1006,7 @@
       "cancelledBanner": "Diese Rechnung wurde storniert durch",
       "pdfPending": "PDF wird erzeugt",
       "pdfPendingHint": "Die Rechnung ist abgeschlossen, das PDF ist aber noch nicht fertig.",
+      "orderNotDone": "Der Auftrag ist nicht erledigt. Schließe ihn ab, bevor Du die Rechnung abschließt.",
       "pdfRetry": "Erneut versuchen",
       "pdfRetryFailed": "Das PDF konnte noch nicht erzeugt werden. Versuche es gleich noch einmal.",
       "pdfRetryDone": "Das PDF ist fertig.",

@@ -178,6 +178,17 @@ describe("IssueInvoiceDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("an order that is not done shows the orderNotDone copy inline and keeps the dialog open", async () => {
+    issue.mutateAsync.mockRejectedValue(new InvoiceActionError("invalid_state", [], false, "order_not_done"));
+    const onOpenChange = vi.fn();
+    const onStateChanged = vi.fn();
+    renderDialog({ onOpenChange, onStateChanged });
+    fireEvent.click(screen.getByRole("button", { name: "Nur abschließen" }));
+    expect(await screen.findByText("Der Auftrag muss erledigt sein, bevor er abgerechnet werden kann.")).toBeInTheDocument();
+    expect(onStateChanged).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   it("a 500 render_failed after issue refetches", async () => {
     issue.mutateAsync.mockRejectedValue(new InvoiceActionError("render_failed", [], true));
     const onStateChanged = vi.fn();

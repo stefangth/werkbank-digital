@@ -9,7 +9,7 @@ import { STORAGE_KEY } from "@/i18n/config";
 const { state, navigate, mut, preview, issue, send, download, pdf, toast } = vi.hoisted(() => {
   const m = () => ({ mutate: vi.fn(), isPending: false, isSuccess: false });
   return {
-    state: { invoice: null as unknown, original: null as unknown, cancelledBy: null as unknown, refetch: vi.fn() },
+    state: { invoice: null as unknown, original: null as unknown, cancelledBy: null as unknown, order: null as unknown, refetch: vi.fn() },
     download: { mutateAsync: vi.fn(), isPending: false },
     navigate: vi.fn(),
     mut: { update: m(), remove: m(), cancel: m(), copy: m() },
@@ -34,6 +34,7 @@ vi.mock("../hooks/useInvoices", () => ({
   useInvoiceMutations: () => mut,
   useCancellationOf: (_id: string | undefined, enabled: boolean) => ({ data: enabled ? state.cancelledBy : null }),
 }));
+vi.mock("../hooks/useOrders", () => ({ useOrder: (id: string | undefined) => ({ data: id ? state.order : undefined }) }));
 vi.mock("../hooks/useInvoiceActions", () => ({
   usePreviewInvoice: () => preview,
   useIssueInvoice: () => issue,
@@ -87,6 +88,7 @@ describe("InvoicePage", () => {
     state.invoice = invoice();
     state.original = null;
     state.cancelledBy = null;
+    state.order = null;
     mut.update.isPending = false;
     pdf.pdfBlobUrl.mockReturnValue("blob:pdf");
     localStorage.setItem(STORAGE_KEY, "de");
@@ -287,9 +289,33 @@ describe("InvoicePage", () => {
     expect(await screen.findByText("PDF wird erzeugt")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "PDF" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Senden" })).not.toBeInTheDocument();
+    // Cancelling waits for the stored file, so the retry comes first.
+    expect(screen.queryByRole("button", { name: "Stornieren" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1" }));
     await waitFor(() => expect(state.refetch).toHaveBeenCalled());
+  });
+
+  it("offers the PDF retry on a cancelled invoice without a file too", async () => {
+    state.invoice = issued({ status: "cancelled", pdf_path: null });
+    issue.mutateAsync.mockResolvedValue({ invoiceNo: "RE-0012" });
+    render();
+    expect(await screen.findByText("PDF wird erzeugt")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1" }));
+  });
+
+  it("tells the office when the order of a draft is not done yet, and stays quiet once it is", async () => {
+    const notice = "Der Auftrag ist nicht erledigt. Schließe ihn ab, bevor Du die Rechnung abschließt.";
+    state.invoice = invoice({ order_id: "o1" });
+    state.order = { id: "o1", status: "in_progress" };
+    const { unmount } = render();
+    expect(await screen.findByText(notice)).toBeInTheDocument();
+    unmount();
+    state.order = { id: "o1", status: "done" };
+    render();
+    await screen.findByRole("textbox", { name: "Betreff" });
+    expect(screen.queryByText(notice)).not.toBeInTheDocument();
   });
 
   it("links the cancellation from a cancelled invoice and offers the corrected one", async () => {

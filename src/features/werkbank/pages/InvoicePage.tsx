@@ -26,6 +26,7 @@ import { useCustomer } from "../hooks/useCustomers";
 import { usePreviewInvoice } from "../hooks/useInvoiceActions";
 import { ITEMS_KEY } from "../hooks/useDocumentItems";
 import { useCancellationOf, useInvoice, useInvoiceMutations } from "../hooks/useInvoices";
+import { useOrder } from "../hooks/useOrders";
 import { useProperty } from "../hooks/useProperties";
 import { mapDbError } from "../lib/dbErrors";
 import { customerDisplayName } from "../lib/displayName";
@@ -46,6 +47,9 @@ export function InvoicePage() {
   const { data: property } = useProperty(invoice?.property_id ?? undefined);
   const { data: cancelledBy } = useCancellationOf(
     invoice?.id, invoice?.status === "cancelled" || (invoice?.status === "issued" && invoice.type === "invoice"));
+  // R28: a draft invoice of an order can only be issued once the order is done.
+  const { data: order } = useOrder(
+    invoice?.status === "draft" && invoice.type === "invoice" ? invoice.order_id ?? undefined : undefined);
   const { update, remove } = useInvoiceMutations();
   // "Abschließen" waits for the last edit to be saved, so the PDF never misses it.
   const itemWrites = useIsMutating({ mutationKey: [...ITEMS_KEY, refKey({ invoiceId: id ?? "" })] });
@@ -154,7 +158,10 @@ export function InvoicePage() {
           </Link>
         </Alert>
       )}
-      {invoice.status === "issued" && !invoice.pdf_path && (
+      {editable && !isCancellation && order && order.status !== "done" && (
+        <Alert>{t("invoices.page.orderNotDone")}</Alert>
+      )}
+      {!isDraft && !invoice.pdf_path && (
         <PdfPendingNotice invoiceId={invoice.id} onDone={() => void refetch()} />
       )}
 

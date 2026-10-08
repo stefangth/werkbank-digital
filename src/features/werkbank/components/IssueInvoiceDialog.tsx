@@ -125,7 +125,7 @@ export function IssueInvoiceDialog({
         if (err.code === "send_failed") toast.warning(t("invoices.send.issuedSendFailed"));
         else toast.error(t("invoices.send.issuedRenderFailed"));
         stateChanged();
-      } else if (err.code === "invalid_state") {
+      } else if (err.code === "invalid_state" && err.reason !== "order_not_done") {
         // Issued or changed elsewhere meanwhile: refetch so the page shows the real state.
         toast.error(t(invoiceActionErrorKey(err.code)));
         stateChanged();
@@ -167,7 +167,9 @@ export function IssueInvoiceDialog({
           )}
           {partyError && <Alert variant="destructive">{t("invoices.send.partyLoad")}</Alert>}
           {issueMode && profileError && <Alert variant="destructive">{t("invoices.send.profileLoad")}</Alert>}
-          {error && error.blockers.length === 0 && <Alert variant="destructive">{t(invoiceActionErrorKey(error.code))}</Alert>}
+          {error && error.blockers.length === 0 && (
+            <Alert variant="destructive">{t(invoiceActionErrorKey(error.code, error.reason))}</Alert>
+          )}
         </div>
 
         <DialogFooter>

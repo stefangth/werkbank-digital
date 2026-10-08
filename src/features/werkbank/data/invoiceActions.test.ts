@@ -54,6 +54,10 @@ describe("sendInvoice", () => {
     const fake = createFakeSupabase(failure(409, { error: "invalid_state" }));
     await expect(sendInvoice(asClient(fake), "org-1", "i1", body)).rejects.toMatchObject({ code: "invalid_state" });
   });
+  it("carries the reason of an invalid_state", async () => {
+    const fake = createFakeSupabase(failure(409, { error: "invalid_state", reason: "order_not_done" }));
+    await expect(sendInvoice(asClient(fake), "org-1", "i1", body)).rejects.toMatchObject({ code: "invalid_state", reason: "order_not_done" });
+  });
 });
 
 describe("invoiceDownloadUrl", () => {
@@ -73,5 +77,7 @@ describe("invoiceActionErrorKey", () => {
     expect(invoiceActionErrorKey("send_failed")).toBe("invoices.send.errors.sendFailed");
     expect(invoiceActionErrorKey("invalid_state")).toBe("invoices.send.errors.invalidState");
     expect(invoiceActionErrorKey("forbidden")).toBe("invoices.send.errors.forbidden");
+    expect(invoiceActionErrorKey("invalid_state", "order_not_done")).toBe("errors.orderNotDone");
+    expect(invoiceActionErrorKey("invalid_state", "invalid_transition")).toBe("invoices.send.errors.invalidState");
   });
 });
