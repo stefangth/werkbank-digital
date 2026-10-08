@@ -1,5 +1,5 @@
 // werkbank-invoices (R5): preview, issue (incl. resume) and download-url.
-import { assert, assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assert, assertEquals, assertExists, assertMatch, assertNotEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import {
   createFakeClient,
@@ -428,18 +428,21 @@ Deno.test("the attachment filename keeps only safe characters of the invoice num
   assertEquals(emails(t)[0].attachments[0].filename, "RE_2026_0007.pdf");
 });
 
-Deno.test("idempotency keys come from the invoice, its last send and the recipient, never the clock", async () => {
-  // A retry after a partial failure (sent_at still unchanged) reuses the keys, so the provider drops
-  // the messages that already went out; a deliberate resend after a success gets fresh keys.
-  const first = setup({ invoice: issuedRow({ pdf_path: PATH }), opts: stored });
-  await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND, to: ["Kunde@Example.com"] }), first.deps, first.render);
-  const keys = (t: typeof first) =>
-    t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => (c.body as { idempotency_key: string }).idempotency_key);
-  assertEquals(keys(first), [`invoice-sent-${INV}-first-kunde@example.com`, `invoice-sent-${INV}-first-buchhaltung@example.com`]);
-
-  const resend = setup({ invoice: issuedRow({ pdf_path: PATH, sent_at: "2026-06-01T12:00:00.000Z" }), opts: stored });
-  await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), resend.deps, resend.render);
-  assertEquals(keys(resend)[0], `invoice-sent-${INV}-2026-06-01T12:00:00.000Z-kunde@example.com`);
+Deno.test("idempotency keys come from the invoice, its last send, the message and the recipient, never the clock", async () => {
+  // A retry after a partial failure (sent_at unchanged, same text) repeats the keys, so the provider
+  // drops what already went out; a changed text or a resend after a success gets fresh keys.
+  const keys = async (invoice: ReturnType<typeof issuedRow>, message: string) => {
+    const t = setup({ invoice, opts: stored });
+    await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND, to: ["Kunde@Example.com"], message }), t.deps, t.render);
+    return t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => (c.body as { idempotency_key: string }).idempotency_key);
+  };
+  const first = await keys(issuedRow({ pdf_path: PATH }), "Anbei die Rechnung.");
+  assertEquals(first.length, 2);
+  assertMatch(first[0], new RegExp(`^invoice-sent-${INV}-first-[0-9a-f]{16}-kunde@example\\.com$`));
+  assertEquals(await keys(issuedRow({ pdf_path: PATH }), "Anbei die Rechnung."), first, "same text, same round: same keys");
+  assertNotEquals((await keys(issuedRow({ pdf_path: PATH }), "Korrigierter Text."))[0], first[0], "changed text: new keys");
+  const resend = await keys(issuedRow({ pdf_path: PATH, sent_at: "2026-06-01T12:00:00.000Z" }), "Anbei die Rechnung.");
+  assert(resend[0].startsWith(`invoice-sent-${INV}-2026-06-01T12:00:00.000Z-`), "a resend after a success gets fresh keys");
 });
 
 Deno.test("a message longer than 5000 characters is bad_request and emails nothing", async () => {

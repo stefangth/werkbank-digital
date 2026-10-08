@@ -379,10 +379,10 @@ async function emailInvoice(
   const attachment = { filename, content_base64: encodeBase64(file) };
   const recipients = [...input.to, ...input.cc];
   const stamp = deps.now();
-  // Keyed on the last completed send, not the clock: a retry after a partial failure (sent_at still
-  // unchanged) repeats the keys, so the provider drops the messages that already went out, while a
-  // deliberate resend after a success (new sent_at) gets fresh keys.
-  const sendRound = invoice.sent_at ?? "first";
+  // Keyed on the last completed send and the text, not the clock: a retry after a partial failure
+  // (sent_at unchanged, same text) repeats the keys, so the provider drops the messages that already
+  // went out, while a changed text or a deliberate resend after a success (new sent_at) gets fresh keys.
+  const sendRound = `${invoice.sent_at ?? "first"}-${(await sha256Hex(input.message)).slice(0, 16)}`;
   for (const recipient of recipients) {
     const result = await deps.sendEmail({
       template_name: "invoice-sent",
