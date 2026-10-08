@@ -135,8 +135,9 @@ export function IssueInvoiceDialog({
     }
   };
 
+  // Not dismissable while issuing or sending: the call would finish behind a closed dialog.
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => { if (next || !pending) onOpenChange(next); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{issueMode ? t("invoices.send.issueTitle") : t(resend ? "invoices.send.resendTitle" : "invoices.send.sendTitle")}</DialogTitle>
@@ -173,7 +174,7 @@ export function IssueInvoiceDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          <Button variant="secondary" disabled={pending} onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           {issueMode ? (
             <>
               <Button variant="secondary" disabled={issueDisabled} onClick={() => void submit(false)}>

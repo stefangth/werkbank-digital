@@ -73,6 +73,19 @@ describe("IssueInvoiceDialog", () => {
     await act(async () => { await i18n.changeLanguage("en"); });
   });
 
+  it("cannot be dismissed while an issue call is running", () => {
+    issue.isPending = true;
+    const onOpenChange = vi.fn();
+    try {
+      renderDialog({ onOpenChange });
+      expect(screen.getByRole("button", { name: "Abbrechen" })).toBeDisabled();
+      fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+      expect(onOpenChange).not.toHaveBeenCalled();
+    } finally {
+      issue.isPending = false;
+    }
+  });
+
   it("shows the irreversibility warning", () => {
     renderDialog();
     expect(screen.getByText("Danach ist die Rechnung nicht mehr änderbar.")).toBeInTheDocument();
