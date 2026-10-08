@@ -5,7 +5,10 @@
 vendored instead of imported as `npm:@e-invoice-eu/core`, because the npm import embeds the whole
 package (every build, source maps, an Excel library) into the edge function bundle, which then
 exceeds the Supabase upload limit (HTTP 413). Vendoring also fixes the exact bytes that render the
-legally relevant e-invoice: nothing changes unless this file changes in git.
+legally relevant e-invoice: nothing changes unless this file changes in git, and
+`../vendor.test.ts` fails CI if the file no longer matches the sha256 in its header. Deploy and
+runtime do not touch esm.sh; only `deno check` fetches the package's type declarations from there
+(see below), so an esm.sh outage can fail a type-check run, never a deploy.
 
 The build bundles the library's dependencies; each keeps its own license. Its direct
 dependencies (versions as resolved by npm when this copy was taken; their own dependencies are
@@ -39,4 +42,5 @@ Types come from the package's `dist/index.d.ts` (type-only import, no runtime ef
    header of the current file with the new version and hash, and save it as
    `e-invoice-eu-core-<version>.mjs` (delete the old file, update `LICENSE` if it changed).
 3. Point `../renderEInvoice.ts` and `../facturx.ts` at the new version.
-4. Run the Deno tests and the Mustang job (`einvoice-validate`); both must pass.
+4. Point `../vendor.test.ts` at the new file name (it checks the header hash).
+5. Run the Deno tests and the Mustang job (`einvoice-validate`); both must pass.

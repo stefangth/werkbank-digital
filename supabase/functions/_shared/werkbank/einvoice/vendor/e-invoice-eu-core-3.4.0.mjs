@@ -2,7 +2,7 @@
 // single-file Deno build from https://esm.sh/@e-invoice-eu/core@3.4.0/deno/core.bundle.mjs
 // (sha256 8e80d87c048ed8f2fd996011dd50389172e4a5eec1207e4bce9670fecc266d95 before this header and
 // with the source map comment removed). Vendored so the bytes that render the e-invoice are fixed
-// in git and no deploy depends on esm.sh. Refresh: see README.md in this folder.
+// in git and no deploy or runtime depends on esm.sh. Refresh: see README.md in this folder.
 /* esm.sh - @e-invoice-eu/core@3.4.0 */
 import __Process$ from "https://deno.land/std@0.177.1/node/process.ts";
 import { Buffer as __Buffer$ } from "https://deno.land/std@0.177.1/node/buffer.ts";
