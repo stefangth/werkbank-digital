@@ -2,6 +2,8 @@
 // an email, duplicates collapse case-insensitively (to before cc), at most MAX_RECIPIENTS in all.
 
 export const MAX_RECIPIENTS = 10;
+/** Longest personal message an office user may add to a customer email. */
+export const MAX_MESSAGE_CHARS = 5000;
 // Same shape as REPLY_TO_RE in send-transactional-email and the company_profiles.email check.
 export const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
