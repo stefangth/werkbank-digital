@@ -60,6 +60,8 @@ begin
      or v_t.customer_id <> v_src.customer_id then
     raise exception 'transfer_target_invalid' using errcode = '22023';
   end if;
+  -- Concurrency: authorize_invoice above locked the source and the target (for update, id order),
+  -- so a second transfer from the same cancelled invoice waits here and sees the reduced credit.
   if v_src.status = 'cancelled' and v_e.amount > greatest(-werkbank.invoice_open_amount(v_src.id), 0) then
     raise exception 'transfer_exceeds_credit' using errcode = '22023';
   end if;
