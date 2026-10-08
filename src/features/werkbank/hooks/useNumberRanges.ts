@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchNumberRange, saveNumberRange, type NumberRangeKey, type NumberRangeSave } from "../data/numberRanges";
+import { fetchHasIssuedInvoice, fetchNumberRange, saveNumberRange, type NumberRangeKey, type NumberRangeSave } from "../data/numberRanges";
 import { mapDbError } from "../lib/dbErrors";
 
 /** Customer create and import advance the customer range, so they invalidate this key too. */
@@ -15,6 +15,16 @@ export function useNumberRange(key: NumberRangeKey) {
     queryKey: [...RANGES_KEY, orgId, key],
     enabled: !!orgId,
     queryFn: () => fetchNumberRange(supabase, orgId!, key),
+  });
+}
+
+/** True once an invoice was issued: the invoice range is then read-only. */
+export function useInvoiceRangeLocked() {
+  const orgId = useAuth().currentOrg?.id;
+  return useQuery({
+    queryKey: ["werkbank", "invoices", orgId, "has-issued"],
+    enabled: !!orgId,
+    queryFn: () => fetchHasIssuedInvoice(supabase, orgId!),
   });
 }
 

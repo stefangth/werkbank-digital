@@ -26,6 +26,9 @@ const base = {
   quote_closing: "",
   payment_terms_text: "",
   quote_validity_days: "30",
+  invoice_intro: "",
+  invoice_closing: "",
+  payment_due_days: "14",
 };
 
 const parse = (over: Record<string, string> = {}) => companyProfileSchema(t).safeParse({ ...base, ...over });
@@ -64,6 +67,11 @@ describe("companyProfileSchema", () => {
     expect(parse({ quote_validity_days: "365" }).success).toBe(true);
   });
 
+  it("accepts a payment term of 0 to 365 days only", () => {
+    for (const ok of ["0", "14", "365"]) expect(parse({ payment_due_days: ok }).success).toBe(true);
+    for (const bad of ["-1", "366", "", "1.5"]) expect(parse({ payment_due_days: bad }).success).toBe(false);
+  });
+
   it("requires name and address, and a 5 digit German postal code", () => {
     expect(parse({ company_name: " " }).success).toBe(false);
     expect(parse({ street: "" }).success).toBe(false);
@@ -88,6 +96,8 @@ describe("toCompanyProfileRow", () => {
     expect(row.email).toBeNull();
     expect(row.iban).toBeNull();
     expect(row.quote_validity_days).toBe(45);
+    expect(row.payment_due_days).toBe(14);
+    expect(row.invoice_intro).toBeNull();
     expect(row.street).toBe("Hauptstr. 1");
   });
 });

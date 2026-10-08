@@ -14,7 +14,7 @@ const COMPLETE = {
   email: "info@muster.example", tax_number: "201/123/45678", vat_id: null,
 };
 
-function renderList(counts: { artists: number; items: number; customers: number }, company: unknown = null, isAdmin = true) {
+function renderList(counts: { artists: number; items: number; customers: number; invoices?: number }, company: unknown = null, isAdmin = true) {
   Object.assign(
     client,
     createFakeSupabase({
@@ -22,6 +22,7 @@ function renderList(counts: { artists: number; items: number; customers: number 
       "werkbank.catalog_items": { data: null, error: null, count: counts.items },
       "werkbank.customers": { data: null, error: null, count: counts.customers },
       "werkbank.company_profiles": { data: company, error: null },
+      "werkbank.invoices": { data: null, error: null, count: counts.invoices ?? 0 },
     }),
   );
   return renderWithProviders(
@@ -33,7 +34,7 @@ function renderList(counts: { artists: number; items: number; customers: number 
 }
 
 describe("StartList", () => {
-  it("shows the four steps in order with their links", async () => {
+  it("shows the five steps in order with their links", async () => {
     renderList({ artists: 0, items: 0, customers: 0 });
     const links = await screen.findAllByRole("link");
     expect(links.map((l) => [l.textContent, l.getAttribute("href")])).toEqual([
@@ -41,6 +42,7 @@ describe("StartList", () => {
       ["Add technicians", "/technicians"],
       ["Add or import services", "/catalog"],
       ["Add or import customers", "/customers"],
+      ["Issue your first invoice", "/invoices"],
     ]);
     expect(screen.queryByTestId("step-done")).not.toBeInTheDocument();
   });
@@ -77,6 +79,13 @@ describe("StartList", () => {
       "Add technicians",
       "Add or import services",
       "Add or import customers",
+      "Issue your first invoice",
     ]);
+  });
+
+  it("marks the invoice step done once an invoice is issued", async () => {
+    renderList({ artists: 0, items: 0, customers: 0, invoices: 2 });
+    const step = (await screen.findByRole("link", { name: /Issue your first invoice/ })).closest("li")!;
+    await waitFor(() => expect(within(step).getByTestId("step-done")).toBeInTheDocument());
   });
 });

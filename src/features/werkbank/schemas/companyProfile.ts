@@ -43,6 +43,12 @@ export const companyProfileSchema = (t: TFunction) =>
       quote_intro: z.string(),
       quote_closing: z.string(),
       payment_terms_text: z.string(),
+      invoice_intro: z.string(),
+      invoice_closing: z.string(),
+      payment_due_days: z
+        .string()
+        .trim()
+        .refine((v) => DIGITS.test(v) && Number(v) >= 0 && Number(v) <= 365, t("company.errors.paymentDueDays")),
       quote_validity_days: z
         .string()
         .trim()
@@ -71,6 +77,8 @@ export function toCompanyProfileRow(form: CompanyProfileForm): CompanyProfileRow
     quote_intro: form.quote_intro,
     quote_closing: form.quote_closing,
     payment_terms_text: form.payment_terms_text,
+    invoice_intro: form.invoice_intro,
+    invoice_closing: form.invoice_closing,
   });
   return {
     company_name: form.company_name.trim(),
@@ -80,5 +88,6 @@ export function toCompanyProfileRow(form: CompanyProfileForm): CompanyProfileRow
     country_code: form.country_code.trim(),
     ...text,
     quote_validity_days: Number(form.quote_validity_days),
+    payment_due_days: Number(form.payment_due_days),
   };
 }

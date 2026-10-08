@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NumberRange } from "../data/numberRanges";
 import { formatNumber, NUMBER_RANGE_KEYS, type NumberRangeKey } from "../data/numberRanges";
-import { useNumberRange, useSaveNumberRange } from "../hooks/useNumberRanges";
+import { useInvoiceRangeLocked, useNumberRange, useSaveNumberRange } from "../hooks/useNumberRanges";
 
 const MAX_PREFIX_LENGTH = 10;
 /** Postgres bigint upper bound is far above this; JS numbers stay exact up to it. */
@@ -22,7 +22,7 @@ function parseNextValue(text: string): number | null {
   return n >= 1 && n <= MAX_NEXT_VALUE ? n : null;
 }
 
-function RangeForm({ rangeKey, range }: { rangeKey: NumberRangeKey; range: NumberRange }) {
+function RangeForm({ rangeKey, range, locked }: { rangeKey: NumberRangeKey; range: NumberRange; locked: boolean }) {
   const { t } = useTranslation("werkbank");
   const save = useSaveNumberRange(rangeKey);
   const [prefix, setPrefix] = useState(range.prefix);
@@ -57,6 +57,7 @@ function RangeForm({ rangeKey, range }: { rangeKey: NumberRangeKey; range: Numbe
             autoComplete="off"
             value={prefix}
             onChange={(e) => setPrefix(e.target.value)}
+            disabled={locked}
             aria-invalid={submitted && !!prefixError}
           />
           {submitted && prefixError ? (
@@ -73,6 +74,7 @@ function RangeForm({ rangeKey, range }: { rangeKey: NumberRangeKey; range: Numbe
             autoComplete="off"
             value={nextText}
             onChange={(e) => setNextText(e.target.value)}
+            disabled={locked}
             aria-invalid={submitted && !!nextError}
           />
           {submitted && nextError && <p role="alert" className="text-sm text-destructive">{nextError}</p>}
@@ -81,7 +83,11 @@ function RangeForm({ rangeKey, range }: { rangeKey: NumberRangeKey; range: Numbe
       <p className="text-sm font-medium" aria-live="polite">
         {preview !== null && t(`numbering.preview.${rangeKey}`, { number: preview })}
       </p>
-      <Button type="submit" disabled={save.isPending}>{t("numbering.save")}</Button>
+      {locked ? (
+        <p className="text-sm text-muted-foreground">{t("numbering.locked")}</p>
+      ) : (
+        <Button type="submit" disabled={save.isPending}>{t("numbering.save")}</Button>
+      )}
     </form>
   );
 }
@@ -89,6 +95,9 @@ function RangeForm({ rangeKey, range }: { rangeKey: NumberRangeKey; range: Numbe
 function RangeSection({ rangeKey }: { rangeKey: NumberRangeKey }) {
   const { t } = useTranslation("werkbank");
   const { data, isLoading, isError } = useNumberRange(rangeKey);
+  // Only the invoice range locks (an issued invoice carries its number for good); others stay editable.
+  const issued = useInvoiceRangeLocked();
+  const locked = rangeKey === "invoice" && issued.data === true;
   const headingId = `numbering-heading-${rangeKey}`;
 
   return (
@@ -102,7 +111,7 @@ function RangeSection({ rangeKey }: { rangeKey: NumberRangeKey }) {
       )}
       {/* Keyed on the loaded values: a refetch (after a save, a new customer or an import)
           re-mounts the form, so it never shows or saves a stale next number. */}
-      {data && <RangeForm key={`${data.prefix}|${data.next_value}|${data.padding}`} rangeKey={rangeKey} range={data} />}
+      {data && <RangeForm key={`${data.prefix}|${data.next_value}|${data.padding}|${locked}`} rangeKey={rangeKey} range={data} locked={locked} />}
     </div>
   );
 }

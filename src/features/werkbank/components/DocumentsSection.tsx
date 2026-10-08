@@ -7,16 +7,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Token } from "@/components/ui/token";
+import { useInvoiceMutations, useInvoices } from "../hooks/useInvoices";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import { useOrderList, useOrderMutations } from "../hooks/useOrders";
 import { useQuoteList, useQuoteMutations } from "../hooks/useQuotes";
 import { formatEuro } from "../lib/money";
+import { INVOICE_STATUS_TONES, signedGross, type InvoiceStatus } from "../lib/invoiceStatus";
 import { ORDER_STATUS_TONES, type OrderStatus } from "../lib/orderStatus";
 import { formatQuoteNumber } from "../lib/quoteNumber";
 import { QUOTE_STATUS_TONE, quoteDisplayStatus } from "../lib/quoteStatus";
-import { orderPath, quotePath } from "../paths";
+import { invoicePath, orderPath, quotePath } from "../paths";
 
-/** The quotes and orders of one customer, or of one property when `propertyId` is given.
+/** The quotes, orders and invoices of one customer, or of one property when `propertyId` is given.
  *  Filtered client-side from the org-wide lists; the create buttons preselect both ids and
  *  open the new document. */
 export function DocumentsSection({ customerId, propertyId }: { customerId?: string; propertyId?: string }) {
@@ -24,9 +26,12 @@ export function DocumentsSection({ customerId, propertyId }: { customerId?: stri
   const navigate = useNavigate();
   const quotes = useQuoteList();
   const orders = useOrderList();
+  // The invoice list filters server-side; a property page asks for the property's invoices only.
+  const invoices = useInvoices({ filter: "all", search: "", ...(propertyId ? { propertyId } : { customerId }) });
   const profile = useCompanyProfile();
   const { create: createQuote } = useQuoteMutations();
   const { create: createOrder } = useOrderMutations();
+  const { create: createInvoice } = useInvoiceMutations();
 
   const mine = <R extends { customer_id: string | null; property_id: string | null }>(rows: R[] | undefined) =>
     (rows ?? []).filter((r) => (propertyId ? r.property_id === propertyId : r.customer_id === customerId));
@@ -44,8 +49,14 @@ export function DocumentsSection({ customerId, propertyId }: { customerId?: stri
       { onSuccess: (id) => navigate(orderPath(id)) },
     );
 
-  const loading = quotes.isLoading || orders.isLoading;
-  const failed = quotes.isError || orders.isError;
+  const newInvoice = () =>
+    createInvoice.mutate(
+      { customerId: customerId!, propertyId: propertyId ?? null, profile: profile.data ?? null },
+      { onSuccess: (id) => navigate(invoicePath(id)) },
+    );
+
+  const loading = quotes.isLoading || orders.isLoading || invoices.isLoading;
+  const failed = quotes.isError || orders.isError || invoices.isError;
 
   const header = (id: string, title: string, label: string, onClick: () => void, disabled: boolean) => (
     <div className="flex items-center justify-between gap-3">
@@ -101,6 +112,31 @@ export function DocumentsSection({ customerId, propertyId }: { customerId?: stri
               <TableCell>{o.subject}</TableCell>
               <TableCell><StatusPill tone={ORDER_STATUS_TONES[s]}>{t(`orders.status.${s}`)}</StatusPill></TableCell>
               <TableCell className="text-right"><Metric size="body">{formatEuro(o.gross_total ?? 0, i18n.language)}</Metric></TableCell>
+            </TableRow>
+          );
+        }))}
+      </section>
+
+      <section className="space-y-3" aria-labelledby="documents-invoices">
+        {header("documents-invoices", t("documents.invoices.title"), t("documents.invoices.add"), newInvoice,
+          !customerId || profile.isLoading || createInvoice.isPending)}
+        {body(t("documents.invoices.empty"), (invoices.data ?? []).map((i) => {
+          const status = (i.status ?? "draft") as InvoiceStatus;
+          return (
+            <TableRow key={i.id}>
+              <TableCell>
+                <Link to={invoicePath(i.id!)} className="hover:underline">
+                  {i.invoice_no ? <Token>{i.invoice_no}</Token> : t("invoices.draftNumber")}
+                </Link>
+              </TableCell>
+              <TableCell>{i.subject}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {i.type === "cancellation" && <StatusPill tone="risk">{t("invoices.type.cancellation")}</StatusPill>}
+                  <StatusPill tone={INVOICE_STATUS_TONES[status]}>{t(`invoices.status.${status}`)}</StatusPill>
+                </div>
+              </TableCell>
+              <TableCell className="text-right"><Metric size="body">{formatEuro(signedGross(i), i18n.language)}</Metric></TableCell>
             </TableRow>
           );
         }))}

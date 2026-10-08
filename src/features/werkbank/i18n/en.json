@@ -17,7 +17,8 @@
       "technicians": "Add technicians",
       "catalog": "Add or import services",
       "customers": "Add or import customers",
-      "loadFailed": "Could not load your progress."
+      "loadFailed": "Could not load your progress.",
+      "invoice": "Issue your first invoice"
     },
     "tiles": {
       "acceptedNoOrder": "Accepted, no order yet",
@@ -183,7 +184,8 @@
     "headings": {
       "customer": "Customer numbers",
       "quote": "Quote numbers",
-      "order": "Order numbers"
+      "order": "Order numbers",
+      "invoice": "Invoice numbers"
     },
     "prefix": "Prefix",
     "prefixHint": "At most 10 characters, for example K-.",
@@ -191,7 +193,8 @@
     "preview": {
       "customer": "Next customer number: {{number}}",
       "quote": "Next quote number: {{number}}",
-      "order": "Next order number: {{number}}"
+      "order": "Next order number: {{number}}",
+      "invoice": "Next invoice number: {{number}}"
     },
     "save": "Save",
     "saved": "Number range saved",
@@ -199,7 +202,8 @@
     "errors": {
       "prefixTooLong": "The prefix can be at most 10 characters long",
       "nextValue": "Enter a whole number of 1 or more"
-    }
+    },
+    "locked": "Prefix and start are locked because invoices have been issued. They can no longer be changed."
   },
   "company": {
     "title": "Company data",
@@ -209,7 +213,8 @@
       "contact": "Contact",
       "legal": "Tax and register",
       "bank": "Bank details",
-      "texts": "Quote defaults"
+      "texts": "Quote defaults",
+      "invoiceTexts": "Invoice defaults"
     },
     "fields": {
       "companyName": "Company name",
@@ -231,7 +236,10 @@
       "quoteIntro": "Intro text for quotes (optional)",
       "quoteClosing": "Closing text for quotes (optional)",
       "paymentTerms": "Payment terms text (optional)",
-      "validity": "Quote valid for (days)"
+      "validity": "Quote valid for (days)",
+      "invoiceIntro": "Intro text for invoices (optional)",
+      "invoiceClosing": "Closing text for invoices (optional)",
+      "paymentDueDays": "Payment term (days)"
     },
     "taxHint": "Enter a tax number, a VAT ID, or both.",
     "logo": {
@@ -252,7 +260,8 @@
       "companyName": "Enter the company name",
       "vatId": "Enter a valid VAT ID, for example DE123456789",
       "iban": "Enter a valid IBAN, for example DE89 3704 0044 0532 0130 00",
-      "validity": "Enter whole days from 1 to 365"
+      "validity": "Enter whole days from 1 to 365",
+      "paymentDueDays": "Enter whole days from 0 to 365"
     }
   },
   "customers": {
@@ -904,7 +913,12 @@
       "status": "Status",
       "gross": "Gross"
     },
-    "loadFailed": "The quotes and orders could not be loaded."
+    "loadFailed": "The quotes and orders could not be loaded.",
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices yet.",
+      "add": "Create invoice"
+    }
   },
   "invoices": {
     "title": "Invoices",

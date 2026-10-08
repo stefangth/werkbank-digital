@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useStartList } from "../hooks/useStartList";
-import { CATALOG_PATH, COMPANY_SETTINGS_PATH, CUSTOMERS_PATH, TECHNICIANS_PATH } from "../paths";
+import { CATALOG_PATH, COMPANY_SETTINGS_PATH, CUSTOMERS_PATH, INVOICES_PATH, TECHNICIANS_PATH } from "../paths";
 
 /** The first-steps list on the handwerk dashboard: a step counts as done once at least one
  *  row exists (and then shows how many) or, for the company step, once the profile is complete. */
@@ -22,6 +22,7 @@ export function StartList({ orgId }: { orgId: string | undefined }) {
     { key: "technicians", to: TECHNICIANS_PATH, count: data.technicians, showCount: true },
     { key: "catalog", to: CATALOG_PATH, count: data.catalogItems, showCount: true },
     { key: "customers", to: CUSTOMERS_PATH, count: data.customers, showCount: true },
+    { key: "invoice", to: INVOICES_PATH, count: data.invoices, showCount: true },
   ];
 
   return (

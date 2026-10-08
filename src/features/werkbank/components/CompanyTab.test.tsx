@@ -101,4 +101,31 @@ describe("CompanyTab", () => {
     renderTab();
     expect(await screen.findByText(/konnten nicht geladen werden/)).toBeInTheDocument();
   });
+
+  it("shows and saves the invoice defaults", async () => {
+    const fake = seed({ data: { org_id: "org-1", company_name: "Muster Bau GmbH", street: "Hauptstr. 1", postal_code: "01067", city: "Dresden", country_code: "DE", quote_validity_days: 14, payment_due_days: 21, invoice_intro: "Hallo", invoice_closing: null, updated_at: "2026-10-08T10:00:00Z" }, error: null });
+    renderTab();
+    expect(await screen.findByLabelText("Zahlungsziel (Tage)")).toHaveValue("21");
+    expect(screen.getByLabelText("Einleitungstext für Rechnungen (optional)")).toHaveValue("Hallo");
+    type("Zahlungsziel (Tage)", "0");
+    type("Einleitungstext für Rechnungen (optional)", "Guten Tag");
+    type("Schlusstext für Rechnungen (optional)", "Danke");
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(upserts(fake)).toHaveLength(1));
+    expect((upserts(fake)[0].args as [Record<string, unknown>])[0]).toMatchObject({ payment_due_days: 0, invoice_intro: "Guten Tag", invoice_closing: "Danke" });
+  });
+
+  it("defaults the payment term to 14 days and rejects more than 365", async () => {
+    const fake = seed({ data: null, error: null });
+    renderTab();
+    expect(await screen.findByLabelText("Zahlungsziel (Tage)")).toHaveValue("14");
+    type("Firmenname", "Muster Bau GmbH");
+    type("Straße und Hausnummer", "Hauptstr. 1");
+    type("PLZ", "01067");
+    type("Ort", "Dresden");
+    type("Zahlungsziel (Tage)", "366");
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByText("Gib ganze Tage von 0 bis 365 ein")).toBeInTheDocument();
+    expect(upserts(fake)).toHaveLength(0);
+  });
 });
