@@ -5,7 +5,7 @@ import { Document, Page, renderToBuffer, Text, View } from "npm:@react-pdf/rende
 import { registerQuoteFonts } from "../pdf/fonts.ts";
 import { formatDateDe, type QuotePdfData } from "../pdf/quoteData.ts";
 import { ItemRow, Line, money, PageFooter, pct, s, SellerHeader, sellerAddressLine, sellerDisplayName } from "../pdf/quoteDocument.tsx";
-import type { InvoiceData } from "./invoiceData.ts";
+import type { InvoiceData, SellerSnapshot } from "./invoiceData.ts";
 
 const orUndef = (v: string | null): string | undefined => (v?.trim() ? v : undefined);
 
@@ -13,8 +13,8 @@ const orUndef = (v: string | null): string | undefined => (v?.trim() ? v : undef
 // amounts and the XML stay positive (R19).
 const signed = (n: number, negative: boolean) => (negative && n !== 0 ? -n : n);
 
-function pdfSeller(d: InvoiceData, logoDataUrl?: string): QuotePdfData["seller"] {
-  const x = d.seller;
+/** Maps a seller snapshot to the shared letterhead props (also used by the dunning notice). */
+export function pdfSeller(x: SellerSnapshot, logoDataUrl?: string): QuotePdfData["seller"] {
   return {
     companyName: x.company_name, legalForm: orUndef(x.legal_form), street: x.street, postalCode: x.postal_code, city: x.city,
     phone: orUndef(x.phone), email: orUndef(x.email), website: orUndef(x.website),
@@ -26,7 +26,7 @@ function pdfSeller(d: InvoiceData, logoDataUrl?: string): QuotePdfData["seller"]
 
 export function InvoiceDocument({ data, logoDataUrl }: { data: InvoiceData; logoDataUrl?: string }) {
   const { buyer, totals } = data;
-  const seller = pdfSeller(data, logoDataUrl);
+  const seller = pdfSeller(data.seller, logoDataUrl);
   const isCancellation = data.type === "cancellation";
   const title = isCancellation ? `Stornorechnung ${data.number}` : `Rechnung ${data.number}`;
   const prop = buyer.property;
