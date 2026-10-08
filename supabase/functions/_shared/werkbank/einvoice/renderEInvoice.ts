@@ -1,5 +1,9 @@
 // The one invoice file: the visual PDF with factur-x.xml embedded (Factur-X EN 16931, PDF/A-3).
-import { InvoiceService } from "npm:@e-invoice-eu/core@3.4.0";
+// esm.sh's single-file build instead of npm:, so the edge bundle carries only the code that runs
+// (the npm package ships every build, source maps and an Excel library: the eszip exceeded the
+// upload limit). Version pinned; the Mustang CI job validates the output on every change.
+// @deno-types="https://esm.sh/@e-invoice-eu/core@3.4.0/dist/index.d.ts"
+import { InvoiceService } from "https://esm.sh/@e-invoice-eu/core@3.4.0?bundle&target=deno";
 import { toUblInput } from "./facturx.ts";
 import type { InvoiceData } from "./invoiceData.ts";
 import { renderInvoicePdf } from "./invoiceDocument.tsx";

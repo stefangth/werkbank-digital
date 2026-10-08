@@ -3,7 +3,7 @@
 // module only formats them and refuses a set that would break BR-CO-10/13/15 (BR-CO-14 holds
 // by construction: BT-110 is the sum of the BG-23 tax amounts).
 // The library's schema wants every amount, quantity and percentage as a string.
-import type { Invoice } from "npm:@e-invoice-eu/core@3.4.0";
+import type { Invoice } from "https://esm.sh/@e-invoice-eu/core@3.4.0/dist/index.d.ts";
 import type { InvoiceData } from "./invoiceData.ts";
 
 type Ubl = Invoice["ubl:Invoice"];
