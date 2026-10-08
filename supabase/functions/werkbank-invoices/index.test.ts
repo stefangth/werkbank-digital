@@ -460,6 +460,45 @@ Deno.test("issue with send and no recipient finalizes nothing", async () => {
   assertEquals(writes([...t.calls, ...t.userCalls]), []);
 });
 
+Deno.test("issue with send and a malformed address is invalid_recipient and finalizes nothing", async () => {
+  const t = setup();
+  const send = { to: ["kunde@example.com"], cc: ["kein-at-zeichen"], message: "" };
+  const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV, send }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(await res.json(), { error: "invalid_recipient" });
+  assertEquals(t.userCalls.filter((c) => c.table === "rpc:werkbank.finalize_invoice"), [], "no finalize RPC");
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
+Deno.test("more than ten recipients is too_many_recipients and finalizes nothing", async () => {
+  const t = setup();
+  const to = Array.from({ length: 6 }, (_, i) => `to${i}@example.com`);
+  const cc = Array.from({ length: 5 }, (_, i) => `cc${i}@example.com`);
+  const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV, send: { to, cc, message: "" } }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(await res.json(), { error: "too_many_recipients" });
+  assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
+Deno.test("send dedupes addresses case-insensitively across to and cc", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH, pdf_sha256: "ab" }), opts: stored });
+  const res = await handle(
+    request({ action: "send", org_id: ORG, invoice_id: INV, to: ["A@x.de", "a@x.de"], cc: ["a@X.de"], message: "" }),
+    t.deps,
+    t.render,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(emails(t).map((m) => m.recipient_email), ["A@x.de"]);
+});
+
+Deno.test("send with a malformed address is invalid_recipient and emails nothing", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH, pdf_sha256: "ab" }), opts: stored });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, to: ["kunde@example"], cc: [], message: "" }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(await res.json(), { error: "invalid_recipient" });
+  assertEquals(emails(t), []);
+});
+
 Deno.test("issue with send reports send_failed with issued: true when the email fails", async () => {
   const t = setup({ opts: { emailResult: { data: null, error: { message: "down" } } } });
   const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV, send: SEND }), t.deps, t.render);

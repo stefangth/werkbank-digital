@@ -51,6 +51,7 @@ import {
 import { renderInvoicePdf } from "../_shared/werkbank/einvoice/invoiceDocument.tsx";
 import { renderEInvoice } from "../_shared/werkbank/einvoice/renderEInvoice.ts";
 import { type InvoiceBlocker, invoicePreflight } from "../_shared/werkbank/invoicePreflight.ts";
+import { checkRecipients } from "../_shared/werkbank/recipients.ts";
 import { formatDateDe } from "../_shared/werkbank/pdf/quoteData.ts";
 
 export interface InvoiceRenderers {
@@ -308,17 +309,23 @@ interface SendInput {
 }
 
 const addresses = (v: unknown): string[] =>
-  Array.isArray(v) ? [...new Set(v.map((a) => (typeof a === "string" ? a.trim() : "")).filter(Boolean))] : [];
+  Array.isArray(v) ? v.map((a) => (typeof a === "string" ? a.trim() : "")).filter(Boolean) : [];
 
-/** { to, cc, message } from a send body; a missing recipient is the no_recipient preflight failure. */
+/**
+ * { to, cc, message } from a send body; a missing recipient is the no_recipient preflight failure,
+ * a malformed address 422 invalid_recipient, more than MAX_RECIPIENTS 422 too_many_recipients
+ * (the codes werkbank-quotes uses). Runs before finalize, so a bad address never leaves an issued
+ * but unsent invoice.
+ */
 function parseSend(raw: unknown): SendInput | Response {
   const b = isRecord(raw) ? raw : {};
   const to = addresses(b.to);
-  const cc = addresses(b.cc).filter((a) => !to.includes(a));
   if (invoicePreflight({ profile: null, itemCount: 0, serviceDateFrom: null, buyer: null, recipients: to }).includes("no_recipient")) {
     return json({ error: "preflight_failed", blockers: ["no_recipient"] }, 422);
   }
-  return { to, cc, message: typeof b.message === "string" ? b.message : "" };
+  const checked = checkRecipients(to, addresses(b.cc));
+  if ("error" in checked) return json({ error: checked.error }, 422);
+  return { ...checked, message: typeof b.message === "string" ? b.message : "" };
 }
 
 function sendFailure(error: "load_failed" | "send_failed", issued: boolean): Response {
