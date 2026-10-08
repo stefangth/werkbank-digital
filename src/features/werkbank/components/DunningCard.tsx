@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/ui/status-pill";
 import { berlinDateKey, formatDateDMY } from "@/lib/dates";
 import type { DunningNotice } from "../data/dunning";
-import { useDunningDownload, useSendDunning } from "../hooks/useDunningActions";
+import { useDunningDownload, useIssueDunning, useSendDunning } from "../hooks/useDunningActions";
 import { useClearDunningHold, useDunningHold, useDunningNotices, useInvoiceBalance } from "../hooks/useOpenItems";
 import { dunningBlockers, nextDunningStage } from "../lib/dunningBlockers";
 import { DUNNING_STAGE_TITLES } from "../lib/dunningDefaults";
@@ -85,7 +85,10 @@ function NoticeRow({ notice: n }: { notice: DunningNotice }) {
   const { t } = useTranslation("werkbank");
   const download = useDunningDownload();
   const send = useSendDunning();
-  const mailFailed = n.delivery === "email" && !n.sent_at;
+  const issue = useIssueDunning();
+  // A notice without its file is still being rendered (or the render failed): retrying resumes it.
+  const unrendered = !n.pdf_path;
+  const mailFailed = !unrendered && n.delivery === "email" && !n.sent_at;
   const recipients = n.sent_to ?? [];
 
   const openPdf = () => {
@@ -104,17 +107,26 @@ function NoticeRow({ notice: n }: { notice: DunningNotice }) {
       .then(() => toast.success(t("dunning.row.resent")))
       .catch(() => toast.error(t("dunning.row.resendFailed")));
 
+  const retryRender = () =>
+    issue.mutateAsync({
+      invoiceId: n.invoice_id, delivery: n.delivery === "email" ? "email" : "print",
+      ...(n.delivery === "email" ? { send: recipients.length ? { to: recipients } : {} } : {}),
+    })
+      .then(() => toast.success(t("dunning.row.retried")))
+      .catch(() => toast.error(t("dunning.row.retryFailed")));
+
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
       <span className="font-medium">{stageTitle(n.stage)}</span>
       <Metric size="body">{formatDateDMY(n.notice_date)}</Metric>
       <span className="text-muted-foreground">{t("dunning.row.deadline")} <Metric size="body">{formatDateDMY(n.payment_deadline)}</Metric></span>
-      <StatusPill tone={mailFailed ? "waiting" : "neutral"}>
-        {t(mailFailed ? "dunning.row.sendFailed" : n.delivery === "email" ? "dunning.row.email" : "dunning.row.print")}
+      <StatusPill tone={mailFailed || unrendered ? "waiting" : "neutral"}>
+        {t(unrendered ? "dunning.row.rendering" : mailFailed ? "dunning.row.sendFailed" : n.delivery === "email" ? "dunning.row.email" : "dunning.row.print")}
       </StatusPill>
       {recipients.length > 0 && <span className="text-muted-foreground">{recipients.join(", ")}</span>}
       <span className="ml-auto flex gap-2">
         {n.pdf_path && <Button variant="secondary" disabled={download.isPending} onClick={() => void openPdf()}>{t("dunning.row.pdf")}</Button>}
+        {unrendered && <Button variant="secondary" disabled={issue.isPending} onClick={() => void retryRender()}>{t("dunning.row.retry")}</Button>}
         {n.delivery === "email" && n.pdf_path && (
           <Button variant="secondary" disabled={send.isPending} onClick={() => void resend()}>{t("dunning.row.resend")}</Button>
         )}

@@ -124,7 +124,7 @@ describe("DunningCard", () => {
     expect(preview.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", paymentDeadline: "2026-10-15" });
   });
 
-  it("says created but not sent when the mail fails, and the list offers Erneut senden", async () => {
+  it("warns Erstellt, Versand fehlgeschlagen and closes the dialog when the mail fails", async () => {
     issue.mutateAsync.mockRejectedValue(new DunningActionError("send_failed", [], true));
     render();
     fireEvent.click(screen.getByRole("button", { name: "Zahlungserinnerung erstellen" }));
@@ -149,6 +149,23 @@ describe("DunningCard", () => {
     expect(screen.getByText("Versand fehlgeschlagen")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
     await waitFor(() => expect(sendM.mutateAsync).toHaveBeenCalledWith({ noticeId: "n1", to: ["rechnung@example.de"] }));
+  });
+
+  it("offers a retry for unrendered notices and resumes them without a new stage", async () => {
+    st.notices = [notice({ pdf_path: null, sent_at: null })];
+    render();
+    expect(screen.getByText("PDF wird erzeugt")).toBeInTheDocument();
+    expect(screen.queryByText("Versand fehlgeschlagen")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Erneut senden" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "email", send: { to: ["rechnung@example.de"] } }));
+  });
+
+  it("retries an unrendered print notice without send", async () => {
+    st.notices = [notice({ pdf_path: null, delivery: "print", sent_to: null, sent_at: null })];
+    render();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledWith({ invoiceId: "i1", delivery: "print" }));
   });
 
   it("opens a stored PDF", async () => {

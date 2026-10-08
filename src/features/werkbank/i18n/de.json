@@ -207,7 +207,11 @@
       "pdf": "PDF",
       "resend": "Erneut senden",
       "resent": "Mahnung gesendet.",
-      "resendFailed": "Die Mahnung konnte nicht gesendet werden."
+      "resendFailed": "Die Mahnung konnte nicht gesendet werden.",
+      "rendering": "PDF wird erzeugt",
+      "retry": "Erneut versuchen",
+      "retried": "Mahnung fertiggestellt.",
+      "retryFailed": "Die Mahnung konnte nicht fertiggestellt werden."
     },
     "blockers": {
       "not_issued": "Nur für abgeschlossene Rechnungen möglich.",
@@ -232,7 +236,7 @@
       "sent": "{{stage}} erstellt und gesendet.",
       "created": "{{stage}} erstellt.",
       "issuedSendFailed": "Erstellt, Versand fehlgeschlagen. Sende die Mahnung erneut über die Liste.",
-      "issuedRenderFailed": "Erstellt, das PDF ist noch nicht fertig. Versuche es gleich in der Liste noch einmal."
+      "issuedRenderFailed": "Erstellt, das PDF ist noch nicht fertig. Klicke in der Liste auf Erneut versuchen."
     },
     "hold": {
       "set": "Mahnsperre setzen",

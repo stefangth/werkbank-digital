@@ -207,7 +207,11 @@
       "pdf": "PDF",
       "resend": "Send again",
       "resent": "Notice sent.",
-      "resendFailed": "The notice could not be sent."
+      "resendFailed": "The notice could not be sent.",
+      "rendering": "PDF is being created",
+      "retry": "Try again",
+      "retried": "Notice completed.",
+      "retryFailed": "The notice could not be completed."
     },
     "blockers": {
       "not_issued": "Only possible for finalised invoices.",
@@ -232,7 +236,7 @@
       "sent": "{{stage}} created and sent.",
       "created": "{{stage}} created.",
       "issuedSendFailed": "Created, sending failed. Send the notice again from the list.",
-      "issuedRenderFailed": "Created, the PDF is not ready yet. Try again from the list in a moment."
+      "issuedRenderFailed": "Created, the PDF is not ready yet. Choose Try again in the list."
     },
     "hold": {
       "set": "Put on hold",
