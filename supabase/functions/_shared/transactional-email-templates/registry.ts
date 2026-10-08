@@ -44,10 +44,11 @@ import { template as accountEmailChanged } from './account-email-changed.tsx'
 import { template as magicLink } from './magic-link.tsx'
 import { template as airtableSyncHeld } from './airtable-sync-held.tsx'
 // Quote emails of the Werkbank module (ADR 0013 allow-list entry in scripts/moduleIsolation.test.ts).
-// Removing the module removes these three imports and their TEMPLATES and SUBJECT_RESOLVERS entries.
+// Removing the module removes these four imports and their TEMPLATES and SUBJECT_RESOLVERS entries.
 import { template as quoteSent } from '../werkbank/emails/quote-sent.tsx'
 import { template as quoteDecided } from '../werkbank/emails/quote-decided.tsx'
 import { template as quoteDecisionConfirmation } from '../werkbank/emails/quote-decision-confirmation.tsx'
+import { template as invoiceSent } from '../werkbank/emails/invoice-sent.tsx'
 
 type RegisteredTemplateEntry = TemplateEntry & { family: EmailFamily }
 
@@ -68,6 +69,7 @@ export const TEMPLATES: Record<string, RegisteredTemplateEntry> = {
   'quote-sent': { ...quoteSent, family: 'pine' },
   'quote-decided': { ...quoteDecided, family: 'pine' },
   'quote-decision-confirmation': { ...quoteDecisionConfirmation, family: 'pine' },
+  'invoice-sent': { ...invoiceSent, family: 'pine' },
 }
 
 export interface TemplatePresentation {
@@ -175,6 +177,14 @@ const SUBJECT_RESOLVERS = {
     quoteNo: String(data.quote_no || ''),
     companyName: String(data.company_name || copy['quote-sent.companyFallback']),
   }),
+  'invoice-sent': (data, copy) => applyEmailTokens(
+    data.kind === 'cancellation' ? copy['invoice-sent.subjectCancellation'] : copy['invoice-sent.subject'],
+    {
+      invoiceNo: String(data.invoiceNo || ''),
+      precedingNo: String(data.precedingNo || ''),
+      companyName: String(data.companyName || copy['invoice-sent.companyFallback']),
+    },
+  ),
   'quote-decided': (data, copy) => applyEmailTokens(
     data.decision === 'rejected' ? copy['quote-decided.subjectRejected'] : copy['quote-decided.subjectAccepted'],
     { quoteNo: String(data.quote_no || '') },

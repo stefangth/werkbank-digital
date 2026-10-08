@@ -157,7 +157,7 @@ Deno.test("an unknown invoice is not_found", async () => {
 
 Deno.test("an unknown action and a missing id are bad requests", async () => {
   const t = setup();
-  assertEquals((await handle(request({ action: "send", org_id: ORG, invoice_id: INV }), t.deps, t.render)).status, 400);
+  assertEquals((await handle(request({ action: "frobnicate", org_id: ORG, invoice_id: INV }), t.deps, t.render)).status, 400);
   assertEquals((await handle(request({ action: "preview", org_id: ORG }), t.deps, t.render)).status, 400);
 });
 
@@ -330,16 +330,133 @@ Deno.test("issue on an issued invoice with a file is invalid_state (double issue
   assertEquals(t.einvoiceRendered.length, 0);
 });
 
-Deno.test("issue with send is unsupported for now and finalizes nothing", async () => {
+const SEND = { to: ["kunde@example.com"], cc: ["buchhaltung@example.com"], message: "Anbei die Rechnung." };
+const STORED = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x41, 0x33, 0x01]);
+const stored = { storageDownloadResult: { data: new Blob([STORED]), error: null } };
+const emails = (t: { invokeCalls: Array<{ name: string; body: unknown }> }) =>
+  t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => c.body as Record<string, any>);
+
+// ── send ─────────────────────────────────────────────────────────────────────
+
+Deno.test("send attaches the STORED file, never renders, and stamps sent_at and sent_to", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH, pdf_sha256: "ab" }), opts: stored });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { ok: true, email_sent: true });
+
+  assertEquals(t.pdfRendered.length + t.einvoiceRendered.length, 0, "the renderer is never called in send");
+  assertEquals(t.calls.filter((c) => c.method === "upload"), []);
+  assertEquals(t.calls.find((c) => c.method === "download")?.args[0], PATH);
+
+  const sent = emails(t);
+  assertEquals(sent.length, 2, "one message per recipient");
+  assertEquals(sent.map((m) => m.recipient_email), ["kunde@example.com", "buchhaltung@example.com"]);
+  for (const m of sent) {
+    assertEquals(m.template_name, "invoice-sent");
+    assertEquals(m.reply_to, "buero@muster.de");
+    assertEquals(m.locale, "de");
+    assertEquals(m.org_id, ORG);
+    assertEquals(m.attachments, [{ filename: "RE-0007.pdf", content_base64: encodeBase64(STORED) }]);
+    assertEquals(m.templateData, {
+      companyName: "Muster Sanitär", invoiceNo: "RE-0007", kind: "invoice",
+      grossFormatted: new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(119),
+      dueDateFormatted: "22.10.2026", message: "Anbei die Rechnung.",
+    });
+  }
+  assert(sent[0].templateData.grossFormatted.includes("119,00"));
+
+  const upd = t.calls.find((c) => c.method === "update");
+  assertExists(upd);
+  assertEquals(upd.args[0], { sent_at: "2026-06-01T12:00:00.000Z", sent_to: ["kunde@example.com", "buchhaltung@example.com"] });
+  const filters = t.calls.filter((c) => c.table === "werkbank.invoices" && c.method === "eq").map((c) => c.args.join("="));
+  assert(filters.includes(`id=${INV}`) && filters.includes(`org_id=${ORG}`));
+});
+
+Deno.test("send of a cancellation names the cancelled invoice", async () => {
+  const t = setup({
+    invoice: issuedRow({ type: "cancellation", invoice_no: "RE-0008", cancels_invoice_id: ORIG, pdf_path: PATH }),
+    original: issuedRow({ id: ORIG, invoice_no: "RE-0003", status: "cancelled", pdf_path: "x" }),
+    opts: stored,
+  });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  const data = emails(t)[0].templateData;
+  assertEquals(data.kind, "cancellation");
+  assertEquals(data.precedingNo, "RE-0003");
+  assertEquals(emails(t)[0].attachments[0].filename, "RE-0008.pdf");
+});
+
+Deno.test("a cancelled original can still be resent", async () => {
+  const t = setup({ invoice: issuedRow({ status: "cancelled", pdf_path: PATH }), opts: stored });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(emails(t).length, 2);
+});
+
+Deno.test("send without a recipient is a no_recipient preflight failure", async () => {
+  for (const to of [[], ["  "]]) {
+    const t = setup({ invoice: issuedRow({ pdf_path: PATH }), opts: stored });
+    const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, to, cc: ["x@example.com"], message: "" }), t.deps, t.render);
+    assertEquals(res.status, 422);
+    assertEquals(await res.json(), { error: "preflight_failed", blockers: ["no_recipient"] });
+    assertEquals(emails(t), []);
+    assertEquals(t.calls.filter((c) => c.method === "update"), []);
+  }
+});
+
+Deno.test("send on a draft or an unstored invoice is invalid_state", async () => {
+  for (const invoice of [invoiceRow(), issuedRow()]) {
+    const t = setup({ invoice, opts: stored });
+    const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+    assertEquals(res.status, 409);
+    assertEquals(await res.json(), { error: "invalid_state" });
+    assertEquals(emails(t), []);
+  }
+});
+
+Deno.test("a failed email is send_failed (issued) and leaves sent_at alone", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH }), opts: { ...stored, emailResult: { data: null, error: { message: "down" } } } });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+  assertEquals(res.status, 502);
+  assertEquals(await res.json(), { error: "send_failed", issued: true });
+  assertEquals(t.calls.filter((c) => c.method === "update"), []);
+});
+
+Deno.test("send answers load_failed when the stored file cannot be read", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH }) });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), t.deps, t.render);
+  assertEquals(res.status, 500);
+  assertEquals(emails(t), []);
+});
+
+Deno.test("issue with send stores the file, then emails the stored bytes", async () => {
+  const t = setup({ opts: stored });
+  const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV, send: SEND }), t.deps, t.render);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { ok: true, invoice_no: "RE-0007", email_sent: true });
+  assertEquals(t.einvoiceRendered.length, 1);
+  assertEquals(t.pdfRendered.length, 0);
+  // The attachment is the file that was just uploaded, not a second render.
+  assertEquals(emails(t)[0].attachments[0].content_base64, encodeBase64(EINVOICE));
+  assertEquals(t.calls.filter((c) => c.method === "download"), [], "no storage read needed after our own upload");
+  const updates = t.calls.filter((c) => c.method === "update").map((c) => Object.keys(c.args[0] as object).sort().join(","));
+  assertEquals(updates, ["pdf_path,pdf_sha256", "sent_at,sent_to"]);
+});
+
+Deno.test("issue with send and no recipient finalizes nothing", async () => {
   const t = setup();
-  const res = await handle(
-    request({ action: "issue", org_id: ORG, invoice_id: INV, send: { to: ["a@example.com"], cc: [], message: "" } }),
-    t.deps,
-    t.render,
-  );
-  assertEquals(res.status, 400);
-  assertEquals(await res.json(), { error: "unsupported" });
+  const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV, send: { to: [], cc: [], message: "" } }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(await res.json(), { error: "preflight_failed", blockers: ["no_recipient"] });
   assertEquals(writes([...t.calls, ...t.userCalls]), []);
+});
+
+Deno.test("issue with send reports send_failed with issued: true when the email fails", async () => {
+  const t = setup({ opts: { emailResult: { data: null, error: { message: "down" } } } });
+  const res = await handle(request({ action: "issue", org_id: ORG, invoice_id: INV, send: SEND }), t.deps, t.render);
+  assertEquals(res.status, 502);
+  assertEquals(await res.json(), { error: "send_failed", issued: true });
+  assertEquals(t.calls.filter((c) => c.method === "update").length, 1, "the file is stamped, sent_at is not");
 });
 
 Deno.test("an upload failure after finalize reports issued: true and does not stamp", async () => {
