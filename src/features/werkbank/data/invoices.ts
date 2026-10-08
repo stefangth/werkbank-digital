@@ -24,7 +24,7 @@ type Client = SupabaseClient<Database>;
 
 /** Keeps a search term from breaking out of the PostgREST `or(...)` filter. */
 function safeTerm(term: string): string {
-  return term.replace(/[,()%*\\]/g, " ").trim();
+  return term.replace(/[,()%*\\"]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /** Invoices of the org (with customer, property and totals), newest first, optionally narrowed. */

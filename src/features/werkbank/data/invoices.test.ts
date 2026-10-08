@@ -33,7 +33,7 @@ describe("fetchInvoices", () => {
   });
   it("searches number, customer, property and subject, and strips filter syntax", async () => {
     const fake = createFakeSupabase({ "werkbank.invoice_list": { data: [], error: null } });
-    await fetchInvoices(asClient(fake), "org-1", { filter: "all", search: "Mül,ler)" });
+    await fetchInvoices(asClient(fake), "org-1", { filter: "all", search: "Mül,\"ler)" });
     const or = fake.calls.find((c) => c.method === "or")!.args[0] as string;
     expect(or).toBe("invoice_no.ilike.%Mül ler%,customer_name.ilike.%Mül ler%,property_name.ilike.%Mül ler%,subject.ilike.%Mül ler%");
   });

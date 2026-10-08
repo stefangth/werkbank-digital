@@ -42,7 +42,7 @@ export function InvoiceActions({
     return download.mutateAsync(invoice.id)
       .then((url) =>
         showInTab(tab, url, (blocked) =>
-          toast.error(t("invoices.page.pdfBlocked"), { action: { label: t("invoices.page.pdfOpen"), onClick: () => window.open(blocked, "_blank") } })))
+          toast.error(t("invoices.page.pdfBlocked"), { action: { label: t("invoices.page.pdfOpen"), onClick: () => window.open(blocked, "_blank", "noopener") } })))
       .catch(() => {
         tab?.close();
         toast.error(t("invoices.page.pdfFailed"));
