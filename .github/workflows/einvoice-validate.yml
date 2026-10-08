@@ -1,0 +1,67 @@
+name: Validate e-invoices
+
+# Renders the Werkbank e-invoice fixtures through the real pipeline and validates each
+# PDF with the Mustang CLI (EN 16931 schematron + PDF/A-3). Path-filtered: the ordinary
+# CI workflow has no conditional jobs, and this one needs a JVM and a download, so it
+# only runs when the e-invoice code, its edge function, the fixture script or this file change.
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "supabase/functions/_shared/werkbank/einvoice/**"
+      - "supabase/functions/werkbank-invoices/**"
+      - "scripts/werkbank/**"
+      - ".github/workflows/einvoice-validate.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MUSTANG_VERSION: "2.26.0"
+  # SHA-256 of Mustang-CLI-2.26.0.jar from Maven Central.
+  MUSTANG_SHA256: 42d7868cb68264874a7b8cab4c3587b03b23ccc7cd72373da917f66758bb9736
+
+jobs:
+  mustang:
+    name: Mustang validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: denoland/setup-deno@v2
+        with:
+          # Same pin as the function tests in ci.yml.
+          deno-version: v2.5.6
+
+      - name: Download Mustang CLI
+        run: |
+          curl -fsSL -o mustang.jar "https://repo1.maven.org/maven2/org/mustangproject/Mustang-CLI/${MUSTANG_VERSION}/Mustang-CLI-${MUSTANG_VERSION}.jar"
+          echo "${MUSTANG_SHA256}  mustang.jar" | sha256sum --check -
+
+      - name: Typecheck scripts
+        run: deno check --node-modules-dir=none scripts/werkbank/*.ts
+
+      - name: Render fixtures
+        run: deno run --allow-read --allow-write --allow-env --node-modules-dir=none scripts/werkbank/einvoice-fixtures.ts "$RUNNER_TEMP/einv"
+
+      - name: Validate with Mustang
+        run: |
+          # Mustang exits non-zero on an invalid file; the gate below decides, so keep going.
+          for f in "$RUNNER_TEMP"/einv/*.pdf; do
+            java -jar mustang.jar --action validate --source "$f" > "${f%.pdf}.report" 2>&1 || true
+          done
+
+      # Fails on any summary other than status="valid" and on any error or warning;
+      # notices (XRechnung-only rules) are ignored. Prints the full report on failure.
+      - name: Gate the reports
+        run: deno run --allow-read scripts/werkbank/mustang-gate.ts "$RUNNER_TEMP"/einv/*.report
