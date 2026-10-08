@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { edgeResponseContext } from "@/lib/edgeErrors";
 import type { QuoteBlocker } from "../lib/quotePreflight";
+import { pdfBlobUrl } from "../lib/pdfTab";
 
 type Client = SupabaseClient<Database>;
 
@@ -66,10 +67,7 @@ async function invoke<T>(orgId: string, quoteId: string, client: Client, action:
  *  tab it opened before the call (see lib/pdfTab.ts). The URL is freed when the page unloads. */
 export async function previewQuote(client: Client, orgId: string, quoteId: string): Promise<string> {
   const { pdf_base64 } = await invoke<{ pdf_base64: string }>(orgId, quoteId, client, "preview");
-  const bytes = Uint8Array.from(atob(pdf_base64), (c) => c.charCodeAt(0));
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-  window.addEventListener("pagehide", () => URL.revokeObjectURL(url), { once: true });
-  return url;
+  return pdfBlobUrl(pdf_base64);
 }
 
 export async function sendQuote(client: Client, orgId: string, quoteId: string, body: SendBody): Promise<{ emailSent: boolean }> {

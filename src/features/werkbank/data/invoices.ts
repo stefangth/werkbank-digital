@@ -13,7 +13,7 @@ export type InvoiceListQuery = { filter: InvoiceFilter; search: string; customer
 
 /** The columns a user edits on a draft; number, status, snapshots and the send stamps are service-only. */
 export type InvoicePatch = Partial<Pick<Invoice,
-  "contact_id" | "property_id" | "location_note" | "subject" | "discount_percent" | "intro_text" | "closing_text"
+  "customer_id" | "contact_id" | "property_id" | "location_note" | "subject" | "discount_percent" | "intro_text" | "closing_text"
   | "payment_terms_text" | "payment_due_days" | "service_date_from" | "service_date_to"
 >>;
 

@@ -1,22 +1,160 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Receipt } from "lucide-react";
+import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Metric } from "@/components/ui/metric";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useInvoice } from "../hooks/useInvoices";
+import { StatusPill } from "@/components/ui/status-pill";
+import { Token } from "@/components/ui/token";
+import { formatDateDMY } from "@/lib/dates";
+import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
+import { DocumentTotalsCard } from "../components/DocumentTotalsCard";
+import { InvoiceHeaderForm } from "../components/InvoiceHeaderForm";
+import { IssueInvoiceDialog } from "../components/IssueInvoiceDialog";
+import { LineItemsEditor } from "../components/LineItemsEditor";
+import type { InvoicePatch } from "../data/invoices";
+import { useCustomer } from "../hooks/useCustomers";
+import { usePreviewInvoice } from "../hooks/useInvoiceActions";
+import { useInvoice, useInvoiceMutations } from "../hooks/useInvoices";
+import { useProperty } from "../hooks/useProperties";
+import { mapDbError } from "../lib/dbErrors";
+import { customerDisplayName } from "../lib/displayName";
+import { INVOICE_STATUS_TONES, type InvoiceStatus } from "../lib/invoiceStatus";
+import { openPendingTab, pdfBlobUrl, showInTab } from "../lib/pdfTab";
+import { INVOICES_PATH, invoicePath } from "../paths";
 
-/** The invoice page. Task 15 replaces the body; for now it shows the header. */
+/** One invoice. A draft is edited in place (header, service period, payment term, items) and
+ *  issued through the issue dialog, after which it can no longer change. Any other status is
+ *  shown read only. A cancellation draft keeps customer, discount and items of the original. */
 export function InvoicePage() {
   const { t } = useTranslation("werkbank");
-  const { id } = useParams();
-  const { data: invoice, isLoading, isError } = useInvoice(id);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data: invoice, isLoading, isError, refetch } = useInvoice(id);
+  const { data: original } = useInvoice(invoice?.cancels_invoice_id ?? undefined);
+  const { data: customer } = useCustomer(invoice?.customer_id);
+  const { data: property } = useProperty(invoice?.property_id ?? undefined);
+  const { update, remove } = useInvoiceMutations();
+  const preview = usePreviewInvoice();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [issuing, setIssuing] = useState(false);
+  // Keyed by the invoice id: the route reuses this component, so a lock must not carry over.
+  const [lockedId, setLockedId] = useState<string | null>(null);
 
-  if (isLoading) return <Skeleton className="h-32 w-full" />;
-  if (isError || !invoice) return <Alert variant="destructive">{t("invoices.page.loadFailed")}</Alert>;
+  if (isLoading) return <Skeleton className="h-48 w-full" />;
+  if (isError) return <Alert variant="destructive">{t("invoices.page.loadFailed")}</Alert>;
+  // After a delete the refetch finds no invoice before the navigation runs: keep the skeleton.
+  if (!invoice && (remove.isPending || remove.isSuccess)) return <Skeleton className="h-48 w-full" />;
+  if (!invoice) {
+    return (
+      <div className="space-y-4">
+        <EmptyState icon={Receipt} title={t("invoices.page.notFound.title")} reason={t("invoices.page.notFound.reason")} />
+        <p className="text-center">
+          <Link to={INVOICES_PATH} className="text-sm font-medium text-accent-text hover:underline">
+            {t("invoices.page.notFound.back")}
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  const isDraft = invoice.status === "draft";
+  const isCancellation = invoice.type === "cancellation";
+  const locked = lockedId === invoice.id;
+  const editable = isDraft && !locked;
+  const status = invoice.status as InvoiceStatus;
+  const names = {
+    customer: customer ? customerDisplayName(customer) : null,
+    property: property?.name ?? null,
+  };
+
+  // A save that hits an invoice issued meanwhile: fetch the real state, so the page turns read only.
+  const save = (patch: InvoicePatch) =>
+    update.mutate(
+      { id: invoice.id, patch },
+      {
+        onError: (e) => {
+          if (mapDbError(e) === "errors.invoiceLocked") {
+            setLockedId(invoice.id);
+            void refetch();
+          }
+        },
+      },
+    );
+
+  // The tab is opened inside the click, before the edge call, so the browser allows it.
+  const showPreview = () => {
+    const tab = openPendingTab();
+    return preview.mutateAsync(invoice.id)
+      .then((base64) =>
+        showInTab(tab, pdfBlobUrl(base64), (url) =>
+          toast.error(t("invoices.page.pdfBlocked"), { action: { label: t("invoices.page.pdfOpen"), onClick: () => window.open(url, "_blank") } })))
+      .catch(() => {
+        tab?.close();
+        toast.error(t("invoices.page.pdfFailed"));
+      });
+  };
+
   return (
-    <PageHeader
-      title={invoice.invoice_no ?? t("invoices.draftNumber")}
-      sub={invoice.subject ?? undefined}
-    />
+    <div className="space-y-6">
+      <Link to={INVOICES_PATH} className="text-sm font-medium text-accent-text hover:underline">
+        {t("invoices.page.back")}
+      </Link>
+      <PageHeader
+        eyebrow={t("invoices.title")}
+        title={isCancellation ? t("invoices.page.cancellationTitle") : invoice.subject ?? invoice.invoice_no ?? t("invoices.draftNumber")}
+        actions={
+          editable && (
+            <>
+              <Button variant="secondary" disabled={preview.isPending} onClick={() => void showPreview()}>
+                {t("invoices.page.preview")}
+              </Button>
+              <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>{t("invoices.page.delete")}</Button>
+              <Button onClick={() => setIssuing(true)}>{t("invoices.page.issue")}</Button>
+            </>
+          )
+        }
+      />
+      <div className="flex flex-wrap items-center gap-3">
+        {invoice.invoice_no && <Token className="text-lg">{invoice.invoice_no}</Token>}
+        <StatusPill tone={INVOICE_STATUS_TONES[status] ?? "neutral"}>{t(`invoices.status.${status}`)}</StatusPill>
+        {isCancellation && <StatusPill tone="neutral">{t("invoices.type.cancellation")}</StatusPill>}
+        {invoice.issue_date && <Metric size="body">{t("invoices.header.issueDate")} {formatDateDMY(invoice.issue_date)}</Metric>}
+        {invoice.due_date && <Metric size="body">{t("invoices.header.dueDate")} {formatDateDMY(invoice.due_date)}</Metric>}
+        {isCancellation && original && (
+          <Link to={invoicePath(original.id)} className="text-sm font-medium text-accent-text hover:underline">
+            {t("invoices.page.cancels", { number: original.invoice_no })}
+          </Link>
+        )}
+      </div>
+
+      {locked && <Alert variant="destructive">{t("errors.invoiceLocked")}</Alert>}
+
+      <InvoiceHeaderForm key={`${invoice.id}-${editable}`} invoice={invoice} readOnly={!editable} names={names} onPatch={save} />
+
+      <LineItemsEditor
+        docRef={{ invoiceId: invoice.id }}
+        readOnly={!editable || isCancellation}
+        onLocked={() => { setLockedId(invoice.id); void refetch(); }}
+      />
+      <DocumentTotalsCard totals={invoice.totals} isPrivateCustomer={customer?.kind === "private"} />
+
+      {issuing && isDraft && (
+        <IssueInvoiceDialog invoice={invoice} mode="issue" open onOpenChange={setIssuing} onStateChanged={() => void refetch()} />
+      )}
+      <DeleteConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title={t("invoices.page.deleteTitle")}
+        body={t("invoices.page.deleteBody")}
+        onConfirm={() => remove.mutate(invoice.id, { onSuccess: () => { setConfirmingDelete(false); navigate(INVOICES_PATH); } })}
+        pending={remove.isPending}
+      />
+    </div>
   );
 }

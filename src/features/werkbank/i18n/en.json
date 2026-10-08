@@ -955,7 +955,23 @@
     },
     "page": {
       "loadFailed": "The invoice could not be loaded.",
-      "back": "All invoices"
+      "back": "All invoices",
+      "notFound": {
+        "title": "Invoice not found",
+        "reason": "It may have been deleted.",
+        "back": "Back to invoices"
+      },
+      "cancellationTitle": "Cancellation",
+      "cancels": "Cancels invoice {{number}}",
+      "cancellationLocked": "Customer, discount and items come from the original invoice and cannot be changed.",
+      "preview": "Preview",
+      "delete": "Delete",
+      "issue": "Issue",
+      "deleteTitle": "Delete this draft?",
+      "deleteBody": "The draft and its items are removed for good.",
+      "pdfFailed": "The PDF could not be opened.",
+      "pdfBlocked": "Your browser blocked the new tab.",
+      "pdfOpen": "Open PDF"
     },
     "send": {
       "errors": {
@@ -968,7 +984,46 @@
         "preflight": "The invoice is not ready yet. Complete the missing details first.",
         "sendFailed": "The invoice was issued, but the email could not be sent.",
         "generic": "Something went wrong. Please try again."
+      },
+      "issueTitle": "Issue invoice",
+      "issueHint": "The invoice gets its number, the PDF and the e-invoice. You can send it right away or later.",
+      "warning": "After this, the invoice can no longer be changed.",
+      "sendTitle": "Send invoice",
+      "sendHint": "The customer gets the stored PDF by email.",
+      "to": "To",
+      "cc": "Copy (CC)",
+      "message": "Message",
+      "defaultMessage": "Hello,\n\nplease find our invoice attached. Thank you for your order.\n\nKind regards",
+      "defaultMessageCancellation": "Hello,\n\nplease find our cancellation invoice attached.\n\nKind regards",
+      "issueOnly": "Issue only",
+      "issueAndSend": "Issue and send",
+      "send": "Send",
+      "issued": "Invoice {{number}} issued.",
+      "issuedAndSent": "Invoice {{number}} issued and sent.",
+      "issuedSendFailed": "Issued, sending failed",
+      "issuedRenderFailed": "Issued. The PDF is not ready yet.",
+      "sent": "The invoice was sent.",
+      "emailFailed": "The email could not be sent.",
+      "profileLoad": "Your company details could not be loaded. Reload the page.",
+      "blockers": {
+        "no_items": "The invoice has no item yet.",
+        "no_service_date": "Enter a service date.",
+        "profile_incomplete": "Your company details are incomplete. Add name, address, email, a tax number or VAT id and the IBAN in the settings.",
+        "no_buyer_address": "The customer's billing address is incomplete. Add street, postal code and city.",
+        "no_recipient": "Add at least one recipient."
       }
+    },
+    "header": {
+      "serviceFrom": "Service date from",
+      "serviceTo": "Service date to",
+      "serviceToClear": "Remove service date to",
+      "servicePeriod": "Service date",
+      "servicePeriodRange": "{{from}} to {{to}}",
+      "paymentDueDays": "Payment term in days",
+      "paymentDueDaysValue_one": "{{count}} day",
+      "paymentDueDaysValue_other": "{{count}} days",
+      "issueDate": "Invoice date",
+      "dueDate": "Due on"
     }
   }
 }

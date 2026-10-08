@@ -14,3 +14,12 @@ export function showInTab(tab: Window | null, url: string, onBlocked: (url: stri
   if (!tab) onBlocked(url);
   else if (!tab.closed) tab.location.href = url;
 }
+
+/** A blob URL for the base64 bytes of a PDF, to show in a pending tab. The URL is freed when the
+ *  page unloads. */
+export function pdfBlobUrl(base64: string): string {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  window.addEventListener("pagehide", () => URL.revokeObjectURL(url), { once: true });
+  return url;
+}

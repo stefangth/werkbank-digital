@@ -1,0 +1,185 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { InvoiceActionError, invoiceActionErrorKey } from "../data/invoiceActions";
+import type { Invoice } from "../data/invoices";
+import { useCompanyProfile } from "../hooks/useCompanyProfile";
+import { useContacts } from "../hooks/useContacts";
+import { useCustomer } from "../hooks/useCustomers";
+import { useDocumentItems } from "../hooks/useDocumentItems";
+import { useIssueInvoice, useSendInvoice } from "../hooks/useInvoiceActions";
+import { useProperty } from "../hooks/useProperties";
+import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
+
+export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
+
+/** Addresses separated by comma, semicolon or whitespace; an address typed twice is kept once
+ *  (compared case-insensitively). */
+const splitAddresses = (value: string): string[] => {
+  const seen = new Set<string>();
+  return value.split(/[,;\s]+/).filter((a) => {
+    const key = a.toLowerCase();
+    if (!a || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+/** Issue a draft invoice ("issue": irreversible, with "Nur abschließen" and "Abschließen und
+ *  senden"), or mail an issued one ("send"). The recipient is prefilled with the customer's
+ *  invoice email, else the contact's, else the customer's email. The buttons stay disabled while
+ *  `invoicePreflight` finds blockers; the server runs the same check. `onStateChanged` is called
+ *  whenever the invoice may have left the draft state (issued, or a conflict), so the caller
+ *  refetches and turns read only. */
+export function IssueInvoiceDialog({
+  invoice, mode, open, onOpenChange, onStateChanged,
+}: {
+  invoice: IssuableInvoice;
+  mode: "issue" | "send";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onStateChanged?: () => void;
+}) {
+  const { t } = useTranslation("werkbank");
+  const issue = useIssueInvoice();
+  const send = useSendInvoice();
+  const { data: profile, isLoading: profileLoading, isError: profileError } = useCompanyProfile();
+  const { data: items, isLoading: itemsLoading } = useDocumentItems({ invoiceId: invoice.id });
+  const { data: customer } = useCustomer(invoice.customer_id);
+  const { data: property } = useProperty(invoice.property_id ?? undefined);
+  const { data: customerContacts } = useContacts(invoice.customer_id ? { customerId: invoice.customer_id } : undefined);
+  const { data: propertyContacts } = useContacts(invoice.property_id ? { propertyId: invoice.property_id } : undefined);
+
+  const contact = invoice.contact_id
+    ? [...(propertyContacts ?? []), ...(customerContacts ?? [])].find((c) => c.id === invoice.contact_id)
+    : undefined;
+  const defaultTo = customer?.invoice_email?.trim() || contact?.email?.trim() || customer?.email?.trim() || "";
+
+  // null = untouched, so the prefill follows the customer and contact data as it loads.
+  const [toInput, setToInput] = useState<string | null>(null);
+  const [ccInput, setCcInput] = useState("");
+  const [message, setMessage] = useState(() =>
+    t(invoice.type === "cancellation" ? "invoices.send.defaultMessageCancellation" : "invoices.send.defaultMessage"));
+  const [error, setError] = useState<InvoiceActionError | null>(null);
+
+  const to = splitAddresses(toInput ?? defaultTo);
+  const cc = splitAddresses(ccInput);
+  const issueMode = mode === "issue";
+  const loading = !customer || (!!invoice.property_id && !property) || (issueMode && (profileLoading || itemsLoading));
+
+  // Same rule as the SQL buyer snapshot: the property's billing address once it has a billing name.
+  const buyer = property?.billing_name != null
+    ? { street: property.billing_street, postal_code: property.billing_postal_code, city: property.billing_city }
+    : customer ?? null;
+  const check = (recipients: string[] | null) =>
+    invoicePreflight({
+      profile: profile ?? null,
+      itemCount: (items ?? []).filter((i) => i.kind === "item").length,
+      serviceDateFrom: invoice.service_date_from,
+      buyer,
+      recipients,
+    });
+  // An issued invoice only needs a recipient: its PDF is already stored.
+  const sendBlockers = issueMode ? check(to) : check(to).filter((b) => b === "no_recipient");
+  const issueBlockers = issueMode ? check(null) : [];
+  const shownBlockers: InvoiceBlocker[] = error?.blockers.length
+    ? error.blockers
+    : loading ? [] : sendBlockers.filter((b) => !profileError || b !== "profile_incomplete");
+  const pending = issue.isPending || send.isPending;
+  const issueDisabled = loading || pending || (issueMode && profileError) || issueBlockers.length > 0;
+  const sendDisabled = issueDisabled || sendBlockers.length > 0;
+
+  const stateChanged = () => {
+    onOpenChange(false);
+    onStateChanged?.();
+  };
+
+  const submit = async (withSend: boolean) => {
+    setError(null);
+    const body = { to, cc, message: message.trim() };
+    try {
+      if (!issueMode) {
+        const { emailSent } = await send.mutateAsync({ invoiceId: invoice.id, body });
+        if (emailSent) toast.success(t("invoices.send.sent"));
+        else toast.warning(t("invoices.send.emailFailed"));
+        stateChanged();
+        return;
+      }
+      const res = await issue.mutateAsync(withSend ? { invoiceId: invoice.id, send: body } : { invoiceId: invoice.id });
+      if (withSend && res.emailSent === false) toast.warning(t("invoices.send.issuedSendFailed"));
+      else toast.success(t(withSend ? "invoices.send.issuedAndSent" : "invoices.send.issued", { number: res.invoiceNo }));
+      stateChanged();
+    } catch (e) {
+      const err = e instanceof InvoiceActionError ? e : new InvoiceActionError("unknown");
+      if (err.issued) {
+        // The number is drawn and the invoice is final; only the PDF or the email is missing.
+        if (err.code === "send_failed") toast.warning(t("invoices.send.issuedSendFailed"));
+        else toast.error(t("invoices.send.issuedRenderFailed"));
+        stateChanged();
+      } else if (err.code === "invalid_state") {
+        // Issued or changed elsewhere meanwhile: refetch so the page shows the real state.
+        toast.error(t(invoiceActionErrorKey(err.code)));
+        stateChanged();
+      } else {
+        setError(err);
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{issueMode ? t("invoices.send.issueTitle") : t("invoices.send.sendTitle")}</DialogTitle>
+          <DialogDescription>{issueMode ? t("invoices.send.issueHint") : t("invoices.send.sendHint")}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {issueMode && <Alert variant="destructive" className="font-medium">{t("invoices.send.warning")}</Alert>}
+          <div className="space-y-2">
+            <Label htmlFor="issue-invoice-to">{t("invoices.send.to")}</Label>
+            <Input id="issue-invoice-to" type="text" value={toInput ?? defaultTo} onChange={(e) => setToInput(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="issue-invoice-cc">{t("invoices.send.cc")}</Label>
+            <Input id="issue-invoice-cc" type="text" value={ccInput} onChange={(e) => setCcInput(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="issue-invoice-message">{t("invoices.send.message")}</Label>
+            <Textarea id="issue-invoice-message" rows={5} value={message} onChange={(e) => setMessage(e.target.value)} />
+          </div>
+
+          {shownBlockers.length > 0 && (
+            <Alert variant="destructive">
+              <ul className="m-0 list-disc pl-4">
+                {shownBlockers.map((b) => <li key={b}>{t(`invoices.send.blockers.${b}`)}</li>)}
+              </ul>
+            </Alert>
+          )}
+          {issueMode && profileError && <Alert variant="destructive">{t("invoices.send.profileLoad")}</Alert>}
+          {error && error.blockers.length === 0 && <Alert variant="destructive">{t(invoiceActionErrorKey(error.code))}</Alert>}
+        </div>
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          {issueMode ? (
+            <>
+              <Button variant="secondary" disabled={issueDisabled} onClick={() => void submit(false)}>
+                {t("invoices.send.issueOnly")}
+              </Button>
+              <Button disabled={sendDisabled} onClick={() => void submit(true)}>{t("invoices.send.issueAndSend")}</Button>
+            </>
+          ) : (
+            <Button disabled={sendDisabled} onClick={() => void submit(true)}>{t("invoices.send.send")}</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
