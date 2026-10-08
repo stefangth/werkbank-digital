@@ -7,8 +7,10 @@ import type { AssignmentRow } from "../data/technicianApp";
 vi.mock("./MobileShell", () => ({ MobileShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
 vi.mock("./InstallHint", () => ({ InstallHint: () => null }));
 vi.mock("../hooks/useAssignments", () => ({ useAssignments: vi.fn(), useIsTechnicianHere: () => true }));
+vi.mock("./registerServiceWorker", () => ({ applyPendingUpdate: vi.fn() }));
 
 import { useAssignments } from "../hooks/useAssignments";
+import { applyPendingUpdate } from "./registerServiceWorker";
 import { AssignmentsPage } from "./AssignmentsPage";
 
 const row = (o: Partial<AssignmentRow>): AssignmentRow => ({
@@ -20,6 +22,12 @@ const renderPage = () => renderWithProviders(<MemoryRouter><AssignmentsPage /></
 
 describe("AssignmentsPage", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("loads a waiting app update here, where no report can be open", () => {
+    mockList({ isLoading: false, isError: false, data: [] });
+    renderPage();
+    expect(applyPendingUpdate).toHaveBeenCalledOnce();
+  });
 
   it("renders groups in order with hints on the 7 and 14 day windows and hides empty ones", () => {
     mockList({ isLoading: false, isError: false, data: [
