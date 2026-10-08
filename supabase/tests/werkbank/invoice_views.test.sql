@@ -1,7 +1,7 @@
 -- Werkbank Teil 4 (R3, R4): invoice branch of document_totals, invoice_list, immutable invoice files.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(29);
+SELECT plan(31);
 
 SET LOCAL timezone = 'UTC';
 
@@ -169,6 +169,14 @@ SELECT lives_ok($$DELETE FROM storage.objects WHERE bucket_id = 'werkbank-assets
 RESET ROLE;
 SELECT is((SELECT count(*)::int FROM storage.objects WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/invoices/x.pdf'), 1,
   'the invoice file is still there');
+
+-- Once the org is deleted (erasure, ADR-0013 removal), its invoice files can be deleted.
+SELECT lives_ok($$DELETE FROM public.organizations WHERE id = 'bbbbbbbb-0000-4000-b000-0000000000d1'$$,
+  'the org with issued invoices can be deleted');
+SET LOCAL ROLE service_role;
+SELECT lives_ok($$DELETE FROM storage.objects WHERE name = 'bbbbbbbb-0000-4000-b000-0000000000d1/invoices/x.pdf'$$,
+  'after the org is deleted its invoice file can be deleted');
+RESET ROLE;
 
 SELECT * FROM finish();
 ROLLBACK;
