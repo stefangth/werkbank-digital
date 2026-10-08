@@ -10,7 +10,7 @@ import { mapDbError } from "../lib/dbErrors";
 import { ORDERS_KEY } from "./useOrders";
 import { QUOTES_KEY } from "./useQuotes";
 
-const ITEMS_KEY = ["werkbank", "items"] as const;
+export const ITEMS_KEY = ["werkbank", "items"] as const;
 
 export function useDocumentItems(ref: DocumentRef | undefined) {
   return useQuery({
@@ -31,11 +31,12 @@ export function useItemMutations(ref: DocumentRef, onLocked?: () => void) {
 
   function useWiring<V, R>(mutationFn: (vars: V) => Promise<R>) {
     return useMutation({
+      mutationKey: [...key, "write"],
       mutationFn,
       onError: (e) => {
         const errorKey = mapDbError(e);
         toast.error(t(errorKey));
-        if (errorKey === "errors.quoteLocked" || errorKey === "errors.orderLocked") onLocked?.();
+        if (errorKey === "errors.quoteLocked" || errorKey === "errors.orderLocked" || errorKey === "errors.invoiceLocked") onLocked?.();
       },
       onSettled: () => Promise.all([key, "orderId" in ref ? ORDERS_KEY : QUOTES_KEY].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     });

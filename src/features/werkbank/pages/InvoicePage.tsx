@@ -1,3 +1,4 @@
+import { useIsMutating } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -15,12 +16,16 @@ import { formatDateDMY } from "@/lib/dates";
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
 import { DocumentTotalsCard } from "../components/DocumentTotalsCard";
 import { InvoiceHeaderForm } from "../components/InvoiceHeaderForm";
+import { InvoiceActions, PdfPendingNotice } from "../components/InvoiceActions";
+import { InvoiceHistory } from "../components/InvoiceHistory";
 import { IssueInvoiceDialog } from "../components/IssueInvoiceDialog";
 import { LineItemsEditor } from "../components/LineItemsEditor";
+import { refKey } from "../data/documentItems";
 import type { InvoicePatch } from "../data/invoices";
 import { useCustomer } from "../hooks/useCustomers";
 import { usePreviewInvoice } from "../hooks/useInvoiceActions";
-import { useInvoice, useInvoiceMutations } from "../hooks/useInvoices";
+import { ITEMS_KEY } from "../hooks/useDocumentItems";
+import { useCancellationOf, useInvoice, useInvoiceMutations } from "../hooks/useInvoices";
 import { useProperty } from "../hooks/useProperties";
 import { mapDbError } from "../lib/dbErrors";
 import { customerDisplayName } from "../lib/displayName";
@@ -39,7 +44,11 @@ export function InvoicePage() {
   const { data: original } = useInvoice(invoice?.cancels_invoice_id ?? undefined);
   const { data: customer } = useCustomer(invoice?.customer_id);
   const { data: property } = useProperty(invoice?.property_id ?? undefined);
+  const { data: cancelledBy } = useCancellationOf(
+    invoice?.id, invoice?.status === "cancelled" || (invoice?.status === "issued" && invoice.type === "invoice"));
   const { update, remove } = useInvoiceMutations();
+  // "Abschließen" waits for the last edit to be saved, so the PDF never misses it.
+  const itemWrites = useIsMutating({ mutationKey: [...ITEMS_KEY, refKey({ invoiceId: id ?? "" })] });
   const preview = usePreviewInvoice();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [issuing, setIssuing] = useState(false);
@@ -68,6 +77,7 @@ export function InvoicePage() {
   const locked = lockedId === invoice.id;
   const editable = isDraft && !locked;
   const status = invoice.status as InvoiceStatus;
+  const cancelled = invoice.status === "cancelled";
   const names = {
     customer: customer ? customerDisplayName(customer) : null,
     property: property?.name ?? null,
@@ -109,23 +119,25 @@ export function InvoicePage() {
         eyebrow={t("invoices.title")}
         title={isCancellation ? t("invoices.page.cancellationTitle") : invoice.subject ?? invoice.invoice_no ?? t("invoices.draftNumber")}
         actions={
-          editable && (
+          !isDraft ? (
+            <InvoiceActions invoice={invoice} onStateChanged={() => void refetch()} />
+          ) : editable && (
             <>
               <Button variant="secondary" disabled={preview.isPending} onClick={() => void showPreview()}>
                 {t("invoices.page.preview")}
               </Button>
               <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>{t("invoices.page.delete")}</Button>
-              <Button onClick={() => setIssuing(true)}>{t("invoices.page.issue")}</Button>
+              <Button disabled={update.isPending || itemWrites > 0} onClick={() => setIssuing(true)}>{t("invoices.page.issue")}</Button>
             </>
           )
         }
       />
       <div className="flex flex-wrap items-center gap-3">
-        {invoice.invoice_no && <Token className="text-lg">{invoice.invoice_no}</Token>}
+        {invoice.invoice_no && <Token className="text-title-sm">{invoice.invoice_no}</Token>}
         <StatusPill tone={INVOICE_STATUS_TONES[status] ?? "neutral"}>{t(`invoices.status.${status}`)}</StatusPill>
         {isCancellation && <StatusPill tone="neutral">{t("invoices.type.cancellation")}</StatusPill>}
-        {invoice.issue_date && <Metric size="body">{t("invoices.header.issueDate")} {formatDateDMY(invoice.issue_date)}</Metric>}
-        {invoice.due_date && <Metric size="body">{t("invoices.header.dueDate")} {formatDateDMY(invoice.due_date)}</Metric>}
+        {invoice.issue_date && <span>{t("invoices.header.issueDate")} <Metric size="body">{formatDateDMY(invoice.issue_date)}</Metric></span>}
+        {invoice.due_date && <span>{t("invoices.header.dueDate")} <Metric size="body">{formatDateDMY(invoice.due_date)}</Metric></span>}
         {isCancellation && original && (
           <Link to={invoicePath(original.id)} className="text-sm font-medium text-accent-text hover:underline">
             {t("invoices.page.cancels", { number: original.invoice_no })}
@@ -134,6 +146,17 @@ export function InvoicePage() {
       </div>
 
       {locked && <Alert variant="destructive">{t("errors.invoiceLocked")}</Alert>}
+      {cancelled && cancelledBy && (
+        <Alert>
+          {t("invoices.page.cancelledBanner")}{" "}
+          <Link to={invoicePath(cancelledBy.id)} className="font-medium text-accent-text hover:underline">
+            <Token>{cancelledBy.invoice_no}</Token>
+          </Link>
+        </Alert>
+      )}
+      {invoice.status === "issued" && !invoice.pdf_path && (
+        <PdfPendingNotice invoiceId={invoice.id} onDone={() => void refetch()} />
+      )}
 
       <InvoiceHeaderForm key={`${invoice.id}-${editable}`} invoice={invoice} readOnly={!editable} names={names} onPatch={save} />
 
@@ -142,7 +165,8 @@ export function InvoicePage() {
         readOnly={!editable || isCancellation}
         onLocked={() => { setLockedId(invoice.id); void refetch(); }}
       />
-      <DocumentTotalsCard totals={invoice.totals} isPrivateCustomer={customer?.kind === "private"} />
+      <DocumentTotalsCard totals={invoice.totals} isPrivateCustomer={customer?.kind === "private"} negate={isCancellation} />
+      <InvoiceHistory invoice={invoice} cancelledBy={cancelledBy} />
 
       {issuing && isDraft && (
         <IssueInvoiceDialog invoice={invoice} mode="issue" open onOpenChange={setIssuing} onStateChanged={() => void refetch()} />

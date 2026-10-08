@@ -38,10 +38,12 @@ const splitAddresses = (value: string): string[] => {
  *  whenever the invoice may have left the draft state (issued, or a conflict), so the caller
  *  refetches and turns read only. */
 export function IssueInvoiceDialog({
-  invoice, mode, open, onOpenChange, onStateChanged,
+  invoice, mode, resend, open, onOpenChange, onStateChanged,
 }: {
   invoice: IssuableInvoice;
   mode: "issue" | "send";
+  /** send mode only: the invoice went out before, so the copy says "again". */
+  resend?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStateChanged?: () => void;
@@ -51,8 +53,8 @@ export function IssueInvoiceDialog({
   const send = useSendInvoice();
   const { data: profile, isLoading: profileLoading, isError: profileError } = useCompanyProfile();
   const { data: items, isLoading: itemsLoading } = useDocumentItems({ invoiceId: invoice.id });
-  const { data: customer } = useCustomer(invoice.customer_id);
-  const { data: property } = useProperty(invoice.property_id ?? undefined);
+  const { data: customer, isError: customerError } = useCustomer(invoice.customer_id);
+  const { data: property, isError: propertyError } = useProperty(invoice.property_id ?? undefined);
   const { data: customerContacts } = useContacts(invoice.customer_id ? { customerId: invoice.customer_id } : undefined);
   const { data: propertyContacts } = useContacts(invoice.property_id ? { propertyId: invoice.property_id } : undefined);
 
@@ -71,6 +73,7 @@ export function IssueInvoiceDialog({
   const to = splitAddresses(toInput ?? defaultTo);
   const cc = splitAddresses(ccInput);
   const issueMode = mode === "issue";
+  const partyError = customerError || propertyError;
   const loading = !customer || (!!invoice.property_id && !property) || (issueMode && (profileLoading || itemsLoading));
 
   // Same rule as the SQL buyer snapshot: the property's billing address once it has a billing name.
@@ -136,7 +139,7 @@ export function IssueInvoiceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{issueMode ? t("invoices.send.issueTitle") : t("invoices.send.sendTitle")}</DialogTitle>
+          <DialogTitle>{issueMode ? t("invoices.send.issueTitle") : t(resend ? "invoices.send.resendTitle" : "invoices.send.sendTitle")}</DialogTitle>
           <DialogDescription>{issueMode ? t("invoices.send.issueHint") : t("invoices.send.sendHint")}</DialogDescription>
         </DialogHeader>
 
@@ -162,6 +165,7 @@ export function IssueInvoiceDialog({
               </ul>
             </Alert>
           )}
+          {partyError && <Alert variant="destructive">{t("invoices.send.partyLoad")}</Alert>}
           {issueMode && profileError && <Alert variant="destructive">{t("invoices.send.profileLoad")}</Alert>}
           {error && error.blockers.length === 0 && <Alert variant="destructive">{t(invoiceActionErrorKey(error.code))}</Alert>}
         </div>
@@ -176,7 +180,7 @@ export function IssueInvoiceDialog({
               <Button disabled={sendDisabled} onClick={() => void submit(true)}>{t("invoices.send.issueAndSend")}</Button>
             </>
           ) : (
-            <Button disabled={sendDisabled} onClick={() => void submit(true)}>{t("invoices.send.send")}</Button>
+            <Button disabled={sendDisabled} onClick={() => void submit(true)}>{t(resend ? "invoices.send.resend" : "invoices.send.send")}</Button>
           )}
         </DialogFooter>
       </DialogContent>

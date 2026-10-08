@@ -963,7 +963,7 @@
       },
       "cancellationTitle": "Stornorechnung",
       "cancels": "Storniert Rechnung {{number}}",
-      "cancellationLocked": "Kunde, Rabatt und Positionen kommen aus der Originalrechnung und lassen sich nicht ändern.",
+      "cancellationLocked": "Kunde, Betreff, Ort, Rabatt und Positionen kommen aus der Originalrechnung und lassen sich nicht ändern.",
       "preview": "Vorschau",
       "delete": "Löschen",
       "issue": "Abschließen",
@@ -971,7 +971,22 @@
       "deleteBody": "Der Entwurf und seine Positionen werden endgültig entfernt.",
       "pdfFailed": "Das PDF konnte nicht geöffnet werden.",
       "pdfBlocked": "Dein Browser hat den neuen Tab blockiert.",
-      "pdfOpen": "PDF öffnen"
+      "pdfOpen": "PDF öffnen",
+      "pdf": "PDF",
+      "send": "Senden",
+      "resend": "Erneut senden",
+      "cancel": "Stornieren",
+      "copy": "Kopieren",
+      "correct": "Korrigierte Rechnung anlegen",
+      "cancelTitle": "Diese Rechnung stornieren?",
+      "cancelBody": "Es wird eine Stornorechnung als Entwurf angelegt. Du musst sie abschließen, damit die Stornierung gilt.",
+      "cancelConfirm": "Stornorechnung anlegen",
+      "cancelledBanner": "Diese Rechnung wurde storniert durch",
+      "pdfPending": "PDF wird erzeugt",
+      "pdfPendingHint": "Die Rechnung ist abgeschlossen, das PDF ist aber noch nicht fertig.",
+      "pdfRetry": "Erneut versuchen",
+      "pdfRetryFailed": "Das PDF konnte noch nicht erzeugt werden. Versuche es gleich noch einmal.",
+      "pdfRetryDone": "Das PDF ist fertig."
     },
     "send": {
       "errors": {
@@ -1011,7 +1026,10 @@
         "profile_incomplete": "Deine Firmendaten sind unvollständig. Ergänze in den Einstellungen Name, Adresse, E-Mail, Steuernummer oder USt-IdNr. und IBAN.",
         "no_buyer_address": "Die Rechnungsanschrift des Kunden ist unvollständig. Ergänze Straße, PLZ und Ort.",
         "no_recipient": "Trage mindestens einen Empfänger ein."
-      }
+      },
+      "resendTitle": "Rechnung erneut senden",
+      "resend": "Erneut senden",
+      "partyLoad": "Kunde oder Objekt konnten nicht geladen werden. Lade die Seite neu."
     },
     "header": {
       "serviceFrom": "Leistungsdatum von",
@@ -1024,6 +1042,13 @@
       "paymentDueDaysValue_other": "{{count}} Tage",
       "issueDate": "Rechnungsdatum",
       "dueDate": "Fällig am"
+    },
+    "history": {
+      "title": "Verlauf",
+      "issued": "Abgeschlossen",
+      "sent": "Versendet",
+      "sentTo": "an {{recipients}}",
+      "cancelledBy": "Storniert durch"
     }
   }
 }

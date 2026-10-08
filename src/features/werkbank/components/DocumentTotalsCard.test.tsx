@@ -51,4 +51,12 @@ describe("DocumentTotalsCard", () => {
     renderWithProviders(<DocumentTotalsCard totals={null} isPrivateCustomer={false} />);
     expect(screen.getByText("Brutto")).toBeInTheDocument();
   });
+
+  it("shows the amounts negative for a cancellation document, without doubling the sign", () => {
+    renderWithProviders(<DocumentTotalsCard totals={totals({ discount_total: 50 })} isPrivateCustomer={false} negate />);
+    expect(screen.getByText(/^-1\.175,00/)).toBeInTheDocument();
+    expect(screen.getByText(/^-1\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/^50,00/)).toBeInTheDocument();
+    expect(screen.queryByText(/--/)).not.toBeInTheDocument();
+  });
 });

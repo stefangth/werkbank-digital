@@ -9,8 +9,8 @@ const { profile, items, contacts, customer, property, issue, send, toast } = vi.
   profile: { data: null as unknown, isLoading: false, isError: false },
   items: { data: [] as unknown[], isLoading: false },
   contacts: { data: [] as unknown[] },
-  customer: { data: null as unknown },
-  property: { data: null as unknown },
+  customer: { data: null as unknown, isError: false },
+  property: { data: null as unknown, isError: false },
   issue: { mutateAsync: vi.fn(), isPending: false },
   send: { mutateAsync: vi.fn(), isPending: false },
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
@@ -39,11 +39,12 @@ const invoice = (over: Record<string, unknown> = {}) => ({
   service_date_from: "2026-10-01", invoice_no: null, ...over,
 });
 
-const renderDialog = (opts: { inv?: ReturnType<typeof invoice>; mode?: "issue" | "send"; onOpenChange?: () => void; onStateChanged?: () => void } = {}) =>
+const renderDialog = (opts: { inv?: ReturnType<typeof invoice>; mode?: "issue" | "send"; resend?: boolean; onOpenChange?: () => void; onStateChanged?: () => void } = {}) =>
   renderWithProviders(
     <IssueInvoiceDialog
       invoice={(opts.inv ?? invoice()) as never}
       mode={opts.mode ?? "issue"}
+      resend={opts.resend}
       open
       onOpenChange={opts.onOpenChange ?? vi.fn()}
       onStateChanged={opts.onStateChanged ?? vi.fn()}
@@ -60,6 +61,8 @@ describe("IssueInvoiceDialog", () => {
     contacts.data = [{ id: "k1", email: "kontakt@example.de" }];
     customer.data = CUSTOMER;
     property.data = null;
+    customer.isError = false;
+    property.isError = false;
     issue.mutateAsync.mockResolvedValue({ invoiceNo: "RE-0012", emailSent: true });
     send.mutateAsync.mockResolvedValue({ emailSent: true });
     localStorage.setItem(STORAGE_KEY, "de");
@@ -222,5 +225,19 @@ describe("IssueInvoiceDialog", () => {
       renderDialog({ inv: issued(), mode: "send" });
       expect(screen.getByRole("button", { name: "Senden" })).toBeDisabled();
     });
+  });
+
+  it("uses the again wording when an invoice that went out is sent once more", () => {
+    renderDialog({ mode: "send", resend: true });
+    expect(screen.getByRole("heading", { name: "Rechnung erneut senden" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Erneut senden" })).toBeEnabled();
+  });
+
+  it("explains a failed customer load instead of staying disabled silently", () => {
+    customer.data = null;
+    customer.isError = true;
+    renderDialog();
+    expect(screen.getByText(/Kunde oder Objekt konnten nicht geladen werden/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nur abschließen" })).toBeDisabled();
   });
 });

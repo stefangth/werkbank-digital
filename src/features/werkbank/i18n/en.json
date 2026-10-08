@@ -963,7 +963,7 @@
       },
       "cancellationTitle": "Cancellation",
       "cancels": "Cancels invoice {{number}}",
-      "cancellationLocked": "Customer, discount and items come from the original invoice and cannot be changed.",
+      "cancellationLocked": "Customer, subject, location, discount and items come from the original invoice and cannot be changed.",
       "preview": "Preview",
       "delete": "Delete",
       "issue": "Issue",
@@ -971,7 +971,22 @@
       "deleteBody": "The draft and its items are removed for good.",
       "pdfFailed": "The PDF could not be opened.",
       "pdfBlocked": "Your browser blocked the new tab.",
-      "pdfOpen": "Open PDF"
+      "pdfOpen": "Open PDF",
+      "pdf": "PDF",
+      "send": "Send",
+      "resend": "Send again",
+      "cancel": "Cancel invoice",
+      "copy": "Copy",
+      "correct": "Create corrected invoice",
+      "cancelTitle": "Cancel this invoice?",
+      "cancelBody": "A cancellation invoice is created as a draft. You have to finalise it for the cancellation to take effect.",
+      "cancelConfirm": "Create cancellation",
+      "cancelledBanner": "This invoice was cancelled by",
+      "pdfPending": "The PDF is being created",
+      "pdfPendingHint": "The invoice is issued, but its PDF is not ready yet.",
+      "pdfRetry": "Try again",
+      "pdfRetryFailed": "The PDF could not be created yet. Try again in a moment.",
+      "pdfRetryDone": "The PDF is ready."
     },
     "send": {
       "errors": {
@@ -1011,7 +1026,10 @@
         "profile_incomplete": "Your company details are incomplete. Add name, address, email, a tax number or VAT id and the IBAN in the settings.",
         "no_buyer_address": "The customer's billing address is incomplete. Add street, postal code and city.",
         "no_recipient": "Add at least one recipient."
-      }
+      },
+      "resendTitle": "Send invoice again",
+      "resend": "Send again",
+      "partyLoad": "The customer or property could not be loaded. Reload the page."
     },
     "header": {
       "serviceFrom": "Service date from",
@@ -1024,6 +1042,13 @@
       "paymentDueDaysValue_other": "{{count}} days",
       "issueDate": "Invoice date",
       "dueDate": "Due on"
+    },
+    "history": {
+      "title": "History",
+      "issued": "Issued",
+      "sent": "Sent",
+      "sentTo": "to {{recipients}}",
+      "cancelledBy": "Cancelled by"
     }
   }
 }

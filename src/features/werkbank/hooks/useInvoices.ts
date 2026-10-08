@@ -5,7 +5,7 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   cancelInvoice, copyInvoice, createFreeInvoice, createInvoiceFromOrder, deleteInvoice, fetchActiveInvoiceForOrder,
-  fetchInvoice, fetchInvoices, updateInvoice, type InvoiceDefaults, type InvoiceListQuery, type InvoicePatch,
+  fetchCancellationOf, fetchInvoice, fetchInvoices, updateInvoice, type InvoiceDefaults, type InvoiceListQuery, type InvoicePatch,
 } from "../data/invoices";
 import { mapDbError } from "../lib/dbErrors";
 import { RANGES_KEY } from "./useNumberRanges";
@@ -38,6 +38,16 @@ export function useActiveInvoiceForOrder(orderId: string | undefined) {
     queryKey: [...INVOICES_KEY, orgId, "for-order", orderId],
     enabled: !!orgId && !!orderId,
     queryFn: () => fetchActiveInvoiceForOrder(supabase, orgId!, orderId!),
+  });
+}
+
+/** The cancellation document of an invoice (the "cancelled by" link); only asked for when `enabled`. */
+export function useCancellationOf(invoiceId: string | undefined, enabled: boolean) {
+  const orgId = useAuth().currentOrg?.id;
+  return useQuery({
+    queryKey: [...INVOICES_KEY, orgId, "cancellation-of", invoiceId],
+    enabled: !!orgId && !!invoiceId && enabled,
+    queryFn: () => fetchCancellationOf(supabase, orgId!, invoiceId!),
   });
 }
 

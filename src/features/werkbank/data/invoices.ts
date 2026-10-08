@@ -64,6 +64,14 @@ export async function fetchActiveInvoiceForOrder(client: Client, orgId: string, 
   return data;
 }
 
+/** The cancellation document that cancels this invoice, if any (at most one exists). */
+export async function fetchCancellationOf(client: Client, orgId: string, invoiceId: string): Promise<{ id: string; invoice_no: string | null } | null> {
+  const { data, error } = await client.schema("werkbank").from("invoices").select("id, invoice_no")
+    .eq("org_id", orgId).eq("cancels_invoice_id", invoiceId).eq("type", "cancellation").maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 /** Creates a free (order-less) draft, prefilled from the company profile. The database assigns no number yet. */
 export async function createFreeInvoice(
   client: Client,
