@@ -16,20 +16,9 @@ import { useDocumentItems } from "../hooks/useDocumentItems";
 import { useIssueInvoice, useSendInvoice } from "../hooks/useInvoiceActions";
 import { useProperty } from "../hooks/useProperties";
 import { invoicePreflight, type InvoiceBlocker } from "../lib/invoicePreflight";
+import { splitAddresses } from "../lib/addresses";
 
 export type IssuableInvoice = Pick<Invoice, "id" | "type" | "customer_id" | "property_id" | "contact_id" | "service_date_from">;
-
-/** Addresses separated by comma, semicolon or whitespace; an address typed twice is kept once
- *  (compared case-insensitively). */
-const splitAddresses = (value: string): string[] => {
-  const seen = new Set<string>();
-  return value.split(/[,;\s]+/).filter((a) => {
-    const key = a.toLowerCase();
-    if (!a || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-};
 
 /** Issue a draft invoice ("issue": irreversible, with "Nur abschließen" and "Abschließen und
  *  senden"), or mail an issued one ("send"). The recipient is prefilled with the customer's
