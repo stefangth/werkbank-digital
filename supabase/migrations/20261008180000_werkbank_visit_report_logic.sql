@@ -4,6 +4,8 @@
 -- Technicians read and write orders and visit reports only through these SECURITY DEFINER RPCs. The
 -- caller's technician row is public.artists where user_id = auth.uid() and org_id = the order's org;
 -- a missing order and a missing assignment both raise not_assigned (42501), so ids cannot be probed.
+-- The caller must also be a member of that org (public.is_org_member): remove_org_member keeps the
+-- artist row linked, and these functions bypass the RESTRICTIVE org_isolation policy.
 
 -- 1. Private helpers ---------------------------------------------------------------------------
 
@@ -22,7 +24,8 @@ begin
   from werkbank.orders o
   join werkbank.order_technicians ot on ot.order_id = o.id and ot.org_id = o.org_id
   join public.artists a on a.id = ot.artist_id and a.org_id = o.org_id
-  where o.id = p_order and auth.uid() is not null and a.user_id = auth.uid();
+  where o.id = p_order and auth.uid() is not null and a.user_id = auth.uid()
+    and public.is_org_member(auth.uid(), o.org_id);
   if not found then
     raise exception 'not_assigned' using errcode = '42501';
   end if;
@@ -91,7 +94,11 @@ stable
 security definer
 set search_path = ''
 as $$
-  select distinct a.org_id from public.artists a where auth.uid() is not null and a.user_id = auth.uid()
+  select distinct a.org_id
+  from public.artists a
+  join public.organizations o on o.id = a.org_id
+  where auth.uid() is not null and a.user_id = auth.uid() and o.org_kind = 'handwerk'
+    and public.is_org_member(auth.uid(), a.org_id)
 $$;
 revoke all on function werkbank.my_technician_orgs() from public, anon;
 grant execute on function werkbank.my_technician_orgs() to authenticated;
@@ -118,6 +125,7 @@ as $$
   cross join lateral (select werkbank.assignment_group(o.status, o.scheduled_date, o.completed_at,
     coalesce(p_today, (now() at time zone 'Europe/Berlin')::date)) as group_key) g
   where o.org_id = p_org and auth.uid() is not null and a.user_id = auth.uid() and g.group_key is not null
+    and public.is_org_member(auth.uid(), p_org)
   order by o.scheduled_date nulls last, o.scheduled_time nulls last, o.order_no
 $$;
 revoke all on function werkbank.my_assignments(uuid, date) from public, anon;
@@ -418,13 +426,14 @@ begin
     or exists (
       select 1 from werkbank.order_technicians ot
       join public.artists a on a.id = ot.artist_id
-      where ot.org_id = v_org and ot.order_id = v_order and a.org_id = v_org and a.user_id = auth.uid());
+      where ot.org_id = v_org and ot.order_id = v_order and a.org_id = v_org and a.user_id = auth.uid()
+        and public.is_org_member(auth.uid(), v_org));
 end;
 $$;
 revoke all on function werkbank.can_read_visit_object(text) from public, anon;
 grant execute on function werkbank.can_read_visit_object(text) to authenticated;
 
--- Write (insert, delete): a technician assigned to the order whose report in the path belongs to
+-- Write (insert): a technician assigned to the order whose report in the path belongs to
 -- that order, is unlocked and is authored by them.
 create function werkbank.can_write_visit_object(p_name text)
 returns boolean
@@ -448,11 +457,28 @@ begin
     join werkbank.order_technicians ot on ot.org_id = r.org_id and ot.order_id = r.order_id and ot.artist_id = r.artist_id
     join public.artists a on a.id = r.artist_id and a.org_id = r.org_id
     where r.org_id = v_f[1]::uuid and r.order_id = v_f[2]::uuid and r.id = v_f[3]::uuid
-      and r.locked_at is null and a.user_id = auth.uid());
+      and r.locked_at is null and a.user_id = auth.uid() and public.is_org_member(auth.uid(), r.org_id));
 end;
 $$;
 revoke all on function werkbank.can_write_visit_object(text) from public, anon;
 grant execute on function werkbank.can_write_visit_object(text) to authenticated;
+
+-- Delete: as write, and the object is neither a registered photo nor a report's signature, so a
+-- report (and its PDF) never points at a missing object. remove_visit_photo deletes the row first
+-- and returns the path, so the client's delete afterwards passes.
+create function werkbank.can_delete_visit_object(p_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select werkbank.can_write_visit_object(p_name)
+    and not exists (select 1 from werkbank.visit_report_photos ph where ph.path = p_name)
+    and not exists (select 1 from werkbank.visit_reports r where r.signature_path = p_name)
+$$;
+revoke all on function werkbank.can_delete_visit_object(text) from public, anon;
+grant execute on function werkbank.can_delete_visit_object(text) to authenticated;
 
 -- No update policy: an upsert fails, so a signature cannot be replaced.
 create policy "Werkbank visit objects read"
@@ -463,4 +489,4 @@ create policy "Werkbank technicians insert visit objects"
   with check (case when bucket_id = 'werkbank-visits' then werkbank.can_write_visit_object(name) else false end);
 create policy "Werkbank technicians delete visit objects"
   on storage.objects for delete to authenticated
-  using (case when bucket_id = 'werkbank-visits' then werkbank.can_write_visit_object(name) else false end);
+  using (case when bucket_id = 'werkbank-visits' then werkbank.can_delete_visit_object(name) else false end);

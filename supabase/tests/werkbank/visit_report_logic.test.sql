@@ -2,7 +2,7 @@
 -- bucket and its storage policies.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(117);
+SELECT plan(131);
 
 SET LOCAL timezone = 'UTC';
 -- Berlin today, as the RPCs compute it.
@@ -107,7 +107,8 @@ FROM unnest(ARRAY[
   'werkbank.lock_visit_report(uuid)',
   'werkbank.sign_visit_report(uuid, text, text)',
   'werkbank.can_read_visit_object(text)',
-  'werkbank.can_write_visit_object(text)']) f;
+  'werkbank.can_write_visit_object(text)',
+  'werkbank.can_delete_visit_object(text)']) f;
 SELECT ok(NOT has_function_privilege('anon', 'werkbank.assigned_artist(uuid)', 'EXECUTE')
   AND NOT has_function_privilege('authenticated', 'werkbank.assigned_artist(uuid)', 'EXECUTE'),
   'werkbank.assigned_artist is private');
@@ -115,14 +116,24 @@ SELECT ok(
   (SELECT bool_and(p.prosecdef) FROM pg_proc p WHERE p.pronamespace = 'werkbank'::regnamespace AND p.proname IN (
     'my_technician_orgs','my_assignments','my_assignment','start_assignment','complete_assignment','create_visit_report',
     'update_visit_report','add_visit_photo','remove_visit_photo','lock_visit_report','sign_visit_report',
-    'can_read_visit_object','can_write_visit_object','assigned_artist')),
+    'can_read_visit_object','can_write_visit_object','can_delete_visit_object','assigned_artist')),
   'every technician RPC and helper is security definer');
 
 -- my_technician_orgs -------------------------------------------------------------------------
+-- A is also a linked artist member of a production org, which is not a technician org.
+SET session_replication_role = replica;
+INSERT INTO public.organizations (id, name, slug, org_kind) VALUES
+  ('bbbbbbbb-0000-4000-b000-0000000006c3','VL Prod','vl-prod','production');
+INSERT INTO public.org_memberships (org_id, user_id, role) VALUES
+  ('bbbbbbbb-0000-4000-b000-0000000006c3','aaaaaaaa-0000-4000-a000-0000000006c3','artist');
+INSERT INTO public.artists (id, org_id, user_id, name) VALUES
+  ('99999999-0000-4000-9000-0000000006c4','bbbbbbbb-0000-4000-b000-0000000006c3','aaaaaaaa-0000-4000-a000-0000000006c3','Tina Technik');
+SET session_replication_role = DEFAULT;
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
 SET LOCAL ROLE authenticated;
 SELECT results_eq($$SELECT * FROM werkbank.my_technician_orgs()$$,
-  $$VALUES ('bbbbbbbb-0000-4000-b000-0000000006c1'::uuid)$$, 'my_technician_orgs: the org of technician A');
+  $$VALUES ('bbbbbbbb-0000-4000-b000-0000000006c1'::uuid)$$,
+  'my_technician_orgs: the handwerk org of technician A, not the production org with an artist row');
 RESET ROLE;
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c2');
 SET LOCAL ROLE authenticated;
@@ -404,10 +415,23 @@ SELECT lives_ok($$SELECT count(*) FROM storage.objects$$, 'storage: a select ove
 WITH u AS (UPDATE storage.objects SET name = name || '.bak' WHERE bucket_id = 'werkbank-visits' RETURNING 1)
 SELECT is((SELECT count(*)::int FROM u), 0,
   'storage: no update policy');
+SELECT lives_ok($$SELECT set_config('wbt.p4', werkbank.add_visit_photo(current_setting('wbt.r4')::uuid,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg')::text, true)$$,
+  'add_visit_photo registers q1 on r4');
 SELECT set_config('storage.allow_delete_query', 'true', true);
 WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits' RETURNING name)
-SELECT is((SELECT count(*)::int FROM d), 2,
-  'storage: A deletes only the objects under an own open report');
+SELECT is((SELECT array_agg(name) FROM d),
+  ARRAY['bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/x.jpg'],
+  'storage: A deletes only the unregistered object under an own open report, not a registered photo');
+SELECT is(werkbank.remove_visit_photo(current_setting('wbt.p4')::uuid),
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg',
+  'remove_visit_photo unregisters q1');
+WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits'
+  AND name = 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg' RETURNING 1)
+SELECT is((SELECT count(*)::int FROM d), 1, 'storage: A deletes the object after remove_visit_photo');
+WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits'
+  AND name = 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r3') || '/signature.png' RETURNING 1)
+SELECT is((SELECT count(*)::int FROM d), 0, 'storage: A cannot delete the signature of a signed report');
 SELECT set_config('storage.allow_delete_query', 'false', true);
 RESET ROLE;
 
@@ -476,6 +500,39 @@ SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkba
 RESET ROLE;
 SELECT is((SELECT count(*)::int FROM werkbank.visit_reports WHERE artist_id = '99999999-0000-4000-9000-0000000006c1'), 3,
   'removed: the technician''s reports stay');
+
+-- Removed from the org --------------------------------------------------------------------------
+-- remove_org_member deletes the membership and keeps the artist row linked; A is still assigned to
+-- AU-3 and has an open report there with an object.
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
+SET LOCAL ROLE authenticated;
+SELECT lives_ok($$SELECT set_config('wbt.r5', werkbank.create_visit_report('33333333-0000-4000-a000-0000000006c3')::text, true)$$,
+  'create_visit_report on AU-3 (r5)');
+RESET ROLE;
+INSERT INTO storage.objects (bucket_id, name) VALUES
+  ('werkbank-visits', 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c3/' || current_setting('wbt.r5') || '/m1.jpg');
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
+SET LOCAL ROLE authenticated;
+SELECT is((SELECT count(*)::int FROM storage.objects WHERE bucket_id = 'werkbank-visits'), 1, 'member: A reads the object of AU-3');
+RESET ROLE;
+DELETE FROM public.org_memberships
+WHERE org_id = 'bbbbbbbb-0000-4000-b000-0000000006c1' AND user_id = 'aaaaaaaa-0000-4000-a000-0000000006c3';
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
+SET LOCAL ROLE authenticated;
+SELECT is_empty($$SELECT * FROM werkbank.my_technician_orgs()$$, 'non-member: my_technician_orgs excludes the org');
+SELECT is_empty($$SELECT * FROM werkbank.my_assignments('bbbbbbbb-0000-4000-b000-0000000006c1')$$,
+  'non-member: my_assignments returns nothing');
+SELECT throws_ok($$SELECT werkbank.my_assignment('33333333-0000-4000-a000-0000000006c3')$$,
+  '42501', 'not_assigned', 'non-member: my_assignment');
+SELECT throws_ok($$SELECT werkbank.start_assignment('33333333-0000-4000-a000-0000000006c3')$$,
+  '42501', 'not_assigned', 'non-member: start_assignment');
+SELECT throws_ok($$SELECT werkbank.update_visit_report(current_setting('wbt.r5')::uuid, 'x', current_setting('wbt.today')::date)$$,
+  '42501', 'not_assigned', 'non-member: update_visit_report');
+SELECT is((SELECT count(*)::int FROM storage.objects WHERE bucket_id = 'werkbank-visits'), 0, 'non-member: storage select denied');
+SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c3/' || current_setting('wbt.r5') || '/m2.jpg')$$,
+  '42501', NULL, 'non-member: storage insert denied');
+RESET ROLE;
 
 SELECT * FROM finish();
 ROLLBACK;
