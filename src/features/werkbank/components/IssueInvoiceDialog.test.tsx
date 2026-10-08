@@ -92,6 +92,14 @@ describe("IssueInvoiceDialog", () => {
     expect(screen.getByRole("button", { name: "Nur abschließen" })).toBeEnabled();
   });
 
+  it("flags an address without @ right away and keeps sending disabled", () => {
+    renderDialog();
+    fireEvent.change(screen.getByLabelText("Kopie (CC)"), { target: { value: "buero.example.de" } });
+    expect(screen.getByText("Prüfe die E-Mail-Adressen.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Abschließen und senden" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Nur abschließen" })).toBeEnabled();
+  });
+
   it("shows the irreversibility warning", () => {
     renderDialog();
     expect(screen.getByText("Danach ist die Rechnung nicht mehr änderbar.")).toBeInTheDocument();

@@ -86,7 +86,9 @@ export function IssueInvoiceDialog({
     : loading ? [] : sendBlockers.filter((b) => !profileError || b !== "profile_incomplete");
   const pending = issue.isPending || send.isPending;
   const issueDisabled = loading || pending || (issueMode && profileError) || issueBlockers.length > 0;
-  const sendDisabled = issueDisabled || sendBlockers.length > 0;
+  // Quick feedback only; the server checks the format (invalid_recipient) before anything is issued.
+  const malformed = [...to, ...cc].some((a) => !/^[^@\s]+@[^@\s]+$/.test(a));
+  const sendDisabled = issueDisabled || sendBlockers.length > 0 || malformed;
 
   const stateChanged = () => {
     onOpenChange(false);
@@ -156,6 +158,7 @@ export function IssueInvoiceDialog({
               </ul>
             </Alert>
           )}
+          {malformed && <Alert variant="destructive">{t("invoices.send.errors.invalidRecipient")}</Alert>}
           {partyError && <Alert variant="destructive">{t("invoices.send.partyLoad")}</Alert>}
           {issueMode && profileError && <Alert variant="destructive">{t("invoices.send.profileLoad")}</Alert>}
           {error && error.blockers.length === 0 && (
