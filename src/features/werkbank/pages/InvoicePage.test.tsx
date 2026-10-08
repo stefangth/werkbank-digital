@@ -65,6 +65,7 @@ vi.mock("../components/LineItemsEditor", () => ({
   LineItemsEditor: ({ readOnly, docRef }: { readOnly: boolean; docRef: { invoiceId: string } }) =>
     <div data-testid="items" data-readonly={String(readOnly)} data-invoice={docRef.invoiceId} />,
 }));
+vi.mock("../components/PaymentsCard", () => ({ PaymentsCard: ({ invoiceId, status }: { invoiceId: string; status: string }) => <div data-testid="payments" data-invoice={invoiceId} data-status={status} /> }));
 vi.mock("../components/DocumentTotalsCard", () => ({ DocumentTotalsCard: () => <div data-testid="totals" /> }));
 vi.mock("../components/CustomerPicker", () => ({ CustomerPicker: () => <div>test-customer-picker</div> }));
 vi.mock("../components/PropertyPicker", () => ({ PropertyPicker: () => <div>test-property-picker</div> }));
@@ -114,6 +115,24 @@ describe("InvoicePage", () => {
     expect(screen.getByTestId("items")).toHaveAttribute("data-invoice", "i1");
     expect(screen.getByTestId("totals")).toBeInTheDocument();
     for (const name of ["Vorschau", "Löschen", "Abschließen"]) expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
+  it("shows the payments card for issued and cancelled invoices but not for drafts or cancellations", async () => {
+    state.invoice = invoice({ status: "issued", invoice_no: "RE-1" });
+    const view = render();
+    expect(await screen.findByTestId("payments")).toHaveAttribute("data-status", "issued");
+    view.unmount();
+    state.invoice = invoice({ status: "cancelled", invoice_no: "RE-1" });
+    const second = render();
+    expect(await screen.findByTestId("payments")).toHaveAttribute("data-status", "cancelled");
+    second.unmount();
+    for (const over of [{ status: "draft" }, { status: "issued", type: "cancellation", invoice_no: "ST-1" }]) {
+      state.invoice = invoice(over);
+      const v = render();
+      await screen.findByTestId("totals");
+      expect(screen.queryByTestId("payments")).not.toBeInTheDocument();
+      v.unmount();
+    }
   });
 
   it("saves the payment term on blur and rejects an invalid one", async () => {

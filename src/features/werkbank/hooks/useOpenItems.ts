@@ -5,7 +5,7 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { clearDunningHold, fetchDunningDue, fetchDunningHold, fetchDunningNotices, setDunningHold } from "../data/dunning";
 import {
-  fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
+  fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, fetchTransferTargets, recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
   type EntryKind, type WriteOffReason,
 } from "../data/invoiceEntries";
 import { mapDbError } from "../lib/dbErrors";
@@ -54,3 +54,8 @@ export const useTransferEntry = () =>
 export const useSetDunningHold = () =>
   useLedgerMutation((v: { invoiceId: string; reason: string; until: string | null }) => setDunningHold(supabase, v.invoiceId, v.reason, v.until));
 export const useClearDunningHold = () => useLedgerMutation((invoiceId: string) => clearDunningHold(supabase, invoiceId));
+
+/** Issued invoices of the customer a payment can move to; only asked for while the dialog is open. */
+export const useTransferTargets = (customerId: string | undefined, excludeInvoiceId: string, enabled: boolean) =>
+  useOrgQuery(["transfer-targets", customerId, excludeInvoiceId], !!customerId && enabled,
+    (o) => fetchTransferTargets(supabase, o, customerId!, excludeInvoiceId));

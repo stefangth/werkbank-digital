@@ -105,6 +105,97 @@
       "overpaid": "Credit"
     }
   },
+  "payments": {
+    "title": "Payments",
+    "claim": "Claim",
+    "paid": "Paid",
+    "writtenOff": "Written off",
+    "open": "Open",
+    "credit": "Credit",
+    "loadFailed": "Payments could not be loaded.",
+    "empty": "No entries yet.",
+    "recordPayment": "Record payment",
+    "writeOff": "Write off",
+    "refund": "Refund credit",
+    "kind": {
+      "payment": "Payment",
+      "refund": "Refund",
+      "write_off": "Write-off"
+    },
+    "reason": {
+      "skonto": "Cash discount",
+      "goodwill": "Goodwill",
+      "bad_debt": "Bad debt",
+      "other": "Other"
+    },
+    "reversedNote": "Reversed: {{reason}}",
+    "movedHere": "Moved here from another invoice",
+    "reverse": "Reverse",
+    "transfer": "Move",
+    "cancelledCredit": "This invoice is cancelled and holds a credit. Move the payments to another invoice of this customer or refund the credit.",
+    "form": {
+      "date": "Booking date",
+      "pickDate": "Pick a date",
+      "amount": "Amount",
+      "note": "Note (optional)",
+      "noteRequired": "Note",
+      "reason": "Reason",
+      "reasonLabel": "Reason",
+      "target": "Move to",
+      "none": "There is no other issued invoice for this customer."
+    },
+    "hints": {
+      "date": "Today. You can change the date.",
+      "amount": "The open amount. You can change it for a part payment.",
+      "refund": "The full credit. You can change it for a part refund."
+    },
+    "warnings": {
+      "overOpen": "This is more than the open amount. The rest is booked as credit."
+    },
+    "payment": {
+      "title": "Record payment",
+      "description": "Book a payment of the customer on this invoice.",
+      "submit": "Book payment",
+      "saved": "Payment booked."
+    },
+    "write_off": {
+      "title": "Write off open amount",
+      "description": "The whole open amount is written off.",
+      "submit": "Write off",
+      "hint": "This only affects the open items in Werkbank. A VAT correction is done by your tax advisor.",
+      "saved": "Write-off booked."
+    },
+    "refund_dialog": {
+      "title": "Refund credit",
+      "description": "Book the refund of a credit to the customer.",
+      "submit": "Book refund",
+      "saved": "Refund booked."
+    },
+    "reverseDialog": {
+      "title": "Reverse entry",
+      "description": "The entry stays visible in the list, marked as reversed.",
+      "reason": "Reason",
+      "submit": "Reverse entry",
+      "saved": "Entry reversed."
+    },
+    "transferDialog": {
+      "title": "Move payment",
+      "description": "The payment is moved to another issued invoice of the same customer.",
+      "reason": "Reason",
+      "submit": "Move payment",
+      "saved": "Payment moved."
+    },
+    "errors": {
+      "date": "Pick a booking date.",
+      "amount": "Enter an amount with at most two decimal places, for example 1.190,50.",
+      "refundMax": "The refund cannot be higher than the credit.",
+      "reason": "Choose a reason.",
+      "noteRequired": "Add a note for the reason Other.",
+      "reversalReason": "Enter a reason.",
+      "target": "Choose an invoice.",
+      "transferReason": "Enter a reason."
+    }
+  },
   "errors": {
     "customerNoTaken": "This customer number is already taken.",
     "itemNoTaken": "This item number is already taken.",

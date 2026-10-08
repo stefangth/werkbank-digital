@@ -105,6 +105,97 @@
       "overpaid": "Guthaben"
     }
   },
+  "payments": {
+    "title": "Zahlungen",
+    "claim": "Forderung",
+    "paid": "Bezahlt",
+    "writtenOff": "Ausgebucht",
+    "open": "Offen",
+    "credit": "Guthaben",
+    "loadFailed": "Die Zahlungen konnten nicht geladen werden.",
+    "empty": "Noch keine Buchungen.",
+    "recordPayment": "Zahlung erfassen",
+    "writeOff": "Ausbuchen",
+    "refund": "Guthaben auszahlen",
+    "kind": {
+      "payment": "Zahlung",
+      "refund": "Auszahlung",
+      "write_off": "Ausbuchung"
+    },
+    "reason": {
+      "skonto": "Skonto",
+      "goodwill": "Kulanz",
+      "bad_debt": "Forderungsausfall",
+      "other": "Sonstiges"
+    },
+    "reversedNote": "Storniert: {{reason}}",
+    "movedHere": "Von einer anderen Rechnung umgebucht",
+    "reverse": "Stornieren",
+    "transfer": "Umbuchen",
+    "cancelledCredit": "Diese Rechnung ist storniert und hat ein Guthaben. Buche die Zahlungen auf eine andere Rechnung dieses Kunden um oder zahle das Guthaben aus.",
+    "form": {
+      "date": "Buchungsdatum",
+      "pickDate": "Datum wählen",
+      "amount": "Betrag",
+      "note": "Notiz (optional)",
+      "noteRequired": "Notiz",
+      "reason": "Grund",
+      "reasonLabel": "Grund",
+      "target": "Umbuchen auf",
+      "none": "Es gibt keine andere abgeschlossene Rechnung für diesen Kunden."
+    },
+    "hints": {
+      "date": "Heute. Du kannst das Datum ändern.",
+      "amount": "Der offene Betrag. Bei einer Teilzahlung kannst Du ihn ändern.",
+      "refund": "Das ganze Guthaben. Bei einer Teilauszahlung kannst Du es ändern."
+    },
+    "warnings": {
+      "overOpen": "Das ist mehr als der offene Betrag. Der Rest wird als Guthaben gebucht."
+    },
+    "payment": {
+      "title": "Zahlung erfassen",
+      "description": "Buche eine Zahlung des Kunden auf diese Rechnung.",
+      "submit": "Zahlung buchen",
+      "saved": "Zahlung gebucht."
+    },
+    "write_off": {
+      "title": "Offenen Betrag ausbuchen",
+      "description": "Der gesamte offene Betrag wird ausgebucht.",
+      "submit": "Ausbuchen",
+      "hint": "Betrifft nur die offenen Posten in Werkbank. Eine Umsatzsteuerkorrektur macht Dein Steuerberater.",
+      "saved": "Ausbuchung gebucht."
+    },
+    "refund_dialog": {
+      "title": "Guthaben auszahlen",
+      "description": "Buche die Auszahlung eines Guthabens an den Kunden.",
+      "submit": "Auszahlung buchen",
+      "saved": "Auszahlung gebucht."
+    },
+    "reverseDialog": {
+      "title": "Buchung stornieren",
+      "description": "Die Buchung bleibt in der Liste sichtbar und wird als storniert markiert.",
+      "reason": "Grund",
+      "submit": "Buchung stornieren",
+      "saved": "Buchung storniert."
+    },
+    "transferDialog": {
+      "title": "Zahlung umbuchen",
+      "description": "Die Zahlung wird auf eine andere abgeschlossene Rechnung desselben Kunden umgebucht.",
+      "reason": "Grund",
+      "submit": "Zahlung umbuchen",
+      "saved": "Zahlung umgebucht."
+    },
+    "errors": {
+      "date": "Wähle ein Buchungsdatum.",
+      "amount": "Gib einen Betrag mit höchstens zwei Nachkommastellen ein, zum Beispiel 1.190,50.",
+      "refundMax": "Die Auszahlung kann nicht höher sein als das Guthaben.",
+      "reason": "Wähle einen Grund.",
+      "noteRequired": "Ergänze eine Notiz beim Grund Sonstiges.",
+      "reversalReason": "Gib einen Grund ein.",
+      "target": "Wähle eine Rechnung.",
+      "transferReason": "Gib einen Grund ein."
+    }
+  },
   "errors": {
     "customerNoTaken": "Diese Kundennummer ist schon vergeben.",
     "itemNoTaken": "Diese Artikelnummer ist schon vergeben.",
