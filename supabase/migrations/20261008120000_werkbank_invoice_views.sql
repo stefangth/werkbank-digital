@@ -189,6 +189,11 @@ set search_path = ''
 as $$
 begin
   if old.bucket_id = 'werkbank-documents' and (storage.foldername(old.name))[2] = 'invoices'
+     -- An update is blocked only when it changes the file itself (path, version, content metadata);
+     -- the Storage service may still stamp updated_at / last_accessed_at.
+     and (tg_op = 'DELETE'
+          or (new.bucket_id, new.name, new.version, new.metadata, new.user_metadata)
+             is distinct from (old.bucket_id, old.name, old.version, old.metadata, old.user_metadata))
      and exists (select 1 from public.organizations o
                  where o.id::text = (storage.foldername(old.name))[1]) then
     raise exception 'invoice_locked' using errcode = '55000';
