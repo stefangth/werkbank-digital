@@ -363,6 +363,7 @@
     "notPayable": "Für dieses Dokument lassen sich keine Zahlungen buchen.",
     "futureBookingDate": "Das Buchungsdatum darf nicht in der Zukunft liegen.",
     "refundExceedsCredit": "Die Erstattung ist höher als das Guthaben dieser Rechnung.",
+    "transferExceedsCredit": "Die Zahlung ist höher als das verbleibende Guthaben dieser stornierten Rechnung. Storniere zuerst die Erstattung.",
     "nothingOpen": "Auf dieser Rechnung ist nichts mehr offen.",
     "openAmountChanged": "Der offene Betrag hat sich zwischenzeitlich geändert. Prüf ihn bitte und versuch es erneut.",
     "alreadyReversed": "Dieser Eintrag wurde bereits rückgängig gemacht.",

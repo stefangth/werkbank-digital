@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dunningBlockers, mapDbError, WerkbankDataError } from "./dbErrors";
+import { blockersFromError, mapDbError, WerkbankDataError } from "./dbErrors";
 
 describe("mapDbError", () => {
   it("maps the customer number unique violation (message)", () => {
@@ -101,6 +101,7 @@ describe("open items errors", () => {
     ["open_amount_changed", "errors.openAmountChanged"], ["already_reversed", "errors.alreadyReversed"],
     ["transfer_target_invalid", "errors.transferTargetInvalid"], ["dunning_not_allowed", "errors.dunningNotAllowed"],
     ["invalid_entry_kind", "errors.invalidEntryKind"], ["invalid_amount", "errors.invalidAmount"],
+    ["transfer_exceeds_credit", "errors.transferExceedsCredit"],
   ])("maps %s", (message, key) => {
     expect(mapDbError({ code: "22023", message })).toBe(key);
   });
@@ -118,13 +119,13 @@ describe("open items errors", () => {
   });
 });
 
-describe("dunningBlockers", () => {
+describe("blockersFromError", () => {
   it("parses the detail", () => {
-    expect(dunningBlockers({ message: "dunning_not_allowed", details: "not_overdue,on_hold" })).toEqual(["not_overdue", "on_hold"]);
+    expect(blockersFromError({ message: "dunning_not_allowed", details: "not_overdue,on_hold" })).toEqual(["not_overdue", "on_hold"]);
   });
   it("drops unknown names and handles a missing detail", () => {
-    expect(dunningBlockers({ message: "dunning_not_allowed", details: "on_hold,bogus" })).toEqual(["on_hold"]);
-    expect(dunningBlockers({ message: "dunning_not_allowed" })).toEqual([]);
-    expect(dunningBlockers(null)).toEqual([]);
+    expect(blockersFromError({ message: "dunning_not_allowed", details: "on_hold,bogus" })).toEqual(["on_hold"]);
+    expect(blockersFromError({ message: "dunning_not_allowed" })).toEqual([]);
+    expect(blockersFromError(null)).toEqual([]);
   });
 });

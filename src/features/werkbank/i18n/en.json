@@ -363,6 +363,7 @@
     "notPayable": "This document cannot take payments.",
     "futureBookingDate": "The booking date cannot be in the future.",
     "refundExceedsCredit": "The refund is higher than the credit on this invoice.",
+    "transferExceedsCredit": "The payment is higher than the credit left on this cancelled invoice. Reverse the refund first.",
     "nothingOpen": "Nothing is open on this invoice any more.",
     "openAmountChanged": "The open amount has changed in the meantime. Please check it and try again.",
     "alreadyReversed": "This entry has already been reversed.",

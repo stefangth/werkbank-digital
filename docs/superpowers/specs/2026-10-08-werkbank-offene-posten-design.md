@@ -130,7 +130,7 @@ All `security definer`, `set search_path = ''`, role check admin or producer of 
   - `write_off`: invoice `status = 'issued'` with open amount > 0. `p_amount` must equal the current open amount (the RPC recomputes it; a stale client value fails with `open_amount_changed`). Reason required.
   - `booked_on` not after Berlin today.
 - `reverse_invoice_entry(p_entry uuid, p_reason text) returns void`: sets the reversal columns once. Fails if already reversed.
-- `transfer_invoice_entry(p_entry uuid, p_target_invoice uuid, p_reason text) returns uuid`: only a non-reversed `payment`; target is an issued `invoice` of the same org and customer, not the same invoice. Reverses the entry and inserts a new `payment` with the same amount and `booked_on` and `transferred_from` set, in one transaction.
+- `transfer_invoice_entry(p_entry uuid, p_target_invoice uuid, p_reason text) returns uuid`: only a non-reversed `payment`; target is an issued `invoice` of the same org and customer, not the same invoice. Reverses the entry and inserts a new `payment` with the same amount and `booked_on` and `transferred_from` set, in one transaction. From a cancelled invoice the payment may move only up to its current credit (`transfer_exceeds_credit`), so a payment partly refunded cannot be moved in full (ruling R12).
 - `create_dunning_notice(p_invoice uuid, p_delivery text, p_payment_deadline date) returns werkbank.dunning_notices`: invoice `type = 'invoice'`, `status = 'issued'`, `due_date < ` Berlin today, open amount > 0, no active hold, stage = highest existing stage + 1 and at most 3, and the previous stage has a stored file and, if its delivery is `email`, a `sent_at`. The wait days are not enforced here; they only drive `dunning_due`. Snapshots the amounts from `invoice_balances`.
 - `set_dunning_hold(p_invoice uuid, p_reason text, p_until date) returns void` (upsert) and `clear_dunning_hold(p_invoice uuid) returns void`.
 
@@ -142,7 +142,7 @@ Both `security_invoker = true`.
 
 - `claim` = `gross_total` from `document_totals` for an issued invoice, 0 for a cancelled one (the cancellation invoice offsets it; cancellation invoices never appear in this view).
 - `paid` = sum of non-reversed `payment` minus non-reversed `refund`.
-- `written_off` = sum of non-reversed `write_off`.
+- `written_off` = sum of non-reversed `write_off` for an issued invoice, 0 for a cancelled one: a write-off booked before the cancellation (skonto, goodwill) does not count once the claim is 0, so it never turns into credit that was not paid (amended by the final review, ruling R12). For a cancelled invoice the open amount is therefore `-paid`.
 - `open_amount` = `claim - paid - written_off` (negative means credit).
 - `payment_state`: `open` (open > 0, paid = 0), `partial` (open > 0, paid > 0), `paid` (open = 0, written_off = 0), `written_off` (open = 0, written_off > 0), `overpaid` (open < 0), `void` (cancelled, open = 0).
 - `days_overdue` = Berlin today minus `due_date` when open > 0 and positive, else 0.
