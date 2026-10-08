@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 import type { AuthContextType } from "@/features/auth/AuthContext";
 import type { AssignmentReport } from "../data/technicianApp";
 
-vi.mock("../hooks/useAssignments", () => ({ useAssignmentActions: vi.fn(), useVisitObjectUrls: () => ({ data: {} }) }));
+vi.mock("../hooks/useAssignments", () => ({ ASSIGNMENTS_KEY: ["werkbank", "assignments"], useAssignmentActions: vi.fn(), useVisitObjectUrls: () => ({ data: {} }) }));
 vi.mock("../lib/resizeImage", () => ({ resizeImage: vi.fn() }));
 vi.mock("./SignaturePad", () => ({
   SignaturePad: ({ onChange }: { onChange: (b: Blob | null) => void }) => (

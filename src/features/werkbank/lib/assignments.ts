@@ -18,3 +18,17 @@ export function groupAssignments(rows: AssignmentRow[]): { key: GroupKey; rows: 
       cmp(a.scheduled_date, b.scheduled_date) || cmp(a.scheduled_time, b.scheduled_time) || cmp(a.order_no, b.order_no)),
   })).filter((g) => g.rows.length > 0);
 }
+
+/** Ids of the orders whose details are kept for offline use. */
+export function offlineOrderIds(rows: Pick<AssignmentRow, "id" | "group_key">[]): Set<string> {
+  return new Set(rows.filter((r) => isOfflineGroup(r.group_key as GroupKey)).map((r) => r.id));
+}
+
+/** Which queries the offline cache keeps: the list `["werkbank", "assignments", user, org]` and
+ *  the details `[..., orderId]` of offline-group orders. Nothing else, signed URLs least of all. */
+export function shouldPersistQuery(query: { queryKey: readonly unknown[] }, offlineIds: Set<string>): boolean {
+  const k = query.queryKey;
+  if (k[0] !== "werkbank" || k[1] !== "assignments") return false;
+  if (k.length === 4) return true;
+  return k.length === 5 && typeof k[4] === "string" && offlineIds.has(k[4]);
+}

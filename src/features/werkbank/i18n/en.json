@@ -1482,6 +1482,11 @@
       "signatureAlt": "Signature of {{name}}",
       "othersReport": "{{name}} writes this report. You can only read it.",
       "signatureStored": "The signature is saved. Only the confirmation is missing, so sign again to finish."
+    },
+    "offline": {
+      "banner": "Offline. Last sync: <time>{{time}}</time>",
+      "bannerNoSync": "Offline.",
+      "needsNetwork": "Needs a connection"
     }
   }
 }

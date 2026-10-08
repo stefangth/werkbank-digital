@@ -18,12 +18,14 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { berlinDateKey, formatDateWithWeekday } from "@/lib/dates";
 import type { AssignmentDetail } from "../data/technicianApp";
 import { ASSIGNMENTS_KEY, useAssignment, useAssignmentActions } from "../hooks/useAssignments";
+import { useOnline } from "../hooks/useOnline";
 import { mapDbError } from "../lib/dbErrors";
 import { ORDER_STATUS_TONES, type OrderStatus } from "../lib/orderStatus";
 import { UNIT_CODES, unitLabelKey, type UnitCode } from "../lib/units";
 import { ASSIGNMENTS_PATH } from "../paths";
 import { mapsLink } from "./mapsLink";
 import { MobileShell } from "./MobileShell";
+import { NeedsNetwork } from "./OfflineBanner";
 import { ReportSheet } from "./ReportSheet";
 import { TechnicianRoute } from "./TechnicianRoute";
 
@@ -39,6 +41,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentDetail; refetch: () => Promise<{ data?: AssignmentDetail }> }) {
   const { t } = useTranslation("werkbank");
   const { start, complete, createReport } = useAssignmentActions(orderId);
+  const { online } = useOnline();
   const [confirming, setConfirming] = useState(false);
   const [openReportId, setOpenReportId] = useState<string | null>(null);
   const { order, contact, items, technicians, reports } = data;
@@ -78,11 +81,12 @@ function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentD
       </header>
 
       {status === "open" && (
-        <Button size="touch" className="w-full" disabled={start.isPending} onClick={() => start.mutate(undefined)}>{t("app.detail.start")}</Button>
+        <Button size="touch" className="w-full" disabled={!online || start.isPending} onClick={() => start.mutate(undefined)}>{t("app.detail.start")}</Button>
       )}
       {status === "in_progress" && (
-        <Button size="touch" className="w-full" disabled={complete.isPending} onClick={() => setConfirming(true)}>{t("app.detail.complete")}</Button>
+        <Button size="touch" className="w-full" disabled={!online || complete.isPending} onClick={() => setConfirming(true)}>{t("app.detail.complete")}</Button>
       )}
+      {(status === "open" || status === "in_progress") && <NeedsNetwork />}
 
       {(address || order.location_note) && (
         <Section title={t("app.detail.address")}>
@@ -160,9 +164,12 @@ function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentD
           </ul>
         )}
         {canReport && (
-          <Button variant="secondary" size="touch" className="w-full" disabled={createReport.isPending} onClick={newReport}>
-            <Plus aria-hidden="true" />{t("app.detail.newReport")}
-          </Button>
+          <>
+            <Button variant="secondary" size="touch" className="w-full" disabled={!online || createReport.isPending} onClick={newReport}>
+              <Plus aria-hidden="true" />{t("app.detail.newReport")}
+            </Button>
+            <NeedsNetwork />
+          </>
         )}
       </Section>
 
@@ -179,7 +186,7 @@ function Detail({ orderId, data, refetch }: { orderId: string; data: AssignmentD
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className={buttonVariants({ variant: "secondary", size: "touch" })}>{t("common.cancel")}</AlertDialogCancel>
-            <Button size="touch" disabled={complete.isPending} onClick={onComplete}>{t("app.detail.complete")}</Button>
+            <Button size="touch" disabled={!online || complete.isPending} onClick={onComplete}>{t("app.detail.complete")}</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -208,7 +215,8 @@ function Body({ orderId }: { orderId: string }) {
     );
   }
   if (isLoading) return <Skeleton role="status" aria-busy="true" className="h-40 w-full" />;
-  if (isError || !data) return <Alert variant="destructive">{t("app.loadFailed")}</Alert>;
+  // A failed refetch (offline) keeps showing the cached order.
+  if (!data) return <Alert variant="destructive">{t("app.loadFailed")}</Alert>;
   return <Detail orderId={orderId} data={data} refetch={() => refetch()} />;
 }
 

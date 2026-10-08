@@ -161,4 +161,26 @@ describe("AssignmentPage", () => {
     expect(within(dialog).getByRole("button", { name: "Report as done" }).className).toContain("h-11");
     expect(within(dialog).getByRole("button", { name: "Cancel" }).className).toContain("h-11");
   });
+  it("disables every write offline with the hint", () => {
+    const offline = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      mockQuery({ data: detail() });
+      const { unmount } = renderPage();
+      expect(screen.getByRole("button", { name: "Start work" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "New report" })).toBeDisabled();
+      expect(screen.getAllByText("Needs a connection").length).toBeGreaterThan(0);
+      unmount();
+      mockQuery({ data: detail({ status: "in_progress" }) });
+      renderPage();
+      expect(screen.getByRole("button", { name: "Report as done" })).toBeDisabled();
+    } finally {
+      offline.mockRestore();
+    }
+  });
+
+  it("keeps showing the cached order when a refetch failed", () => {
+    mockQuery({ data: detail(), isError: true, error: { message: "TypeError: Failed to fetch" } });
+    renderPage();
+    expect(screen.getByText("A-1")).toBeInTheDocument();
+  });
 });

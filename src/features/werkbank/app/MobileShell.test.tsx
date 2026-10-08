@@ -1,9 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { renderWithProviders } from "@/test/renderWithProviders";
 
-const signOut = vi.fn().mockResolvedValue(undefined);
+const { calls } = vi.hoisted(() => ({ calls: [] as string[] }));
+const signOut = vi.fn(async () => { calls.push("signOut"); });
+vi.mock("../lib/idbPersister", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/idbPersister")>()),
+  clearAssignmentCache: vi.fn(async (userId: string) => { await Promise.resolve(); calls.push(`clear:${userId}`); }),
+}));
+vi.mock("./signatureStore", () => ({ clearUploadedSignatures: vi.fn(() => { calls.push("signatures"); }) }));
+vi.mock("./registerServiceWorker", () => ({ registerServiceWorker: vi.fn() }));
 vi.mock("@/features/auth/AuthContext", () => ({
   useAuth: () => ({ user: { id: "u1", email: "m@example.com" }, currentOrg: { id: "org-1" }, signOut }),
 }));
@@ -23,7 +30,12 @@ describe("MobileShell", () => {
     expect(screen.getByRole("heading", { name: "Einsatz" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back" })).toHaveAttribute("href", "/einsaetze");
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
+  it("signing out first deletes the user's offline cache and stored signatures", async () => {
+    renderWithProviders(<MemoryRouter><MobileShell title="Einsatz"><p>body</p></MobileShell></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
-    expect(signOut).toHaveBeenCalled();
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
+    expect(calls).toEqual(["clear:u1", "signatures", "signOut"]);
   });
 });

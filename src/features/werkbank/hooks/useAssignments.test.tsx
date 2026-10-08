@@ -87,3 +87,45 @@ describe("useAssignmentActions complete", () => {
     expect(toastError).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("offline reading", () => {
+  it("prefetches the details of overdue, today and upcoming orders only", async () => {
+    const fake = createFakeSupabase({
+      "rpc:werkbank.my_assignments": { data: [
+        { id: "o1", group_key: "today" }, { id: "o2", group_key: "done" }, { id: "o3", group_key: "unscheduled" },
+        { id: "o4", group_key: "upcoming" }, { id: "o5", group_key: "overdue" },
+      ], error: null },
+      "rpc:werkbank.my_assignment": { data: { order: { id: "any" } }, error: null },
+    });
+    Object.assign(client, fake);
+    const { queryClient } = renderHookWithProviders(() => useAssignments(), { authOverrides });
+    const key = (id: string) => ["werkbank", "assignments", "u1", "org-1", id];
+    await waitFor(() => {
+      for (const id of ["o1", "o4", "o5"]) expect(queryClient.getQueryData(key(id))).toBeDefined();
+    });
+    expect(queryClient.getQueryData(key("o2"))).toBeUndefined();
+    expect(queryClient.getQueryData(key("o3"))).toBeUndefined();
+    const fetched = fake.calls.filter((c) => c.table === "rpc:werkbank.my_assignment").map((c) => (c.args[0] as { p_order: string }).p_order);
+    expect(fetched.sort()).toEqual(["o1", "o4", "o5"]);
+  });
+
+  it("reads from the cache first when offline", () => {
+    Object.assign(client, createFakeSupabase());
+    const { queryClient } = renderHookWithProviders(() => useAssignments(), { authOverrides });
+    expect(queryClient.getQueryCache().find({ queryKey: ["werkbank", "assignments", "u1", "org-1"] })?.options.networkMode).toBe("offlineFirst");
+  });
+
+  it("refuses a write offline with the needs-a-connection toast and sends nothing", async () => {
+    const fake = createFakeSupabase();
+    Object.assign(client, fake);
+    const offline = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      const { result } = renderHookWithProviders(() => useAssignmentActions("x"), { authOverrides });
+      await act(async () => { await result.current.start.mutateAsync(undefined).catch(() => undefined); });
+      expect(toastError).toHaveBeenCalledWith("Needs a connection");
+      expect(fake.calls.filter((c) => c.method === "rpc")).toEqual([]);
+    } finally {
+      offline.mockRestore();
+    }
+  });
+});

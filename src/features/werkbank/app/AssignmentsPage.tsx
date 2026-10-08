@@ -18,7 +18,8 @@ function List() {
   const { t } = useTranslation("werkbank");
   const { data, isLoading, isError } = useAssignments();
   if (isLoading) return <Skeleton role="status" aria-busy="true" className="h-40 w-full" />;
-  if (isError) return <Alert variant="destructive">{t("app.loadFailed")}</Alert>;
+  // A failed refetch (offline) keeps showing the cached list.
+  if (isError && !data) return <Alert variant="destructive">{t("app.loadFailed")}</Alert>;
   const groups = groupAssignments(data ?? []);
   if (groups.length === 0) {
     return <EmptyState icon={ClipboardList} title={t("app.emptyTitle")} body={t("app.emptyBody")} reason={t("app.emptyReason")} />;

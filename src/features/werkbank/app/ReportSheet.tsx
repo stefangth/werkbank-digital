@@ -14,10 +14,12 @@ import { formatDateWithWeekday, formatTimestampLocal } from "@/lib/dates";
 import { DefaultHint, HintedLabel } from "../components/DefaultHint";
 import type { AssignmentReport } from "../data/technicianApp";
 import { useAssignmentActions, useVisitObjectUrls } from "../hooks/useAssignments";
+import { useOnline } from "../hooks/useOnline";
 import { hintId } from "../lib/hintId";
 import { resizeImage } from "../lib/resizeImage";
 import { MAX_PHOTOS_PER_REPORT, PHOTO_MAX_EDGE_PX } from "../lib/visitDefaults";
 import { FinalConfirmDialog } from "./FinalConfirmDialog";
+import { NeedsNetwork } from "./OfflineBanner";
 import { ReportPhotos } from "./ReportPhotos";
 import { SignStep } from "./SignStep";
 
@@ -69,6 +71,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
 }) {
   const { t } = useTranslation("werkbank");
   const { updateReport, addPhoto, removePhoto, lockReport } = useAssignmentActions(orderId);
+  const { online } = useOnline();
   const [body, setBody] = useState(report.body);
   const [visitDate, setVisitDate] = useState(report.visit_date);
   const [step, setStep] = useState<"edit" | "sign">("edit");
@@ -168,10 +171,10 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
           <Metric size="body">{photoCount} / {MAX_PHOTOS_PER_REPORT}</Metric>
           <DefaultHint text={t("app.report.photoLimitHint", { max: MAX_PHOTOS_PER_REPORT })} />
         </div>
-        <ReportPhotos photos={report.photos} urls={urls} onRemove={(id) => removePhoto.mutate(id)} removeDisabled={removePhoto.isPending} />
+        <ReportPhotos photos={report.photos} urls={urls} onRemove={(id) => removePhoto.mutate(id)} removeDisabled={!online || removePhoto.isPending} />
         <div className="flex items-center gap-1.5">
           <Button
-            type="button" variant="secondary" size="touch" disabled={uploading || photoCount >= MAX_PHOTOS_PER_REPORT}
+            type="button" variant="secondary" size="touch" disabled={!online || uploading || photoCount >= MAX_PHOTOS_PER_REPORT}
             onClick={() => fileRef.current?.click()}
           >
             <Camera aria-hidden="true" />{uploading ? t("app.report.uploading") : t("app.report.addPhoto")}
@@ -185,8 +188,9 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       </section>
 
       <div className="flex flex-col gap-2">
-        <Button size="touch" disabled={updateReport.isPending} onClick={toSignStep}>{t("app.report.sign")}</Button>
-        <Button variant="secondary" size="touch" onClick={() => setLocking(true)}>{t("app.report.lock")}</Button>
+        <Button size="touch" disabled={!online || updateReport.isPending} onClick={toSignStep}>{t("app.report.sign")}</Button>
+        <Button variant="secondary" size="touch" disabled={!online} onClick={() => setLocking(true)}>{t("app.report.lock")}</Button>
+        <NeedsNetwork />
       </div>
 
       <FinalConfirmDialog

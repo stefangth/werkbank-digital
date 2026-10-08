@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { AssignmentRow } from "../data/technicianApp";
-import { GROUP_ORDER, groupAssignments, isOfflineGroup } from "./assignments";
+import { GROUP_ORDER, groupAssignments, isOfflineGroup, offlineOrderIds, shouldPersistQuery } from "./assignments";
 
 const row = (o: Partial<AssignmentRow>): AssignmentRow => ({
   id: "x", order_no: "A-1", status: "open", scheduled_date: null, scheduled_time: null, subject: null,
@@ -31,5 +31,29 @@ describe("groupAssignments", () => {
 describe("isOfflineGroup", () => {
   it("is true for overdue, today and upcoming only", () => {
     expect(GROUP_ORDER.filter(isOfflineGroup)).toEqual(["overdue", "today", "upcoming"]);
+  });
+});
+
+describe("shouldPersistQuery", () => {
+  const ids = offlineOrderIds([
+    row({ id: "o", group_key: "overdue" }), row({ id: "t", group_key: "today" }), row({ id: "up", group_key: "upcoming" }),
+    row({ id: "un", group_key: "unscheduled" }), row({ id: "d", group_key: "done" }),
+  ]);
+  const q = (queryKey: unknown[]) => ({ queryKey });
+  it("collects the orders of the offline groups", () => {
+    expect([...ids].sort()).toEqual(["o", "t", "up"]);
+  });
+  it("keeps the list and the details of offline groups", () => {
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org"]), ids)).toBe(true);
+    for (const id of ["o", "t", "up"]) expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", id]), ids)).toBe(true);
+  });
+  it("drops done and unscheduled details and every other key", () => {
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "un"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "d"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "visit-object-urls", "org/o/r/a.jpg"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "orders", "org"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "technician-orgs", "u1"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["bookings", "status"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "o", "extra"]), ids)).toBe(false);
   });
 });

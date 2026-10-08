@@ -8,14 +8,12 @@ import { Label } from "@/components/ui/label";
 import type { AssignmentReport } from "../data/technicianApp";
 import { isSignatureUploaded } from "../data/technicianApp";
 import { useAssignmentActions } from "../hooks/useAssignments";
+import { useOnline } from "../hooks/useOnline";
 import { SIGNATURE_MAX_BYTES } from "../lib/visitDefaults";
 import { FinalConfirmDialog } from "./FinalConfirmDialog";
+import { NeedsNetwork } from "./OfflineBanner";
 import { SignaturePad } from "./SignaturePad";
-
-/** Signatures stored as signature.png whose `sign_visit_report` failed, by report id. They outlive
- *  the sign step (back to the report, sheet closed and reopened), so a retry signs the stored
- *  image and never a redrawn one, which the upload would answer with "already exists". */
-const uploadedSignatures = new Map<string, { png: Blob; signerName: string }>();
+import { uploadedSignatures } from "./signatureStore";
 
 /** The customer signs on the technician's phone: a read-only summary of the report, the signer's
  *  name and the pad. Signing uploads the PNG, then locks the report with `sign_visit_report`. */
@@ -29,6 +27,7 @@ export function SignStep({ orderId, report, body, onBack, onSigned }: {
 }) {
   const { t } = useTranslation("werkbank");
   const { signReport } = useAssignmentActions(orderId);
+  const { online } = useOnline();
   const [uploaded, setUploaded] = useState(() => uploadedSignatures.get(report.id) ?? null);
   const [name, setName] = useState(uploaded?.signerName ?? "");
   const [png, setPng] = useState<Blob | null>(uploaded?.png ?? null);
@@ -94,7 +93,8 @@ export function SignStep({ orderId, report, body, onBack, onSigned }: {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Button size="touch" disabled={!signer || !png} onClick={() => setConfirming(true)}>{t("app.report.signSubmit")}</Button>
+        <Button size="touch" disabled={!online || !signer || !png} onClick={() => setConfirming(true)}>{t("app.report.signSubmit")}</Button>
+        <NeedsNetwork />
         <Button variant="secondary" size="touch" onClick={onBack}>{t("app.report.backToReport")}</Button>
       </div>
 
