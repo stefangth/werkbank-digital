@@ -211,7 +211,8 @@ export default tseslint.config(
   // pooler URL, etc.), created whenever the local stack is running. Its generated,
   // single-line index.ts trips --max-warnings 0, so a running stack must not make
   // `npm run lint` fail — same reasoning as coverage/ above.
-  { ignores: ["dist", "coverage", "supabase/.temp", ".claude/worktrees/**"] },
+  // The vendored e-invoice build is third-party code kept byte for byte (see its README).
+  { ignores: ["dist", "coverage", "supabase/.temp", ".claude/worktrees/**", "supabase/functions/_shared/werkbank/einvoice/vendor/**"] },
   // App, tests, e2e, scripts — browser runtime, Vite fast refresh.
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

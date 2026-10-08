@@ -1,5 +1,8 @@
 // The one invoice file: the visual PDF with factur-x.xml embedded (Factur-X EN 16931, PDF/A-3).
-import { InvoiceService } from "npm:@e-invoice-eu/core@3.4.0";
+// The vendored single-file build instead of npm: (see vendor/README.md): the npm import made the
+// edge bundle exceed the upload limit, and vendoring fixes the bytes that render the e-invoice.
+// @deno-types="https://esm.sh/@e-invoice-eu/core@3.4.0/dist/index.d.ts"
+import { InvoiceService } from "./vendor/e-invoice-eu-core-3.4.0.mjs";
 import { toUblInput } from "./facturx.ts";
 import type { InvoiceData } from "./invoiceData.ts";
 import { renderInvoicePdf } from "./invoiceDocument.tsx";
