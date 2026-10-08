@@ -72,3 +72,18 @@ describe("useAssignmentActions", () => {
     expect(toastError).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("useAssignmentActions complete", () => {
+  it("stays silent on invalid_transition so the page can decide after the refetch", async () => {
+    Object.assign(client, createFakeSupabase({ "rpc:werkbank.complete_assignment": { data: null, error: { code: "22023", message: "invalid_transition" } } }));
+    const { result } = renderHookWithProviders(() => useAssignmentActions("x"), { authOverrides });
+    await act(async () => { await result.current.complete.mutateAsync(undefined).catch(() => undefined); });
+    expect(toastError).not.toHaveBeenCalled();
+  });
+  it("toasts other complete errors", async () => {
+    Object.assign(client, createFakeSupabase({ "rpc:werkbank.complete_assignment": { data: null, error: { code: "42501", message: "not_assigned" } } }));
+    const { result } = renderHookWithProviders(() => useAssignmentActions("x"), { authOverrides });
+    await act(async () => { await result.current.complete.mutateAsync(undefined).catch(() => undefined); });
+    expect(toastError).toHaveBeenCalledTimes(1);
+  });
+});

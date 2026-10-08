@@ -7,7 +7,7 @@ import {
   completeAssignment, createVisitReport, fetchAssignment, fetchAssignments, fetchTechnicianOrgs, lockVisitReport,
   removeVisitPhoto, signVisitReport, startAssignment, updateVisitReport, uploadVisitPhoto,
 } from "../data/technicianApp";
-import { mapDbError } from "../lib/dbErrors";
+import { mapDbError, type DbErrorKey } from "../lib/dbErrors";
 import { ORDERS_KEY } from "./useOrders";
 
 export const ASSIGNMENTS_KEY = ["werkbank", "assignments"] as const;
@@ -50,14 +50,22 @@ export function useAssignment(orderId: string | undefined) {
   });
 }
 
-/** One technician write: errors toast their translated copy; every outcome refreshes the given
+/** One technician write: errors toast their translated copy (except the `silent` keys); every outcome refreshes the given
  *  query domains (the assignments always, the office's orders too for status changes). */
-function useTechnicianMutation<V, R>(mutationFn: (vars: V) => Promise<R>, keys: readonly (readonly string[])[] = [ASSIGNMENTS_KEY]) {
+function useTechnicianMutation<V, R>(
+  mutationFn: (vars: V) => Promise<R>,
+  keys: readonly (readonly string[])[] = [ASSIGNMENTS_KEY],
+  /** Errors the caller handles itself after the refetch, so no toast here. */
+  silent: readonly DbErrorKey[] = [],
+) {
   const qc = useQueryClient();
   const { t } = useTranslation("werkbank");
   return useMutation({
     mutationFn,
-    onError: (e) => toast.error(t(mapDbError(e))),
+    onError: (e) => {
+      const key = mapDbError(e);
+      if (!silent.includes(key)) toast.error(t(key));
+    },
     onSettled: () => Promise.all(keys.map((queryKey) => qc.invalidateQueries({ queryKey: [...queryKey] }))),
   });
 }
@@ -67,7 +75,7 @@ export function useAssignmentActions(orderId: string) {
   const orgId = useAuth().currentOrg?.id;
   return {
     start: useTechnicianMutation(() => startAssignment(supabase, orderId), [ASSIGNMENTS_KEY, ORDERS_KEY]),
-    complete: useTechnicianMutation(() => completeAssignment(supabase, orderId), [ASSIGNMENTS_KEY, ORDERS_KEY]),
+    complete: useTechnicianMutation(() => completeAssignment(supabase, orderId), [ASSIGNMENTS_KEY, ORDERS_KEY], ["errors.invalidTransition"]),
     createReport: useTechnicianMutation((visitDate?: string) => createVisitReport(supabase, orderId, visitDate)),
     updateReport: useTechnicianMutation((v: { reportId: string; body: string; visitDate: string }) =>
       updateVisitReport(supabase, v.reportId, v.body, v.visitDate)),
