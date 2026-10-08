@@ -54,6 +54,17 @@ describe("sendInvoice", () => {
     const fake = createFakeSupabase(failure(409, { error: "invalid_state" }));
     await expect(sendInvoice(asClient(fake), "org-1", "i1", body)).rejects.toMatchObject({ code: "invalid_state" });
   });
+  it("surfaces the server's recipient errors with their own copy", async () => {
+    for (const [code, key] of [
+      ["invalid_recipient", "invoices.send.errors.invalidRecipient"],
+      ["too_many_recipients", "invoices.send.errors.tooManyRecipients"],
+    ] as const) {
+      const fake = createFakeSupabase(failure(422, { error: code }));
+      const err = await sendInvoice(asClient(fake), "org-1", "i1", body).catch((e: unknown) => e);
+      expect(err).toMatchObject({ code });
+      expect(invoiceActionErrorKey((err as InvoiceActionError).code)).toBe(key);
+    }
+  });
   it("carries the reason of an invalid_state", async () => {
     const fake = createFakeSupabase(failure(409, { error: "invalid_state", reason: "order_not_done" }));
     await expect(sendInvoice(asClient(fake), "org-1", "i1", body)).rejects.toMatchObject({ code: "invalid_state", reason: "order_not_done" });
