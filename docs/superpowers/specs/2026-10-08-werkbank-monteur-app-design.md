@@ -115,7 +115,7 @@ Constraints: `unique (org_id, id)`; signature columns all null or all set; a sig
 
 ### R2. RPCs (schema `werkbank`)
 
-All are `security definer`, `set search_path = ''`, `revoke all ... from public, anon`, `grant execute ... to authenticated`. Every one resolves the caller's technician row as `artists where user_id = auth.uid() and org_id = <order's org>` and checks the assignment in `order_technicians` (SQLSTATE `WB600 not_assigned`, same message for "not found" so ids cannot be probed).
+All are `security definer`, `set search_path = ''`, `revoke all ... from public, anon`, `grant execute ... to authenticated`. Every one resolves the caller's technician row as `artists where user_id = auth.uid() and org_id = <order's org>` and checks the assignment in `order_technicians` (`not_assigned`, same message for "not found" so ids cannot be probed). Errors are raised as messages with standard SQLSTATEs like Teil 3 to 5 (`not_assigned`/`not_author` 42501, `report_locked`/`report_not_empty`/`order_closed` 55000, `photo_missing`/`photo_limit`/`signer_required` 22023); the `WBxxx` codes below name the message (amended while planning).
 
 | RPC | Effect |
 |---|---|
@@ -149,7 +149,7 @@ Policies on `storage.objects`, built like the Teil 3 policies (cast the path seg
 
 **Landing.** A user whose only role in the active `handwerk` org is `artist` is redirected from the dashboard to `/einsaetze`. Implemented through the module dashboard slot (`WerkbankDashboard` renders `<Navigate to="/einsaetze">` for that case), so no core routing changes.
 
-**Nav item.** "Meine Einsätze" (`werkbank:nav.myAssignments`), kinds `handwerk`, shown when `my_technician_orgs()` contains the active org.
+**Nav item.** "Meine Einsätze" (`werkbank:nav.myAssignments`), kinds `handwerk`, role `artist`. The core `NavItem` has no visibility predicate, so admins and office users who are also linked to a technician get a "Meine Einsätze" link in the Werkbank dashboard header instead (amended 2026-10-08 while planning).
 
 **List screen.** Groups in this order: Überfällig, Heute, Nächste 7 Tage, Ohne Termin, Erledigt. Empty groups are hidden. Each card: time (`Metric`), customer, address, subject, `StatusPill`. Grouping is a pure function `groupAssignments(rows, today)` in `src/features/werkbank/lib/assignments.ts`, but the RPC's group key is authoritative; the function only orders and labels. No pull to refresh; queries refetch on mount and window focus.
 
@@ -183,7 +183,7 @@ Locked reports render read-only with "Unterschrieben von X am …" or "Abgeschlo
 
 **Notification.** `werkbank_order_completed` renders in `NotificationsList` with a link to the order. Its title and message are written in German by the RPC (Werkbank is German first, like the documents); no new notification category settings.
 
-**Dashboard.** Orders in the done list of `WerkbankDashboard` with `completed_by` pointing to a user linked to a technician show "vom Monteur gemeldet".
+**Dashboard.** A fourth tile "Vom Monteur gemeldet" counts orders in status `done` whose `completed_by` is a user linked to a technician (`order_list.completed_by_technician`) and links to the orders list filtered to them (amended 2026-10-08 while planning: the dashboard has no done list).
 
 ### R7. Edge function `werkbank-reports`
 
