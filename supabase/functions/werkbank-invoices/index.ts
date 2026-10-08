@@ -51,7 +51,7 @@ import {
 import { renderInvoicePdf } from "../_shared/werkbank/einvoice/invoiceDocument.tsx";
 import { renderEInvoice } from "../_shared/werkbank/einvoice/renderEInvoice.ts";
 import { type InvoiceBlocker, invoicePreflight } from "../_shared/werkbank/invoicePreflight.ts";
-import { checkRecipients } from "../_shared/werkbank/recipients.ts";
+import { checkRecipients, MAX_MESSAGE_CHARS } from "../_shared/werkbank/recipients.ts";
 import { formatDateDe } from "../_shared/werkbank/pdf/quoteData.ts";
 
 export interface InvoiceRenderers {
@@ -325,7 +325,9 @@ function parseSend(raw: unknown): SendInput | Response {
   }
   const checked = checkRecipients(to, addresses(b.cc));
   if ("error" in checked) return json({ error: checked.error }, 422);
-  return { ...checked, message: typeof b.message === "string" ? b.message : "" };
+  const message = typeof b.message === "string" ? b.message : "";
+  if (message.length > MAX_MESSAGE_CHARS) return json({ error: "bad_request" }, 422);
+  return { ...checked, message };
 }
 
 function sendFailure(error: "load_failed" | "send_failed", issued: boolean): Response {
@@ -372,7 +374,11 @@ async function emailInvoice(
   const attachment = { filename: `${invoice.invoice_no}.pdf`, content_base64: encodeBase64(file) };
   const recipients = [...input.to, ...input.cc];
   const stamp = deps.now();
-  for (const [i, recipient] of recipients.entries()) {
+  // Keyed on the last completed send, not the clock: a retry after a partial failure (sent_at still
+  // unchanged) repeats the keys, so the provider drops the messages that already went out, while a
+  // deliberate resend after a success (new sent_at) gets fresh keys.
+  const sendRound = invoice.sent_at ?? "first";
+  for (const recipient of recipients) {
     const result = await deps.sendEmail({
       template_name: "invoice-sent",
       recipient_email: recipient,
@@ -389,7 +395,7 @@ async function emailInvoice(
         message: input.message,
       },
       attachments: [attachment],
-      idempotency_key: `invoice-sent-${invoice.id}-${stamp.getTime()}-${i}`,
+      idempotency_key: `invoice-sent-${invoice.id}-${sendRound}-${recipient.toLowerCase()}`,
     });
     if (!emailWasSent(result)) {
       console.warn("werkbank-invoices: invoice email not delivered", {

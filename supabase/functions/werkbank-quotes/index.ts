@@ -54,12 +54,11 @@ import { renderQuotePdf } from "../_shared/werkbank/pdf/quoteDocument.tsx";
 import { parseName, parseSignature, quoteConsentText } from "../_shared/werkbank/acceptance.ts";
 import { formatQuoteNumber } from "../_shared/werkbank/quoteDisplayNumber.ts";
 import { ASSETS_BUCKET, DOCUMENTS_BUCKET, isAlreadyExists, logoDataUrl } from "../_shared/werkbank/documentStorage.ts";
-import { checkRecipients } from "../_shared/werkbank/recipients.ts";
+import { checkRecipients, MAX_MESSAGE_CHARS } from "../_shared/werkbank/recipients.ts";
 
 export type RenderQuotePdf = (data: QuotePdfData) => Promise<Uint8Array>;
 
 const SIGNED_URL_TTL = 600;
-const MAX_MESSAGE_CHARS = 5000;
 
 type Body = Record<string, unknown>;
 

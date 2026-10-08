@@ -413,6 +413,28 @@ Deno.test("send without a recipient is a no_recipient preflight failure", async 
   }
 });
 
+Deno.test("idempotency keys come from the invoice, its last send and the recipient, never the clock", async () => {
+  // A retry after a partial failure (sent_at still unchanged) reuses the keys, so the provider drops
+  // the messages that already went out; a deliberate resend after a success gets fresh keys.
+  const first = setup({ invoice: issuedRow({ pdf_path: PATH }), opts: stored });
+  await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND, to: ["Kunde@Example.com"] }), first.deps, first.render);
+  const keys = (t: typeof first) =>
+    t.invokeCalls.filter((c) => c.name === "send-transactional-email").map((c) => (c.body as { idempotency_key: string }).idempotency_key);
+  assertEquals(keys(first), [`invoice-sent-${INV}-first-kunde@example.com`, `invoice-sent-${INV}-first-buchhaltung@example.com`]);
+
+  const resend = setup({ invoice: issuedRow({ pdf_path: PATH, sent_at: "2026-06-01T12:00:00.000Z" }), opts: stored });
+  await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND }), resend.deps, resend.render);
+  assertEquals(keys(resend)[0], `invoice-sent-${INV}-2026-06-01T12:00:00.000Z-kunde@example.com`);
+});
+
+Deno.test("a message longer than 5000 characters is bad_request and emails nothing", async () => {
+  const t = setup({ invoice: issuedRow({ pdf_path: PATH }), opts: stored });
+  const res = await handle(request({ action: "send", org_id: ORG, invoice_id: INV, ...SEND, message: "x".repeat(5001) }), t.deps, t.render);
+  assertEquals(res.status, 422);
+  assertEquals(await res.json(), { error: "bad_request" });
+  assertEquals(emails(t), []);
+});
+
 Deno.test("send on a draft or an unstored invoice is invalid_state", async () => {
   for (const invoice of [invoiceRow(), issuedRow()]) {
     const t = setup({ invoice, opts: stored });
