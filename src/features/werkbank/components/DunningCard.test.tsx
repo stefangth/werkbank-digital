@@ -143,6 +143,12 @@ describe("DunningCard", () => {
     expect(within(alert).getByText("Es ist nichts mehr offen.")).toBeInTheDocument();
   });
 
+  it("offers Erneut senden only for the latest stage", async () => {
+    st.notices = [notice(), notice({ id: "n2", stage: 2, pdf_path: "n2.pdf" })];
+    render();
+    expect(screen.getAllByRole("button", { name: "Erneut senden" })).toHaveLength(1);
+  });
+
   it("resends from a recipients dialog with the last addresses and a typed CC", async () => {
     st.notices = [notice()];
     render();

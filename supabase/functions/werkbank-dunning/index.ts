@@ -422,6 +422,12 @@ async function sendNotice(deps: Deps, orgId: string, noticeId: string, input: Se
   if (!data) return json({ error: "not_found" }, 404);
   const notice = data as unknown as DunningNoticeRow;
   if (!notice.pdf_path) return json({ error: "pdf_missing" }, 409);
+  // Only the latest stage goes out again: once a newer notice exists, resending an older one would
+  // mail the customer a lower stage than the one they already have.
+  const stages = await w.from("dunning_notices").select("stage").eq("invoice_id", notice.invoice_id).eq("org_id", orgId);
+  if (stages.error) return json({ error: "load_failed" }, 500);
+  const latest = Math.max(...((stages.data ?? []) as { stage: number }[]).map((r) => r.stage), notice.stage);
+  if (latest > notice.stage) return json({ error: "not_latest_notice" }, 409);
 
   const invoice = await loadInvoice(deps, orgId, notice.invoice_id);
   if (invoice === "error") return json({ error: "load_failed" }, 500);

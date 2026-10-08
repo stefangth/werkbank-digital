@@ -345,7 +345,8 @@
     },
     "errors": {
       "noRecipient": "No email address is stored for this customer. Enter a recipient.",
-      "invoiceFileMissing": "The invoice PDF is missing, so the notice cannot go out by email. Send it by post."
+      "invoiceFileMissing": "The invoice PDF is missing, so the notice cannot go out by email. Send it by post.",
+      "notLatestNotice": "Only the latest notice can be sent again."
     },
     "send": {
       "resendTitle": "Send {{stage}} again",

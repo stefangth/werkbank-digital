@@ -25,6 +25,7 @@ export class DunningActionError extends Error {
 export function dunningActionErrorKey(code: string): string {
   if (code === "no_recipient") return "dunning.errors.noRecipient";
   if (code === "invoice_file_missing") return "dunning.errors.invoiceFileMissing";
+  if (code === "not_latest_notice") return "dunning.errors.notLatestNotice";
   return invoiceActionErrorKey(code);
 }
 

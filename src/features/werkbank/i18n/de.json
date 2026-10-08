@@ -345,7 +345,8 @@
     },
     "errors": {
       "noRecipient": "Für diesen Kunden ist keine E-Mail-Adresse hinterlegt. Gib einen Empfänger ein.",
-      "invoiceFileMissing": "Das PDF der Rechnung fehlt, deshalb kann die Mahnung nicht per E-Mail rausgehen. Verschicke sie per Post."
+      "invoiceFileMissing": "Das PDF der Rechnung fehlt, deshalb kann die Mahnung nicht per E-Mail rausgehen. Verschicke sie per Post.",
+      "notLatestNotice": "Nur die neueste Mahnung kann erneut gesendet werden."
     },
     "send": {
       "resendTitle": "{{stage}} erneut senden",

@@ -13,7 +13,8 @@ type Page<T> = PromiseLike<{ data: T[] | null; error: unknown }>;
 
 /** Keeps a search term from breaking out of the PostgREST `or(...)` filter. */
 function safeTerm(term: string): string {
-  return term.replace(/[,()%*\\"]/g, " ").replace(/\s+/g, " ").trim();
+  // "_" is an ilike wildcard: escaped so "RE_1" matches only itself.
+  return term.replace(/[,()%*\\"]/g, " ").replace(/\s+/g, " ").trim().replace(/_/g, "\\_");
 }
 
 /** The payment state of one invoice, or null if it has none (draft, cancellation, other org). */

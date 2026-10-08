@@ -44,6 +44,8 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
   const holdActive = !!hold && (hold.until === null || hold.until >= today);
   // Emailing a notice again needs what creating one needs: an issued invoice, something open and
   // no active hold (the server checks the same). Storing an unrendered notice is always allowed.
+  // Only the latest stage is sent again (the edge refuses an older one: not_latest_notice).
+  const latestStage = Math.max(0, ...notices.map((n) => n.stage));
   const canEmail = issued && invoice.type === "invoice" && (balance.data?.open_amount ?? 0) > 0 && !holdActive;
   const createLabel = t("dunning.create.button", { stage: t(stageKey(stage)) });
   const blockerText = blockers[0] ? t(`dunning.blockers.${blockers[0]}`) : null;
@@ -84,7 +86,7 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
 
       {notices.length ? (
         <ul className="m-0 list-none divide-y divide-border rounded-card border border-border p-0">
-          {notices.map((n) => <NoticeRow key={n.id} notice={n} invoice={invoice} canEmail={canEmail} />)}
+          {notices.map((n) => <NoticeRow key={n.id} notice={n} invoice={invoice} canEmail={canEmail && n.stage === latestStage} />)}
         </ul>
       ) : <p className="m-0 text-sm text-muted-foreground">{t("dunning.empty")}</p>}
 

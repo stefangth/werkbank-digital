@@ -408,6 +408,14 @@ Deno.test("send of a notice without a stored file is 409 pdf_missing", async () 
   assertEquals(emails(t), []);
 });
 
+Deno.test("send of an older stage after a newer one exists is 409 not_latest_notice and emails nothing", async () => {
+  const t = setup({ notices: [filed(), filed({ id: "n-2", stage: 2 })], opts: stored });
+  const res = await handle(request(sendBody), t.deps, t.render);
+  assertEquals(res.status, 409);
+  assertEquals(await res.json(), { error: "not_latest_notice" });
+  assertEquals(emails(t), []);
+});
+
 Deno.test("send of an unknown notice is 404", async () => {
   const t = setup({ opts: stored });
   const res = await handle(request(sendBody), t.deps, t.render);

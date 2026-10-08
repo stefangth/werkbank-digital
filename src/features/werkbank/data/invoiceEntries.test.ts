@@ -41,6 +41,12 @@ describe("reads", () => {
     expect(or?.args[0]).toContain("invoice_no.ilike.%Mül ler%");
     expect(or?.args[0]).toContain("customer_name.ilike.%Mül ler%");
   });
+  it("fetchOpenItems matches an underscore literally, not as an ilike wildcard", async () => {
+    const fake = createFakeSupabase({ [T("invoice_balances")]: { data: [], error: null } });
+    await fetchOpenItems(asClient(fake), "o1", { search: "RE_1" });
+    const or = fake.calls.find((c) => c.method === "or");
+    expect(or?.args[0]).toContain("invoice_no.ilike.%RE\\_1%");
+  });
   it("fetchCustomerCredit sums the negative open amounts as a positive number", async () => {
     const fake = createFakeSupabase({ [T("invoice_balances")]: { data: [{ open_amount: -110 }, { open_amount: -40.5 }], error: null } });
     expect(await fetchCustomerCredit(asClient(fake), "o1")).toBe(150.5);
