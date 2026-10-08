@@ -79,6 +79,12 @@ describe("OrdersPage", () => {
     expect(numbersShown()).toEqual(["AU-0003", "AU-0005"]);
   });
 
+  it("offers the invoiced status in the filter", async () => {
+    render();
+    fireEvent.click(await screen.findByRole("combobox", { name: "Status" }));
+    expect(await screen.findByRole("option", { name: "Abgerechnet" })).toBeInTheDocument();
+  });
+
   it("filters by technician", async () => {
     render();
     fireEvent.click(await screen.findByRole("combobox", { name: "Monteur" }));

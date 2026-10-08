@@ -4,8 +4,8 @@ import { ORDER_STATUSES, ORDER_STATUS_TONES, needsSchedule, nextOrderActions } f
 
 describe("ORDER_STATUSES", () => {
   it("matches the check constraint on werkbank.orders.status", () => {
-    const sql = readFileSync("supabase/migrations/20261007180000_werkbank_quotes_orders.sql", "utf8");
-    const check = /status text not null default 'open' check \(status in \(([^)]*)\)\)/.exec(sql);
+    const sql = readFileSync("supabase/migrations/20261008100000_werkbank_invoices.sql", "utf8");
+    const check = /add constraint orders_status_check\s+check \(status in \(([^)]*)\)\)/.exec(sql);
     expect(check).not.toBeNull();
     const dbValues = check![1].split(",").map((v) => v.trim().replace(/'/g, ""));
     expect([...ORDER_STATUSES]).toEqual(dbValues);
@@ -14,12 +14,13 @@ describe("ORDER_STATUSES", () => {
 
 describe("orderStatus", () => {
   it("maps each status to its tone", () => {
-    expect(ORDER_STATUS_TONES).toEqual({ open: "waiting", in_progress: "accent", done: "confirmed", cancelled: "neutral" });
+    expect(ORDER_STATUS_TONES).toEqual({ open: "waiting", in_progress: "accent", done: "confirmed", invoiced: "confirmed", cancelled: "neutral" });
   });
   it("offers the transitions the database allows", () => {
     expect(nextOrderActions("open")).toEqual(["start", "cancel"]);
     expect(nextOrderActions("in_progress")).toEqual(["complete", "cancel"]);
     expect(nextOrderActions("done")).toEqual(["reopen"]);
+    expect(nextOrderActions("invoiced")).toEqual([]);
     expect(nextOrderActions("cancelled")).toEqual([]);
   });
 });

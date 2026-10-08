@@ -3,7 +3,7 @@ import type { Tone } from "@/components/ui/tones";
 /** The generated `orders.status` is a plain `string` (the database enforces the values with a
  *  check constraint, which type generation cannot express), so the union is kept here.
  *  `orderStatus.test.ts` compares it with the check constraint in the migration. */
-export const ORDER_STATUSES = ["open", "in_progress", "done", "cancelled"] as const;
+export const ORDER_STATUSES = ["open", "in_progress", "done", "invoiced", "cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export type OrderAction = "start" | "complete" | "reopen" | "cancel";
 
@@ -12,6 +12,7 @@ export const ORDER_STATUS_TONES: Record<OrderStatus, Tone> = {
   open: "waiting",
   in_progress: "accent",
   done: "confirmed",
+  invoiced: "confirmed",
   cancelled: "neutral",
 };
 

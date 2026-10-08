@@ -729,12 +729,14 @@
       "open": "Offen",
       "in_progress": "In Arbeit",
       "done": "Erledigt",
+      "invoiced": "Abgerechnet",
       "cancelled": "Storniert"
     },
     "action": {
       "start": "Beginnen",
       "complete": "Erledigt",
       "reopen": "Wieder öffnen",
+      "createInvoice": "Rechnung erstellen",
       "cancel": "Stornieren"
     },
     "noMatches": "Kein Auftrag passt zu deinen Filtern.",
@@ -761,6 +763,7 @@
     "page": {
       "loadFailed": "Der Auftrag konnte nicht geladen werden.",
       "back": "Alle Aufträge",
+      "invoice": "Rechnung",
       "fromQuote": "Aus Angebot",
       "delete": "Auftrag löschen",
       "deleteTitle": "Diesen Auftrag löschen?",

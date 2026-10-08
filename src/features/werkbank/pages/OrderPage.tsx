@@ -22,12 +22,13 @@ import type { OrderPatch } from "../data/orders";
 import { useCustomer } from "../hooks/useCustomers";
 import { useDocumentItems } from "../hooks/useDocumentItems";
 import { useOrder, useOrderList, useOrderMutations } from "../hooks/useOrders";
+import { useActiveInvoiceForOrder, useInvoiceMutations } from "../hooks/useInvoices";
 import { useQuote } from "../hooks/useQuotes";
 import { mapDbError } from "../lib/dbErrors";
 import { ORDER_ACTION_TARGET, ORDER_STATUS_TONES, nextOrderActions, type OrderAction, type OrderStatus } from "../lib/orderStatus";
 import { diffAgainstQuote } from "../lib/quoteDiff";
 import { formatQuoteNumber } from "../lib/quoteNumber";
-import { ORDERS_PATH, quotePath } from "../paths";
+import { ORDERS_PATH, invoicePath, quotePath } from "../paths";
 
 const ACTION_VARIANT = { start: "default", complete: "default", reopen: "secondary", cancel: "destructive" } as const;
 
@@ -44,6 +45,8 @@ export function OrderPage() {
   const { data: quote } = useQuote(order?.quote_id ?? undefined);
   const { data: quoteItems } = useDocumentItems(order?.quote_id ? { quoteId: order.quote_id } : undefined);
   const { data: orderItems } = useDocumentItems(order ? { orderId: order.id } : undefined);
+  const { data: activeInvoice } = useActiveInvoiceForOrder(order?.status === "invoiced" ? order.id : undefined);
+  const { fromOrder } = useInvoiceMutations();
   const { update, setStatus, setTechnicians, remove } = useOrderMutations();
   // Keyed by the order id and the status it was set at: the route reuses this component, so a
   // lock must not carry over to the next order, and it ends as soon as the status changes
@@ -77,7 +80,7 @@ export function OrderPage() {
 
   const status = order.status as OrderStatus;
   const locked = lockedAt?.id === order.id && lockedAt.status === order.status;
-  const readOnly = locked || status === "done" || status === "cancelled";
+  const readOnly = locked || status === "done" || status === "invoiced" || status === "cancelled";
   const listRow = list?.find((o) => o.id === order.id);
 
   // A save that hits an order closed meanwhile: fetch the real state, so the page turns read only.
@@ -105,6 +108,11 @@ export function OrderPage() {
                 {t(`orders.action.${action}`)}
               </Button>
             ))}
+            {status === "done" && !locked && (
+              <Button disabled={fromOrder.isPending} onClick={() => fromOrder.mutate(order.id, { onSuccess: (invoiceId) => navigate(invoicePath(invoiceId)) })}>
+                {t("orders.action.createInvoice")}
+              </Button>
+            )}
             {status === "open" && !locked && (
               <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>
                 {t("orders.page.delete")}
@@ -116,6 +124,14 @@ export function OrderPage() {
       <div className="flex flex-wrap items-center gap-3">
         <Token className="text-lg">{order.order_no}</Token>
         <StatusPill tone={ORDER_STATUS_TONES[status]}>{t(`orders.status.${status}`)}</StatusPill>
+        {status === "invoiced" && activeInvoice && (
+          <span className="text-sm">
+            {t("orders.page.invoice")}{" "}
+            <Link to={invoicePath(activeInvoice.id)} className="font-medium text-accent-text hover:underline">
+              <Token>{activeInvoice.invoice_no}</Token>
+            </Link>
+          </span>
+        )}
         {order.quote_id && quote && (
           <span className="text-sm">
             {t("orders.page.fromQuote")}{" "}
