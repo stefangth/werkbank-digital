@@ -182,9 +182,13 @@ grant select on werkbank.invoice_list to authenticated;
 -- included), as long as the org exists. Once the org row is deleted (erasure, ADR-0013 removal),
 -- its invoice files can be deleted through the Storage API. The trigger sits on storage.objects,
 -- so nothing in public depends on schema werkbank.
+-- security definer: the org lookup must see public.organizations whatever role the Storage
+-- service runs as (supabase_storage_admin has no select on it; an RLS-bound caller would see
+-- "no org" and be let through). The body reads only the row being changed and organizations.
 create function werkbank.protect_invoice_files()
 returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 begin
