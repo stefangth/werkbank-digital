@@ -52,6 +52,20 @@ describe("BulkDunningDialog", () => {
     expect(screen.queryByRole("link", { name: "RE-2" })).not.toBeInTheDocument();
   });
 
+  it("keeps the total fixed when the rows prop shrinks during the run", async () => {
+    let release: () => void = () => undefined;
+    issue.mutateAsync.mockImplementationOnce(() => new Promise((res) => { release = () => res({ noticeId: "n", stage: 1 }); }));
+    issue.mutateAsync.mockResolvedValue({ noticeId: "n", stage: 1 });
+    const rows = [row("a", "RE-1"), row("b", "RE-2")] as never;
+    const { rerender } = render(rows);
+    fireEvent.click(screen.getByRole("button", { name: "Jetzt mahnen" }));
+    expect(await screen.findByText("0 von 2 erledigt")).toBeInTheDocument();
+    rerender(<BulkDunningDialog rows={[row("b", "RE-2")] as never} onOpenChange={vi.fn()} />);
+    await act(async () => { release(); });
+    await waitFor(() => expect(issue.mutateAsync).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("2 versendet")).toBeInTheDocument();
+  });
+
   it("treats any other error as failed", async () => {
     issue.mutateAsync.mockRejectedValueOnce(new Error("boom"));
     render([row("a", "RE-1")]);

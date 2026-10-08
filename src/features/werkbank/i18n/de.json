@@ -314,6 +314,11 @@
       "bannerUntil": "Gilt bis",
       "bannerOpen": "Gilt, bis Du sie aufhebst.",
       "clear": "Aufheben"
+    },
+    "stage": {
+      "1": "Zahlungserinnerung",
+      "2": "1. Mahnung",
+      "3": "2. und letzte Mahnung"
     }
   },
   "errors": {

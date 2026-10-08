@@ -12,13 +12,12 @@ import type { DunningNotice } from "../data/dunning";
 import { useDunningDownload, useIssueDunning, useSendDunning } from "../hooks/useDunningActions";
 import { useClearDunningHold, useDunningHold, useDunningNotices, useInvoiceBalance } from "../hooks/useOpenItems";
 import { dunningBlockers, nextDunningStage } from "../lib/dunningBlockers";
-import { DUNNING_STAGE_TITLES } from "../lib/dunningDefaults";
+import { stageKey } from "../lib/stageKey";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { CreateDunningDialog } from "./CreateDunningDialog";
 import { DunningHoldDialog } from "./DunningHoldDialog";
 
 type DunningInvoice = { id: string; customer_id: string; contact_id: string | null; status: string; type: string; due_date: string | null };
-const stageTitle = (stage: number) => DUNNING_STAGE_TITLES[Math.min(Math.max(stage, 1), 3) as 1 | 2 | 3];
 
 /** The dunning notices of an issued or cancelled invoice, the button for the next one and the
  *  hold. A cancelled invoice keeps its notices as a record: no create button, no hold actions.
@@ -51,7 +50,7 @@ export function DunningCard({ invoice }: { invoice: DunningInvoice }) {
           <div className="ml-auto flex flex-wrap gap-2">
             {!holdActive && <Button variant="secondary" onClick={() => setDialog("hold")}>{t("dunning.hold.set")}</Button>}
             <IconTooltip label={blockers[0] ? t(`dunning.blockers.${blockers[0]}`) : null}>
-              <Button disabled={blockers.length > 0} onClick={() => setDialog("create")}>{t("dunning.create.button", { stage: stageTitle(stage) })}</Button>
+              <Button disabled={blockers.length > 0} onClick={() => setDialog("create")}>{t("dunning.create.button", { stage: t(stageKey(stage)) })}</Button>
             </IconTooltip>
           </div>
         )}
@@ -117,7 +116,7 @@ function NoticeRow({ notice: n }: { notice: DunningNotice }) {
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
-      <span className="font-medium">{stageTitle(n.stage)}</span>
+      <span className="font-medium">{t(stageKey(n.stage))}</span>
       <Metric size="body">{formatDateDMY(n.notice_date)}</Metric>
       <span className="text-muted-foreground">{t("dunning.row.deadline")} <Metric size="body">{formatDateDMY(n.payment_deadline)}</Metric></span>
       <StatusPill tone={mailFailed || unrendered ? "waiting" : "neutral"}>

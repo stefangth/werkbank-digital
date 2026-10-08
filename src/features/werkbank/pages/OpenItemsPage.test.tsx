@@ -6,7 +6,7 @@ import i18n from "@/i18n";
 import { STORAGE_KEY } from "@/i18n/config";
 
 const { st, issue, toast } = vi.hoisted(() => ({
-  st: { open: [] as unknown[], due: [] as unknown[], credit: 0, loading: false, error: false },
+  st: { open: [] as unknown[], due: [] as unknown[], credit: 0, loading: false, error: false, searchLoading: false },
   issue: { mutateAsync: vi.fn(), isPending: false },
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -16,7 +16,7 @@ vi.mock("react-router-dom", () => ({
   Link: ({ to, children }: { to: string; children: React.ReactNode }) => <a href={to}>{children}</a>,
 }));
 vi.mock("../hooks/useOpenItems", () => ({
-  useOpenItems: () => ({ data: st.open, isLoading: st.loading, isError: st.error }),
+  useOpenItems: (q: { search: string }) => ({ data: q.search && st.searchLoading ? undefined : st.open, isLoading: q.search ? st.searchLoading : st.loading, isError: st.error }),
   useDunningDue: () => ({ data: st.due, isLoading: false, isError: false }),
   useCustomerCredit: () => ({ data: st.credit }),
 }));
@@ -35,7 +35,7 @@ const due = (id: string, no: string, over: Record<string, unknown> = {}) => ({
 describe("OpenItemsPage", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    Object.assign(st, { open: [], due: [], credit: 0, loading: false, error: false });
+    Object.assign(st, { open: [], due: [], credit: 0, loading: false, error: false, searchLoading: false });
     localStorage.setItem(STORAGE_KEY, "de");
     await act(async () => { await i18n.changeLanguage("de"); });
   });
@@ -74,6 +74,30 @@ describe("OpenItemsPage", () => {
     expect(tiles).toHaveTextContent(/250,00/);
     expect(tiles).toHaveTextContent(/50,00/);
     expect(tiles).toHaveTextContent(/40,00/);
+  });
+
+  it("keeps the search input and tiles mounted while a search is loading", async () => {
+    st.open = [bal("a", "RE-1", { open_amount: 50 })];
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render();
+    const input = await screen.findByRole("searchbox");
+    st.searchLoading = true;
+    fireEvent.change(input, { target: { value: "Mei" } });
+    await act(async () => { vi.advanceTimersByTime(400); });
+    expect(screen.getByRole("searchbox")).toBe(input);
+    expect(screen.getByTestId("open-items-kpis")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("does not match the word null on rows without a property in the due search", async () => {
+    st.due = [due("a", "RE-1", { property_name: null })];
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render();
+    fireEvent.click(await screen.findByRole("tab", { name: /Mahnfällig/ }));
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "null" } });
+    await act(async () => { vi.advanceTimersByTime(400); });
+    expect(screen.getByText("Keine Rechnung ist mahnfällig")).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it("selects due invoices and opens the confirm dialog", async () => {

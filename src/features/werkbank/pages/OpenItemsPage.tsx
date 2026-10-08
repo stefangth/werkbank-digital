@@ -23,7 +23,7 @@ import { BulkDunningDialog } from "../components/BulkDunningDialog";
 import type { InvoiceBalance } from "../data/invoiceEntries";
 import { useIssueDunning } from "../hooks/useDunningActions";
 import { useCustomerCredit, useDunningDue, useOpenItems } from "../hooks/useOpenItems";
-import { DUNNING_STAGE_TITLES } from "../lib/dunningDefaults";
+import { stageKey } from "../lib/stageKey";
 import { dueRecipient } from "../lib/dueRecipient";
 import { formatEuro } from "../lib/money";
 import { paymentStatus } from "../lib/paymentStatus";
@@ -34,7 +34,6 @@ type View = "open" | "due";
 const VIEWS: readonly View[] = ["open", "due"];
 const SEARCH_DEBOUNCE_MS = 275;
 const sumCents = (rows: Pick<InvoiceBalance, "open_amount">[]) => rows.reduce((s, r) => s + Math.round((r.open_amount ?? 0) * 100), 0) / 100;
-const stageTitle = (stage: number | null) => DUNNING_STAGE_TITLES[Math.min(Math.max(stage ?? 1, 1), 3) as 1 | 2 | 3];
 
 /** Everything still open or in credit, and the invoices due their next notice (bulk send). */
 export function OpenItemsPage() {
@@ -57,7 +56,7 @@ export function OpenItemsPage() {
   const days = (r: Pick<InvoiceBalance, "days_overdue">) => r.days_overdue ?? 0;
   const owing = (all.data ?? []).filter((r) => (r.open_amount ?? 0) > 0);
   const rows = [...(list.data ?? [])].sort((a, b) => days(b) - days(a));
-  const due = (dueQuery.data ?? []).filter((r) => !term || `${r.invoice_no} ${r.customer_name} ${r.property_name}`.toLowerCase().includes(term.toLowerCase()));
+  const due = (dueQuery.data ?? []).filter((r) => !term || `${r.invoice_no} ${r.customer_name} ${r.property_name ?? ""}`.toLowerCase().includes(term.toLowerCase()));
   const pickable = due.filter((r) => dueRecipient(r));
   const chosen = due.filter((r) => r.invoice_id && selected.has(r.invoice_id));
   const toggle = (id: string, on: boolean) => setSelected((s) => { const n = new Set(s); if (on) n.add(id); else n.delete(id); return n; });
@@ -67,8 +66,9 @@ export function OpenItemsPage() {
       .then(() => toast.success(t("openItems.due.printed")))
       .catch(() => toast.error(t("openItems.due.printFailed")));
 
-  const loading = all.isLoading || list.isLoading || dueQuery.isLoading;
+  const loading = all.isLoading || dueQuery.isLoading;
   const failed = all.isError || list.isError || dueQuery.isError;
+  const listLoading = list.isLoading;
   const nothing = !term && (all.data ?? []).length === 0;
 
   return (
@@ -101,7 +101,9 @@ export function OpenItemsPage() {
                 )}
               </div>
 
-              {view === "open" ? (
+              {view === "open" && listLoading ? (
+                <Skeleton className="h-32 w-full" />
+              ) : view === "open" ? (
                 rows.length === 0 ? (
                   <EmptyState size="inline" title={t("openItems.noMatches")} reason={t("openItems.noMatchesReason")} />
                 ) : (
@@ -132,7 +134,7 @@ export function OpenItemsPage() {
                             <TableCell className="text-right">{days(r) > 0 && <Metric size="body">{days(r)}</Metric>}</TableCell>
                             <TableCell className="text-right"><Metric size="body">{money(r.open_amount ?? 0)}</Metric></TableCell>
                             <TableCell><StatusPill tone={s.tone}>{t(s.labelKey)}</StatusPill></TableCell>
-                            <TableCell>{r.last_stage ? stageTitle(r.last_stage) : null}</TableCell>
+                            <TableCell>{r.last_stage ? t(stageKey(r.last_stage)) : null}</TableCell>
                             <TableCell>
                               {r.hold_reason && (
                                 <IconTooltip label={t("openItems.holdTooltip", { reason: r.hold_reason })}>
@@ -182,7 +184,7 @@ export function OpenItemsPage() {
                           </TableCell>
                           <TableCell className="text-right"><Metric size="body">{r.days_overdue ?? 0}</Metric></TableCell>
                           <TableCell className="text-right"><Metric size="body">{money(r.open_amount ?? 0)}</Metric></TableCell>
-                          <TableCell>{stageTitle(r.next_stage)}</TableCell>
+                          <TableCell>{t(stageKey(r.next_stage))}</TableCell>
                           <TableCell className="text-right">
                             {!hasMail && (
                               <Button variant="secondary" size="sm" disabled={issue.isPending} onClick={() => void printOnly(id)}>{t("openItems.due.print")}</Button>

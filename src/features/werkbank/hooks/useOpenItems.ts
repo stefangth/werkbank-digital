@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthContext";
@@ -15,16 +15,19 @@ export const OPEN_ITEMS_KEY = ["werkbank", "open-items"] as const;
 
 export type OpenItemsQuery = { search: string; customerId?: string; overdueOnly?: boolean };
 
-function useOrgQuery<T>(parts: unknown[], enabled: boolean, fn: (orgId: string) => Promise<T>) {
+function useOrgQuery<T>(parts: unknown[], enabled: boolean, fn: (orgId: string) => Promise<T>, keepPrevious = false) {
   const orgId = useAuth().currentOrg?.id;
-  return useQuery({ queryKey: [...OPEN_ITEMS_KEY, orgId, ...parts], enabled: !!orgId && enabled, queryFn: () => fn(orgId!) });
+  return useQuery({
+    queryKey: [...OPEN_ITEMS_KEY, orgId, ...parts], enabled: !!orgId && enabled, queryFn: () => fn(orgId!),
+    ...(keepPrevious ? { placeholderData: keepPreviousData } : {}),
+  });
 }
 
 export const useInvoiceBalance = (invoiceId: string | undefined) =>
   useOrgQuery(["balance", invoiceId], !!invoiceId, (o) => fetchInvoiceBalance(supabase, o, invoiceId!));
 export const useInvoiceEntries = (invoiceId: string | undefined) =>
   useOrgQuery(["entries", invoiceId], !!invoiceId, (o) => fetchInvoiceEntries(supabase, o, invoiceId!));
-export const useOpenItems = (q: OpenItemsQuery) => useOrgQuery(["list", q], true, (o) => fetchOpenItems(supabase, o, q));
+export const useOpenItems = (q: OpenItemsQuery) => useOrgQuery(["list", q], true, (o) => fetchOpenItems(supabase, o, q), true);
 export const useBalanceMap = () => useOrgQuery(["balance-map"], true, (o) => fetchBalanceMap(supabase, o));
 export const useCustomerCredit = () => useOrgQuery(["credit"], true, (o) => fetchCustomerCredit(supabase, o));
 export const useDunningDue = () => useOrgQuery(["due"], true, (o) => fetchDunningDue(supabase, o));

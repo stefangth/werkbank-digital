@@ -314,6 +314,11 @@
       "bannerUntil": "Applies until",
       "bannerOpen": "Applies until you lift it.",
       "clear": "Lift"
+    },
+    "stage": {
+      "1": "Payment reminder",
+      "2": "First notice",
+      "3": "Second and final notice"
     }
   },
   "errors": {

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { createFakeSupabase } from "@/test/supabaseFake";
 import {
-  fetchCustomerCredit, fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, fetchTransferTargets,
+  fetchBalanceMap, fetchCustomerCredit, fetchInvoiceBalance, fetchInvoiceEntries, fetchOpenItems, fetchTransferTargets,
   recordInvoiceEntry, reverseInvoiceEntry, transferInvoiceEntry,
 } from "./invoiceEntries";
 
@@ -91,5 +91,23 @@ describe("rpcs", () => {
     const error = { code: "22023", message: "nothing_open" };
     const fake = createFakeSupabase({ "rpc:werkbank.record_invoice_entry": { data: null, error } });
     await expect(recordInvoiceEntry(asClient(fake), { invoiceId: "i1", kind: "payment", amount: 5, bookedOn: "2026-10-08" })).rejects.toBe(error);
+  });
+});
+
+describe("fetchBalanceMap", () => {
+  it("keys the org's balance rows by invoice id, reads in pages and ignores rows without an id", async () => {
+    const fake = createFakeSupabase({ [T("invoice_balances")]: { data: [
+      { invoice_id: "i1", open_amount: 5 }, { invoice_id: null, open_amount: 9 }, { invoice_id: "i2", open_amount: 0 },
+    ], error: null } });
+    const map = await fetchBalanceMap(asClient(fake), "org-1");
+    expect([...map.keys()]).toEqual(["i1", "i2"]);
+    expect(map.get("i1")?.open_amount).toBe(5);
+    expect(fake.calls).toContainEqual(expect.objectContaining({ method: "eq", args: ["org_id", "org-1"] }));
+    expect(fake.calls).toContainEqual(expect.objectContaining({ method: "range", args: [0, 999] }));
+  });
+  it("throws the database error", async () => {
+    const error = { code: "42501" };
+    const fake = createFakeSupabase({ [T("invoice_balances")]: { data: null, error } });
+    await expect(fetchBalanceMap(asClient(fake), "org-1")).rejects.toBe(error);
   });
 });

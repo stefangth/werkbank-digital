@@ -24,10 +24,13 @@ export function BulkDunningDialog({ rows, onOpenChange }: { rows: DunningDueRow[
   const [running, setRunning] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
-  const sendable = rows.filter((r) => dueRecipient(r));
+  // Frozen when the run starts: the lists refresh while it runs and `rows` shrinks with them.
+  const [frozen, setFrozen] = useState<DunningDueRow[] | null>(null);
+  const sendable = frozen ?? rows.filter((r) => dueRecipient(r));
   const excluded = rows.filter((r) => !dueRecipient(r));
 
   const run = async () => {
+    setFrozen(sendable);
     setRunning(true);
     const result: Outcome = { sent: 0, skipped: 0, failed: [] };
     for (const r of sendable) {

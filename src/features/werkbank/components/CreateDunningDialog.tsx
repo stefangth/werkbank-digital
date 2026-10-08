@@ -18,7 +18,7 @@ import { useIssueDunning, usePreviewDunning } from "../hooks/useDunningActions";
 import { splitAddresses } from "../lib/addresses";
 import { defaultRecipient } from "../lib/defaultRecipient";
 import { addDaysToKey } from "../lib/dunningBlockers";
-import { DUNNING_STAGE_TITLES } from "../lib/dunningDefaults";
+import { stageKey } from "../lib/stageKey";
 import { openPendingTab, showInTab } from "../lib/pdfTab";
 import { DatePopover } from "./DatePopover";
 import { DefaultHint } from "./DefaultHint";
@@ -75,7 +75,7 @@ export function CreateDunningDialog({ invoice, stage, onOpenChange }: {
       await issue.mutateAsync(email
         ? { invoiceId: invoice.id, delivery: "email", paymentDeadline: deadline, send: { to, ...(cc.length ? { cc } : {}) } }
         : { invoiceId: invoice.id, delivery: "print", paymentDeadline: deadline });
-      toast.success(t(email ? "dunning.create.sent" : "dunning.create.created", { stage: DUNNING_STAGE_TITLES[stage] }));
+      toast.success(t(email ? "dunning.create.sent" : "dunning.create.created", { stage: t(stageKey(stage)) }));
       onOpenChange(false);
     } catch (e) {
       const err = e instanceof DunningActionError ? e : new DunningActionError("unknown");
@@ -90,7 +90,7 @@ export function CreateDunningDialog({ invoice, stage, onOpenChange }: {
     <Dialog open onOpenChange={(next) => { if (next || !pending) onOpenChange(next); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("dunning.create.title", { stage: DUNNING_STAGE_TITLES[stage] })}</DialogTitle>
+          <DialogTitle>{t("dunning.create.title", { stage: t(stageKey(stage)) })}</DialogTitle>
           <DialogDescription>{t("dunning.create.description")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
