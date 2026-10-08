@@ -12,7 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import type { CompanyProfile } from "../data/companyProfile";
 import { useCompanyProfile, useSaveCompanyProfile } from "../hooks/useCompanyProfile";
+import { DEFAULT_STAGE_TEXTS } from "../lib/dunningDefaults";
+import { stageKey } from "../lib/stageKey";
 import { companyProfileSchema, toCompanyProfileRow, type CompanyProfileForm } from "../schemas/companyProfile";
+import { DefaultHint } from "./DefaultHint";
 import { CountryField } from "./CountryField";
 import { LogoUpload } from "./LogoUpload";
 
@@ -41,7 +44,22 @@ const EMPTY: CompanyProfileForm = {
   invoice_intro: "",
   invoice_closing: "",
   payment_due_days: "14",
+  reminder_after_days: "7",
+  dunning1_after_days: "14",
+  dunning2_after_days: "14",
+  dunning_deadline_days: "7",
+  reminder_text: "",
+  dunning1_text: "",
+  dunning2_text: "",
 };
+
+type DunningDayField = "reminder_after_days" | "dunning1_after_days" | "dunning2_after_days" | "dunning_deadline_days";
+
+const STAGES = [
+  { stage: 1, field: "reminder_after_days", textField: "reminder_text", hint: "reminder" },
+  { stage: 2, field: "dunning1_after_days", textField: "dunning1_text", hint: "dunning1" },
+  { stage: 3, field: "dunning2_after_days", textField: "dunning2_text", hint: "dunning2" },
+] as const;
 
 function toFormValues(p: CompanyProfile | null): CompanyProfileForm {
   if (!p) return EMPTY;
@@ -70,6 +88,13 @@ function toFormValues(p: CompanyProfile | null): CompanyProfileForm {
     invoice_intro: p.invoice_intro ?? "",
     invoice_closing: p.invoice_closing ?? "",
     payment_due_days: String(p.payment_due_days),
+    reminder_after_days: String(p.reminder_after_days),
+    dunning1_after_days: String(p.dunning1_after_days),
+    dunning2_after_days: String(p.dunning2_after_days),
+    dunning_deadline_days: String(p.dunning_deadline_days),
+    reminder_text: p.reminder_text ?? "",
+    dunning1_text: p.dunning1_text ?? "",
+    dunning2_text: p.dunning2_text ?? "",
   };
 }
 
@@ -111,6 +136,26 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
           <FormLabel>{t(labelKey)}</FormLabel>
           <FormControl>
             <Textarea rows={3} {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
+  const dunningField = (name: DunningDayField, label: string, hintKey: string) => (
+    <FormField
+      key={name}
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="inline-flex items-center gap-1.5">
+            {label}
+            <DefaultHint text={t(hintKey)} />
+          </FormLabel>
+          <FormControl>
+            <Input autoComplete="off" inputMode="numeric" {...field} />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -191,6 +236,34 @@ function CompanyForm({ profile }: { profile: CompanyProfile | null }) {
           {area("invoice_intro", "company.fields.invoiceIntro")}
           {area("invoice_closing", "company.fields.invoiceClosing")}
           <div className="sm:max-w-48">{text("payment_due_days", "company.fields.paymentDueDays", { inputMode: "numeric" })}</div>
+        </section>
+
+        <section className="space-y-4">
+          <Eyebrow>{t("company.sections.dunning")}</Eyebrow>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {STAGES.map(({ stage, field, hint }) =>
+              dunningField(field, t("company.dunning.afterDays", { stage: t(stageKey(stage)) }), `company.dunning.hint.${hint}`))}
+            {dunningField("dunning_deadline_days", t("company.dunning.deadline"), "company.dunning.hint.deadline")}
+          </div>
+          {STAGES.map(({ stage, textField }) => (
+            <FormField
+              key={textField}
+              control={form.control}
+              name={textField}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="inline-flex items-center gap-1.5">
+                    {t("company.dunning.textLabel", { stage: t(stageKey(stage)) })}
+                    <DefaultHint text={t("company.dunning.hint.text")} />
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea rows={4} placeholder={DEFAULT_STAGE_TEXTS[stage]} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
         </section>
 
         <Button type="submit" disabled={save.isPending || logoUploading}>{t("common.save")}</Button>

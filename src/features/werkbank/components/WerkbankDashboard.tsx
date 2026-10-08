@@ -5,11 +5,12 @@ import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/AuthContext";
+import { useDunningDue, useOpenItems } from "../hooks/useOpenItems";
 import { useOrderList } from "../hooks/useOrders";
 import { useQuoteList } from "../hooks/useQuotes";
 import { needsSchedule } from "../lib/orderStatus";
 import { isAcceptedWithoutOrder } from "../lib/quoteStatus";
-import { ORDERS_PATH, QUOTES_PATH } from "../paths";
+import { ORDERS_PATH, OPEN_ITEMS_PATH, QUOTES_PATH } from "../paths";
 import { StartList } from "./StartList";
 
 /** One count tile: a skeleton while loading, a short error text on failure, else a link to the
@@ -33,14 +34,34 @@ function Tile<Row>({
   );
 }
 
-/** Two counts the office acts on, each linking to the list with its filter applied. */
+/** Overdue invoices, with how many of them are due a notice; links to the open items page. */
+function OverdueTile() {
+  const { t } = useTranslation("werkbank");
+  const overdue = useOpenItems({ search: "", overdueOnly: true });
+  const due = useDunningDue();
+  const label = t("dashboard.tiles.overdue");
+  if (overdue.isError || due.isError) return <Alert variant="destructive">{t("dashboard.tiles.loadFailed")}</Alert>;
+  if (!overdue.data || !due.data) return <Skeleton role="status" aria-busy="true" aria-label={label} className="h-20 w-full" />;
+  return (
+    <Link to={OPEN_ITEMS_PATH} className="block rounded-card hover:bg-hover-tint">
+      <KpiTile
+        tone="waiting"
+        label={label}
+        value={String(overdue.data.length)}
+        note={t("dashboard.tiles.overdueNote", { count: due.data.length })}
+      />
+    </Link>
+  );
+}
+
+/** Three counts the office acts on, each linking to the list with its filter applied. */
 function DashboardTiles() {
   const { t } = useTranslation("werkbank");
   const quotes = useQuoteList();
   const orders = useOrderList();
 
   return (
-    <section aria-label={t("dashboard.tiles.label")} className="grid gap-3 sm:grid-cols-2">
+    <section aria-label={t("dashboard.tiles.label")} className="grid gap-3 sm:grid-cols-3">
       <Tile
         to={`${QUOTES_PATH}?status=accepted&noOrder=1`}
         label={t("dashboard.tiles.acceptedNoOrder")}
@@ -53,6 +74,7 @@ function DashboardTiles() {
         query={orders}
         count={(rows) => rows.filter(needsSchedule).length}
       />
+      <OverdueTile />
     </section>
   );
 }

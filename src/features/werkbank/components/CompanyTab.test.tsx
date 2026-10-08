@@ -103,7 +103,7 @@ describe("CompanyTab", () => {
   });
 
   it("shows and saves the invoice defaults", async () => {
-    const fake = seed({ data: { org_id: "org-1", company_name: "Muster Bau GmbH", street: "Hauptstr. 1", postal_code: "01067", city: "Dresden", country_code: "DE", quote_validity_days: 14, payment_due_days: 21, invoice_intro: "Hallo", invoice_closing: null, updated_at: "2026-10-08T10:00:00Z" }, error: null });
+    const fake = seed({ data: { org_id: "org-1", company_name: "Muster Bau GmbH", street: "Hauptstr. 1", postal_code: "01067", city: "Dresden", country_code: "DE", quote_validity_days: 14, payment_due_days: 21, reminder_after_days: 7, dunning1_after_days: 14, dunning2_after_days: 14, dunning_deadline_days: 7, invoice_intro: "Hallo", invoice_closing: null, updated_at: "2026-10-08T10:00:00Z" }, error: null });
     renderTab();
     expect(await screen.findByLabelText("Zahlungsziel (Tage)")).toHaveValue("21");
     expect(screen.getByLabelText("Einleitungstext für Rechnungen (optional)")).toHaveValue("Hallo");
@@ -127,5 +127,66 @@ describe("CompanyTab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
     expect(await screen.findByText("Gib ganze Tage von 0 bis 365 ein")).toBeInTheDocument();
     expect(upserts(fake)).toHaveLength(0);
+  });
+
+  describe("Mahnwesen", () => {
+    const fillRequired = () => {
+      type("Firmenname", "Muster Bau GmbH");
+      type("Straße und Hausnummer", "Hauptstr. 1");
+      type("PLZ", "01067");
+      type("Ort", "Dresden");
+    };
+
+    it("shows the defaults and the default texts as placeholders", async () => {
+      seed({ data: null, error: null });
+      renderTab();
+      expect(await screen.findByLabelText("Zahlungserinnerung nach (Tage)")).toHaveValue("7");
+      expect(screen.getByLabelText("1. Mahnung nach (Tage)")).toHaveValue("14");
+      expect(screen.getByLabelText("2. und letzte Mahnung nach (Tage)")).toHaveValue("14");
+      expect(screen.getByLabelText("Zahlungsfrist in Mahnungen (Tage)")).toHaveValue("7");
+      expect(screen.getByLabelText("Text für Zahlungserinnerung (optional)")).toHaveAttribute("placeholder", expect.stringContaining("sicher ist Ihnen im Alltag entgangen"));
+      expect(screen.getAllByRole("img", { name: "Leer lassen für den Standardtext." })).toHaveLength(3);
+      expect(screen.getByRole("img", { name: "Vorgabe 7 Tage nach Fälligkeit der Rechnung. Du kannst den Wert hier ändern." })).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "Vorgabe 7 Tage. So lange hat der Kunde nach einer Mahnung Zeit zu zahlen. Du kannst den Wert hier ändern." })).toBeInTheDocument();
+    });
+
+    it("saves the four day fields as numbers and a blank text as null", async () => {
+      const fake = seed({ data: null, error: null });
+      renderTab();
+      await screen.findByLabelText("Firmenname");
+      fillRequired();
+      type("Zahlungserinnerung nach (Tage)", "3");
+      type("1. Mahnung nach (Tage)", "10");
+      type("2. und letzte Mahnung nach (Tage)", "0");
+      type("Zahlungsfrist in Mahnungen (Tage)", "365");
+      type("Text für 1. Mahnung (optional)", "  Eigener Text  ");
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+      await waitFor(() => expect(upserts(fake)).toHaveLength(1));
+      const [payload] = upserts(fake)[0].args as [Record<string, unknown>];
+      expect(payload).toMatchObject({
+        reminder_after_days: 3, dunning1_after_days: 10, dunning2_after_days: 0, dunning_deadline_days: 365,
+        reminder_text: null, dunning1_text: "Eigener Text", dunning2_text: null,
+      });
+    });
+
+    it("rejects 366 days", async () => {
+      const fake = seed({ data: null, error: null });
+      renderTab();
+      await screen.findByLabelText("Firmenname");
+      fillRequired();
+      type("Zahlungsfrist in Mahnungen (Tage)", "366");
+      fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+      expect(await screen.findByText("Gib ganze Tage von 0 bis 365 ein")).toBeInTheDocument();
+      expect(upserts(fake)).toHaveLength(0);
+    });
+
+    it("shows the stored values", async () => {
+      seed({ data: { org_id: "org-1", company_name: "X", street: "s", postal_code: "01067", city: "c", country_code: "DE", quote_validity_days: 30, payment_due_days: 14,
+        reminder_after_days: 5, dunning1_after_days: 6, dunning2_after_days: 8, dunning_deadline_days: 9, reminder_text: "Mein Text", dunning1_text: null, dunning2_text: null, updated_at: "2026-10-08T10:00:00Z" }, error: null });
+      renderTab();
+      expect(await screen.findByLabelText("Zahlungserinnerung nach (Tage)")).toHaveValue("5");
+      expect(screen.getByLabelText("Zahlungsfrist in Mahnungen (Tage)")).toHaveValue("9");
+      expect(screen.getByLabelText("Text für Zahlungserinnerung (optional)")).toHaveValue("Mein Text");
+    });
   });
 });

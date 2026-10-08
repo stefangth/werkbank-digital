@@ -29,6 +29,13 @@ const base = {
   invoice_intro: "",
   invoice_closing: "",
   payment_due_days: "14",
+  reminder_after_days: "7",
+  dunning1_after_days: "14",
+  dunning2_after_days: "14",
+  dunning_deadline_days: "7",
+  reminder_text: "",
+  dunning1_text: "",
+  dunning2_text: "",
 };
 
 const parse = (over: Record<string, string> = {}) => companyProfileSchema(t).safeParse({ ...base, ...over });

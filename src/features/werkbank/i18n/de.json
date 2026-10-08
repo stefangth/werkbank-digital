@@ -19,13 +19,17 @@
       "catalog": "Leistungen anlegen oder importieren",
       "customers": "Kunden anlegen oder importieren",
       "loadFailed": "Der Stand konnte nicht geladen werden.",
-      "invoice": "Erste Rechnung ausstellen"
+      "invoice": "Erste Rechnung ausstellen",
+      "first_payment": "Erste Zahlung erfassen"
     },
     "tiles": {
       "acceptedNoOrder": "Angenommen, ohne Auftrag",
       "unscheduled": "Aufträge ohne Termin",
       "label": "Offene Punkte",
-      "loadFailed": "Die Anzahl konnte nicht geladen werden."
+      "loadFailed": "Die Anzahl konnte nicht geladen werden.",
+      "overdue": "Überfällig",
+      "overdueNote_one": "davon {{count}} mahnfällig",
+      "overdueNote_other": "davon {{count}} mahnfällig"
     }
   },
   "technicians": {
@@ -454,7 +458,8 @@
       "legal": "Steuer und Register",
       "bank": "Bankverbindung",
       "texts": "Standards für Angebote",
-      "invoiceTexts": "Rechnungsvorgaben"
+      "invoiceTexts": "Rechnungsvorgaben",
+      "dunning": "Mahnwesen"
     },
     "fields": {
       "companyName": "Firmenname",
@@ -501,7 +506,20 @@
       "vatId": "Gib eine gültige USt-IdNr. ein, zum Beispiel DE123456789",
       "iban": "Gib eine gültige IBAN ein, zum Beispiel DE89 3704 0044 0532 0130 00",
       "validity": "Gib ganze Tage von 1 bis 365 ein",
-      "paymentDueDays": "Gib ganze Tage von 0 bis 365 ein"
+      "paymentDueDays": "Gib ganze Tage von 0 bis 365 ein",
+      "dunningDays": "Gib ganze Tage von 0 bis 365 ein"
+    },
+    "dunning": {
+      "afterDays": "{{stage}} nach (Tage)",
+      "textLabel": "Text für {{stage}} (optional)",
+      "deadline": "Zahlungsfrist in Mahnungen (Tage)",
+      "hint": {
+        "reminder": "Vorgabe 7 Tage nach Fälligkeit der Rechnung. Du kannst den Wert hier ändern.",
+        "dunning1": "Vorgabe 14 Tage nach der Zahlungserinnerung. Du kannst den Wert hier ändern.",
+        "dunning2": "Vorgabe 14 Tage nach der 1. Mahnung. Du kannst den Wert hier ändern.",
+        "deadline": "Vorgabe 7 Tage. So lange hat der Kunde nach einer Mahnung Zeit zu zahlen. Du kannst den Wert hier ändern.",
+        "text": "Leer lassen für den Standardtext."
+      }
     }
   },
   "customers": {
@@ -603,6 +621,12 @@
         "add": "Liegenschaft anlegen",
         "empty": "Dieser Kunde hat noch keine Liegenschaften.",
         "loadFailed": "Die Liegenschaften konnten nicht geladen werden."
+      },
+      "openItems": {
+        "title": "Offene Posten",
+        "open": "Offen gesamt",
+        "credit": "Guthaben",
+        "loadFailed": "Die offenen Posten konnten nicht geladen werden."
       }
     }
   },

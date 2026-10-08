@@ -19,13 +19,17 @@
       "catalog": "Add or import services",
       "customers": "Add or import customers",
       "loadFailed": "Could not load your progress.",
-      "invoice": "Issue your first invoice"
+      "invoice": "Issue your first invoice",
+      "first_payment": "Record your first payment"
     },
     "tiles": {
       "acceptedNoOrder": "Accepted, no order yet",
       "unscheduled": "Orders without a date",
       "label": "Open items",
-      "loadFailed": "The count could not be loaded."
+      "loadFailed": "The count could not be loaded.",
+      "overdue": "Overdue",
+      "overdueNote_one": "of which {{count}} due a notice",
+      "overdueNote_other": "of which {{count}} due a notice"
     }
   },
   "technicians": {
@@ -454,7 +458,8 @@
       "legal": "Tax and register",
       "bank": "Bank details",
       "texts": "Quote defaults",
-      "invoiceTexts": "Invoice defaults"
+      "invoiceTexts": "Invoice defaults",
+      "dunning": "Dunning"
     },
     "fields": {
       "companyName": "Company name",
@@ -501,7 +506,20 @@
       "vatId": "Enter a valid VAT ID, for example DE123456789",
       "iban": "Enter a valid IBAN, for example DE89 3704 0044 0532 0130 00",
       "validity": "Enter whole days from 1 to 365",
-      "paymentDueDays": "Enter whole days from 0 to 365"
+      "paymentDueDays": "Enter whole days from 0 to 365",
+      "dunningDays": "Enter whole days from 0 to 365"
+    },
+    "dunning": {
+      "afterDays": "{{stage}} after (days)",
+      "textLabel": "Text for {{stage}} (optional)",
+      "deadline": "Payment deadline in notices (days)",
+      "hint": {
+        "reminder": "Default 7 days after the invoice is due. You can change the value here.",
+        "dunning1": "Default 14 days after the payment reminder. You can change the value here.",
+        "dunning2": "Default 14 days after the first notice. You can change the value here.",
+        "deadline": "Default 7 days. This is how long a customer has to pay after a notice. You can change the value here.",
+        "text": "Leave empty for the default text."
+      }
     }
   },
   "customers": {
@@ -603,6 +621,12 @@
         "add": "Add property",
         "empty": "This customer has no properties yet.",
         "loadFailed": "The properties could not be loaded."
+      },
+      "openItems": {
+        "title": "Open items",
+        "open": "Open in total",
+        "credit": "Credit",
+        "loadFailed": "The open items could not be loaded."
       }
     }
   },
