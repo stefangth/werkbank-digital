@@ -77,6 +77,10 @@ browser default, which happens to be 16 but is not a scale token, so it reads as
 while being invisible to the token guard. Always write `text-lead` explicitly. Use it only
 for the H1 sub, not for card or section subs, which stay at `text-body` (14).
 
+**16 is the input size of phone-first screens** (the technician app): `text-input-touch` on
+every input and textarea there. iOS Safari zooms the page on focus of a field below 16px,
+so the 13 control size does not apply to those fields. Desktop screens keep 13.
+
 **[ci]** Half-pixel sizes are gone. 10.5, 11.5, 12.5 and 13.5 do not exist.
 
 **[review]** Every number the user reads is Geist Sans with `tabular-nums`: money, time,

@@ -72,7 +72,7 @@ export function SignStep({ orderId, report, body, onBack, onSigned }: {
       <div className="space-y-1.5">
         <Label htmlFor="report-signer">{t("app.report.signerName")}</Label>
         <Input
-          id="report-signer" className="h-11" autoComplete="name" value={name} readOnly={!!uploaded}
+          id="report-signer" className="h-11 text-input-touch" autoComplete="name" value={name} readOnly={!!uploaded}
           onChange={(e) => setName(e.target.value)}
         />
       </div>

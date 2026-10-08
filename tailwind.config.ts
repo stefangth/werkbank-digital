@@ -26,6 +26,7 @@ export default {
         control: "13px",       /* buttons, inputs, table cells, nav rows */
         body: "14px",          /* body copy */
         lead: "16px",          /* page-header sub / lead paragraph under an H1 */
+        "input-touch": "16px", /* inputs of phone-first screens: below 16, iOS Safari zooms on focus */
         "title-sm": "17px",    /* card titles */
         title: "22px",         /* section headers */
         "display-sm": "32px",  /* page H1 */

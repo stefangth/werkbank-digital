@@ -66,6 +66,19 @@ describe("ReportSheet", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("sizes every field at 16px so iOS does not zoom on focus", async () => {
+    renderSheet();
+    for (const label of ["Visit date", "What was done"]) {
+      const field = screen.getByLabelText(label);
+      expect(field).toHaveClass("text-input-touch");
+      expect(field).not.toHaveClass("text-[13px]");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
+    const signer = await screen.findByLabelText("Name of the signer");
+    expect(signer).toHaveClass("text-input-touch");
+    expect(signer).not.toHaveClass("text-[13px]");
+  });
+
   it("explains the presets next to the visit date, the photo limit and the resizing", () => {
     renderSheet();
     expect(screen.getByText(/Default today/)).toBeInTheDocument();

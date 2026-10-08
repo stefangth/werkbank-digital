@@ -161,7 +161,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       <div className="space-y-1.5">
         <HintedLabel htmlFor={DATE_ID} hint={t("app.report.visitDateHint")}>{t("app.report.visitDate")}</HintedLabel>
         <Input
-          id={DATE_ID} type="date" className="h-11" required value={visitDate} aria-describedby={hintId(DATE_ID)}
+          id={DATE_ID} type="date" className="h-11 text-input-touch" required value={visitDate} aria-describedby={hintId(DATE_ID)}
           onChange={(e) => {
             setVisitDate(e.target.value);
             if (e.target.value) save({ body, visitDate: e.target.value }).catch(() => undefined);
@@ -172,7 +172,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       <div className="space-y-1.5">
         <Label htmlFor={BODY_ID}>{t("app.report.body")}</Label>
         <Textarea
-          id={BODY_ID} rows={6} value={body} onChange={(e) => setBody(e.target.value)}
+          id={BODY_ID} rows={6} className="text-input-touch" value={body} onChange={(e) => setBody(e.target.value)}
           onBlur={() => { save().catch(() => undefined); }}
         />
       </div>
