@@ -18,6 +18,7 @@ import { LineItemsEditor } from "../components/LineItemsEditor";
 import { OrderHeaderForm } from "../components/OrderHeaderForm";
 import { OrderScheduleCard, type SchedulePatch } from "../components/OrderScheduleCard";
 import { QuoteComparison } from "../components/QuoteComparison";
+import { VisitReportsCard } from "../components/VisitReportsCard";
 import type { OrderPatch } from "../data/orders";
 import { useCustomer } from "../hooks/useCustomers";
 import { useDocumentItems } from "../hooks/useDocumentItems";
@@ -127,6 +128,7 @@ export function OrderPage() {
                 {t("orders.action.createInvoice")}
               </Button>
             )}
+            {/* The report PDF button joins these actions. */}
             {status === "open" && !locked && (
               <Button variant="destructive" onClick={() => setConfirmingDelete(true)}>
                 {t("orders.page.delete")}
@@ -176,6 +178,8 @@ export function OrderPage() {
         techniciansPending={setTechnicians.isPending}
         onTechnicians={saveTechnicians}
       />
+
+      <VisitReportsCard orderId={order.id} />
 
       {quote && diff && orderItems && (
         <QuoteComparison

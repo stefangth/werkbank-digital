@@ -120,6 +120,8 @@ export function OrdersPage() {
       setTo(null);
     }
   }
+  // The dashboard's "reported by technician" tile links here with ?byTechnician=1.
+  const byTechnician = params.get("byTechnician") === "1";
   const emptyRange = !!from && !!to && from > to;
   const [creating, setCreating] = useState(false);
 
@@ -127,12 +129,13 @@ export function OrdersPage() {
     () =>
       (orders ?? []).filter((o) => {
         if (status !== ALL && o.status !== status) return false;
+        if (byTechnician && !o.completed_by_technician) return false;
         if (technician !== ALL && !o.technician_ids?.includes(technician)) return false;
         if (unscheduled) return needsSchedule(o);
         if (from || to) return !!o.scheduled_date && (!from || o.scheduled_date >= from) && (!to || o.scheduled_date <= to);
         return true;
       }),
-    [orders, status, technician, from, to, unscheduled],
+    [orders, status, technician, from, to, unscheduled, byTechnician],
   );
 
   const pickFrom = (date: string) => { setUnscheduled(false); setFrom(date); };

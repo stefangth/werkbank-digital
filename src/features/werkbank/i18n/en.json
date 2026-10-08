@@ -46,7 +46,8 @@
       "loadFailed": "The count could not be loaded.",
       "overdue": "Overdue",
       "overdueNote_one": "of which {{count}} due a notice",
-      "overdueNote_other": "of which {{count}} due a notice"
+      "overdueNote_other": "of which {{count}} due a notice",
+      "byTechnician": "Reported by technician"
     },
     "myAssignments": "My assignments"
   },
@@ -1128,6 +1129,15 @@
       "body": "This order has a draft invoice. The draft keeps its current items and dates. It does not pick up changes to the order.",
       "keep": "Keep it done",
       "confirm": "Reopen"
+    },
+    "reports": {
+      "title": "Visit reports",
+      "officeNote": "Internal note",
+      "state": {
+        "open": "Open",
+        "locked": "Closed",
+        "signed": "Signed"
+      }
     }
   },
   "publicQuote": {
