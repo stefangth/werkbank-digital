@@ -1024,7 +1024,7 @@
         "tooManyRecipients": "There are too many recipients.",
         "pdfMissing": "The PDF is missing. Issue the invoice again.",
         "preflight": "The invoice is not ready yet. Complete the missing details first.",
-        "sendFailed": "The invoice was issued, but the email could not be sent.",
+        "sendFailed": "The email could not be sent to everyone. Sending again only reaches those who have not received it.",
         "generic": "Something went wrong. Please try again."
       },
       "issueTitle": "Issue invoice",
@@ -1042,7 +1042,7 @@
       "send": "Send",
       "issued": "Invoice {{number}} issued.",
       "issuedAndSent": "Invoice {{number}} issued and sent.",
-      "issuedSendFailed": "Issued, sending failed",
+      "issuedSendFailed": "Issued, sending failed. Sending again only reaches those who have not received it.",
       "issuedRenderFailed": "Issued. The PDF is not ready yet.",
       "sent": "The invoice was sent.",
       "emailFailed": "The email could not be sent.",

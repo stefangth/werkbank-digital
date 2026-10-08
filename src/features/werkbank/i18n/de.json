@@ -1024,7 +1024,7 @@
         "tooManyRecipients": "Es sind zu viele Empfänger.",
         "pdfMissing": "Das PDF fehlt. Stelle die Rechnung erneut aus.",
         "preflight": "Die Rechnung ist noch nicht bereit. Ergänze zuerst die fehlenden Angaben.",
-        "sendFailed": "Die Rechnung wurde ausgestellt, aber die E-Mail konnte nicht gesendet werden.",
+        "sendFailed": "Die E-Mail konnte nicht an alle gesendet werden. Erneut senden erreicht nur, wer sie noch nicht hat.",
         "generic": "Etwas ist schiefgegangen. Bitte versuche es erneut."
       },
       "issueTitle": "Rechnung abschließen",
@@ -1042,7 +1042,7 @@
       "send": "Senden",
       "issued": "Rechnung {{number}} abgeschlossen.",
       "issuedAndSent": "Rechnung {{number}} abgeschlossen und gesendet.",
-      "issuedSendFailed": "Abgeschlossen, Versand fehlgeschlagen",
+      "issuedSendFailed": "Abgeschlossen, Versand fehlgeschlagen. Erneut senden erreicht nur, wer die Mail noch nicht hat.",
       "issuedRenderFailed": "Abgeschlossen. Das PDF ist noch nicht fertig.",
       "sent": "Die Rechnung wurde gesendet.",
       "emailFailed": "Die E-Mail konnte nicht gesendet werden.",

@@ -184,7 +184,7 @@ describe("InvoicePage", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("Danach ist die Rechnung nicht mehr änderbar.")).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Abschließen und senden" }));
-    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Abgeschlossen, Versand fehlgeschlagen"));
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Abgeschlossen, Versand fehlgeschlagen. Erneut senden erreicht nur, wer die Mail noch nicht hat."));
     expect(state.refetch).toHaveBeenCalled();
     view.rerender(<MemoryRouter><InvoicePage /></MemoryRouter>);
     expect(await screen.findByText("RE-0012")).toBeInTheDocument();

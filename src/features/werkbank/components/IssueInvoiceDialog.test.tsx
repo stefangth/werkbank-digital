@@ -174,7 +174,7 @@ describe("IssueInvoiceDialog", () => {
     const onStateChanged = vi.fn();
     renderDialog({ onOpenChange, onStateChanged });
     fireEvent.click(screen.getByRole("button", { name: "Abschließen und senden" }));
-    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Abgeschlossen, Versand fehlgeschlagen"));
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Abgeschlossen, Versand fehlgeschlagen. Erneut senden erreicht nur, wer die Mail noch nicht hat."));
     expect(onStateChanged).toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
@@ -183,7 +183,7 @@ describe("IssueInvoiceDialog", () => {
     issue.mutateAsync.mockResolvedValue({ invoiceNo: "RE-0012", emailSent: false });
     renderDialog();
     fireEvent.click(screen.getByRole("button", { name: "Abschließen und senden" }));
-    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Abgeschlossen, Versand fehlgeschlagen"));
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Abgeschlossen, Versand fehlgeschlagen. Erneut senden erreicht nur, wer die Mail noch nicht hat."));
   });
 
   it("a 409 invalid_state refetches and closes", async () => {
