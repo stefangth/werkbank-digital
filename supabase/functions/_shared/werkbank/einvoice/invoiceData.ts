@@ -8,6 +8,9 @@ type W = Database["werkbank"];
 export type InvoiceRow = W["Tables"]["invoices"]["Row"];
 export type InvoiceItemRow = W["Tables"]["document_items"]["Row"];
 export type InvoiceTotalsRow = W["Views"]["document_totals"]["Row"];
+export type CompanyProfileRow = W["Tables"]["company_profiles"]["Row"];
+export type CustomerRow = W["Tables"]["customers"]["Row"];
+export type PropertyRow = W["Tables"]["properties"]["Row"];
 
 /** `werkbank.company_profiles` row minus org_id/created_at/updated_at (see finalize_invoice). */
 export interface SellerSnapshot {
@@ -96,6 +99,38 @@ export interface InvoiceDataInput {
   preceding?: { invoice_no: string; issue_date: string } | null;
   /** Drafts have no snapshots; the caller builds seller and buyer from the live rows. */
   draftFallback?: { seller: SellerSnapshot; buyer: BuyerSnapshot };
+}
+
+/** What finalize_invoice stores as seller_snapshot: the profile minus org_id and timestamps. */
+export function draftSellerSnapshot(profile: CompanyProfileRow): SellerSnapshot {
+  const { org_id: _org, created_at: _created, updated_at: _updated, ...seller } = profile;
+  return seller;
+}
+
+/** What finalize_invoice stores as buyer_snapshot (v_buyer in migration 20261008110000): the
+ *  property's billing address when billing_name is set, else the customer's; name "last, first"
+ *  for a private customer, the company name for a property manager. Drafts only: a missing
+ *  billing field is "" here where the SQL would store null (finalize blocks it anyway). */
+export function draftBuyerSnapshot(customer: CustomerRow, property: PropertyRow | null): BuyerSnapshot {
+  const bill = property?.billing_name != null ? property : null;
+  const personName = (customer.last_name ?? "") + (customer.first_name ? `, ${customer.first_name}` : "");
+  const name = bill?.billing_name ??
+    (customer.kind === "property_manager" ? customer.company_name ?? "" : personName);
+  return {
+    name,
+    street: (bill ? bill.billing_street : customer.street) ?? "",
+    postal_code: (bill ? bill.billing_postal_code : customer.postal_code) ?? "",
+    city: (bill ? bill.billing_city : customer.city) ?? "",
+    country_code: (bill ? bill.billing_country_code : customer.country_code) ?? "",
+    customer_no: customer.customer_no,
+    vat_id: customer.vat_id,
+    invoice_email: customer.invoice_email,
+    is_private: customer.kind === "private",
+    billing_override: bill !== null,
+    property: property
+      ? { name: property.name, street: property.street, postal_code: property.postal_code, city: property.city }
+      : null,
+  };
 }
 
 const berlinToday = (): string =>

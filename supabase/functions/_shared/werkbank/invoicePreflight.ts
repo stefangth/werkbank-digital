@@ -4,7 +4,7 @@
 // Mirrored to the edge runtime (supabase/functions/_shared/werkbank/invoicePreflight.ts, see
 // scripts/mirrors.manifest.json), together with quotePreflight.ts, so the relative import
 // resolves in both runtimes. The issue dialog and werkbank-invoices check the same blockers.
-import { isCompanyProfileComplete, type CompanyProfileLike } from "./quotePreflight";
+import { isCompanyProfileComplete, type CompanyProfileLike } from "./quotePreflight.ts";
 
 export type InvoiceBlocker =
   | "no_items"

@@ -1,6 +1,12 @@
 import { assertEquals, assertThrows } from "jsr:@std/assert@1";
 import type { Database } from "../../database.types.ts";
-import { buildInvoiceData, type BuyerSnapshot, type SellerSnapshot } from "./invoiceData.ts";
+import {
+  buildInvoiceData,
+  type BuyerSnapshot,
+  draftBuyerSnapshot,
+  draftSellerSnapshot,
+  type SellerSnapshot,
+} from "./invoiceData.ts";
 
 type W = Database["werkbank"];
 type Inv = W["Tables"]["invoices"]["Row"];
@@ -111,4 +117,60 @@ Deno.test("draft uses the fallback and is watermarked", () => {
 
 Deno.test("issued invoice without snapshots and without fallback throws", () => {
   assertThrows(() => buildInvoiceData({ invoice: invoice({ seller_snapshot: null }), items, totals: totals() }));
+});
+
+// Draft fallbacks mirror finalize_invoice (migration 20261008110000): seller = the profile row
+// minus org_id/created_at/updated_at, buyer = the jsonb_build_object of v_buyer.
+type Profile = W["Tables"]["company_profiles"]["Row"];
+type Customer = W["Tables"]["customers"]["Row"];
+type Property = W["Tables"]["properties"]["Row"];
+
+const profileRow: Profile = {
+  ...seller, org_id: "o", created_at: "2026-01-01", updated_at: "2026-01-02",
+};
+const customerRow = (extra: Partial<Customer> = {}): Customer => ({
+  archived_at: null, city: "Hamburg", company_name: null, country_code: "DE", created_at: "", customer_no: "K-0001",
+  email: "kunde@example.com", first_name: "Hans", id: "c", invoice_email: "re@example.com", kind: "private",
+  last_name: "Mueller", notes: null, org_id: "o", payment_terms_days: 14, phone: null, postal_code: "20095",
+  street: "Str. 2", updated_at: "", vat_id: null, ...extra,
+});
+const propertyRow = (extra: Partial<Property> = {}): Property => ({
+  access_notes: null, archived_at: null, billing_city: null, billing_country_code: null, billing_name: null,
+  billing_postal_code: null, billing_street: null, city: "Kiel", country_code: "DE", created_at: "", customer_id: "c",
+  id: "p", name: "Haus Nord", notes: null, object_no: null, org_id: "o", postal_code: "24103", street: "Nordweg 3",
+  updated_at: "", ...extra,
+});
+
+Deno.test("draft seller is the profile without org_id and timestamps", () => {
+  assertEquals(draftSellerSnapshot(profileRow), seller);
+});
+
+Deno.test("draft buyer of a private customer: last, first and the customer address", () => {
+  assertEquals(draftBuyerSnapshot(customerRow(), null), {
+    name: "Mueller, Hans", street: "Str. 2", postal_code: "20095", city: "Hamburg", country_code: "DE",
+    customer_no: "K-0001", vat_id: null, invoice_email: "re@example.com", is_private: true, billing_override: false,
+    property: null,
+  });
+  assertEquals(draftBuyerSnapshot(customerRow({ first_name: "" }), null).name, "Mueller");
+});
+
+Deno.test("draft buyer of a property manager is its company name, with the property", () => {
+  const b = draftBuyerSnapshot(customerRow({ kind: "property_manager", company_name: "HV Nord" }), propertyRow());
+  assertEquals(b.name, "HV Nord");
+  assertEquals(b.is_private, false);
+  assertEquals(b.billing_override, false);
+  assertEquals(b.street, "Str. 2");
+  assertEquals(b.property, { name: "Haus Nord", street: "Nordweg 3", postal_code: "24103", city: "Kiel" });
+});
+
+Deno.test("draft buyer uses the property's billing override when billing_name is set", () => {
+  const b = draftBuyerSnapshot(customerRow(), propertyRow({
+    billing_name: "Eigentuemer GbR", billing_street: "Ostweg 1", billing_postal_code: "10115", billing_city: "Berlin",
+    billing_country_code: "DE",
+  }));
+  assertEquals(
+    [b.name, b.street, b.postal_code, b.city, b.country_code, b.billing_override],
+    ["Eigentuemer GbR", "Ostweg 1", "10115", "Berlin", "DE", true],
+  );
+  assertEquals(b.customer_no, "K-0001");
 });
