@@ -24,11 +24,12 @@ export function offlineOrderIds(rows: Pick<AssignmentRow, "id" | "group_key">[])
   return new Set(rows.filter((r) => isOfflineGroup(r.group_key as GroupKey)).map((r) => r.id));
 }
 
-/** Which queries the offline cache keeps: the list `["werkbank", "assignments", user, org]` and
- *  the details `[..., orderId]` of offline-group orders. Nothing else, signed URLs least of all. */
-export function shouldPersistQuery(query: { queryKey: readonly unknown[] }, offlineIds: Set<string>): boolean {
+/** Which queries the offline cache of `userId` keeps: that user's list
+ *  `["werkbank", "assignments", userId, org]` and the details `[..., orderId]` of offline-group
+ *  orders. Nothing of another user (a shared phone), nothing else, signed URLs least of all. */
+export function shouldPersistQuery(query: { queryKey: readonly unknown[] }, offlineIds: Set<string>, userId: string): boolean {
   const k = query.queryKey;
-  if (k[0] !== "werkbank" || k[1] !== "assignments") return false;
+  if (k[0] !== "werkbank" || k[1] !== "assignments" || k[2] !== userId) return false;
   if (k.length === 4) return true;
   return k.length === 5 && typeof k[4] === "string" && offlineIds.has(k[4]);
 }

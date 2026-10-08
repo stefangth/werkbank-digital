@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { renderWithProviders } from "@/test/renderWithProviders";
+import { createTestQueryClient } from "@/test/queryClient";
 
 const { calls } = vi.hoisted(() => ({ calls: [] as string[] }));
 const signOut = vi.fn(async () => { calls.push("signOut"); });
@@ -32,10 +33,17 @@ describe("MobileShell", () => {
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 
-  it("signing out first deletes the user's offline cache and stored signatures", async () => {
-    renderWithProviders(<MemoryRouter><MobileShell title="Einsatz"><p>body</p></MobileShell></MemoryRouter>);
+  it("signing out first deletes the offline cache, the cached queries and stored signatures", async () => {
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryDefaults(["werkbank"], { gcTime: Infinity });
+    queryClient.setQueryData(["werkbank", "assignments", "u1", "org-1"], [{ id: "o1" }]);
+    queryClient.setQueryData(["werkbank", "orders", "org-1"], []);
+    signOut.mockImplementationOnce(async () => {
+      calls.push(`signOut:${queryClient.getQueryCache().findAll({ queryKey: ["werkbank"] }).length}`);
+    });
+    renderWithProviders(<MemoryRouter><MobileShell title="Einsatz"><p>body</p></MobileShell></MemoryRouter>, { queryClient });
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(signOut).toHaveBeenCalled());
-    expect(calls).toEqual(["clear:u1", "signatures", "signOut"]);
+    expect(calls).toEqual(["clear:u1", "signatures", "signOut:0"]);
   });
 });

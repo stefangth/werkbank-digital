@@ -26,7 +26,7 @@ describe("idbPersister", () => {
     expect(await b.restoreClient()).toEqual(client("b"));
   });
 
-  it("clearAssignmentCache stops that user's persisting and removes only that user's entry", async () => {
+  it("clearAssignmentCache stops every persisting and empties the whole store", async () => {
     const a = createIdbPersister(assignmentCacheKey("ua"));
     const b = createIdbPersister(assignmentCacheKey("ub"));
     await a.persistClient(client("a"));
@@ -37,8 +37,8 @@ describe("idbPersister", () => {
     trackPersistence("ub", stopB);
     await clearAssignmentCache("ua");
     expect(stopA).toHaveBeenCalledOnce();
-    expect(stopB).not.toHaveBeenCalled();
+    expect(stopB).toHaveBeenCalledOnce();
     expect(await a.restoreClient()).toBeUndefined();
-    expect(await b.restoreClient()).toEqual(client("b"));
+    expect(await b.restoreClient()).toBeUndefined();
   });
 });

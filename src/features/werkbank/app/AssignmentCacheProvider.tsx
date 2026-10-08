@@ -38,7 +38,7 @@ export function AssignmentCacheProvider({ children }: { children: ReactNode }) {
           if (!defaultShouldDehydrateQuery(query)) return false;
           // The list of the same user and org decides which details are offline orders.
           const list = qc.getQueryData<AssignmentRow[]>(query.queryKey.slice(0, 4));
-          return shouldPersistQuery(query, offlineOrderIds(Array.isArray(list) ? list : []));
+          return shouldPersistQuery(query, offlineOrderIds(Array.isArray(list) ? list : []), userId);
         },
       },
     });

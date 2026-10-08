@@ -29,7 +29,7 @@ function Probe({ user }: { user: string }) {
 
 beforeEach(async () => {
   vi.clearAllMocks();
-  for (const u of ["a", "b", "c", "d"]) await createIdbPersister(assignmentCacheKey(u)).removeClient();
+  for (const u of ["a", "b", "c", "d", "e", "f"]) await createIdbPersister(assignmentCacheKey(u)).removeClient();
 });
 
 describe("AssignmentCacheProvider", () => {
@@ -56,6 +56,19 @@ describe("AssignmentCacheProvider", () => {
     renderWithProviders(<AssignmentCacheProvider><p>x</p></AssignmentCacheProvider>, { queryClient, ...auth("c") });
     await waitFor(async () => expect(await createIdbPersister(assignmentCacheKey("c")).restoreClient()).toBeUndefined());
     expect(queryClient.getQueryData(listKey("c"))).toBeUndefined();
+  });
+
+  it("never writes another user's queries into this user's entry (same tab, shared phone)", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    queryClient.setQueryData(listKey("e"), rows);
+    queryClient.setQueryData([...listKey("e"), "o1"], { order: { id: "o1" } });
+    renderWithProviders(<AssignmentCacheProvider><p>x</p></AssignmentCacheProvider>, { queryClient, ...auth("f") });
+    await new Promise((r) => setTimeout(r, 20));
+    queryClient.setQueryData(listKey("f"), rows);
+    await waitFor(async () => {
+      const stored = await createIdbPersister(assignmentCacheKey("f")).restoreClient();
+      expect(stored?.clientState.queries.map((q) => q.queryKey)).toEqual([listKey("f")]);
+    });
   });
 
   it("persists the list and offline details only, never signed URLs", async () => {

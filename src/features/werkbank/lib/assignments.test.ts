@@ -44,16 +44,20 @@ describe("shouldPersistQuery", () => {
     expect([...ids].sort()).toEqual(["o", "t", "up"]);
   });
   it("keeps the list and the details of offline groups", () => {
-    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org"]), ids)).toBe(true);
-    for (const id of ["o", "t", "up"]) expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", id]), ids)).toBe(true);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org"]), ids, "u1")).toBe(true);
+    for (const id of ["o", "t", "up"]) expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", id]), ids, "u1")).toBe(true);
   });
   it("drops done and unscheduled details and every other key", () => {
-    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "un"]), ids)).toBe(false);
-    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "d"]), ids)).toBe(false);
-    expect(shouldPersistQuery(q(["werkbank", "visit-object-urls", "org/o/r/a.jpg"]), ids)).toBe(false);
-    expect(shouldPersistQuery(q(["werkbank", "orders", "org"]), ids)).toBe(false);
-    expect(shouldPersistQuery(q(["werkbank", "technician-orgs", "u1"]), ids)).toBe(false);
-    expect(shouldPersistQuery(q(["bookings", "status"]), ids)).toBe(false);
-    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "o", "extra"]), ids)).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "un"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "d"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "visit-object-urls", "org/o/r/a.jpg"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "orders", "org"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "technician-orgs", "u1"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["bookings", "status"]), ids, "u1")).toBe(false);
+  });
+  it("drops another user's list and details (shared phone)", () => {
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u2", "org"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u2", "org", "o"]), ids, "u1")).toBe(false);
+    expect(shouldPersistQuery(q(["werkbank", "assignments", "u1", "org", "o", "extra"]), ids, "u1")).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -17,15 +18,18 @@ import { clearUploadedSignatures } from "./signatureStore";
 export function MobileShell({ title, back, children }: { title?: string; back?: string; children: ReactNode }) {
   const { t } = useTranslation("werkbank");
   const { user, signOut } = useAuth();
+  const qc = useQueryClient();
   const company = useCompanyProfile();
   const logo = useLogoUrl(company.data?.logo_path);
   const profile = useMyProfile();
   const name = profile.data?.display_name || user?.email || t("app.unnamedUser");
 
-  // A shared phone: the next user must find nothing of this one, so the offline copy and any
-  // stored signature go before the session does.
+  // A shared phone: the next user must find nothing of this one, so the offline copy, the
+  // in-memory queries (kept for days for offline use) and any stored signature go before the
+  // session does.
   const onSignOut = async () => {
     if (user) await clearAssignmentCache(user.id).catch(() => undefined);
+    qc.removeQueries({ queryKey: ["werkbank"] });
     clearUploadedSignatures();
     await signOut();
   };
