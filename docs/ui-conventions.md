@@ -117,6 +117,7 @@ is immutable across modes; only the role token flips.
 | `Table` | 34px rows, 13px cells, eyebrow header. `numeric` on any numeric column (D6). |
 | `EmptyState` | Never renders without an action, or an explicit `reason` prop saying why there is none (D8). |
 | `Eyebrow` | The only way to render an uppercase label. |
+| `DefaultHint` | A preset value carries a tooltip that explains it. Use `DefaultHint` in Werkbank. |
 
 ## 6. Copy
 
