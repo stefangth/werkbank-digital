@@ -119,6 +119,10 @@ end;
 $$;
 revoke all on function werkbank.lock_dunning_notice() from public, anon;
 
+-- Scale note: open_amount calls invoice_open_amount once per row (it re-reads invoices, totals and
+-- entries), so list and KPI cost grows with the number of issued invoices. Fine at pilot scale (a
+-- few hundred invoices per org); if it gets slow, derive open_amount from claim, e.paid and
+-- e.written_off below instead and keep a pgTAP pin that both agree.
 create or replace view werkbank.invoice_balances with (security_invoker = true) as
 select
   x.invoice_id, x.org_id, x.invoice_no, x.status, x.customer_id, x.property_id,

@@ -3,7 +3,7 @@
 -- cleared once set.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(20);
+SELECT plan(22);
 
 SET LOCAL timezone = 'UTC';
 
@@ -98,6 +98,13 @@ SELECT is(pg_temp.open(103), 1190::numeric, 'the failed transfer changed nothing
 SELECT lives_ok($$SELECT werkbank.transfer_invoice_entry('77777777-0000-4000-a000-0000000000e3', pg_temp.n(103), 'Umbuchung')$$,
   'a transfer within the credit of a cancelled invoice works');
 SELECT is(pg_temp.open(104), 0::numeric, 'the source is settled after the transfer');
+
+-- 2a. A transfer needs a reason: the source's reversal_reason check rejects a blank or missing one.
+SELECT set_config('of.p', werkbank.record_invoice_entry(pg_temp.n(105), 'payment', 10, pg_temp.today())::text, true);
+SELECT throws_ok($$SELECT werkbank.transfer_invoice_entry(current_setting('of.p')::uuid, pg_temp.n(103), ' ')$$,
+  '23514', NULL, 'a transfer with a blank reason fails');
+SELECT throws_ok($$SELECT werkbank.transfer_invoice_entry(current_setting('of.p')::uuid, pg_temp.n(103), NULL)$$,
+  '23514', NULL, 'a transfer without a reason fails');
 
 -- 2b. A hold cannot end in the past (it would never count as active) ---------------------------
 SELECT throws_ok($$SELECT werkbank.set_dunning_hold(pg_temp.n(103), 'Reklamation', pg_temp.today() - 1)$$,
