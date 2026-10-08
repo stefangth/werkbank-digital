@@ -28,7 +28,7 @@ vi.mock("../hooks/useOrders", () => ({
   useOrderMutations: () => ({ create: { mutate: createOrder, isPending: false } }),
 }));
 vi.mock("../hooks/useCompanyProfile", () => ({
-  useCompanyProfile: () => ({ data: state.profileLoading ? undefined : { quote_validity_days: 14 }, isLoading: state.profileLoading }),
+  useCompanyProfile: () => ({ data: state.profileLoading ? undefined : { quote_validity_days: 14, payment_due_days: 21, invoice_intro: "Hallo", invoice_closing: "Danke" }, isLoading: state.profileLoading }),
 }));
 
 import { DocumentsSection } from "./DocumentsSection";
@@ -116,7 +116,7 @@ describe("DocumentsSection", () => {
     render({ customerId: "k1", propertyId: "p1" });
     fireEvent.click(screen.getByRole("button", { name: "Angebot anlegen" }));
     expect(createQuote).toHaveBeenCalledWith(
-      { draft: { customer_id: "k1", property_id: "p1" }, profile: { quote_validity_days: 14 } },
+      { draft: { customer_id: "k1", property_id: "p1" }, profile: { quote_validity_days: 14, payment_due_days: 21, invoice_intro: "Hallo", invoice_closing: "Danke" } },
       expect.anything(),
     );
     expect(navigate).toHaveBeenCalledWith("/quotes/qNew");
@@ -168,7 +168,7 @@ describe("DocumentsSection", () => {
     render({ customerId: "k1", propertyId: "p1" });
     fireEvent.click(screen.getByRole("button", { name: "Rechnung anlegen" }));
     expect(createInvoice).toHaveBeenCalledWith(
-      { customerId: "k1", propertyId: "p1", profile: { quote_validity_days: 14 } },
+      { customerId: "k1", propertyId: "p1", profile: { quote_validity_days: 14, payment_due_days: 21, invoice_intro: "Hallo", invoice_closing: "Danke" } },
       expect.anything(),
     );
     expect(navigate).toHaveBeenCalledWith("/invoices/iNew");

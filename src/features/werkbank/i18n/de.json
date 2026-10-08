@@ -201,7 +201,8 @@
     "loadFailed": "Die Nummernkreise konnten nicht geladen werden. Versuche es bitte noch einmal.",
     "errors": {
       "prefixTooLong": "Das Präfix darf höchstens 10 Zeichen lang sein",
-      "nextValue": "Gib eine ganze Zahl ab 1 ein"
+      "nextValue": "Gib eine ganze Zahl ab 1 ein",
+      "raiseOnly": "Der Startwert kann nur erhöht werden."
     },
     "locked": "Präfix und Start sind gesperrt, weil bereits Rechnungen ausgestellt wurden. Sie können nicht mehr geändert werden."
   },

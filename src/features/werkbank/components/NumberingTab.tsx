@@ -31,13 +31,16 @@ function RangeForm({ rangeKey, range, locked }: { rangeKey: NumberRangeKey; rang
 
   const nextValue = parseNextValue(nextText);
   const prefixError = prefix.length > MAX_PREFIX_LENGTH ? t("numbering.errors.prefixTooLong") : null;
-  const nextError = nextValue === null ? t("numbering.errors.nextValue") : null;
+  // The database refuses any decrease of the invoice start (number_range_locked), so catch it here.
+  const nextError = nextValue === null
+    ? t("numbering.errors.nextValue")
+    : rangeKey === "invoice" && nextValue < range.next_value ? t("numbering.errors.raiseOnly") : null;
   const preview = nextValue !== null && !prefixError ? formatNumber(prefix, nextValue, range.padding) : null;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (prefixError || nextValue === null) return;
+    if (prefixError || nextError || nextValue === null) return;
     // The padding is not editable here; it is written back as stored. The next number is only sent
     // when the admin changed it, so saving a new prefix never moves the counter.
     save.mutate(

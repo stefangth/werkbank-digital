@@ -207,4 +207,18 @@ describe("NumberingTab", () => {
     fireEvent.click(row("Rechnungsnummern").getByRole("button", { name: "Speichern" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Dieser Nummernkreis kann nicht mehr geändert werden."));
   });
+
+  it("blocks lowering the invoice start but saves a raised one", async () => {
+    const fake = seed({ data: { prefix: "RE-", next_value: 100, padding: 4 }, error: null });
+    renderTab();
+    const next = await row("Rechnungsnummern").findByLabelText("Nächste Nummer");
+    fireEvent.change(next, { target: { value: "50" } });
+    fireEvent.click(row("Rechnungsnummern").getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByText("Der Startwert kann nur erhöht werden.")).toBeInTheDocument();
+    expect(upserts(fake)).toHaveLength(0);
+    fireEvent.change(next, { target: { value: "120" } });
+    fireEvent.click(row("Rechnungsnummern").getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(upserts(fake)).toHaveLength(1));
+    expect(upserts(fake)[0].args[0]).toMatchObject({ key: "invoice", next_value: 120 });
+  });
 });

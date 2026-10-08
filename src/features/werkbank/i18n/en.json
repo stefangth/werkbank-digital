@@ -201,7 +201,8 @@
     "loadFailed": "The number ranges could not be loaded. Please try again.",
     "errors": {
       "prefixTooLong": "The prefix can be at most 10 characters long",
-      "nextValue": "Enter a whole number of 1 or more"
+      "nextValue": "Enter a whole number of 1 or more",
+      "raiseOnly": "The start value can only be raised."
     },
     "locked": "Prefix and start are locked because invoices have been issued. They can no longer be changed."
   },
