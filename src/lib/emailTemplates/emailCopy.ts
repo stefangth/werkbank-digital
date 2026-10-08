@@ -22,6 +22,7 @@ export const EMAIL_TEMPLATE_KEYS = [
   "quote-sent",
   "quote-decided",
   "quote-decision-confirmation",
+  "invoice-sent",
 ] as const;
 
 export type EmailTemplateKey = typeof EMAIL_TEMPLATE_KEYS[number];
@@ -365,6 +366,24 @@ export const EMAIL_COPY_DEFAULTS = {
   "quote-sent.previewText": "Quote {{quoteNo}} from {{companyName}}",
   "quote-sent.companyFallback": "Your contractor",
 
+  // Invoice email of the trade module: goes to the business's customer (Sie in German).
+  "invoice-sent.subject": "Invoice {{invoiceNo}} from {{companyName}}",
+  "invoice-sent.subjectCancellation": "Cancellation invoice {{invoiceNo}} for {{precedingNo}}",
+  "invoice-sent.heading": "Your invoice",
+  "invoice-sent.headingCancellation": "Your cancellation invoice",
+  "invoice-sent.greeting": "Hello,",
+  "invoice-sent.intro": "{{companyName}} is sending you invoice {{invoiceNo}}. You will find the PDF attached.",
+  "invoice-sent.introCancellation": "{{companyName}} is sending you cancellation invoice {{invoiceNo}} for invoice {{precedingNo}}. You will find the PDF attached.",
+  "invoice-sent.invoiceLabel": "Invoice:",
+  "invoice-sent.cancellationLabel": "Cancellation invoice:",
+  "invoice-sent.precedingLabel": "For invoice:",
+  "invoice-sent.amountLabel": "Amount:",
+  "invoice-sent.dueLabel": "Due on:",
+  "invoice-sent.footer": "Questions? Simply reply to this email.",
+  "invoice-sent.previewText": "Invoice {{invoiceNo}} from {{companyName}}",
+  "invoice-sent.previewTextCancellation": "Cancellation invoice {{invoiceNo}} from {{companyName}}",
+  "invoice-sent.companyFallback": "Your contractor",
+
   "quote-decided.subjectAccepted": "Quote {{quoteNo}} was accepted",
   "quote-decided.subjectRejected": "Quote {{quoteNo}} was declined",
   "quote-decided.headingAccepted": "Quote accepted",
@@ -626,6 +645,24 @@ export const EMAIL_COPY_DE: EmailCopy = {
   "quote-sent.footer": "Bei Fragen antworten Sie einfach auf diese E-Mail.",
   "quote-sent.previewText": "Angebot {{quoteNo}} von {{companyName}}",
   "quote-sent.companyFallback": "Ihr Betrieb",
+
+  // Customer email (Sie): the reader is the business's customer (named exemption in emailCopy.test.ts).
+  "invoice-sent.subject": "Rechnung {{invoiceNo}} von {{companyName}}",
+  "invoice-sent.subjectCancellation": "Stornorechnung {{invoiceNo}} zu {{precedingNo}}",
+  "invoice-sent.heading": "Ihre Rechnung",
+  "invoice-sent.headingCancellation": "Ihre Stornorechnung",
+  "invoice-sent.greeting": "Guten Tag,",
+  "invoice-sent.intro": "{{companyName}} sendet Ihnen die Rechnung {{invoiceNo}}. Das PDF finden Sie im Anhang.",
+  "invoice-sent.introCancellation": "{{companyName}} sendet Ihnen die Stornorechnung {{invoiceNo}} zur Rechnung {{precedingNo}}. Das PDF finden Sie im Anhang.",
+  "invoice-sent.invoiceLabel": "Rechnung:",
+  "invoice-sent.cancellationLabel": "Stornorechnung:",
+  "invoice-sent.precedingLabel": "Zur Rechnung:",
+  "invoice-sent.amountLabel": "Betrag:",
+  "invoice-sent.dueLabel": "Fällig am:",
+  "invoice-sent.footer": "Bei Fragen antworten Sie einfach auf diese E-Mail.",
+  "invoice-sent.previewText": "Rechnung {{invoiceNo}} von {{companyName}}",
+  "invoice-sent.previewTextCancellation": "Stornorechnung {{invoiceNo}} von {{companyName}}",
+  "invoice-sent.companyFallback": "Ihr Betrieb",
 
   "quote-decided.subjectAccepted": "Angebot {{quoteNo}} wurde angenommen",
   "quote-decided.subjectRejected": "Angebot {{quoteNo}} wurde abgelehnt",

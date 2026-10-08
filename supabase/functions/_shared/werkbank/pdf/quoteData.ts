@@ -1,6 +1,10 @@
 // Pure mapping from database rows to the data the quote PDF prints. No DB access here.
 import type { Database } from "../../database.types.ts";
 import { formatQuoteNumber } from "../quoteDisplayNumber.ts";
+import { buildSections, clean, UNIT_LABELS, type QuotePdfRow, type QuotePdfSection } from "./sections.ts";
+
+export { UNIT_LABELS };
+export type { QuotePdfRow, QuotePdfSection };
 
 type W = Database["werkbank"]["Tables"];
 export type QuoteRow = W["quotes"]["Row"];
@@ -10,40 +14,11 @@ export type PropertyRow = W["properties"]["Row"];
 export type ProfileRow = W["company_profiles"]["Row"];
 export type TotalsRow = Database["werkbank"]["Views"]["document_totals"]["Row"];
 
-export const UNIT_LABELS: Record<string, string> = {
-  HUR: "Std",
-  H87: "Stk",
-  MTR: "m",
-  MTK: "m²",
-  MTQ: "m³",
-  KGM: "kg",
-  LTR: "l",
-  LS: "pauschal",
-};
-
 export interface QuoteAcceptance {
   name: string;
   decidedAt: string;
   signaturePngDataUrl?: string;
   typedName?: string;
-}
-
-export interface QuotePdfRow {
-  number?: string;
-  kind: "item" | "text";
-  name?: string;
-  description?: string;
-  quantity?: number;
-  unit?: string;
-  unitPrice?: number;
-  lineNet?: number;
-}
-
-export interface QuotePdfSection {
-  title?: string;
-  number?: string;
-  rows: QuotePdfRow[];
-  subtotal?: number;
 }
 
 export interface QuotePdfData {
@@ -100,11 +75,6 @@ export interface QuotePdfInput {
   date?: string;
   watermark?: "Entwurf";
 }
-
-const clean = (v: string | null | undefined): string | undefined => {
-  const t = v?.trim();
-  return t ? t : undefined;
-};
 
 /** "2026-10-07" or an ISO timestamp to "07.10.2026". */
 export function formatDateDe(value: string): string {
@@ -169,49 +139,6 @@ function parseVat(raw: unknown): VatEntry[] {
     const net = Number(o.discounted_net ?? o.net ?? 0);
     return { rate: Number(o.rate ?? 0), net, vat: Number(o.vat ?? 0) };
   });
-}
-
-function buildSections(items: ItemRow[]): QuotePdfSection[] {
-  const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order);
-  const sections: QuotePdfSection[] = [];
-  let current: QuotePdfSection | null = null;
-  let sectionNo = 0;
-  let rowNo = 0;
-  for (const it of sorted) {
-    if (it.kind === "title") {
-      sectionNo += 1;
-      rowNo = 0;
-      current = { title: it.name ?? "", number: String(sectionNo), rows: [] };
-      sections.push(current);
-      continue;
-    }
-    if (!current) {
-      current = { rows: [] };
-      sections.push(current);
-    }
-    if (it.kind === "text") {
-      current.rows.push({ kind: "text", name: clean(it.name), description: clean(it.description) });
-      continue;
-    }
-    rowNo += 1;
-    const unitPrice = (it.material_price ?? 0) + (it.labour_price ?? 0);
-    current.rows.push({
-      kind: "item",
-      number: current.number ? `${current.number}.${rowNo}` : String(rowNo),
-      name: clean(it.name),
-      description: clean(it.description),
-      quantity: it.quantity ?? 0,
-      unit: it.unit_code ? (UNIT_LABELS[it.unit_code] ?? it.unit_code) : undefined,
-      unitPrice,
-      lineNet: it.line_net ?? 0,
-    });
-  }
-  for (const s of sections) {
-    if (s.title !== undefined) {
-      s.subtotal = Math.round(s.rows.reduce((sum, r) => sum + (r.lineNet ?? 0), 0) * 100) / 100;
-    }
-  }
-  return sections;
 }
 
 export function buildQuotePdfData(input: QuotePdfInput): QuotePdfData {

@@ -10,7 +10,7 @@ import {
 import { EMAIL_TEMPLATE_COPY_FIELDS } from "./emailTemplateMeta";
 
 // The quote emails are rendered from defaults only, like cron-health-alert and magic-link.
-const QUOTE_TEMPLATE_PREFIXES = ["quote-sent.", "quote-decided.", "quote-decision-confirmation."];
+const QUOTE_TEMPLATE_PREFIXES = ["quote-sent.", "quote-decided.", "quote-decision-confirmation.", "invoice-sent."];
 
 describe("legacyEmailOverridesToCopy", () => {
   it("translates the persisted legacy field names to flattened copy keys", () => {
@@ -229,7 +229,7 @@ describe("email copy registry", () => {
 
 // Named exemption from the Du rule: these two emails go to a trade business's own customer,
 // who is not a user of the app, so their German copy uses the formal Sie (spec R5, R7).
-const CUSTOMER_FACING_PREFIXES = ["quote-sent.", "quote-decision-confirmation."];
+const CUSTOMER_FACING_PREFIXES = ["quote-sent.", "quote-decision-confirmation.", "invoice-sent."];
 
 const emailTokensOf = (s: string): string[] =>
   (s.match(/\{\{(\w+)\}\}/g) ?? []).slice().sort();

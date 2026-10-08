@@ -319,6 +319,46 @@
     "html": "02c97bc9c237c45ae3646e6d4453bf58ab973b8a96f18a2052cbef2695dbdb48",
     "text": "9a80278b420643314417c599df84845992f85b121ef531e184c2a1d1f10c1b08"
   },
+  "invoice-sent/preview/production/en": {
+    "subject": "Invoice RE-0001 from Muster Sanitär GmbH",
+    "html": "54b50f2d8e06c921ec442d3336da5e56edb17e4b0417defa3c46c223b90f26d7",
+    "text": "1c463ea48d186376f9fb0bd9344511653f38b16dac7b9bc13125a80d45ab918c"
+  },
+  "invoice-sent/preview/production/de": {
+    "subject": "Rechnung RE-0001 von Muster Sanitär GmbH",
+    "html": "36b33457c61850cc950a534cf4c62ea051bef80791b9d654a6694f9917ac71da",
+    "text": "2f7a2a4da1d03f9d278caafce1ff39f8ff7727ca7533aa46b217fb47f0d81541"
+  },
+  "invoice-sent/preview/staffing/en": {
+    "subject": "Invoice RE-0001 from Muster Sanitär GmbH",
+    "html": "54b50f2d8e06c921ec442d3336da5e56edb17e4b0417defa3c46c223b90f26d7",
+    "text": "1c463ea48d186376f9fb0bd9344511653f38b16dac7b9bc13125a80d45ab918c"
+  },
+  "invoice-sent/preview/staffing/de": {
+    "subject": "Rechnung RE-0001 von Muster Sanitär GmbH",
+    "html": "36b33457c61850cc950a534cf4c62ea051bef80791b9d654a6694f9917ac71da",
+    "text": "2f7a2a4da1d03f9d278caafce1ff39f8ff7727ca7533aa46b217fb47f0d81541"
+  },
+  "invoice-sent/empty/production/en": {
+    "subject": "Invoice  from Your contractor",
+    "html": "f55c9bf209ecc2950e0afcd6806004ca83abb08f6d67ac60a433bb5f6a55b8fb",
+    "text": "8854f37b38da5e1710428ed2c44a74d9815ec80f0e66ce88daddc285d4798fac"
+  },
+  "invoice-sent/empty/production/de": {
+    "subject": "Rechnung  von Ihr Betrieb",
+    "html": "871773703d4e8b67b2fe393acde8b5b8b77324053239a875a5340f85b6393118",
+    "text": "8cd8d29521b60681260f07fc486eab00bd1f9900bae9888cf1b2bcabacbdeccb"
+  },
+  "invoice-sent/empty/staffing/en": {
+    "subject": "Invoice  from Your contractor",
+    "html": "f55c9bf209ecc2950e0afcd6806004ca83abb08f6d67ac60a433bb5f6a55b8fb",
+    "text": "8854f37b38da5e1710428ed2c44a74d9815ec80f0e66ce88daddc285d4798fac"
+  },
+  "invoice-sent/empty/staffing/de": {
+    "subject": "Rechnung  von Ihr Betrieb",
+    "html": "871773703d4e8b67b2fe393acde8b5b8b77324053239a875a5340f85b6393118",
+    "text": "8cd8d29521b60681260f07fc486eab00bd1f9900bae9888cf1b2bcabacbdeccb"
+  },
   "magic-link/preview/production/en": {
     "subject": "Your sign-in link for ShowFlow",
     "html": "090bbcac05c1cf375bbdc35a19d2ecb76e47213cee5c1f57e56c876dd853f795",

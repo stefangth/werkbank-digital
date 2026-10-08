@@ -45,6 +45,9 @@ export const MODULES: readonly ModuleGuard[] = [
       "supabase/functions/export-org-data/index.ts",
       "supabase/functions/export-org-data/index.test.ts",
       "docs/**",
+      // E-invoice validation in CI: Deno fixture and gate scripts plus the path-filtered workflow.
+      "scripts/werkbank/**",
+      ".github/workflows/einvoice-validate.yml",
       "CLAUDE.md",
       "README.md",
       "scripts/mirrors.manifest.json",

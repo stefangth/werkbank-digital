@@ -53,16 +53,12 @@ import {
 import { renderQuotePdf } from "../_shared/werkbank/pdf/quoteDocument.tsx";
 import { parseName, parseSignature, quoteConsentText } from "../_shared/werkbank/acceptance.ts";
 import { formatQuoteNumber } from "../_shared/werkbank/quoteDisplayNumber.ts";
+import { ASSETS_BUCKET, DOCUMENTS_BUCKET, isAlreadyExists, logoDataUrl } from "../_shared/werkbank/documentStorage.ts";
+import { checkRecipients, MAX_MESSAGE_CHARS } from "../_shared/werkbank/recipients.ts";
 
 export type RenderQuotePdf = (data: QuotePdfData) => Promise<Uint8Array>;
 
-const DOCUMENTS_BUCKET = "werkbank-documents";
-const ASSETS_BUCKET = "werkbank-assets";
 const SIGNED_URL_TTL = 600;
-const MAX_RECIPIENTS = 10;
-const MAX_MESSAGE_CHARS = 5000;
-// Same shape as REPLY_TO_RE in send-transactional-email and the company_profiles.email check.
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 type Body = Record<string, unknown>;
 
@@ -155,34 +151,10 @@ async function loadDocument(deps: Deps, quote: QuoteRow): Promise<LoadedDocument
   };
 }
 
-/** Storage's "object exists" answer to an upload with upsert: false. */
-function isAlreadyExists(error: unknown): boolean {
-  const e = error as { statusCode?: unknown; status?: unknown; message?: unknown };
-  return String(e.statusCode) === "409" || e.status === 409 || /already exists/i.test(String(e.message ?? ""));
-}
-
 const itemCount = (items: ItemRow[]) => items.filter((i) => i.kind === "item").length;
 
 /** The number the customer sees everywhere: `A-0042`, from version 2 `A-0042-2`. */
 const displayNo = (quote: QuoteRow) => formatQuoteNumber(quote.quote_no, quote.version);
-
-/** The org's logo as a data URL for the PDF, or undefined when there is none or it cannot be read. */
-async function logoDataUrl(deps: Deps, path: string | null | undefined): Promise<string | undefined> {
-  if (!path) return undefined;
-  try {
-    const { data, error } = await deps.admin.storage.from(ASSETS_BUCKET).download(path);
-    if (error || !data) return undefined;
-    const blob = data as Blob;
-    const lower = path.toLowerCase();
-    const mime = blob.type?.startsWith("image/")
-      ? blob.type
-      : lower.endsWith(".png") ? "image/png" : /\.jpe?g$/.test(lower) ? "image/jpeg" : null;
-    if (!mime) return undefined;
-    return `data:${mime};base64,${encodeBase64(new Uint8Array(await blob.arrayBuffer()))}`;
-  } catch {
-    return undefined;
-  }
-}
 
 async function renderDocument(
   deps: Deps,
@@ -241,19 +213,9 @@ function parseSendInput(body: Body): SendInput | { error: string } {
   }
   const message = typeof body.message === "string" ? body.message.trim() : "";
   if (message.length > MAX_MESSAGE_CHARS) return { error: "bad_request" };
-  if ([...to, ...cc].some((a) => !EMAIL_RE.test(a))) return { error: "invalid_recipient" };
-  const seen = new Set<string>();
-  const unique = (addrs: string[]) =>
-    addrs.filter((a) => {
-      const key = a.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  const uniqueTo = unique(to);
-  const uniqueCc = unique(cc);
-  if (uniqueTo.length + uniqueCc.length > MAX_RECIPIENTS) return { error: "too_many_recipients" };
-  return { to: uniqueTo, cc: uniqueCc, message };
+  const recipients = checkRecipients(to, cc);
+  if ("error" in recipients) return recipients;
+  return { ...recipients, message };
 }
 
 async function sendQuote(deps: Deps, render: RenderQuotePdf, quote: QuoteRow, body: Body): Promise<Response> {

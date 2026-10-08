@@ -5,15 +5,15 @@ import { Document, Image, Page, renderToBuffer, StyleSheet, Text, View } from "n
 import { registerQuoteFonts } from "./fonts.ts";
 import { formatDateDe, type QuotePdfData, type QuotePdfRow } from "./quoteData.ts";
 
-const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
-const qty = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 3 });
-const pct = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
+export const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+export const qty = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 3 });
+export const pct = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
 
 const INK = "#1a1a1a";
 const MUTED = "#666666";
 const RULE = "#cccccc";
 
-const s = StyleSheet.create({
+export const s = StyleSheet.create({
   page: { fontFamily: "Geist", fontSize: 9.5, color: INK, paddingTop: 48, paddingBottom: 96, paddingHorizontal: 50, lineHeight: 1.35 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 },
   logo: { maxWidth: 150, maxHeight: 56, objectFit: "contain" },
@@ -52,9 +52,9 @@ const s = StyleSheet.create({
   watermark: { position: "absolute", top: 330, left: 70, fontSize: 110, fontWeight: 600, color: "#e6e6e6", transform: "rotate(-30deg)" },
 });
 
-const money = (n: number) => eur.format(n);
+export const money = (n: number) => eur.format(n);
 
-function Line({ label, value, style }: { label: string; value: string; style?: typeof s.totalRow }) {
+export function Line({ label, value, style }: { label: string; value: string; style?: typeof s.totalRow }) {
   return (
     <View style={style ?? s.totalRow}>
       <Text>{label}</Text>
@@ -63,7 +63,7 @@ function Line({ label, value, style }: { label: string; value: string; style?: t
   );
 }
 
-function ItemRow({ row }: { row: QuotePdfRow }) {
+export function ItemRow({ row }: { row: QuotePdfRow }) {
   if (row.kind === "text") {
     return (
       <View style={s.textRow} wrap={false}>
@@ -87,6 +87,58 @@ function ItemRow({ row }: { row: QuotePdfRow }) {
   );
 }
 
+type Seller = QuotePdfData["seller"];
+
+export const sellerDisplayName = (seller: Seller) => [seller.companyName, seller.legalForm].filter(Boolean).join(" ");
+export const sellerAddressLine = (seller: Seller) => `${seller.street}, ${seller.postalCode} ${seller.city}`;
+
+/** Logo (or name) left, seller contact block right. Shared by quote and invoice. */
+export function SellerHeader({ seller }: { seller: Seller }) {
+  const sellerName = sellerDisplayName(seller);
+  return (
+    <View style={s.header}>
+      <View>{seller.logoDataUrl ? <Image src={seller.logoDataUrl} style={s.logo} /> : <Text style={s.sellerName}>{sellerName}</Text>}</View>
+      <View style={s.sellerBlock}>
+        <Text style={s.sellerName}>{sellerName}</Text>
+        <Text>{seller.street}</Text>
+        <Text>{`${seller.postalCode} ${seller.city}`}</Text>
+        {seller.phone ? <Text>{`Telefon ${seller.phone}`}</Text> : null}
+        {seller.email ? <Text>{seller.email}</Text> : null}
+      </View>
+    </View>
+  );
+}
+
+/** Fixed page footer (company, register and tax ids, bank) plus page number. Shared by quote and invoice. */
+export function PageFooter({ seller }: { seller: Seller }) {
+  const sellerName = sellerDisplayName(seller);
+  const sellerAddress = sellerAddressLine(seller);
+  return (
+    <>
+    <View style={s.footer} fixed>
+      <View style={s.footerCol}>
+        <Text>{sellerName}</Text>
+        <Text>{sellerAddress}</Text>
+        {seller.website ? <Text>{seller.website}</Text> : null}
+      </View>
+      <View style={s.footerCol}>
+        {seller.registerCourt || seller.registerNumber ? (
+          <Text>{`Handelsregister ${[seller.registerCourt, seller.registerNumber].filter(Boolean).join(" ")}`}</Text>
+        ) : null}
+        {seller.taxNumber ? <Text>{`Steuernummer ${seller.taxNumber}`}</Text> : null}
+        {seller.vatId ? <Text>{`USt-IdNr. ${seller.vatId}`}</Text> : null}
+      </View>
+      <View style={s.footerCol}>
+        {seller.bankName ? <Text>{seller.bankName}</Text> : null}
+        {seller.iban ? <Text>{`IBAN ${seller.iban}`}</Text> : null}
+        {seller.bic ? <Text>{`BIC ${seller.bic}`}</Text> : null}
+      </View>
+    </View>
+    <Text style={s.pageNumber} fixed render={({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}`} />
+    </>
+  );
+}
+
 export function QuoteDocument({ data }: { data: QuotePdfData }) {
   const { seller, totals } = data;
   const sellerAddress = `${seller.street}, ${seller.postalCode} ${seller.city}`;
@@ -96,16 +148,7 @@ export function QuoteDocument({ data }: { data: QuotePdfData }) {
       <Page size="A4" style={s.page}>
         {data.watermark ? <Text style={s.watermark} fixed>{data.watermark}</Text> : null}
 
-        <View style={s.header}>
-          <View>{seller.logoDataUrl ? <Image src={seller.logoDataUrl} style={s.logo} /> : <Text style={s.sellerName}>{sellerName}</Text>}</View>
-          <View style={s.sellerBlock}>
-            <Text style={s.sellerName}>{sellerName}</Text>
-            <Text>{seller.street}</Text>
-            <Text>{`${seller.postalCode} ${seller.city}`}</Text>
-            {seller.phone ? <Text>{`Telefon ${seller.phone}`}</Text> : null}
-            {seller.email ? <Text>{seller.email}</Text> : null}
-          </View>
-        </View>
+        <SellerHeader seller={seller} />
 
         <View style={s.addressRow}>
           <View style={s.recipient}>
@@ -185,26 +228,7 @@ export function QuoteDocument({ data }: { data: QuotePdfData }) {
           </View>
         ) : null}
 
-        <View style={s.footer} fixed>
-          <View style={s.footerCol}>
-            <Text>{sellerName}</Text>
-            <Text>{sellerAddress}</Text>
-            {seller.website ? <Text>{seller.website}</Text> : null}
-          </View>
-          <View style={s.footerCol}>
-            {seller.registerCourt || seller.registerNumber ? (
-              <Text>{`Handelsregister ${[seller.registerCourt, seller.registerNumber].filter(Boolean).join(" ")}`}</Text>
-            ) : null}
-            {seller.taxNumber ? <Text>{`Steuernummer ${seller.taxNumber}`}</Text> : null}
-            {seller.vatId ? <Text>{`USt-IdNr. ${seller.vatId}`}</Text> : null}
-          </View>
-          <View style={s.footerCol}>
-            {seller.bankName ? <Text>{seller.bankName}</Text> : null}
-            {seller.iban ? <Text>{`IBAN ${seller.iban}`}</Text> : null}
-            {seller.bic ? <Text>{`BIC ${seller.bic}`}</Text> : null}
-          </View>
-        </View>
-        <Text style={s.pageNumber} fixed render={({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}`} />
+        <PageFooter seller={seller} />
       </Page>
     </Document>
   );

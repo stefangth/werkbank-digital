@@ -180,3 +180,9 @@ verify_jwt = false
 # the caller through requireOrgRole; the public ones by the SHA-256 of the link token.
 [functions.werkbank-quotes]
 verify_jwt = false
+
+# werkbank-invoices: invoice preview, issue (finalize_invoice through the caller's JWT, then the
+# Factur-X file) and download for the Werkbank module. No public actions, so the gateway
+# verifies the JWT; the function still checks the org role through requireOrgRole.
+[functions.werkbank-invoices]
+verify_jwt = true
