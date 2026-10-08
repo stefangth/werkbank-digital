@@ -1,5 +1,53 @@
 [
   {
+    "version": "1.21.0",
+    "date": "2026-10-08",
+    "dateLabel": "October 8, 2026",
+    "title": "Vom Auftrag zur Rechnung",
+    "changes": {
+      "new": [
+        {
+          "title": "Rechnungen",
+          "description": "Erstelle aus einem erledigten Auftrag mit einem Klick eine Rechnung oder schreibe eine ohne Auftrag. Im Entwurf legst du Leistungsdatum oder Leistungszeitraum und Zahlungsziel fest."
+        },
+        {
+          "title": "Abschließen",
+          "description": "Beim Abschließen bekommt die Rechnung die nächste lückenlose Nummer (RE-) und ist danach gesperrt. Du kannst nur abschließen oder gleich per E-Mail senden."
+        },
+        {
+          "title": "E-Rechnung",
+          "description": "Jede abgeschlossene Rechnung ist ein ZUGFeRD-PDF (EN 16931), das dein Kunde lesen und seine Buchhaltung automatisch verarbeiten kann."
+        },
+        {
+          "title": "Storno und Korrektur",
+          "description": "Storniere eine Rechnung mit einer Stornorechnung und lege daraus bei Bedarf eine korrigierte Rechnung an."
+        },
+        {
+          "title": "Abgerechnet",
+          "description": "Aufträge zeigen den neuen Status Abgerechnet, sobald ihre Rechnung abgeschlossen ist."
+        },
+        {
+          "title": "Rechnungsvorgaben",
+          "description": "Hinterlege in den Firmendaten Zahlungsziel, Einleitung und Schlusstext für neue Rechnungen."
+        },
+        {
+          "title": "Rechnungsnummern",
+          "description": "Lege Präfix und Start des Rechnungsnummernkreises in den Nummernkreisen fest."
+        }
+      ],
+      "improved": [
+        {
+          "title": "Kunden und Liegenschaften",
+          "description": "Auf der Detailseite siehst du jetzt auch die zugehörigen Rechnungen."
+        },
+        {
+          "title": "Startliste",
+          "description": "Ein neuer Schritt führt dich zur ersten Rechnung und zeigt, was noch fehlt."
+        }
+      ]
+    }
+  },
+  {
     "version": "1.20.0",
     "date": "2026-10-07",
     "dateLabel": "October 7, 2026",

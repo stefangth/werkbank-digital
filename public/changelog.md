@@ -2,6 +2,23 @@
 
 Was neu ist, neueste Einträge zuerst.
 
+## 1.21.0 — October 8, 2026
+
+*Vom Auftrag zur Rechnung*
+
+### New
+- **Rechnungen** — Erstelle aus einem erledigten Auftrag mit einem Klick eine Rechnung oder schreibe eine ohne Auftrag. Im Entwurf legst du Leistungsdatum oder Leistungszeitraum und Zahlungsziel fest.
+- **Abschließen** — Beim Abschließen bekommt die Rechnung die nächste lückenlose Nummer (RE-) und ist danach gesperrt. Du kannst nur abschließen oder gleich per E-Mail senden.
+- **E-Rechnung** — Jede abgeschlossene Rechnung ist ein ZUGFeRD-PDF (EN 16931), das dein Kunde lesen und seine Buchhaltung automatisch verarbeiten kann.
+- **Storno und Korrektur** — Storniere eine Rechnung mit einer Stornorechnung und lege daraus bei Bedarf eine korrigierte Rechnung an.
+- **Abgerechnet** — Aufträge zeigen den neuen Status Abgerechnet, sobald ihre Rechnung abgeschlossen ist.
+- **Rechnungsvorgaben** — Hinterlege in den Firmendaten Zahlungsziel, Einleitung und Schlusstext für neue Rechnungen.
+- **Rechnungsnummern** — Lege Präfix und Start des Rechnungsnummernkreises in den Nummernkreisen fest.
+
+### Improved
+- **Kunden und Liegenschaften** — Auf der Detailseite siehst du jetzt auch die zugehörigen Rechnungen.
+- **Startliste** — Ein neuer Schritt führt dich zur ersten Rechnung und zeigt, was noch fehlt.
+
 ## 1.20.0 — October 7, 2026
 
 *Vom Angebot zum Auftrag*
