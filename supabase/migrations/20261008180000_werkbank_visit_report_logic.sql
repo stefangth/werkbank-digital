@@ -291,6 +291,9 @@ as $$
 declare
   v_report werkbank.visit_reports := werkbank.authored_open_report(p_report);
 begin
+  if char_length(coalesce(p_body, '')) > 10000 then
+    raise exception 'body_too_long' using errcode = '22023';
+  end if;
   update werkbank.visit_reports
   set body = coalesce(p_body, ''), visit_date = coalesce(p_visit_date, visit_date)
   where id = v_report.id;

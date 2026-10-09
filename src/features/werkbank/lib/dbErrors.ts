@@ -39,6 +39,7 @@ export type DbErrorKey =
   | "errors.photoMissing"
   | "errors.photoLimit"
   | "errors.signerRequired"
+  | "errors.bodyTooLong"
   | "errors.orderHasReports"
   | "errors.generic";
 
@@ -100,6 +101,7 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (text.includes("photo_missing")) return "errors.photoMissing";
   if (text.includes("photo_limit")) return "errors.photoLimit";
   if (text.includes("signer_required")) return "errors.signerRequired";
+  if (text.includes("body_too_long")) return "errors.bodyTooLong";
   if (code === "23503") return text.includes("visit_reports_order_fk") ? "errors.orderHasReports" : "errors.inUse";
   if (code === "42501" || code === "PGRST301") return "errors.forbidden";
   return "errors.generic";
