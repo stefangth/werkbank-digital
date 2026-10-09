@@ -176,6 +176,7 @@ Locked reports render read-only with "Unterschrieben von X am …" or "Abgeschlo
 - Photos and the signature image are shown from signed URLs and are not cached offline; offline they show a placeholder "Foto nur online".
 - Offline banner from `navigator.onLine` and the `online`/`offline` events plus failed fetches: "Offline. Stand: 07:42" (time of the last successful list fetch). All write buttons are disabled offline with the hint "Braucht Netz".
 - On sign out the IndexedDB store is deleted. The service worker precache holds only the app shell, which contains no customer data, so it stays.
+- Residual cases (amended 2026-10-09 during review): a sign out from a tab that never opened the technician app, an expired session without a `SIGNED_OUT` event, or a store that does not answer within 2 s leaves the copy on the device until the technician app is opened next; that open first deletes other users' and expired entries. The copy is not encrypted at rest; it holds at most 7 days of the user's own assignments.
 
 ### R6. Office side
 
