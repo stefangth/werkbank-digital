@@ -154,7 +154,7 @@ describe("signVisitReport", () => {
     upload.mockResolvedValueOnce({ data: null, error: { message: "The resource already exists", statusCode: "409" } });
     remove.mockResolvedValueOnce({ data: [], error: null });
     const err = await signVisitReport(client, input).catch((e: unknown) => e);
-    expect(err).toEqual(expect.objectContaining({ message: "report_locked" }));
+    expect(err).toEqual(expect.objectContaining({ code: "55000", message: "report_locked" }));
     expect(isSignatureUploaded(err)).toBe(false);
     expect(upload).toHaveBeenCalledTimes(1);
     expect(fake.calls).toEqual([]);

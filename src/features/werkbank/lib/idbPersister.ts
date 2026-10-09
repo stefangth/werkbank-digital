@@ -62,10 +62,44 @@ export async function pruneAssignmentCache(userId: string, maxAgeMs: number, now
   });
 }
 
+/** How often a user's entry is written at most: the list refresh and the detail prefetches fire
+ *  many cache events in a row, each of which would otherwise write the whole client. */
+export const PERSIST_THROTTLE_MS = 1000;
+
+/** Open throttle windows by key: the newest client waiting for the window's end, if any. A sign
+ *  out cancels them all. */
+const pendingWrites = new Map<string, { timer: ReturnType<typeof setTimeout>; client: PersistedClient | null }>();
+
+const write = (key: string, client: PersistedClient) =>
+  run("readwrite", (s) => s.put(client, key)).then(() => undefined, () => undefined);
+
+function openWindow(key: string) {
+  const entry: { timer: ReturnType<typeof setTimeout>; client: PersistedClient | null } = {
+    client: null,
+    timer: setTimeout(() => {
+      pendingWrites.delete(key);
+      if (entry.client) {
+        void write(key, entry.client);
+        openWindow(key);
+      }
+    }, PERSIST_THROTTLE_MS),
+  };
+  pendingWrites.set(key, entry);
+}
+
 export function createIdbPersister(key: string): Persister {
   return {
-    // A failed write only costs the offline copy; it never breaks the screen.
-    persistClient: (client: PersistedClient) => run("readwrite", (s) => s.put(client, key)).then(() => undefined, () => undefined),
+    // Leading and trailing throttle: the first change is written at once, later ones in the same
+    // window only as the newest client at its end. A failed write only costs the offline copy.
+    persistClient: (client: PersistedClient) => {
+      const pending = pendingWrites.get(key);
+      if (pending) {
+        pending.client = client;
+        return Promise.resolve();
+      }
+      openWindow(key);
+      return write(key, client);
+    },
     restoreClient: () => run<PersistedClient>("readonly", (s) => s.get(key) as IDBRequest<PersistedClient>),
     removeClient: () => run("readwrite", (s) => s.delete(key)).then(() => undefined),
   };
@@ -89,6 +123,8 @@ export function trackPersistence(userId: string, stop: () => void): () => void {
 export async function clearAssignmentCache(): Promise<void> {
   for (const stop of subscriptions.values()) stop();
   subscriptions.clear();
+  for (const pending of pendingWrites.values()) clearTimeout(pending.timer);
+  pendingWrites.clear();
   // A store that never answers must not hold up a sign out; the next app open prunes it.
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
