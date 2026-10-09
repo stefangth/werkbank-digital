@@ -119,7 +119,11 @@ export async function loadVisitReportData(
         continue;
       }
       const img = await downloadImage(deps, VISITS_BUCKET, p.path);
-      if (!img) continue;
+      if (!img) {
+        // Left out of the PDF; the log answers "where did that photo go".
+        console.warn("werkbank-reports: photo not readable", { reportId: r.id, path: p.path });
+        continue;
+      }
       if (img.size > remaining) {
         exhausted = true;
         morePhotos = true;
