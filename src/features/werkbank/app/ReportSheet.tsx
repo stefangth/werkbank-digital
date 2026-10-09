@@ -172,7 +172,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       <div className="space-y-1.5">
         <Label htmlFor={BODY_ID}>{t("app.report.body")}</Label>
         <Textarea
-          id={BODY_ID} rows={6} className="text-input-touch" value={body} onChange={(e) => setBody(e.target.value)}
+          id={BODY_ID} rows={6} maxLength={10000} className="text-input-touch" value={body} onChange={(e) => setBody(e.target.value)}
           onBlur={() => { save().catch(() => undefined); }}
         />
       </div>

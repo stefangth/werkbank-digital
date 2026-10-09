@@ -33,7 +33,7 @@ describe("mapDbError", () => {
       ["not_assigned", "42501", "errors.notAssigned"], ["not_author", "42501", "errors.notAuthor"],
       ["report_locked", "55000", "errors.reportLocked"], ["report_not_empty", "55000", "errors.reportNotEmpty"],
       ["order_closed", "55000", "errors.orderClosed"], ["photo_missing", "22023", "errors.photoMissing"],
-      ["photo_limit", "22023", "errors.photoLimit"], ["signer_required", "22023", "errors.signerRequired"],
+      ["photo_limit", "22023", "errors.photoLimit"], ["signer_required", "22023", "errors.signerRequired"], ["body_too_long", "22023", "errors.bodyTooLong"],
     ];
     for (const [message, code, key] of cases) expect(mapDbError({ code, message })).toBe(key);
   });
