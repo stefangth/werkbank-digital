@@ -35,7 +35,7 @@ describe("idbPersister", () => {
     const stopB = vi.fn();
     trackPersistence("ua", stopA);
     trackPersistence("ub", stopB);
-    await clearAssignmentCache("ua");
+    await clearAssignmentCache();
     expect(stopA).toHaveBeenCalledOnce();
     expect(stopB).toHaveBeenCalledOnce();
     expect(await a.restoreClient()).toBeUndefined();
