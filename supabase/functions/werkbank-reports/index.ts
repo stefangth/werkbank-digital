@@ -32,10 +32,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** A trimmed uuid string, else null: anything else would fail in Postgres as a 500. */
 const str = (v: unknown): string | null => (typeof v === "string" && UUID.test(v.trim()) ? v.trim() : null);
 
-/** undefined when absent, null when malformed (not a non-empty array of uuids). */
+/** More report ids than any order has; keeps the reports query small. */
+const MAX_REPORT_IDS = 200;
+
+/** undefined when absent, null when malformed (not a non-empty array of at most 200 uuids). */
 function parseReportIds(v: unknown): string[] | undefined | null {
   if (v === undefined || v === null) return undefined;
-  if (!Array.isArray(v) || v.length === 0) return null;
+  if (!Array.isArray(v) || v.length === 0 || v.length > MAX_REPORT_IDS) return null;
   const ids = v.map(str);
   return ids.every((id): id is string => id !== null) ? [...new Set(ids)] : null;
 }
