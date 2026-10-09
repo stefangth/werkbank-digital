@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { DONE_WINDOW_DAYS, PHOTO_MAX_BYTES, UPCOMING_DAYS } from "./visitDefaults";
+import { DONE_WINDOW_DAYS, MAX_PHOTOS_PER_REPORT, PHOTO_MAX_BYTES, UPCOMING_DAYS } from "./visitDefaults";
 
 // werkbank.assignment_group spells the two windows as literals; this keeps them in step with
 // the values the app shows in its DefaultHints.
@@ -13,5 +13,8 @@ describe("assignment group windows", () => {
   });
   it("keep the photo size limit equal to the werkbank-visits bucket limit", () => {
     expect(migration).toContain(`'werkbank-visits', 'werkbank-visits', false, ${PHOTO_MAX_BYTES}`);
+  });
+  it("keep the photo limit per report equal to add_visit_photo's check", () => {
+    expect(migration).toContain(`ph.report_id = v_report.id) >= ${MAX_PHOTOS_PER_REPORT} then`);
   });
 });
