@@ -92,9 +92,16 @@ describe("uploadVisitPhoto", () => {
     await uploadVisitPhoto(client, input);
     expect(upload.mock.calls[0][0]).not.toBe(upload.mock.calls[1][0]);
   });
-  it("throws a registration error", async () => {
+  it("throws a registration error after removing the unregistered upload", async () => {
     const error = new Error("photo_limit");
-    const { client } = withStorage({ [R("add_visit_photo")]: { data: null, error } });
+    const { client, upload, remove } = withStorage({ [R("add_visit_photo")]: { data: null, error } });
+    await expect(uploadVisitPhoto(client, input)).rejects.toBe(error);
+    expect(remove).toHaveBeenCalledWith([upload.mock.calls[0][0]]);
+  });
+  it("keeps the registration error when the cleanup fails", async () => {
+    const error = new Error("photo_limit");
+    const { client, remove } = withStorage({ [R("add_visit_photo")]: { data: null, error } });
+    remove.mockRejectedValueOnce(new Error("offline"));
     await expect(uploadVisitPhoto(client, input)).rejects.toBe(error);
   });
 });
