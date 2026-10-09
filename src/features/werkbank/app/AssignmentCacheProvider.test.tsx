@@ -77,7 +77,7 @@ describe("AssignmentCacheProvider", () => {
     await waitFor(async () => {
       const stored = await createIdbPersister(assignmentCacheKey("f")).restoreClient();
       expect(stored?.clientState.queries.map((q) => q.queryKey)).toEqual([listKey("f")]);
-    });
+    }, { timeout: 3000 }); // writes are throttled (PERSIST_THROTTLE_MS)
   });
 
   it("persists the list and offline details only, never signed URLs", async () => {
@@ -94,6 +94,6 @@ describe("AssignmentCacheProvider", () => {
     await waitFor(async () => {
       const stored = await createIdbPersister(assignmentCacheKey("d")).restoreClient();
       expect(stored?.clientState.queries.map((q) => q.queryKey)).toEqual([listKey("d"), [...listKey("d"), "o1"]]);
-    });
+    }, { timeout: 3000 }); // writes are throttled (PERSIST_THROTTLE_MS)
   });
 });

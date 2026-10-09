@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, vi } from "vitest";
 import type { PersistedClient } from "@tanstack/react-query-persist-client";
-import { assignmentCacheKey, clearAssignmentCache, createIdbPersister, pruneAssignmentCache, trackPersistence } from "./idbPersister";
+import { PERSIST_THROTTLE_MS, assignmentCacheKey, clearAssignmentCache, createIdbPersister, pruneAssignmentCache, trackPersistence } from "./idbPersister";
 
 const client = (marker: string): PersistedClient => ({
   timestamp: 1, buster: "v1", clientState: { mutations: [], queries: [{ queryKey: [marker], queryHash: marker, state: {} } as never] },
@@ -52,5 +52,24 @@ describe("idbPersister", () => {
     expect(await other.restoreClient()).toBeUndefined();
     await pruneAssignmentCache("me", 500, 2_000);
     expect(await mine.restoreClient()).toBeUndefined();
+  });
+
+  it("throttles writes: the first at once, the newest at the end of the window", async () => {
+    const p = createIdbPersister(assignmentCacheKey("throttle"));
+    await p.persistClient(client("first"));
+    await p.persistClient(client("second"));
+    await p.persistClient(client("third"));
+    expect(await p.restoreClient()).toEqual(client("first"));
+    await new Promise((r) => setTimeout(r, PERSIST_THROTTLE_MS + 50));
+    expect(await p.restoreClient()).toEqual(client("third"));
+  });
+
+  it("clearAssignmentCache cancels a pending throttled write", async () => {
+    const p = createIdbPersister(assignmentCacheKey("cancel"));
+    await p.persistClient(client("first"));
+    await p.persistClient(client("late"));
+    await clearAssignmentCache();
+    await new Promise((r) => setTimeout(r, PERSIST_THROTTLE_MS + 50));
+    expect(await p.restoreClient()).toBeUndefined();
   });
 });
