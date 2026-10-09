@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { WerkbankDataError } from "../lib/dbErrors";
 
 type Client = SupabaseClient<Database>;
 
@@ -177,7 +178,7 @@ export async function signVisitReport(
       if (!isAlreadyExists(uploadError)) throw uploadError;
       const { data: removed, error: removeError } = await bucket.remove([path]);
       if (removeError) throw removeError;
-      if (!removed?.length) throw new Error("report_locked");
+      if (!removed?.length) throw new WerkbankDataError("55000", "report_locked");
       const { error: retryError } = await upload();
       if (retryError) throw retryError;
     }

@@ -149,7 +149,7 @@ describe("signVisitReport", () => {
   });
   it("fails as report_locked without signing when the stale signature cannot be removed", async () => {
     const { client, fake } = withStorage({}, { uploadError: { message: "The resource already exists", statusCode: "409" } });
-    await expect(signVisitReport(client, input)).rejects.toThrow("report_locked");
+    await expect(signVisitReport(client, input)).rejects.toMatchObject({ code: "55000", message: "report_locked" });
     expect(fake.calls).toEqual([]);
   });
   it("rethrows other upload errors without signing", async () => {
