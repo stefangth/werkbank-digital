@@ -28,7 +28,7 @@ export function MobileShell({ title, back, children }: { title?: string; back?: 
   // in-memory queries (kept for days for offline use) and any stored signature go before the
   // session does.
   const onSignOut = async () => {
-    await clearAssignmentCache().catch(() => undefined);
+    await clearAssignmentCache().catch((e) => console.warn("werkbank: offline copy not cleared on sign out, the next app open prunes it", e));
     qc.removeQueries({ queryKey: ["werkbank"] });
     clearUploadedSignatures();
     await signOut();

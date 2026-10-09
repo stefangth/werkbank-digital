@@ -23,7 +23,7 @@ export function watchSignOut(auth: AuthEvents, queryClient: QueryClient): void {
   watched.add(auth);
   auth.onAuthStateChange((event) => {
     if (event !== "SIGNED_OUT") return;
-    void clearAssignmentCache().catch(() => undefined);
+    void clearAssignmentCache().catch((e) => console.warn("werkbank: offline copy not cleared on sign out, the next app open prunes it", e));
     // Every technician query (assignments, signed URLs) is keyed under "werkbank"; a new one must be too.
     appQueryClient?.removeQueries({ queryKey: ["werkbank"] });
     clearUploadedSignatures();
