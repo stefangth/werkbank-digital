@@ -36,7 +36,7 @@ export function AssignmentCacheProvider({ children }: { children: ReactNode }) {
     qc.setQueryDefaults([...ASSIGNMENTS_KEY], { gcTime: OFFLINE_MAX_AGE_MS });
     // Other users' and expired entries go before this user's copy is restored (a shared phone, a
     // session that ended without a sign out).
-    void pruneAssignmentCache(userId, OFFLINE_MAX_AGE_MS).catch(() => undefined);
+    void pruneAssignmentCache(userId, OFFLINE_MAX_AGE_MS).catch((e) => console.warn("werkbank: offline copy not pruned", e));
     const [unsubscribe, restored] = persistQueryClient({
       queryClient: qc,
       persister: createIdbPersister(assignmentCacheKey(userId)),

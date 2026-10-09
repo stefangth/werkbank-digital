@@ -71,7 +71,7 @@ export const PERSIST_THROTTLE_MS = 1000;
 const pendingWrites = new Map<string, { timer: ReturnType<typeof setTimeout>; client: PersistedClient | null }>();
 
 const write = (key: string, client: PersistedClient) =>
-  run("readwrite", (s) => s.put(client, key)).then(() => undefined, () => undefined);
+  run("readwrite", (s) => s.put(client, key)).then(() => undefined, (e) => console.warn("werkbank: offline copy not saved", e));
 
 function openWindow(key: string) {
   const entry: { timer: ReturnType<typeof setTimeout>; client: PersistedClient | null } = {
