@@ -2,7 +2,7 @@
 -- bucket and its storage policies.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(138);
+SELECT plan(139);
 
 SET LOCAL timezone = 'UTC';
 -- Berlin today, as the RPCs compute it.
@@ -280,6 +280,8 @@ SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($$SELECT werkbank.update_visit_report(current_setting('wbt.r1')::uuid, 'Therme getauscht', current_setting('wbt.today')::date - 2)$$,
   'update_visit_report as the author');
+SELECT throws_ok($$SELECT werkbank.update_visit_report(current_setting('wbt.r1')::uuid, repeat('x', 10001), current_date)$$,
+  '22023', 'body_too_long', 'update_visit_report: a text over 10000 characters is refused');
 RESET ROLE;
 SELECT results_eq(
   $$SELECT body, visit_date FROM werkbank.visit_reports WHERE id = current_setting('wbt.r1')::uuid$$,

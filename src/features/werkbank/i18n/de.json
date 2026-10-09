@@ -398,6 +398,7 @@
     "photoMissing": "Der Upload ist nicht angekommen. Versuch es bitte noch einmal.",
     "photoLimit": "Ein Bericht kann höchstens 20 Fotos enthalten.",
     "signerRequired": "Gib den Namen der unterschreibenden Person ein.",
+    "bodyTooLong": "Ein Berichtstext darf höchstens 10.000 Zeichen lang sein.",
     "orderHasReports": "Der Auftrag hat Einsatzberichte und kann nicht gelöscht werden. Storniere ihn stattdessen."
   },
   "units": {
