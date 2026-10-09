@@ -8,7 +8,7 @@ const { calls } = vi.hoisted(() => ({ calls: [] as string[] }));
 const signOut = vi.fn(async () => { calls.push("signOut"); });
 vi.mock("../lib/idbPersister", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/idbPersister")>()),
-  clearAssignmentCache: vi.fn(async (userId: string) => { await Promise.resolve(); calls.push(`clear:${userId}`); }),
+  clearAssignmentCache: vi.fn(async () => { await Promise.resolve(); calls.push("clear"); }),
 }));
 vi.mock("./signatureStore", () => ({ clearUploadedSignatures: vi.fn(() => { calls.push("signatures"); }) }));
 vi.mock("./registerServiceWorker", () => ({ registerServiceWorker: vi.fn() }));
@@ -44,6 +44,6 @@ describe("MobileShell", () => {
     renderWithProviders(<MemoryRouter><MobileShell title="Einsatz"><p>body</p></MobileShell></MemoryRouter>, { queryClient });
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(signOut).toHaveBeenCalled());
-    expect(calls).toEqual(["clear:u1", "signatures", "signOut:0"]);
+    expect(calls).toEqual(["clear", "signatures", "signOut:0"]);
   });
 });

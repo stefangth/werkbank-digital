@@ -58,8 +58,8 @@ export function trackPersistence(userId: string, stop: () => void): () => void {
 
 /** Sign out (spec R5): stops every running persist subscription first (so no late write brings
  *  an entry back), then empties the whole store, the signing-out user's entry and any left by
- *  users who never signed out on this phone. The user id is kept for callers; the clear covers all. */
-export async function clearAssignmentCache(_userId?: string): Promise<void> {
+ *  users who never signed out on this phone. */
+export async function clearAssignmentCache(): Promise<void> {
   for (const stop of subscriptions.values()) stop();
   subscriptions.clear();
   await run("readwrite", (s) => s.clear());
