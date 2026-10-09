@@ -124,7 +124,12 @@ export async function uploadVisitPhoto(
   const { data, error } = await client.schema("werkbank").rpc("add_visit_photo", {
     p_report: input.reportId, p_path: path, p_caption: input.caption,
   });
-  if (error) throw error;
+  if (error) {
+    // The object is not registered, so its author may still remove it; leaving it would use up
+    // the report folder's upload room. Best effort: the registration error is what counts.
+    await client.storage.from(VISITS_BUCKET).remove([path]).catch(() => undefined);
+    throw error;
+  }
   return data as string;
 }
 
