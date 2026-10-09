@@ -129,12 +129,21 @@ describe("signVisitReport", () => {
       table: R("sign_visit_report"), args: [{ p_report: "r1", p_signer_name: "Frau Meier", p_signature_path: "o1/x/r1/signature.png" }],
     }));
   });
-  it("continues when the signature already exists", async () => {
+  it("replaces a stale signature with the fresh drawing, then signs", async () => {
     for (const uploadError of [{ message: "The resource already exists", statusCode: "409" }, { message: "Duplicate", statusCode: 409 }]) {
-      const { client, fake } = withStorage({}, { uploadError });
+      const { client, fake, upload, remove } = withStorage();
+      upload.mockResolvedValueOnce({ data: null, error: uploadError });
+      remove.mockResolvedValueOnce({ data: [{ name: "signature.png" }], error: null });
       await signVisitReport(client, input);
+      expect(remove).toHaveBeenCalledWith(["o1/x/r1/signature.png"]);
+      expect(upload).toHaveBeenCalledTimes(2);
       expect(fake.calls).toHaveLength(1);
     }
+  });
+  it("fails as report_locked without signing when the stale signature cannot be removed", async () => {
+    const { client, fake } = withStorage({}, { uploadError: { message: "The resource already exists", statusCode: "409" } });
+    await expect(signVisitReport(client, input)).rejects.toThrow("report_locked");
+    expect(fake.calls).toEqual([]);
   });
   it("rethrows other upload errors without signing", async () => {
     const error = { message: "Payload too large", statusCode: "413" };
