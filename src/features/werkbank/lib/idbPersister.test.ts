@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, vi } from "vitest";
 import type { PersistedClient } from "@tanstack/react-query-persist-client";
-import { assignmentCacheKey, clearAssignmentCache, createIdbPersister, trackPersistence } from "./idbPersister";
+import { assignmentCacheKey, clearAssignmentCache, createIdbPersister, pruneAssignmentCache, trackPersistence } from "./idbPersister";
 
 const client = (marker: string): PersistedClient => ({
   timestamp: 1, buster: "v1", clientState: { mutations: [], queries: [{ queryKey: [marker], queryHash: marker, state: {} } as never] },
@@ -40,5 +40,17 @@ describe("idbPersister", () => {
     expect(stopB).toHaveBeenCalledOnce();
     expect(await a.restoreClient()).toBeUndefined();
     expect(await b.restoreClient()).toBeUndefined();
+  });
+
+  it("pruneAssignmentCache keeps only the current user's fresh entry", async () => {
+    const mine = createIdbPersister(assignmentCacheKey("me"));
+    const other = createIdbPersister(assignmentCacheKey("someone-else"));
+    await mine.persistClient({ ...client("mine"), timestamp: 1_000 });
+    await other.persistClient({ ...client("other"), timestamp: 1_000 });
+    await pruneAssignmentCache("me", 500, 1_200);
+    expect(await mine.restoreClient()).toEqual({ ...client("mine"), timestamp: 1_000 });
+    expect(await other.restoreClient()).toBeUndefined();
+    await pruneAssignmentCache("me", 500, 2_000);
+    expect(await mine.restoreClient()).toBeUndefined();
   });
 });
