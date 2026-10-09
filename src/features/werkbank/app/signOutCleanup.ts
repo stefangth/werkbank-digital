@@ -14,7 +14,9 @@ let appQueryClient: QueryClient | null = null;
 /** Spec R5 for every way out, not only the app's own sign out button (MobileShell): a sign out
  *  from an office page, another tab or an expired session also drops the offline copy, the
  *  werkbank queries held for offline use and any stored signature, so the next user of a shared
- *  phone finds nothing. Called by AssignmentCacheProvider; repeated calls only swap the client. */
+ *  phone finds nothing. Called by AssignmentCacheProvider; repeated calls only swap the client.
+ *  A tab that never opened the technician app does not listen; whatever the store holds then
+ *  stays until the next open, which prunes other users' and expired entries first. */
 export function watchSignOut(auth: AuthEvents, queryClient: QueryClient): void {
   appQueryClient = queryClient;
   if (watched.has(auth)) return;
