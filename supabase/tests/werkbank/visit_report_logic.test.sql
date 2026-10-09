@@ -2,7 +2,7 @@
 -- bucket and its storage policies.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(134);
+SELECT plan(138);
 
 SET LOCAL timezone = 'UTC';
 -- Berlin today, as the RPCs compute it.
@@ -108,7 +108,8 @@ FROM unnest(ARRAY[
   'werkbank.sign_visit_report(uuid, text, text)',
   'werkbank.can_read_visit_object(text)',
   'werkbank.can_write_visit_object(text)',
-  'werkbank.can_delete_visit_object(text)']) f;
+  'werkbank.can_delete_visit_object(text)',
+  'werkbank.visit_folder_has_room(text)']) f;
 SELECT ok(NOT has_function_privilege('anon', 'werkbank.assigned_artist(uuid)', 'EXECUTE')
   AND NOT has_function_privilege('authenticated', 'werkbank.assigned_artist(uuid)', 'EXECUTE'),
   'werkbank.assigned_artist is private');
@@ -116,7 +117,7 @@ SELECT ok(
   (SELECT bool_and(p.prosecdef) FROM pg_proc p WHERE p.pronamespace = 'werkbank'::regnamespace AND p.proname IN (
     'my_technician_orgs','my_assignments','my_assignment','start_assignment','complete_assignment','create_visit_report',
     'update_visit_report','add_visit_photo','remove_visit_photo','lock_visit_report','sign_visit_report',
-    'can_read_visit_object','can_write_visit_object','can_delete_visit_object','assigned_artist')),
+    'can_read_visit_object','can_write_visit_object','can_delete_visit_object','visit_folder_has_room','assigned_artist')),
   'every technician RPC and helper is security definer');
 
 -- my_technician_orgs -------------------------------------------------------------------------
@@ -418,6 +419,9 @@ SELECT is((SELECT count(*)::int FROM u), 0,
 SELECT lives_ok($$SELECT set_config('wbt.p4', werkbank.add_visit_photo(current_setting('wbt.r4')::uuid,
   'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg')::text, true)$$,
   'add_visit_photo registers q1 on r4');
+SELECT is(werkbank.add_visit_photo(current_setting('wbt.r4')::uuid,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg'),
+  current_setting('wbt.p4')::uuid, 'add_visit_photo: registering the same path again returns the existing row');
 SELECT set_config('storage.allow_delete_query', 'true', true);
 WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits' RETURNING name)
 SELECT is((SELECT array_agg(name) FROM d),
@@ -468,6 +472,23 @@ SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkba
   'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/notes.txt')$$,
   '42501', NULL, 'storage: only <uuid>.jpg and signature.png may be uploaded');
 RESET ROLE;
+SAVEPOINT full_folder;
+INSERT INTO storage.objects (bucket_id, name)
+SELECT 'werkbank-visits', 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/' || gen_random_uuid() || '.jpg'
+FROM generate_series(1, 30);
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000005.jpg')$$,
+  '42501', NULL, 'storage: a full report folder takes no more uploads');
+SELECT set_config('storage.allow_delete_query', 'true', true);
+WITH d AS (DELETE FROM storage.objects WHERE id = (SELECT id FROM storage.objects
+  WHERE bucket_id = 'werkbank-visits' AND name LIKE '%/' || current_setting('wbt.r4') || '/%'
+    AND name NOT IN (SELECT path FROM werkbank.visit_report_photos) LIMIT 1) RETURNING 1)
+SELECT is((SELECT count(*)::int FROM d), 1, 'storage: the author can still delete an orphan in a full folder');
+SELECT set_config('storage.allow_delete_query', 'false', true);
+RESET ROLE;
+ROLLBACK TO SAVEPOINT full_folder;
 SAVEPOINT closed_order;
 UPDATE werkbank.orders SET status = 'cancelled' WHERE id = '33333333-0000-4000-a000-0000000006c9';
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
