@@ -21,7 +21,7 @@ describe("useVisitReports", () => {
   });
   it("the office note refreshes the visit reports", async () => {
     Object.assign(client, createFakeSupabase());
-    const { result, queryClient } = renderHookWithProviders(() => useUpdateOfficeNote("x"), { authOverrides });
+    const { result, queryClient } = renderHookWithProviders(() => useUpdateOfficeNote(), { authOverrides });
     const spy = vi.spyOn(queryClient, "invalidateQueries");
     await act(() => result.current.mutateAsync({ reportId: "r1", note: "n" }));
     expect(spy).toHaveBeenCalledWith({ queryKey: ["werkbank", "visit-reports"] });

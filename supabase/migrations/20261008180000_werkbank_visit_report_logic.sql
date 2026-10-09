@@ -80,6 +80,12 @@ begin
   if v_report.locked_at is not null then
     raise exception 'report_locked' using errcode = '55000';
   end if;
+  -- A cancelled or invoiced order's documentation stays as it was when the order closed.
+  perform 1 from werkbank.orders o
+    where o.id = v_report.order_id and o.status in ('cancelled', 'invoiced') for share;
+  if found then
+    raise exception 'order_closed' using errcode = '55000';
+  end if;
   return v_report;
 end;
 $$;
@@ -434,7 +440,8 @@ revoke all on function werkbank.can_read_visit_object(text) from public, anon;
 grant execute on function werkbank.can_read_visit_object(text) to authenticated;
 
 -- Write (insert): a technician assigned to the order whose report in the path belongs to
--- that order, is unlocked and is authored by them.
+-- that order, is unlocked and is authored by them, while the order is neither cancelled nor
+-- invoiced. Only the two names the app writes are allowed: <uuid>.jpg and signature.png.
 create function werkbank.can_write_visit_object(p_name text)
 returns boolean
 language plpgsql
@@ -448,16 +455,19 @@ begin
   if auth.uid() is null or cardinality(v_f) <> 3
      or not (v_f[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
        and v_f[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-       and v_f[3] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') then
+       and v_f[3] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+     or not (p_name ~* '/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg|signature\.png)$') then
     return false;
   end if;
   return exists (
     select 1
     from werkbank.visit_reports r
+    join werkbank.orders o on o.org_id = r.org_id and o.id = r.order_id
     join werkbank.order_technicians ot on ot.org_id = r.org_id and ot.order_id = r.order_id and ot.artist_id = r.artist_id
     join public.artists a on a.id = r.artist_id and a.org_id = r.org_id
     where r.org_id = v_f[1]::uuid and r.order_id = v_f[2]::uuid and r.id = v_f[3]::uuid
-      and r.locked_at is null and a.user_id = auth.uid() and public.is_org_member(auth.uid(), r.org_id));
+      and r.locked_at is null and o.status not in ('cancelled', 'invoiced')
+      and a.user_id = auth.uid() and public.is_org_member(auth.uid(), r.org_id));
 end;
 $$;
 revoke all on function werkbank.can_write_visit_object(text) from public, anon;

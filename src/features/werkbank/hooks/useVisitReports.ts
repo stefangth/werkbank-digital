@@ -16,7 +16,7 @@ export function useVisitReports(orderId: string | undefined) {
   });
 }
 
-export function useUpdateOfficeNote(_orderId: string) {
+export function useUpdateOfficeNote() {
   const qc = useQueryClient();
   const { t } = useTranslation("werkbank");
   return useMutation({
