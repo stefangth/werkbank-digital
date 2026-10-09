@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AssignmentRow } from "../data/technicianApp";
 import { ASSIGNMENTS_KEY } from "../hooks/useAssignments";
 import { offlineOrderIds, shouldPersistQuery } from "../lib/assignments";
-import { assignmentCacheKey, createIdbPersister, trackPersistence } from "../lib/idbPersister";
+import { assignmentCacheKey, createIdbPersister, pruneAssignmentCache, trackPersistence } from "../lib/idbPersister";
 import { OFFLINE_MAX_AGE_MS } from "../lib/visitDefaults";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { watchSignOut } from "./signOutCleanup";
@@ -31,6 +31,9 @@ export function AssignmentCacheProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     // Restored queries have no observer yet; they must outlive the default gc time to be persisted again.
     qc.setQueryDefaults([...ASSIGNMENTS_KEY], { gcTime: OFFLINE_MAX_AGE_MS });
+    // Other users' and expired entries go before this user's copy is restored (a shared phone, a
+    // session that ended without a sign out).
+    void pruneAssignmentCache(userId, OFFLINE_MAX_AGE_MS).catch(() => undefined);
     const [unsubscribe, restored] = persistQueryClient({
       queryClient: qc,
       persister: createIdbPersister(assignmentCacheKey(userId)),

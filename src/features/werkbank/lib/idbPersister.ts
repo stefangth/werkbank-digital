@@ -35,6 +35,29 @@ async function run<T>(mode: IDBTransactionMode, op: (store: IDBObjectStore) => I
 
 export const assignmentCacheKey = (userId: string) => `assignments:${userId}`;
 
+/** On opening the app for `userId`: drops the entries of every other user (a shared phone where
+ *  someone never signed out, or whose session simply expired) and any entry older than `maxAgeMs`.
+ *  A failure only leaves the old entries for the next try. */
+export async function pruneAssignmentCache(userId: string, maxAgeMs: number, now = Date.now()): Promise<void> {
+  if (typeof indexedDB === "undefined") return;
+  const keep = assignmentCacheKey(userId);
+  const conn = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = conn.transaction(STORE, "readwrite");
+    const req = tx.objectStore(STORE).openCursor();
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (!cursor) return;
+      const entry = cursor.value as Partial<PersistedClient> | undefined;
+      const stale = typeof entry?.timestamp !== "number" || now - entry.timestamp > maxAgeMs;
+      if (cursor.key !== keep || stale) cursor.delete();
+      cursor.continue();
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 export function createIdbPersister(key: string): Persister {
   return {
     // A failed write only costs the offline copy; it never breaks the screen.
