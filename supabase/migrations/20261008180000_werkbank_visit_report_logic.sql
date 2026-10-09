@@ -69,11 +69,14 @@ declare
   v_report werkbank.visit_reports;
   v_artist public.artists;
 begin
-  select * into v_report from werkbank.visit_reports r where r.id = p_report for update;
+  -- Check the assignment before taking the row lock, so a caller who is not on the order cannot
+  -- hold the author's report even briefly; then lock and re-read.
+  select * into v_report from werkbank.visit_reports r where r.id = p_report;
   if not found then
     raise exception 'not_assigned' using errcode = '42501';
   end if;
   v_artist := werkbank.assigned_artist(v_report.order_id);
+  select * into v_report from werkbank.visit_reports r where r.id = p_report for update;
   if v_report.artist_id is distinct from v_artist.id then
     raise exception 'not_author' using errcode = '42501';
   end if;
@@ -316,6 +319,11 @@ begin
      or not exists (select 1 from storage.objects s where s.bucket_id = 'werkbank-visits' and s.name = p_path) then
     raise exception 'photo_missing' using errcode = '22023';
   end if;
+  -- A retry after a lost answer registers the same path again: return the existing row.
+  select ph.id into v_id from werkbank.visit_report_photos ph where ph.report_id = v_report.id and ph.path = p_path;
+  if found then
+    return v_id;
+  end if;
   if (select count(*) from werkbank.visit_report_photos ph where ph.report_id = v_report.id) >= 20 then
     raise exception 'photo_limit' using errcode = '22023';
   end if;
@@ -473,6 +481,22 @@ $$;
 revoke all on function werkbank.can_write_visit_object(text) from public, anon;
 grant execute on function werkbank.can_write_visit_object(text) to authenticated;
 
+-- Upload room in a report folder (insert only, never delete, so an author can always clean up):
+-- 20 photos plus the signature plus a few failed registrations. Bounds unregistered uploads.
+create function werkbank.visit_folder_has_room(p_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select (select count(*) from storage.objects s
+          where s.bucket_id = 'werkbank-visits'
+            and s.name like array_to_string(storage.foldername(p_name), '/') || '/%') < 30;
+$$;
+revoke all on function werkbank.visit_folder_has_room(text) from public, anon;
+grant execute on function werkbank.visit_folder_has_room(text) to authenticated;
+
 -- Delete: as write, and the object is neither a registered photo nor a report's signature, so a
 -- report (and its PDF) never points at a missing object. remove_visit_photo deletes the row first
 -- and returns the path, so the client's delete afterwards passes.
@@ -496,7 +520,8 @@ create policy "Werkbank visit objects read"
   using (case when bucket_id = 'werkbank-visits' then werkbank.can_read_visit_object(name) else false end);
 create policy "Werkbank technicians insert visit objects"
   on storage.objects for insert to authenticated
-  with check (case when bucket_id = 'werkbank-visits' then werkbank.can_write_visit_object(name) else false end);
+  with check (case when bucket_id = 'werkbank-visits'
+    then werkbank.can_write_visit_object(name) and werkbank.visit_folder_has_room(name) else false end);
 create policy "Werkbank technicians delete visit objects"
   on storage.objects for delete to authenticated
   using (case when bucket_id = 'werkbank-visits' then werkbank.can_delete_visit_object(name) else false end);
