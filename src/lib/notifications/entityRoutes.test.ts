@@ -58,6 +58,11 @@ describe("notificationTarget", () => {
     }
   });
 
+  it("routes a werkbank_order notification to the order page, or null without an id", () => {
+    expect(notificationTarget({ related_entity_type: "werkbank_order", related_entity_id: "o-1" }, admin)).toBe("/orders/o-1");
+    expect(notificationTarget({ related_entity_type: "werkbank_order", related_entity_id: null }, admin)).toBeNull();
+  });
+
   it("returns null for a werkbank_quote notification with no id", () => {
     expect(notificationTarget({ related_entity_type: "werkbank_quote", related_entity_id: null }, admin)).toBeNull();
   });

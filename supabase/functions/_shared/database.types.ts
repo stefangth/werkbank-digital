@@ -3884,6 +3884,7 @@ export type Database = {
         Row: {
           cancelled_at: string | null
           completed_at: string | null
+          completed_by: string | null
           contact_id: string | null
           created_at: string
           customer_id: string
@@ -3904,6 +3905,7 @@ export type Database = {
         Insert: {
           cancelled_at?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           contact_id?: string | null
           created_at?: string
           customer_id: string
@@ -3924,6 +3926,7 @@ export type Database = {
         Update: {
           cancelled_at?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           contact_id?: string | null
           created_at?: string
           customer_id?: string
@@ -4248,6 +4251,110 @@ export type Database = {
           },
         ]
       }
+      visit_report_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          org_id: string
+          path: string
+          position: number
+          report_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          org_id: string
+          path: string
+          position: number
+          report_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          path?: string
+          position?: number
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_report_photos_report_fk"
+            columns: ["org_id", "report_id"]
+            isOneToOne: false
+            referencedRelation: "visit_reports"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      visit_reports: {
+        Row: {
+          artist_id: string | null
+          body: string
+          created_at: string
+          id: string
+          locked_at: string | null
+          office_note: string | null
+          order_id: string
+          org_id: string
+          signature_path: string | null
+          signed_at: string | null
+          signer_name: string | null
+          technician_name: string
+          updated_at: string
+          visit_date: string
+        }
+        Insert: {
+          artist_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          locked_at?: string | null
+          office_note?: string | null
+          order_id: string
+          org_id: string
+          signature_path?: string | null
+          signed_at?: string | null
+          signer_name?: string | null
+          technician_name: string
+          updated_at?: string
+          visit_date?: string
+        }
+        Update: {
+          artist_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          locked_at?: string | null
+          office_note?: string | null
+          order_id?: string
+          org_id?: string
+          signature_path?: string | null
+          signed_at?: string | null
+          signer_name?: string | null
+          technician_name?: string
+          updated_at?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_reports_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "order_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "visit_reports_order_fk"
+            columns: ["org_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
     }
     Views: {
       document_totals: {
@@ -4457,6 +4564,8 @@ export type Database = {
         Row: {
           cancelled_at: string | null
           completed_at: string | null
+          completed_by: string | null
+          completed_by_technician: boolean | null
           contact_id: string | null
           created_at: string | null
           customer_id: string | null
@@ -4600,6 +4709,54 @@ export type Database = {
       }
     }
     Functions: {
+      add_visit_photo: {
+        Args: { p_caption?: string; p_path: string; p_report: string }
+        Returns: string
+      }
+      assigned_artist: {
+        Args: { p_order: string }
+        Returns: Database["public"]["Tables"]["artists"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "artists"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      assignment_group: {
+        Args: {
+          p_completed_at: string
+          p_scheduled: string
+          p_status: string
+          p_today: string
+        }
+        Returns: string
+      }
+      authored_open_report: {
+        Args: { p_report: string }
+        Returns: {
+          artist_id: string | null
+          body: string
+          created_at: string
+          id: string
+          locked_at: string | null
+          office_note: string | null
+          order_id: string
+          org_id: string
+          signature_path: string | null
+          signed_at: string | null
+          signer_name: string | null
+          technician_name: string
+          updated_at: string
+          visit_date: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "visit_reports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       authorize_invoice: {
         Args: { p_invoice: string; p_other?: string }
         Returns: {
@@ -4641,8 +4798,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      can_delete_visit_object: { Args: { p_name: string }; Returns: boolean }
+      can_read_visit_object: { Args: { p_name: string }; Returns: boolean }
+      can_write_visit_object: { Args: { p_name: string }; Returns: boolean }
       cancel_invoice: { Args: { p_invoice: string }; Returns: string }
       clear_dunning_hold: { Args: { p_invoice: string }; Returns: undefined }
+      complete_assignment: { Args: { p_order: string }; Returns: undefined }
       copy_invoice: { Args: { p_invoice: string }; Returns: string }
       copy_quote: {
         Args: { p_customer?: string; p_property?: string; p_quote: string }
@@ -4681,6 +4842,10 @@ export type Database = {
       }
       create_invoice_from_order: { Args: { p_order: string }; Returns: string }
       create_order_from_quote: { Args: { p_quote: string }; Returns: string }
+      create_visit_report: {
+        Args: { p_order: string; p_visit_date?: string }
+        Returns: string
+      }
       finalize_invoice: {
         Args: { p_invoice: string }
         Returns: {
@@ -4732,6 +4897,25 @@ export type Database = {
         Returns: Json
       }
       invoice_open_amount: { Args: { p_invoice: string }; Returns: number }
+      lock_visit_report: { Args: { p_report: string }; Returns: undefined }
+      my_assignment: { Args: { p_order: string }; Returns: Json }
+      my_assignments: {
+        Args: { p_org: string; p_today?: string }
+        Returns: {
+          city: string
+          customer_name: string
+          group_key: string
+          id: string
+          order_no: string
+          postal_code: string
+          scheduled_date: string
+          scheduled_time: string
+          status: string
+          street: string
+          subject: string
+        }[]
+      }
+      my_technician_orgs: { Args: never; Returns: string[] }
       next_number: { Args: { p_key: string; p_org: string }; Returns: string }
       record_invoice_entry: {
         Args: {
@@ -4760,6 +4944,7 @@ export type Database = {
         }
         Returns: string
       }
+      remove_visit_photo: { Args: { p_photo: string }; Returns: string }
       reverse_invoice_entry: {
         Args: { p_entry: string; p_reason: string }
         Returns: undefined
@@ -4769,9 +4954,22 @@ export type Database = {
         Args: { p_invoice: string; p_reason: string; p_until?: string }
         Returns: undefined
       }
+      sign_visit_report: {
+        Args: {
+          p_report: string
+          p_signature_path: string
+          p_signer_name: string
+        }
+        Returns: undefined
+      }
+      start_assignment: { Args: { p_order: string }; Returns: undefined }
       transfer_invoice_entry: {
         Args: { p_entry: string; p_reason: string; p_target_invoice: string }
         Returns: string
+      }
+      update_visit_report: {
+        Args: { p_body: string; p_report: string; p_visit_date: string }
+        Returns: undefined
       }
     }
     Enums: {

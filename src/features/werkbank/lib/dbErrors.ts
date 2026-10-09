@@ -31,6 +31,16 @@ export type DbErrorKey =
   | "errors.dunningNotAllowed"
   | "errors.invalidEntryKind"
   | "errors.invalidAmount"
+  | "errors.notAssigned"
+  | "errors.notAuthor"
+  | "errors.reportLocked"
+  | "errors.reportNotEmpty"
+  | "errors.orderClosed"
+  | "errors.photoMissing"
+  | "errors.photoLimit"
+  | "errors.signerRequired"
+  | "errors.bodyTooLong"
+  | "errors.orderHasReports"
   | "errors.generic";
 
 /** A client-side failure that stands in for a database error: an Error (stack, instanceof) that
@@ -83,7 +93,16 @@ export function mapDbError(error: unknown): DbErrorKey {
   if (/quote_service_only|order_service_only|provenance_service_only|item_reparent/.test(text)) {
     return "errors.notAllowedHere";
   }
-  if (code === "23503") return "errors.inUse";
+  if (text.includes("not_assigned")) return "errors.notAssigned";
+  if (text.includes("not_author")) return "errors.notAuthor";
+  if (text.includes("report_locked")) return "errors.reportLocked";
+  if (text.includes("report_not_empty")) return "errors.reportNotEmpty";
+  if (text.includes("order_closed")) return "errors.orderClosed";
+  if (text.includes("photo_missing")) return "errors.photoMissing";
+  if (text.includes("photo_limit")) return "errors.photoLimit";
+  if (text.includes("signer_required")) return "errors.signerRequired";
+  if (text.includes("body_too_long")) return "errors.bodyTooLong";
+  if (code === "23503") return text.includes("visit_reports_order_fk") ? "errors.orderHasReports" : "errors.inUse";
   if (code === "42501" || code === "PGRST301") return "errors.forbidden";
   return "errors.generic";
 }

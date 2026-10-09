@@ -28,6 +28,21 @@ describe("mapDbError", () => {
     expect(mapDbError({ code: "23503", message: "fk" })).toBe("errors.inUse");
   });
 
+  it("maps the technician app errors by message, before the errcode fallbacks", () => {
+    const cases: [string, string, string][] = [
+      ["not_assigned", "42501", "errors.notAssigned"], ["not_author", "42501", "errors.notAuthor"],
+      ["report_locked", "55000", "errors.reportLocked"], ["report_not_empty", "55000", "errors.reportNotEmpty"],
+      ["order_closed", "55000", "errors.orderClosed"], ["photo_missing", "22023", "errors.photoMissing"],
+      ["photo_limit", "22023", "errors.photoLimit"], ["signer_required", "22023", "errors.signerRequired"], ["body_too_long", "22023", "errors.bodyTooLong"],
+    ];
+    for (const [message, code, key] of cases) expect(mapDbError({ code, message })).toBe(key);
+  });
+
+  it("maps a foreign key on visit_reports_order_fk to orderHasReports and others to inUse", () => {
+    expect(mapDbError({ code: "23503", message: 'violates foreign key constraint "visit_reports_order_fk" on table "visit_reports"' })).toBe("errors.orderHasReports");
+    expect(mapDbError({ code: "23503", message: 'violates foreign key constraint "other_fk"' })).toBe("errors.inUse");
+  });
+
   it("maps permission errors to forbidden", () => {
     expect(mapDbError({ code: "42501", message: "denied" })).toBe("errors.forbidden");
     expect(mapDbError({ code: "PGRST301", message: "jwt" })).toBe("errors.forbidden");
