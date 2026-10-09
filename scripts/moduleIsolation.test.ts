@@ -76,6 +76,8 @@ export const MODULES: readonly ModuleGuard[] = [
       "src/data/systemMap.ts",
       // Copy lint: names the werkbank publicQuote subtree as the one Sie-form exemption.
       "src/i18n/copyLint.test.ts",
+      // PWA manifest name of the fork.
+      "vite.config.ts",
     ],
   },
 ];

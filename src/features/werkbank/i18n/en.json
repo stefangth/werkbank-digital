@@ -23,7 +23,8 @@
     "quotes": "Quotes",
     "orders": "Orders",
     "invoices": "Invoices",
-    "openItems": "Open items"
+    "openItems": "Open items",
+    "myAssignments": "My assignments"
   },
   "dashboard": {
     "title": "Welcome to Werkbank Digital",
@@ -46,7 +47,8 @@
       "overdue": "Overdue",
       "overdueNote_one": "of which {{count}} due a notice",
       "overdueNote_other": "of which {{count}} due a notice"
-    }
+    },
+    "myAssignments": "My assignments"
   },
   "technicians": {
     "title": "Technicians",
@@ -1385,6 +1387,107 @@
       "sent": "Sent",
       "sentTo": "to {{recipients}}",
       "cancelledBy": "Cancelled by"
+    }
+  },
+  "app": {
+    "notTechnician": "You are not set up as a technician at this company.",
+    "signOut": "Sign out",
+    "assignmentsTitle": "My assignments",
+    "assignmentTitle": "Assignment",
+    "back": "Back",
+    "unnamedUser": "Technician",
+    "notTechnicianReason": "Ask the office to add you under Technicians.",
+    "notTechnicianTitle": "Not set up as a technician",
+    "emptyTitle": "No assignments yet",
+    "emptyBody": "As soon as the office assigns you to an order, it shows up here.",
+    "emptyReason": "The office assigns orders to you.",
+    "loadFailed": "The assignments could not be loaded.",
+    "groups": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Next 7 days",
+      "unscheduled": "No date",
+      "done": "Done"
+    },
+    "groupHints": {
+      "upcoming": "Default 7 days. Orders dated later appear once they are within a week. Not changeable here.",
+      "done": "Default 14 days. Finished orders stay in the list for two weeks. Not changeable here."
+    },
+    "detail": {
+      "route": "Open route",
+      "address": "Address",
+      "contact": "Contact",
+      "call": "Call",
+      "mail": "Email",
+      "locationNote": "Where to find it",
+      "notes": "Notes from the office",
+      "items": "Work",
+      "coTechnicians": "Also on this order",
+      "reports": "Visit reports",
+      "noReports": "No reports yet.",
+      "start": "Start work",
+      "complete": "Report as done",
+      "completeTitle": "Report this order as done?",
+      "completeBody": "The office is notified. You can still write reports afterwards.",
+      "reportBy": "{{name}}",
+      "reportOpen": "Open",
+      "reportLocked": "Closed",
+      "reportSigned": "Signed by {{name}}",
+      "noDate": "No date",
+      "notAssignedBack": "Back to my assignments",
+      "photos_one": "{{count}} photo",
+      "photos": "{{count}} photos",
+      "newReport": "New report"
+    },
+    "noTime": "No time",
+    "install": {
+      "title": "Install the app",
+      "iosBody": "Tap Share, then Add to Home Screen, to open Werkbank like an app.",
+      "body": "Add Werkbank to your home screen to open it like an app.",
+      "button": "Install",
+      "dismiss": "Not now"
+    },
+    "report": {
+      "title": "Visit report",
+      "visitDate": "Visit date",
+      "visitDateHint": "Default today. You can change the date while the report is open.",
+      "body": "What was done",
+      "photos": "Photos",
+      "photoLimitHint": "Default {{max}} photos per report. Not changeable here.",
+      "resizeHint": "Photos are resized to {{px}} px on the long edge, so they upload on a weak connection too. Not changeable here.",
+      "addPhoto": "Add photo",
+      "uploading": "Uploading photo",
+      "removePhoto": "Remove photo",
+      "photoAlt": "Photo {{n}}",
+      "photoOnlineOnly": "Photo only online",
+      "photoTooLarge": "The photo is too large even after resizing.",
+      "photoUnreadable": "The photo could not be read.",
+      "sign": "Get signature",
+      "lock": "Close without signature",
+      "signerName": "Name of the signer",
+      "signature": "Signature",
+      "padLabel": "Signature field",
+      "clear": "Clear",
+      "noText": "No text.",
+      "signSubmit": "Sign",
+      "backToReport": "Back to the report",
+      "signTitle": "Sign the report?",
+      "lockTitle": "Close the report?",
+      "lockSubmit": "Close report",
+      "finalBody": "The report cannot be changed afterwards.",
+      "signedToast": "Report signed.",
+      "lockedToast": "Report closed.",
+      "signatureTooLarge": "The signature is too large. Clear it and sign again.",
+      "signedOn": "Signed by {{name}} on <date>{{date}}</date>",
+      "lockedOn": "Closed on <date>{{date}}</date>",
+      "signatureAlt": "Signature of {{name}}",
+      "othersReport": "{{name}} writes this report. You can only read it.",
+      "signatureStored": "The signature is saved. Only the confirmation is missing, so sign again to finish."
+    },
+    "offline": {
+      "banner": "Offline. Last sync: <time>{{time}}</time>",
+      "bannerNoSync": "Offline.",
+      "needsNetwork": "Needs a connection"
     }
   }
 }

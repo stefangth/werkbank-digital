@@ -23,7 +23,8 @@
     "quotes": "Angebote",
     "orders": "Aufträge",
     "invoices": "Rechnungen",
-    "openItems": "Offene Posten"
+    "openItems": "Offene Posten",
+    "myAssignments": "Meine Einsätze"
   },
   "dashboard": {
     "title": "Willkommen bei Werkbank Digital",
@@ -46,7 +47,8 @@
       "overdue": "Überfällig",
       "overdueNote_one": "davon {{count}} mahnfällig",
       "overdueNote_other": "davon {{count}} mahnfällig"
-    }
+    },
+    "myAssignments": "Meine Einsätze"
   },
   "technicians": {
     "title": "Monteure",
@@ -1385,6 +1387,107 @@
       "sent": "Versendet",
       "sentTo": "an {{recipients}}",
       "cancelledBy": "Storniert durch"
+    }
+  },
+  "app": {
+    "notTechnician": "Du bist in diesem Betrieb nicht als Monteur hinterlegt.",
+    "signOut": "Abmelden",
+    "assignmentsTitle": "Meine Einsätze",
+    "assignmentTitle": "Einsatz",
+    "back": "Zurück",
+    "unnamedUser": "Monteur",
+    "notTechnicianReason": "Frag im Büro, ob Du unter Monteure angelegt wirst.",
+    "notTechnicianTitle": "Nicht als Monteur hinterlegt",
+    "emptyTitle": "Noch keine Einsätze",
+    "emptyBody": "Sobald das Büro Dich einem Auftrag zuteilt, steht er hier.",
+    "emptyReason": "Das Büro teilt Dir Aufträge zu.",
+    "loadFailed": "Die Einsätze konnten nicht geladen werden.",
+    "groups": {
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "upcoming": "Nächste 7 Tage",
+      "unscheduled": "Ohne Termin",
+      "done": "Erledigt"
+    },
+    "groupHints": {
+      "upcoming": "Vorgabe 7 Tage. Später terminierte Aufträge erscheinen, sobald sie innerhalb einer Woche liegen. Hier nicht änderbar.",
+      "done": "Vorgabe 14 Tage. Erledigte Aufträge bleiben zwei Wochen in der Liste. Hier nicht änderbar."
+    },
+    "detail": {
+      "route": "Route öffnen",
+      "address": "Adresse",
+      "contact": "Kontakt",
+      "call": "Anrufen",
+      "mail": "E-Mail",
+      "locationNote": "So findest Du es",
+      "notes": "Hinweise vom Büro",
+      "items": "Arbeiten",
+      "coTechnicians": "Auch bei diesem Auftrag",
+      "reports": "Einsatzberichte",
+      "noReports": "Noch keine Berichte.",
+      "start": "Arbeit beginnen",
+      "complete": "Als erledigt melden",
+      "completeTitle": "Auftrag als erledigt melden?",
+      "completeBody": "Das Büro wird benachrichtigt. Berichte kannst Du danach weiter schreiben.",
+      "reportBy": "{{name}}",
+      "reportOpen": "Offen",
+      "reportLocked": "Abgeschlossen",
+      "reportSigned": "Unterschrieben von {{name}}",
+      "noDate": "Ohne Datum",
+      "notAssignedBack": "Zurück zu meinen Einsätzen",
+      "photos_one": "{{count}} Foto",
+      "photos": "{{count}} Fotos",
+      "newReport": "Neuer Bericht"
+    },
+    "noTime": "Ohne Uhrzeit",
+    "install": {
+      "title": "App installieren",
+      "iosBody": "Tippe auf Teilen, dann auf Zum Home-Bildschirm, um Werkbank wie eine App zu öffnen.",
+      "body": "Füge Werkbank zum Home-Bildschirm hinzu, um es wie eine App zu öffnen.",
+      "button": "Installieren",
+      "dismiss": "Später"
+    },
+    "report": {
+      "title": "Einsatzbericht",
+      "visitDate": "Einsatzdatum",
+      "visitDateHint": "Vorgabe heute. Du kannst das Datum ändern, solange der Bericht offen ist.",
+      "body": "Was wurde gemacht",
+      "photos": "Fotos",
+      "photoLimitHint": "Vorgabe {{max}} Fotos pro Bericht. Hier nicht änderbar.",
+      "resizeHint": "Fotos werden auf {{px}} px verkleinert (lange Kante), damit sie auch bei schwachem Netz hochladen. Hier nicht änderbar.",
+      "addPhoto": "Foto hinzufügen",
+      "uploading": "Foto wird hochgeladen",
+      "removePhoto": "Foto entfernen",
+      "photoAlt": "Foto {{n}}",
+      "photoOnlineOnly": "Foto nur online",
+      "photoTooLarge": "Das Foto ist auch verkleinert zu groß.",
+      "photoUnreadable": "Das Foto konnte nicht gelesen werden.",
+      "sign": "Unterschreiben lassen",
+      "lock": "Ohne Unterschrift abschließen",
+      "signerName": "Name der unterschreibenden Person",
+      "signature": "Unterschrift",
+      "padLabel": "Unterschriftsfeld",
+      "clear": "Löschen",
+      "noText": "Kein Text.",
+      "signSubmit": "Unterschreiben",
+      "backToReport": "Zurück zum Bericht",
+      "signTitle": "Bericht unterschreiben?",
+      "lockTitle": "Bericht abschließen?",
+      "lockSubmit": "Abschließen",
+      "finalBody": "Danach kann der Bericht nicht mehr geändert werden.",
+      "signedToast": "Bericht unterschrieben.",
+      "lockedToast": "Bericht abgeschlossen.",
+      "signatureTooLarge": "Die Unterschrift ist zu groß. Lösch sie und unterschreib neu.",
+      "signedOn": "Unterschrieben von {{name}} am <date>{{date}}</date>",
+      "lockedOn": "Abgeschlossen am <date>{{date}}</date>",
+      "signatureAlt": "Unterschrift von {{name}}",
+      "othersReport": "Diesen Bericht schreibt {{name}}. Du kannst ihn nur lesen.",
+      "signatureStored": "Die Unterschrift ist gespeichert. Es fehlt nur noch die Bestätigung, tipp dafür noch einmal auf Unterschreiben."
+    },
+    "offline": {
+      "banner": "Offline. Stand: <time>{{time}}</time>",
+      "bannerNoSync": "Offline.",
+      "needsNetwork": "Braucht Netz"
     }
   }
 }

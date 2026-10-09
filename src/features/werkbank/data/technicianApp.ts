@@ -153,31 +153,40 @@ function isAlreadyExists(error: unknown): boolean {
   return String(statusCode) === "409" || (typeof message === "string" && /already exists/i.test(message));
 }
 
-/** Uploads signature.png, then signs. An "already exists" answer means an earlier attempt got the
- *  object there (a retry after a dropped connection, or a double tap), so the call goes on. */
+/** True for a signing error raised after signature.png was stored: a retry must send the same
+ *  image (`uploaded: true`), because the stored object is what gets signed. */
+export function isSignatureUploaded(error: unknown): boolean {
+  return typeof error === "object" && error !== null && (error as { signatureUploaded?: unknown }).signatureUploaded === true;
+}
+
+/** Uploads signature.png, then signs. With `uploaded` (the stored image of a failed attempt) the
+ *  upload is skipped; otherwise `png` is a fresh drawing that replaces any stale object. A signing
+ *  error after the upload is marked, see `isSignatureUploaded`. */
 export async function signVisitReport(
   client: Client,
-  input: { orgId: string; orderId: string; reportId: string; signerName: string; png: Blob },
+  input: { orgId: string; orderId: string; reportId: string; signerName: string; png: Blob; uploaded?: boolean },
 ): Promise<void> {
   const path = `${input.orgId}/${input.orderId}/${input.reportId}/signature.png`;
-  const bucket = client.storage.from(VISITS_BUCKET);
-  const upload = () => bucket.upload(path, input.png, { contentType: "image/png", upsert: false });
-  const { error: uploadError } = await upload();
-  if (uploadError) {
-    // "Already exists": an earlier attempt stored another image. Replace it with this drawing, or
-    // the report would carry a signature the signer never made. Storage refuses the removal once
-    // the report is signed or closed, which fails here as report_locked.
-    if (!isAlreadyExists(uploadError)) throw uploadError;
-    const { data: removed, error: removeError } = await bucket.remove([path]);
-    if (removeError) throw removeError;
-    if (!removed?.length) throw new WerkbankDataError("55000", "report_locked");
-    const { error: retryError } = await upload();
-    if (retryError) throw retryError;
+  if (!input.uploaded) {
+    const bucket = client.storage.from(VISITS_BUCKET);
+    const upload = () => bucket.upload(path, input.png, { contentType: "image/png", upsert: false });
+    const { error: uploadError } = await upload();
+    if (uploadError) {
+      // "Already exists": an earlier attempt stored another image. Replace it with this drawing, or
+      // the report would carry a signature the signer never made. Storage refuses the removal once
+      // the report is signed or closed, which fails here as report_locked.
+      if (!isAlreadyExists(uploadError)) throw uploadError;
+      const { data: removed, error: removeError } = await bucket.remove([path]);
+      if (removeError) throw removeError;
+      if (!removed?.length) throw new WerkbankDataError("55000", "report_locked");
+      const { error: retryError } = await upload();
+      if (retryError) throw retryError;
+    }
   }
   const { error } = await client.schema("werkbank").rpc("sign_visit_report", {
     p_report: input.reportId, p_signer_name: input.signerName, p_signature_path: path,
   });
-  if (error) throw error;
+  if (error) throw Object.assign(error, { signatureUploaded: true });
 }
 
 /** Signed URLs (300 s) for photo and signature paths, by path. */

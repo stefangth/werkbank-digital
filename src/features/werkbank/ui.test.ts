@@ -3,7 +3,7 @@ import { NAV_ITEMS, visibleNavItems } from "@/components/layout/navItems";
 import type { OrgKind } from "@/lib/orgKind";
 import { MODULE_UIS } from "@/modules/ui";
 import {
-  loadCatalogPage, loadCustomerDetailPage, loadCustomersPage, loadInvoicePage, loadInvoicesPage, loadOrderPage, loadOrdersPage, loadPropertiesPage, loadPropertyDetailPage, loadQuotePage, loadQuotesPage, loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
+  loadAssignmentPage, loadAssignmentsPage, loadCatalogPage, loadCustomerDetailPage, loadCustomersPage, loadInvoicePage, loadInvoicesPage, loadOrderPage, loadOrdersPage, loadPropertiesPage, loadPropertyDetailPage, loadQuotePage, loadQuotesPage, loadTechniciansPage, loadWerkbankDashboard, werkbankUi } from "./ui";
 import { WerkbankDashboard } from "./components/WerkbankDashboard";
 import { CatalogPage } from "./pages/CatalogPage";
 import { CustomerDetailPage } from "./pages/CustomerDetailPage";
@@ -17,7 +17,7 @@ import { OrderPage } from "./pages/OrderPage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { QuotePage } from "./pages/QuotePage";
 import { QuotesPage } from "./pages/QuotesPage";
-import { CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, ORDERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
+import { ASSIGNMENT_PATH, ASSIGNMENTS_PATH, CATALOG_PATH, CUSTOMERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, ORDERS_PATH, PROPERTIES_PATH, QUOTES_PATH, TECHNICIANS_PATH } from "./paths";
 
 const ctx = (roles: string[], orgKind: OrgKind) => ({
   isEditorMode: false,
@@ -196,7 +196,25 @@ describe("werkbank module UI", () => {
   });
 
   it("points the nav item at the same path as the route", () => {
-    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, ORDERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, CATALOG_PATH, TECHNICIANS_PATH]);
+    expect(werkbankUi.navItems.map((i) => i.to)).toEqual([CUSTOMERS_PATH, PROPERTIES_PATH, QUOTES_PATH, ORDERS_PATH, INVOICES_PATH, OPEN_ITEMS_PATH, CATALOG_PATH, TECHNICIANS_PATH, ASSIGNMENTS_PATH]);
+  });
+
+  it("registers the technician app as bare routes for the three roles", async () => {
+    for (const path of [ASSIGNMENTS_PATH, ASSIGNMENT_PATH]) {
+      const route = werkbankUi.routes.find((r) => r.path === path);
+      expect(route?.shell).toBe("bare");
+      expect(route?.kinds).toEqual(["handwerk"]);
+      expect(route?.requiredRoles).toEqual(["admin", "producer", "artist"]);
+      expect(isLazy(route?.Page)).toBe(true);
+    }
+    expect((await loadAssignmentsPage()).default).toBeDefined();
+    expect((await loadAssignmentPage()).default).toBeDefined();
+  });
+
+  it("shows My assignments in the nav to technicians only", () => {
+    const labels = (roles: string[]) => visibleNavItems(NAV_ITEMS, ctx(roles, "handwerk")).map((i) => i.label);
+    expect(labels(["artist"])).toContain("My assignments");
+    expect(labels(["admin"])).not.toContain("My assignments");
   });
 
   it("contributes the open items route for handwerk office roles", () => {

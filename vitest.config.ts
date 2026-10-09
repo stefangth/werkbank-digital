@@ -53,6 +53,10 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      // The PWA plugin lives in vite.config.ts only; its virtual module needs a stand-in here.
+      "virtual:pwa-register": path.resolve(__dirname, "./src/test/pwaRegisterStub.ts"),
+    },
   },
 });

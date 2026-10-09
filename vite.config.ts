@@ -1,8 +1,13 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import posthog from '@posthog/rollup-plugin';
+import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { readPostHogSourceMapOptions } from './scripts/posthogSourceMaps';
+import { phoneAppPwaOptions } from './scripts/phoneAppPwa';
+
+/** Scope and start page of the technician app (the fork's phone routes). */
+export const PHONE_APP_SCOPE = "/einsaetze";
 
 /**
  * Print which Supabase project the dev server is pointed at, so `npm run dev`
@@ -43,6 +48,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       supabaseTargetBanner(buildEnv.VITE_SUPABASE_URL),
+      // PWA manifest name of the fork.
+      VitePWA(phoneAppPwaOptions(PHONE_APP_SCOPE, {
+        name: "Werkbank Digital", shortName: "Werkbank", iconDir: "/werkbank", themeColor: "#C2410C", lang: "de",
+      })),
       ...(sourceMapOptions ? [posthog(sourceMapOptions)] : []),
     ],
     resolve: {
