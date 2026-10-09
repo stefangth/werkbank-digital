@@ -452,7 +452,8 @@ grant execute on function werkbank.can_read_visit_object(text) to authenticated;
 
 -- Write (insert): a technician assigned to the order whose report in the path belongs to
 -- that order, is unlocked and is authored by them, while the order is neither cancelled nor
--- invoiced. Only the two names the app writes are allowed: <uuid>.jpg and signature.png.
+-- invoiced. Only the two names the app writes are allowed: <uuid>.jpg and signature.png. The
+-- bucket also allows image/png for the signature only: photos are always re-encoded as JPEG.
 create function werkbank.can_write_visit_object(p_name text)
 returns boolean
 language plpgsql
