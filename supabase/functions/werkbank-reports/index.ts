@@ -20,7 +20,7 @@ import { corsHeaders, json, preflight } from "../_shared/http.ts";
 import { requireOrgRole } from "../_shared/auth.ts";
 import { resolveOrgKind } from "../_shared/orgKind.ts";
 import { WERKBANK_ORG_KIND } from "../_shared/werkbank/registry.ts";
-import { loadVisitReportData, type VisitReportPdfData } from "../_shared/werkbank/pdf/visitReportData.ts";
+import { loadVisitReportData, ProfileMissingError, type VisitReportPdfData } from "../_shared/werkbank/pdf/visitReportData.ts";
 import { renderVisitReportPdf } from "../_shared/werkbank/pdf/visitReportDocument.tsx";
 
 export interface VisitReportRenderers {
@@ -70,7 +70,7 @@ export async function handle(
   try {
     data = await loadVisitReportData(deps.admin, orgId, orderId, reportIds);
   } catch (e) {
-    if (e instanceof Error && e.message === "profile_missing") {
+    if (e instanceof ProfileMissingError) {
       return json({ error: "preflight_failed", blockers: ["profile_incomplete"] }, 422);
     }
     console.error("werkbank-reports: load failed", { orderId, error: String(e) });

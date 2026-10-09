@@ -63,6 +63,14 @@ export function priceFreeSections(items: ItemRow[]): VisitReportSection[] {
   }));
 }
 
+/** The org has no company profile yet, so no letterhead can be printed. */
+export class ProfileMissingError extends Error {
+  constructor() {
+    super("profile_missing");
+    this.name = "ProfileMissingError";
+  }
+}
+
 /** null when the order does not exist in this org. Throws `profile_missing` without a company
  *  profile and `load_failed` on a read error. Reports are ordered by visit date, newest last. */
 export async function loadVisitReportData(
@@ -90,7 +98,7 @@ export async function loadVisitReportData(
   ]);
   if (profileRes.error || customerRes.error || propertyRes.error || itemsRes.error || reportsRes.error) throw new Error("load_failed");
   const profile = profileRes.data as unknown as ProfileRow | null;
-  if (!profile) throw new Error("profile_missing");
+  if (!profile) throw new ProfileMissingError();
   const customer = customerRes.data as unknown as CustomerRow | null;
   const property = propertyRes.data as unknown as PropertyRow | null;
   const reports = (reportsRes.data ?? []) as unknown as ReportRow[];
