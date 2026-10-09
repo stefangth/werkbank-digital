@@ -162,7 +162,6 @@ declare
   v_user boolean := current_user in ('authenticated', 'anon');
   v_owner boolean := current_user not in ('authenticated', 'anon', 'service_role');
   v_changed text[];
-  v_status text;
 begin
   if tg_table_name in ('document_items', 'order_technicians') then
     -- Provenance: only the owner context links an item to its source line.
