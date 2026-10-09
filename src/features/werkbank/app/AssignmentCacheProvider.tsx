@@ -12,6 +12,9 @@ import { OFFLINE_MAX_AGE_MS } from "../lib/visitDefaults";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { watchSignOut } from "./signOutCleanup";
 
+/** How long the app waits for its offline copy before it goes on without it. */
+export const RESTORE_TIMEOUT_MS = 3000;
+
 /** Offline reading for the technician routes only: restores the signed-in user's cached
  *  assignments from IndexedDB into the app's query client, then keeps that copy current. The
  *  store is keyed by user id; a cache of another app version or older than seven days is dropped.
@@ -51,9 +54,14 @@ export function AssignmentCacheProvider({ children }: { children: ReactNode }) {
     });
     const stop = trackPersistence(userId, unsubscribe);
     let live = true;
-    restored.catch(() => undefined).finally(() => { if (live) setRestoredFor(userId); });
+    const done = () => { if (live) setRestoredFor(userId); };
+    restored.catch(() => undefined).finally(done);
+    // A blocked IndexedDB (another tab holding an old version) may never answer; the app then
+    // goes on without its offline copy instead of waiting forever.
+    const timeout = setTimeout(done, RESTORE_TIMEOUT_MS);
     return () => {
       live = false;
+      clearTimeout(timeout);
       stop();
     };
   }, [qc, userId]);
