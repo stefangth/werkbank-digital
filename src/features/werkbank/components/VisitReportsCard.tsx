@@ -21,9 +21,9 @@ const reportState = (r: VisitReport): ReportState => (r.signed_at ? "signed" : r
 const STATE_TONE = { open: "waiting", locked: "neutral", signed: "confirmed" } as const;
 
 /** The internal note of one report: saved on leaving the field, only when it changed. */
-function OfficeNote({ report, orderId }: { report: VisitReport; orderId: string }) {
+function OfficeNote({ report }: { report: VisitReport }) {
   const { t } = useTranslation("werkbank");
-  const update = useUpdateOfficeNote(orderId);
+  const update = useUpdateOfficeNote();
   const saved = report.office_note ?? "";
   const [value, setValue] = useState(saved);
   const id = `office-note-${report.id}`;
@@ -38,7 +38,7 @@ function OfficeNote({ report, orderId }: { report: VisitReport; orderId: string 
   );
 }
 
-function ReportItem({ report, orderId, onOpenPhoto }: { report: VisitReport; orderId: string; onOpenPhoto: (url: string, alt: string) => void }) {
+function ReportItem({ report, onOpenPhoto }: { report: VisitReport; onOpenPhoto: (url: string, alt: string) => void }) {
   const { t } = useTranslation("werkbank");
   const state = reportState(report);
   const paths = [...report.photos.map((p) => p.path), ...(report.signature_path ? [report.signature_path] : [])];
@@ -86,7 +86,7 @@ function ReportItem({ report, orderId, onOpenPhoto }: { report: VisitReport; ord
           className="max-h-32 rounded-control border border-border object-contain"
         />
       )}
-      <OfficeNote report={report} orderId={orderId} />
+      <OfficeNote report={report} />
     </li>
   );
 }
@@ -145,7 +145,7 @@ export function VisitReportsCard({ orderId }: { orderId: string }) {
       </CardHeader>
       <CardContent>
         <ul className="m-0 list-none space-y-4 p-0">
-          {reports.map((r) => <ReportItem key={r.id} report={r} orderId={orderId} onOpenPhoto={(url, alt) => setPhoto({ url, alt })} />)}
+          {reports.map((r) => <ReportItem key={r.id} report={r} onOpenPhoto={(url, alt) => setPhoto({ url, alt })} />)}
         </ul>
       </CardContent>
       <Dialog open={!!photo} onOpenChange={(open) => { if (!open) setPhoto(null); }}>

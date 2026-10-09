@@ -26,6 +26,12 @@
           "title": "Vom Monteur gemeldet",
           "description": "Auf dem Dashboard zählt eine neue Kachel die Aufträge, die ein Monteur als erledigt gemeldet hat. Du bekommst dazu eine Benachrichtigung."
         }
+      ],
+      "improved": [
+        {
+          "title": "Sprache beim ersten Besuch",
+          "description": "Ist dein Betrieb für mehrere Sprachen freigeschaltet, startet die App beim ersten Besuch in der Sprache deines Browsers statt auf Englisch. Eine einmal gewählte Sprache bleibt wie bisher."
+        }
       ]
     }
   },

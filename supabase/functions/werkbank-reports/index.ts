@@ -9,7 +9,8 @@
 // role. Stores nothing: locked reports are immutable, so the PDF is reproducible.
 //
 // Errors: 400 bad_request, 401 unauthorized, 403 forbidden, 404 not_found (no handwerk org or no
-// such order in the org), 404 no_reports, 422 preflight_failed (no company profile), 500.
+// such order in the org), 404 no_reports, 422 preflight_failed (no company profile), 500 load_failed
+// (a read failed), 500 render_failed (the PDF could not be built).
 //
 // verify_jwt = true in config.toml: there are no public actions here.
 // DI: exports handle(req, deps, render); Deno.serve wiring at the bottom.
