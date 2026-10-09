@@ -81,19 +81,31 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
   const fileRef = useRef<HTMLInputElement>(null);
   const urls = useVisitObjectUrls(report.photos.map((p) => p.path)).data ?? {};
 
+  /** The save still running, if any. A save started meanwhile (the tap on "Get signature" right
+   *  after the blur of the text) waits for it, so it resolves once everything is stored and fails
+   *  when the running one does. */
+  const inFlight = useRef<Promise<void> | null>(null);
+
   /** Saves the text and date when they differ from the last save; resolves once stored. */
-  const save = (next = { body, visitDate }): Promise<void> => new Promise((resolve, reject) => {
-    if (!next.visitDate || (next.body === saved.current.body && next.visitDate === saved.current.visitDate)) return resolve();
+  const save = (next = { body, visitDate }): Promise<void> => {
+    if (inFlight.current) return inFlight.current.then(() => save(next));
+    if (!next.visitDate || (next.body === saved.current.body && next.visitDate === saved.current.visitDate)) return Promise.resolve();
     const before = saved.current;
     saved.current = next;
-    updateReport.mutate({ reportId: report.id, body: next.body, visitDate: next.visitDate }, {
-      onSuccess: () => resolve(),
-      onError: (e) => {
-        saved.current = before;
-        reject(e);
-      },
+    const running = new Promise<void>((resolve, reject) => {
+      updateReport.mutate({ reportId: report.id, body: next.body, visitDate: next.visitDate }, {
+        onSuccess: () => resolve(),
+        onError: (e) => {
+          saved.current = before;
+          reject(e);
+        },
+      });
     });
-  });
+    inFlight.current = running;
+    const done = () => { if (inFlight.current === running) inFlight.current = null; };
+    running.then(done, done);
+    return running;
+  };
 
   useEffect(() => {
     flushRef.current = () => save();
@@ -149,7 +161,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       <div className="space-y-1.5">
         <HintedLabel htmlFor={DATE_ID} hint={t("app.report.visitDateHint")}>{t("app.report.visitDate")}</HintedLabel>
         <Input
-          id={DATE_ID} type="date" className="h-11" required value={visitDate} aria-describedby={hintId(DATE_ID)}
+          id={DATE_ID} type="date" className="h-11 text-input-touch" required value={visitDate} aria-describedby={hintId(DATE_ID)}
           onChange={(e) => {
             setVisitDate(e.target.value);
             if (e.target.value) save({ body, visitDate: e.target.value }).catch(() => undefined);
@@ -160,7 +172,7 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       <div className="space-y-1.5">
         <Label htmlFor={BODY_ID}>{t("app.report.body")}</Label>
         <Textarea
-          id={BODY_ID} rows={6} maxLength={10000} value={body} onChange={(e) => setBody(e.target.value)}
+          id={BODY_ID} rows={6} maxLength={10000} className="text-input-touch" value={body} onChange={(e) => setBody(e.target.value)}
           onBlur={() => { save().catch(() => undefined); }}
         />
       </div>
@@ -188,7 +200,8 @@ function EditableReport({ orderId, report, flushRef, onClose }: {
       </section>
 
       <div className="flex flex-col gap-2">
-        <Button size="touch" disabled={!online || updateReport.isPending} onClick={toSignStep}>{t("app.report.sign")}</Button>
+        {/* Not disabled while a save runs: the blur of the text starts one right before this tap. */}
+        <Button size="touch" disabled={!online} onClick={toSignStep}>{t("app.report.sign")}</Button>
         <Button variant="secondary" size="touch" disabled={!online} onClick={() => setLocking(true)}>{t("app.report.lock")}</Button>
         <NeedsNetwork />
       </div>

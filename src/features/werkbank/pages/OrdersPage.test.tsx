@@ -159,6 +159,18 @@ describe("OrdersPage", () => {
     expect(screen.getByRole("button", { name: "Nicht eingeplant" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("opens pre-filtered from the dashboard link: done by a technician", async () => {
+    state.rows = [
+      o({ id: "o1", order_no: "AU-0001", status: "done", completed_by_technician: true }),
+      o({ id: "o2", order_no: "AU-0002", status: "done", completed_by_technician: false }),
+      o({ id: "o3", order_no: "AU-0003", status: "open", completed_by_technician: true }),
+    ];
+    state.search = "?status=done&byTechnician=1";
+    render();
+    await screen.findByText("AU-0001");
+    expect(numbersShown()).toEqual(["AU-0001"]);
+  });
+
   it("applies the unscheduled link again when the search params change while mounted", async () => {
     const { rerender } = render();
     await screen.findByText("AU-0001");

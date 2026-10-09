@@ -24,6 +24,12 @@ describe("cn", () => {
     expect(cn("text-eyebrow text-control")).toBe("text-control");
   });
 
+  it("lets the 16px touch input size override a control size and keep a colour", () => {
+    expect(cn("text-[13px]", "text-input-touch")).toBe("text-input-touch");
+    expect(cn("text-control", "text-input-touch")).toBe("text-input-touch");
+    expect(cn("text-input-touch text-muted-foreground")).toBe("text-input-touch text-muted-foreground");
+  });
+
   it("still resolves a conflict between two text-color classes", () => {
     expect(cn("text-muted-foreground text-foreground")).toBe("text-foreground");
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
 import type { AuthContextType } from "@/features/auth/AuthContext";
 import type { AssignmentReport } from "../data/technicianApp";
@@ -64,6 +64,19 @@ describe("ReportSheet", () => {
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
     expect(actions.updateReport.mutate).toHaveBeenCalledWith({ reportId: "r1", body: "Neu", visitDate: "2026-10-08" }, expect.anything());
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("sizes every field at 16px so iOS does not zoom on focus", async () => {
+    renderSheet();
+    for (const label of ["Visit date", "What was done"]) {
+      const field = screen.getByLabelText(label);
+      expect(field).toHaveClass("text-input-touch");
+      expect(field).not.toHaveClass("text-[13px]");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
+    const signer = await screen.findByLabelText("Name of the signer");
+    expect(signer).toHaveClass("text-input-touch");
+    expect(signer).not.toHaveClass("text-[13px]");
   });
 
   it("explains the presets next to the visit date, the photo limit and the resizing", () => {
@@ -139,6 +152,38 @@ describe("ReportSheet", () => {
     fireEvent.change(screen.getByLabelText("What was done"), { target: { value: "Neu" } });
     fireEvent.click(screen.getByRole("button", { name: "Get signature" }));
     await waitFor(() => expect(actions.updateReport.mutate).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByLabelText("Name of the signer")).toBeNull();
+    expect(screen.getByLabelText("What was done")).toBeInTheDocument();
+  });
+
+  /** Typing, then tapping "Get signature": the blur starts the save and the tap lands while it runs. */
+  const blurThenTapSign = () => {
+    let settle: { onSuccess: () => void; onError: (e: Error) => void } | undefined;
+    actions.updateReport.mutate.mockImplementation((_v, opts) => { settle = opts; });
+    actions.updateReport.isPending = true;
+    renderSheet();
+    const body = screen.getByLabelText("What was done");
+    fireEvent.change(body, { target: { value: "Neu" } });
+    fireEvent.blur(body);
+    const sign = screen.getByRole("button", { name: "Get signature" });
+    expect(sign).toBeEnabled();
+    fireEvent.click(sign);
+    expect(actions.updateReport.mutate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("Name of the signer")).toBeNull();
+    return () => settle!;
+  };
+
+  it("keeps the first tap on Get signature after typing and opens the sign step once the save lands", async () => {
+    const settle = blurThenTapSign();
+    act(() => settle().onSuccess());
+    expect(await screen.findByLabelText("Name of the signer")).toBeInTheDocument();
+    expect(actions.updateReport.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays on the report when the save running at the tap fails", async () => {
+    const settle = blurThenTapSign();
+    act(() => settle().onError(new Error("network")));
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.queryByLabelText("Name of the signer")).toBeNull();
     expect(screen.getByLabelText("What was done")).toBeInTheDocument();

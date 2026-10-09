@@ -46,12 +46,12 @@ export const WERKBANK_ORG_KIND = {
     en: {
       admin: "Full control of the business, including people and settings.",
       producer: "Creates quotes, jobs and invoices and schedules the technicians.",
-      artist: "Sees their assigned jobs and marks them as done.",
+      artist: "Sees their own jobs, writes visit reports and marks the work as done.",
     },
     de: {
       admin: "Volle Kontrolle über den Betrieb, inklusive Personen und Einstellungen.",
       producer: "Erstellt Angebote, Aufträge und Rechnungen und plant die Monteure ein.",
-      artist: "Sieht die eigenen Aufträge und meldet sie als erledigt.",
+      artist: "Sieht die eigenen Aufträge, schreibt Einsatzberichte und meldet die Arbeit als erledigt.",
     },
   },
   switchableByOrgAdmin: false,

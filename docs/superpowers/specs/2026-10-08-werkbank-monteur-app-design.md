@@ -191,6 +191,7 @@ Locked reports render read-only with "Unterschrieben von X am …" or "Abgeschlo
 - `POST { org_id, order_id, report_ids?: uuid[] }`; default all locked and unlocked reports of the order, newest last.
 - `requireOrgRole(org_id, ['admin', 'producer'])`, `resolveOrgKind` must be `handwerk`.
 - Builds the PDF with the shared letterhead: company block and logo, title "Einsatzbericht", order number, customer, property address, line items with quantity and unit only, then per report the date, technician, text, photos in a two-column grid (downloaded via the service role, scaled), and the signature image with "Unterschrieben von X am …" or "Nicht unterschrieben". Unlocked reports carry a "Entwurf" marker.
+- Photo budget (amended 2026-10-09 during review): at most 40 MB of raw photo bytes per PDF, loaded one at a time in document order (reports newest last, photos by position) to stay within the edge worker's memory. Once a photo would exceed the budget, it and every later photo are left out, even smaller ones that would still fit, so the PDF never skips a photo out of order; each report with left-out photos says "Weitere Fotos sind in Werkbank gespeichert." Signatures always load.
 - Returns the PDF bytes (`application/pdf`); stores nothing. Locked reports are immutable, so the PDF is reproducible.
 - `[functions.werkbank-reports]` in `supabase/config.toml` with `verify_jwt = true`.
 - Bundle size is checked against the upload limit in CI like `werkbank-invoices`.

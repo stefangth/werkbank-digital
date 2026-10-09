@@ -7,7 +7,7 @@ import { extendTailwindMerge } from "tailwind-merge";
  * against Tailwind's built-in size scale (xs/sm/base/lg/...). It has no way
  * to know about this project's custom fontSize scale defined in
  * tailwind.config.ts (theme.extend.fontSize: eyebrow, caption, control,
- * body, title-sm, title, display-sm, display) — see docs/ui-conventions.md
+ * body, input-touch, title-sm, title, display-sm, display) — see docs/ui-conventions.md
  * §3. Left unconfigured, twMerge misclassifies `text-eyebrow`/`text-control`/
  * etc. as members of the text-color group, so combining one with a real
  * color class like `text-muted-foreground` silently drops one of the two
@@ -20,7 +20,7 @@ const twMerge = extendTailwindMerge({
     classGroups: {
       "font-size": [
         {
-          text: ["eyebrow", "caption", "control", "body", "title-sm", "title", "display-sm", "display"],
+          text: ["eyebrow", "caption", "control", "body", "input-touch", "title-sm", "title", "display-sm", "display"],
         },
       ],
     },

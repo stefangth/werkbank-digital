@@ -43,6 +43,7 @@ vi.mock("../components/LineItemsEditor", () => ({
     </div>
   ),
 }));
+vi.mock("../components/VisitReportsCard", () => ({ VisitReportsCard: ({ orderId }: { orderId: string }) => <div data-testid="reports" data-order={orderId} /> }));
 vi.mock("../components/DocumentTotalsCard", () => ({ DocumentTotalsCard: () => <div data-testid="totals" /> }));
 vi.mock("../components/CustomerPicker", () => ({ CustomerPicker: () => <div /> }));
 vi.mock("../components/PropertyPicker", () => ({ PropertyPicker: () => <div /> }));
@@ -94,6 +95,11 @@ describe("OrderPage", () => {
     expect(screen.getByTestId("items")).toHaveAttribute("data-readonly", "false");
     expect(screen.getByText("AU-0007")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /So funktionieren/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the visit reports card for the order", async () => {
+    render();
+    expect(await screen.findByTestId("reports")).toHaveAttribute("data-order", "o1");
   });
 
   it("saves a changed text field on blur and the notes", async () => {

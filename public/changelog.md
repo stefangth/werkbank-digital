@@ -2,6 +2,20 @@
 
 Was neu ist, neueste Einträge zuerst.
 
+## 1.23.0 — October 9, 2026
+
+*Monteure vor Ort*
+
+### New
+- **Monteur-App** — Deine Monteure öffnen die App auf dem Handy und sehen unter Meine Einsätze nur die Aufträge, die du ihnen zugeteilt hast, mit Adresse, Routenlink, Kontakt und den Arbeiten, aber ohne Preise. Sie beginnen die Arbeit und melden sie als erledigt.
+- **Auch ohne Netz lesen** — Die Aufträge von heute, überfällige und die der nächsten 7 Tage bleiben auf dem Handy. Im Keller oder auf dem Land schaut der Monteur trotzdem nach, was ansteht. Speichern braucht Netz.
+- **Einsatzberichte** — Der Monteur schreibt, was gemacht wurde, hängt Fotos an und lässt den Kunden direkt auf dem Bildschirm unterschreiben. Ein unterschriebener Bericht ist gesperrt.
+- **Bericht als PDF** — Am Auftrag lädst du alle Berichte oder einen einzelnen als PDF mit deinem Briefkopf, den Fotos und der Unterschrift herunter. Zu jedem Bericht kannst du eine interne Notiz ergänzen.
+- **Vom Monteur gemeldet** — Auf dem Dashboard zählt eine neue Kachel die Aufträge, die ein Monteur als erledigt gemeldet hat. Du bekommst dazu eine Benachrichtigung.
+
+### Improved
+- **Sprache beim ersten Besuch** — Ist dein Betrieb für mehrere Sprachen freigeschaltet, startet die App beim ersten Besuch in der Sprache deines Browsers statt auf Englisch. Eine einmal gewählte Sprache bleibt wie bisher.
+
 ## 1.22.0 — October 8, 2026
 
 *Offene Posten und Mahnungen*

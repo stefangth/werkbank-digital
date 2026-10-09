@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import { screen, fireEvent, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { renderWithProviders } from "@/test/renderWithProviders";
@@ -287,5 +287,63 @@ describe("AppLayout force-English gate (language_packages entitlement)", () => {
     // own effect — see this block's header comment — so it is covered via rerender above,
     // not a fresh mount here.)
     expect(i18n.language).toBe("de");
+  });
+});
+
+describe("AppLayout first-visit language (browser language fallback)", () => {
+  // A fresh phone has no stored choice. While entitlements load AppLayout forces English;
+  // once the org is entitled the language must fall back to the browser's, not stay English.
+  let languageSpy: MockInstance<() => string> | undefined;
+  const germanBrowser = () => {
+    languageSpy = vi.spyOn(window.navigator, "language", "get").mockReturnValue("de-DE");
+  };
+  afterEach(async () => {
+    // Restore only the navigator spy: restoreAllMocks would reset the useAuth mock while the
+    // previous tree is still mounted, and the next language change re-renders it.
+    languageSpy?.mockRestore();
+    languageSpy = undefined;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LANG_PACK_CACHE_KEY);
+    await i18n.changeLanguage("en");
+  });
+
+  it("entitled, nothing stored, German browser: the language becomes German", async () => {
+    germanBrowser();
+    mockAuth();
+    mockEntitlements(false);
+    const { rerender } = renderWithProviders(<AppLayout>page content</AppLayout>);
+    // The forced-English state of the loading window (set directly, see the block above).
+    await act(async () => { await i18n.changeLanguage("en"); });
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+
+    mockEntitlements(true);
+    await act(async () => { rerender(<AppLayout>page content</AppLayout>); });
+    await waitFor(() => expect(i18n.language).toBe("de"));
+  });
+
+  it("not entitled: stays English even with a German browser", async () => {
+    germanBrowser();
+    mockAuth();
+    mockEntitlements(true);
+    const { rerender } = renderWithProviders(<AppLayout>page content</AppLayout>);
+    await act(async () => { await i18n.changeLanguage("de"); });
+
+    mockEntitlements(false);
+    await act(async () => { rerender(<AppLayout>page content</AppLayout>); });
+    await waitFor(() => expect(i18n.language).toBe("en"));
+  });
+
+  it("entitled with a stored English choice and a German browser: stays English", async () => {
+    germanBrowser();
+    mockAuth();
+    mockEntitlements(false);
+    const { rerender } = renderWithProviders(<AppLayout>page content</AppLayout>);
+    await act(async () => { await i18n.changeLanguage("en"); });
+
+    localStorage.setItem(STORAGE_KEY, "en");
+    mockEntitlements(true);
+    await act(async () => { rerender(<AppLayout>page content</AppLayout>); });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(i18n.language).toBe("en");
   });
 });

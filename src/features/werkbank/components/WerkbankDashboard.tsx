@@ -56,14 +56,14 @@ function OverdueTile() {
   );
 }
 
-/** Three counts the office acts on, each linking to the list with its filter applied. */
+/** Four counts the office acts on, each linking to the list with its filter applied. */
 function DashboardTiles() {
   const { t } = useTranslation("werkbank");
   const quotes = useQuoteList();
   const orders = useOrderList();
 
   return (
-    <section aria-label={t("dashboard.tiles.label")} className="grid gap-3 sm:grid-cols-3">
+    <section aria-label={t("dashboard.tiles.label")} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <Tile
         to={`${QUOTES_PATH}?status=accepted&noOrder=1`}
         label={t("dashboard.tiles.acceptedNoOrder")}
@@ -75,6 +75,12 @@ function DashboardTiles() {
         label={t("dashboard.tiles.unscheduled")}
         query={orders}
         count={(rows) => rows.filter(needsSchedule).length}
+      />
+      <Tile
+        to={`${ORDERS_PATH}?status=done&byTechnician=1`}
+        label={t("dashboard.tiles.byTechnician")}
+        query={orders}
+        count={(rows) => rows.filter((o) => o.status === "done" && o.completed_by_technician).length}
       />
       <OverdueTile />
     </section>

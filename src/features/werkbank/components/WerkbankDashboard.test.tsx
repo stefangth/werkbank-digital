@@ -49,7 +49,9 @@ describe("WerkbankDashboard", () => {
           { id: "o1", status: "open", scheduled_date: null },
           { id: "o2", status: "in_progress", scheduled_date: null },
           { id: "o3", status: "open", scheduled_date: "2026-11-03" },
-          { id: "o4", status: "done", scheduled_date: null },
+          { id: "o4", status: "done", scheduled_date: null, completed_by_technician: true },
+          { id: "o6", status: "done", scheduled_date: null, completed_by_technician: false },
+          { id: "o7", status: "open", scheduled_date: "2026-11-04", completed_by_technician: true },
           { id: "o5", status: "cancelled", scheduled_date: null },
         ], error: null },
       }),
@@ -106,11 +108,19 @@ describe("WerkbankDashboard", () => {
     await waitFor(() => expect(unscheduled).toHaveTextContent("2"));
   });
 
+  it("counts done orders completed by a technician and links to the filtered list", async () => {
+    authAs("admin");
+    renderDashboard();
+    const tile = await screen.findByRole("link", { name: /Reported by technician/ });
+    expect(tile).toHaveAttribute("href", "/orders?status=done&byTechnician=1");
+    await waitFor(() => expect(tile).toHaveTextContent("1"));
+  });
+
   it("shows a skeleton while the counts load and no dash placeholder", () => {
     authAs("admin");
     renderDashboard();
     expect(screen.queryByText("–")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("status")).toHaveLength(3);
+    expect(screen.getAllByRole("status")).toHaveLength(4);
   });
 
   it("says so when a count cannot be loaded, and still shows the other tile", async () => {

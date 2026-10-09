@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { ClipboardList } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/alert";
@@ -10,6 +11,7 @@ import { groupAssignments, type GroupKey } from "../lib/assignments";
 import { AssignmentCard } from "./AssignmentCard";
 import { InstallHint } from "./InstallHint";
 import { MobileShell } from "./MobileShell";
+import { applyPendingUpdate } from "./registerServiceWorker";
 import { TechnicianRoute } from "./TechnicianRoute";
 
 const HINTED: Partial<Record<GroupKey, "upcoming" | "done">> = { upcoming: "upcoming", done: "done" };
@@ -44,6 +46,8 @@ function List() {
 /** The technician's list of assigned orders, grouped by the server's group key. */
 export function AssignmentsPage() {
   const { t } = useTranslation("werkbank");
+  // A new app version waits for this page: nothing typed or drawn can be lost here.
+  useEffect(() => { applyPendingUpdate(); }, []);
   return (
     <MobileShell title={t("app.assignmentsTitle")}>
       <TechnicianRoute>

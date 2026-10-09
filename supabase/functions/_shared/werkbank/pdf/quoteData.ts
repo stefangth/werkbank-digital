@@ -113,7 +113,7 @@ function recipientLines(customer: CustomerRow, property: PropertyRow | null): st
   ]);
 }
 
-function locationLines(customer: CustomerRow, property: PropertyRow | null): string[] {
+export function locationLines(customer: CustomerRow, property: PropertyRow | null): string[] {
   if (property) {
     return nonEmpty([
       clean(property.name),

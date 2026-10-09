@@ -46,7 +46,8 @@
       "loadFailed": "Die Anzahl konnte nicht geladen werden.",
       "overdue": "Überfällig",
       "overdueNote_one": "davon {{count}} mahnfällig",
-      "overdueNote_other": "davon {{count}} mahnfällig"
+      "overdueNote_other": "davon {{count}} mahnfällig",
+      "byTechnician": "Vom Monteur gemeldet"
     },
     "myAssignments": "Meine Einsätze"
   },
@@ -1129,6 +1130,20 @@
       "body": "Zu diesem Auftrag gibt es einen Rechnungsentwurf. Der Entwurf behält seine jetzigen Positionen und Daten. Änderungen am Auftrag übernimmt er nicht.",
       "keep": "Abbrechen",
       "confirm": "Wieder öffnen"
+    },
+    "reports": {
+      "title": "Einsatzberichte",
+      "officeNote": "Interne Notiz",
+      "state": {
+        "open": "offen",
+        "locked": "abgeschlossen",
+        "signed": "unterschrieben"
+      },
+      "pdf": "PDF",
+      "pdfAll": "Alle Berichte",
+      "pdfOne": "Bericht vom <date>{{date}}</date>, {{name}}",
+      "pdfProfileIncomplete": "Deine Firmendaten sind unvollständig. Ergänze sie in den Einstellungen und versuche es noch einmal.",
+      "pdfNoReports": "Zu diesem Auftrag gibt es keinen passenden Einsatzbericht mehr. Lade die Seite neu."
     }
   },
   "publicQuote": {

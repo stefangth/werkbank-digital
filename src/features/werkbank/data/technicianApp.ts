@@ -68,7 +68,9 @@ export interface AssignmentDetail {
   };
   contact: { name: string | null; phone: string | null; mobile: string | null; email: string | null } | null;
   items: AssignmentItem[];
+  /** Co-technicians of the order, without the caller. */
   technicians: string[];
+  /** Newest first. */
   reports: AssignmentReport[];
 }
 
@@ -159,9 +161,14 @@ export function isSignatureUploaded(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { signatureUploaded?: unknown }).signatureUploaded === true;
 }
 
-/** Uploads signature.png, then signs. With `uploaded` (the stored image of a failed attempt) the
- *  upload is skipped; otherwise `png` is a fresh drawing that replaces any stale object. A signing
- *  error after the upload is marked, see `isSignatureUploaded`. */
+/** Uploads signature.png, then signs. With `uploaded` (the stored image of a failed attempt, see
+ *  `uploadedSignatures`) the upload is skipped. Without it `png` is a fresh drawing: an "already
+ *  exists" answer means an earlier attempt stored another image whose upload state was lost (a
+ *  reload), so that object is removed and the fresh one stored, or the report would show a
+ *  signature the signer never drew. Storage only lets the author remove it while the report is
+ *  unlocked and the path is no signature yet; a refused removal means the report was signed or
+ *  closed meanwhile and fails as `report_locked`. A signing error after the upload is marked, see
+ *  `isSignatureUploaded`. */
 export async function signVisitReport(
   client: Client,
   input: { orgId: string; orderId: string; reportId: string; signerName: string; png: Blob; uploaded?: boolean },
@@ -172,9 +179,6 @@ export async function signVisitReport(
     const upload = () => bucket.upload(path, input.png, { contentType: "image/png", upsert: false });
     const { error: uploadError } = await upload();
     if (uploadError) {
-      // "Already exists": an earlier attempt stored another image. Replace it with this drawing, or
-      // the report would carry a signature the signer never made. Storage refuses the removal once
-      // the report is signed or closed, which fails here as report_locked.
       if (!isAlreadyExists(uploadError)) throw uploadError;
       const { data: removed, error: removeError } = await bucket.remove([path]);
       if (removeError) throw removeError;
