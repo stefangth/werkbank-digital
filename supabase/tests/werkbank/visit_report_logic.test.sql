@@ -2,7 +2,7 @@
 -- bucket and its storage policies.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(131);
+SELECT plan(134);
 
 SET LOCAL timezone = 'UTC';
 -- Berlin today, as the RPCs compute it.
@@ -289,7 +289,7 @@ INSERT INTO storage.objects (bucket_id, name)
 SELECT 'werkbank-visits', 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r1') || '/p' || n || '.jpg'
 FROM generate_series(1, 21) n;
 INSERT INTO storage.objects (bucket_id, name) VALUES
-  ('werkbank-visits', 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg'),
+  ('werkbank-visits', 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg'),
   ('werkbank-visits', 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r3') || '/signature.png');
 
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
@@ -301,7 +301,7 @@ SELECT throws_ok($$SELECT werkbank.add_visit_photo(current_setting('wbt.r1')::uu
   'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r1') || '/nope.jpg')$$,
   '22023', 'photo_missing', 'add_visit_photo: an unknown path is photo_missing');
 SELECT throws_ok($$SELECT werkbank.add_visit_photo(current_setting('wbt.r1')::uuid,
-  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg')$$,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg')$$,
   '22023', 'photo_missing', 'add_visit_photo: the path of another report is photo_missing');
 SELECT throws_ok($$SELECT werkbank.add_visit_photo(current_setting('wbt.r3')::uuid,
   'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r3') || '/signature.png')$$,
@@ -391,7 +391,7 @@ SELECT results_eq(
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
-  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/x.jpg')$$,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000001.jpg')$$,
   'storage: A uploads under an own open report');
 SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
   'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r1') || '/x.jpg')$$,
@@ -416,18 +416,18 @@ WITH u AS (UPDATE storage.objects SET name = name || '.bak' WHERE bucket_id = 'w
 SELECT is((SELECT count(*)::int FROM u), 0,
   'storage: no update policy');
 SELECT lives_ok($$SELECT set_config('wbt.p4', werkbank.add_visit_photo(current_setting('wbt.r4')::uuid,
-  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg')::text, true)$$,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg')::text, true)$$,
   'add_visit_photo registers q1 on r4');
 SELECT set_config('storage.allow_delete_query', 'true', true);
 WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits' RETURNING name)
 SELECT is((SELECT array_agg(name) FROM d),
-  ARRAY['bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/x.jpg'],
+  ARRAY['bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000001.jpg'],
   'storage: A deletes only the unregistered object under an own open report, not a registered photo');
 SELECT is(werkbank.remove_visit_photo(current_setting('wbt.p4')::uuid),
-  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg',
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg',
   'remove_visit_photo unregisters q1');
 WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits'
-  AND name = 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg' RETURNING 1)
+  AND name = 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg' RETURNING 1)
 SELECT is((SELECT count(*)::int FROM d), 1, 'storage: A deletes the object after remove_visit_photo');
 WITH d AS (DELETE FROM storage.objects WHERE bucket_id = 'werkbank-visits'
   AND name = 'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r3') || '/signature.png' RETURNING 1)
@@ -457,9 +457,28 @@ RESET ROLE;
 SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c4');
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
-  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r2') || '/b.jpg')$$,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r2') || '/eeeeeeee-0000-4000-a000-000000000002.jpg')$$,
   'storage: B uploads under an own report');
 RESET ROLE;
+
+-- Names and closed orders -----------------------------------------------------------------------
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/notes.txt')$$,
+  '42501', NULL, 'storage: only <uuid>.jpg and signature.png may be uploaded');
+RESET ROLE;
+SAVEPOINT closed_order;
+UPDATE werkbank.orders SET status = 'cancelled' WHERE id = '33333333-0000-4000-a000-0000000006c9';
+SELECT pg_temp.act_as('aaaaaaaa-0000-4000-a000-0000000006c3');
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$SELECT werkbank.update_visit_report(current_setting('wbt.r4')::uuid, 'später', current_date)$$,
+  '55000', 'order_closed', 'update_visit_report: a report of a cancelled order cannot change');
+SELECT throws_ok($$INSERT INTO storage.objects (bucket_id, name) VALUES ('werkbank-visits',
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000003.jpg')$$,
+  '42501', NULL, 'storage: no upload under a report of a cancelled order');
+RESET ROLE;
+ROLLBACK TO SAVEPOINT closed_order;
 
 -- Removed from the order ----------------------------------------------------------------------
 DELETE FROM werkbank.order_technicians
@@ -480,7 +499,7 @@ SELECT throws_ok($$SELECT werkbank.create_visit_report('33333333-0000-4000-a000-
 SELECT throws_ok($$SELECT werkbank.update_visit_report(current_setting('wbt.r4')::uuid, 'x', current_setting('wbt.today')::date)$$,
   '42501', 'not_assigned', 'removed: update_visit_report');
 SELECT throws_ok($$SELECT werkbank.add_visit_photo(current_setting('wbt.r4')::uuid,
-  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/q1.jpg')$$,
+  'bbbbbbbb-0000-4000-b000-0000000006c1/33333333-0000-4000-a000-0000000006c9/' || current_setting('wbt.r4') || '/eeeeeeee-0000-4000-a000-000000000004.jpg')$$,
   '42501', 'not_assigned', 'removed: add_visit_photo');
 RESET ROLE;
 SELECT set_config('wbt.p2', (SELECT id FROM werkbank.visit_report_photos WHERE report_id = current_setting('wbt.r1')::uuid LIMIT 1)::text, true);
