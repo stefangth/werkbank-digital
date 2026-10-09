@@ -4,6 +4,8 @@ import type { PersistedClient, Persister } from "@tanstack/react-query-persist-c
  *  shared phone never hands one user's orders to the next. */
 const DB_NAME = "werkbank-cache";
 const STORE = "queries";
+/** How long a sign out waits for the store to empty before it goes on. */
+export const CLEAR_TIMEOUT_MS = 2000;
 
 let db: Promise<IDBDatabase> | null = null;
 
@@ -17,6 +19,8 @@ function openDb(): Promise<IDBDatabase> {
       resolve(req.result);
     };
     req.onerror = () => { db = null; reject(req.error); };
+    // Another tab holding an older version: give up rather than wait for it.
+    req.onblocked = () => { db = null; reject(new Error("idb_blocked")); };
   });
   return db;
 }
@@ -85,5 +89,14 @@ export function trackPersistence(userId: string, stop: () => void): () => void {
 export async function clearAssignmentCache(): Promise<void> {
   for (const stop of subscriptions.values()) stop();
   subscriptions.clear();
-  await run("readwrite", (s) => s.clear());
+  // A store that never answers must not hold up a sign out; the next app open prunes it.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("idb_timeout")), CLEAR_TIMEOUT_MS);
+  });
+  try {
+    await Promise.race([run("readwrite", (s) => s.clear()), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
