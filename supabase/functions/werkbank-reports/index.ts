@@ -28,9 +28,11 @@ export interface VisitReportRenderers {
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
-const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !== "" ? v.trim() : null);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** A trimmed uuid string, else null: anything else would fail in Postgres as a 500. */
+const str = (v: unknown): string | null => (typeof v === "string" && UUID.test(v.trim()) ? v.trim() : null);
 
-/** undefined when absent, null when malformed (not a non-empty array of non-empty strings). */
+/** undefined when absent, null when malformed (not a non-empty array of uuids). */
 function parseReportIds(v: unknown): string[] | undefined | null {
   if (v === undefined || v === null) return undefined;
   if (!Array.isArray(v) || v.length === 0) return null;

@@ -79,6 +79,9 @@ Deno.test("bad JSON and malformed bodies are 400", async () => {
   assertEquals((await handle(request({ org_id: ORG, order_id: ORDER, report_ids: "x" }), t.deps, t.render)).status, 400);
   assertEquals((await handle(request({ org_id: ORG, order_id: ORDER, report_ids: [] }), t.deps, t.render)).status, 400);
   assertEquals((await handle(request({ org_id: ORG, order_id: ORDER, report_ids: [1] }), t.deps, t.render)).status, 400);
+  assertEquals((await handle(request({ org_id: ORG, order_id: ORDER, report_ids: ["not-a-uuid"] }), t.deps, t.render)).status, 400);
+  assertEquals((await handle(request({ org_id: "org", order_id: ORDER }), t.deps, t.render)).status, 400);
+  assertEquals((await handle(request({ org_id: ORG, order_id: "order" }), t.deps, t.render)).status, 400);
   assertEquals(t.rendered.length, 0);
 });
 
