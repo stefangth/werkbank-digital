@@ -78,7 +78,7 @@ export async function handle(
 
   try {
     const bytes = await render.renderVisitReportPdf(data);
-    return new Response(bytes as BodyInit, { status: 200, headers: { ...corsHeaders, "Content-Type": "application/pdf" } });
+    return new Response(bytes as BodyInit, { status: 200, headers: { ...corsHeaders, "Content-Type": "application/pdf", "Cache-Control": "no-store" } });
   } catch (e) {
     console.error("werkbank-reports: render failed", { orderId, error: String(e) });
     return json({ error: "render_failed" }, 500);

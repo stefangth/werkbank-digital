@@ -57,6 +57,7 @@ Deno.test("returns the PDF of the order's reports", async () => {
   const res = await handle(request({ org_id: ORG, order_id: ORDER }), t.deps, t.render);
   assertEquals(res.status, 200);
   assertEquals(res.headers.get("Content-Type"), "application/pdf");
+  assertEquals(res.headers.get("Cache-Control"), "no-store");
   assertEquals(new Uint8Array(await res.arrayBuffer()), PDF);
   assertEquals(t.rendered[0].orderNumber, "AU-0042");
   assertEquals(t.rendered[0].reports.map((r) => r.id), [R1]);
